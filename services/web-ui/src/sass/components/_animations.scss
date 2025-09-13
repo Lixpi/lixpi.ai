@@ -1,0 +1,46 @@
+
+// ********** Heartbeat animation **********
+//INFO: use like this:
+// animation: heartbeatAnimation 1.6s infinite;
+// animation-timing-function: ease-in-out;
+@keyframes heartbeatAnimation {
+    0% {
+        transform: scale(100%);
+        fill: #ff3f3f;
+    }
+    35.84% {
+        transform: scale(164.16%);
+    }
+    60.06% {
+        transform: scale(80.06%);
+        fill: #ff6363;
+        fill: $gptBrandColor;
+    }
+    76.43% {
+        transform: scale(133.57%);
+        fill: #ff0000;
+    }
+    87.48% {
+        transform: scale(87.48%);
+    }
+    94.95% {
+        transform: scale(105.05%);
+    }
+    100.00% {
+        transform: scale(100.00%);
+        fill: #ff3f3f;
+    }
+}
+
+// ********** PopOut animation **********
+// INFO: use like this:
+// animation: popOut 400ms cubic-bezier(0.19, 1, 0.22, 1);
+@keyframes popOut {
+    from { transform: scale(0); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes popOutAndGrow {
+    from { transform: scale(0); opacity: 0; height: 0; }
+    to { transform: scale(1); opacity: 1; height: 100%; }
+}

@@ -1,0 +1,46 @@
+{
+	"compilerOptions": {
+		"rootDirs": [
+			"./src",
+		],
+		// "verbatimModuleSyntax": true,
+		"isolatedModules": true,
+		"lib": [
+			"esnext",
+			"DOM",
+			"DOM.Iterable"
+		],
+		"noEmit": true,
+		"target": "esnext",
+		"allowJs": true,
+		"checkJs": true,
+		"esModuleInterop": true,
+		"forceConsistentCasingInFileNames": true,
+		"allowImportingTsExtensions": true,
+		"resolveJsonModule": true,
+		"skipLibCheck": true,
+		"sourceMap": true,
+		"strict": true,
+		"module": "NodeNext",
+		"moduleResolution": "NodeNext",
+		"baseUrl": ".",
+		"paths": {
+			"$src": ["./src"],
+			"$src/*": ["./src/*"],
+			"$lib": ["./packages/shadcn-svelte/lib"],
+			"$lib/*": ["./packages/shadcn-svelte/lib/*"]
+		}
+	},
+	"include": [
+		"./vite.config.ts",
+		"./src/**/*.js",
+		"./src/**/*.ts",
+		"./src/**/*.svelte",
+	],
+	"exclude": [
+		"./node_modules/**",
+	],
+	"globals": {
+		"Stripe": "readonly",    // Imported in the root index.html file from https://js.stripe.com/v3/ to remain PCI compliant
+	}
+}

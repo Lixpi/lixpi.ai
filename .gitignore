@@ -1,0 +1,38 @@
+# misc
+.DS_Store
+
+# dependencies
+node_modules
+package-lock.json
+pnpm-lock.yaml
+.pnpm-store
+
+*.log
+.cache
+dist
+
+# secrets
+*.key
+*.key.pub
+*.pem
+
+# .env
+.env
+.env.dev
+.env.staging
+.env.production
+.env*.local
+.env.development
+
+# temp & debug files
+temp-ai-responses/
+
+# sst
+.sst
+.build
+
+# opennext
+.open-next
+
+# AWS config
+.aws/config

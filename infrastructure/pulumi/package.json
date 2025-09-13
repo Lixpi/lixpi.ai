@@ -1,0 +1,32 @@
+{
+    "name": "llixpi-pulumi",
+    "main": "src/cli.ts",
+    "type": "module",
+    "scripts": {
+        "aws-login": "aws sso login --use-device-code --sso-session=lixpi",
+        "cli": "node src/cli.ts",
+        "init": "node src/cli.ts init --stack=${STAGE} --region=${AWS_REGION}",
+        "preview": "node src/cli.ts preview",
+        "deploy": "node src/cli.ts up",
+        "destroy": "node src/cli.ts destroy",
+        "force-destroy": "node src/cli.ts force-destroy",
+        "cancel": "node src/cli.ts cancel",
+        "list-stacks": "node src/cli.ts list-stacks",
+        "refresh": "node src/cli.ts refresh",
+        "outputs": "node src/cli.ts outputs",
+        "create-stack": "node src/cli.ts create-stack",
+        "remove-stack": "node src/cli.ts remove-stack"
+    },
+    "dependencies": {
+        "@lixpi/constants": "workspace:*",
+        "@lixpi/debug-tools": "workspace:*",
+        "@pulumi/aws": "*",
+        "@pulumi/command": "*",
+        "@pulumi/docker-build": "*",
+        "@pulumi/pulumi": "*",
+        "chalk": "*",
+        "ora": "*",
+        "yargs": "*"
+    },
+    "packageManager": "pnpm@10.6.3"
+}

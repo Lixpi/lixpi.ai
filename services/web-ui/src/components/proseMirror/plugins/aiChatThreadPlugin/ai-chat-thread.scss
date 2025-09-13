@@ -1,0 +1,304 @@
+// AI Chat Thread Styles
+.ai-chat-thread-wrapper {
+    position: relative;
+
+    // Visual indicator border (temporary)
+    &::before {
+        content: '';
+        position: absolute;
+        right: -1rem;
+        top: 0;
+        bottom: 0;
+        width: 1px;
+        background: linear-gradient(to bottom, #ff8844 0%, #ff8844 60%, #ffaa77 100%);
+    }
+
+    // Receiving state styles (applied via decorations)
+    &.receiving {
+        .keyboard-shortcut-hint {
+            border-color: $redPink;
+            background-color: white;
+            transition: hoverTransition(background, 300ms);
+
+            .shortcut-default,
+            .shortcut-hover {
+                opacity: 0;
+                pointer-events: none;
+            }
+
+            .shortcut-receiving {
+                opacity: 1;
+                pointer-events: auto;
+
+                .stop-icon svg {
+                    fill: $redPink;
+                }
+
+                .shortcut-label {
+                    color: $redPink;
+                }
+            }
+
+            // Hover over receiving state - only when in receiving mode
+            &:hover {
+                // Ensure default/hover states stay hidden during receiving hover
+                .shortcut-default,
+                .shortcut-hover {
+                    opacity: 0 !important;
+                    pointer-events: none !important;
+                }
+
+                .shortcut-receiving {
+                    opacity: 1 !important;
+                    pointer-events: auto !important;
+
+                    .stop-icon svg {
+                        fill: white;
+                    }
+
+                    .shortcut-label {
+                        color: white;
+                    }
+                }
+
+                // Add red background on hover
+                background-color: $redPink;
+                border-color: $redPink;
+            }
+        }
+    }
+
+    .ai-chat-thread-content {
+        position: relative;
+    }
+
+    .keyboard-shortcut-hint {
+        position: absolute;
+        bottom: -0.75rem;
+        right: 1rem;
+        min-width: 85px; // Preserve width during state changes
+        background: white;
+        border: 1px solid rgba($steelBlue, 0.2);
+        border-radius: 20px;
+        font-size: 0.8rem;
+        color: rgba($steelBlue, 0.7);
+        opacity: 0.8;
+        transition: hoverTransition(all, 400ms); // Longer transition for mouse leave
+        box-shadow: 0 2px 8px rgba($steelBlue, 0.2);
+        cursor: pointer;
+
+        .shortcut-default,
+        .shortcut-hover,
+        .shortcut-receiving {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.4rem 0.55rem;
+            transition: hoverTransition(all, 250ms);
+        }
+
+        .shortcut-default {
+            opacity: 1;
+            position: relative; // ensure stacking below absolute states
+            z-index: 1;
+        }
+
+        .shortcut-hover,
+        .shortcut-receiving {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        // Layering: receiving above hover above default
+        .shortcut-hover { z-index: 2; }
+        .shortcut-receiving { z-index: 3; }
+
+        .icons-container {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            width: 36px; // Reduced width to minimize empty space
+            height: 20px; // Fixed height to prevent vertical movement
+            // gap: 0.25rem;
+            position: relative; // enable absolute positioning of animated icons
+            overflow: hidden;   // keep animation within bounds
+            // border: 1px solid red;
+        }
+
+        .shortcut-keys {
+            display: flex;
+            align-items: center;
+
+            .key-icon {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 17px;
+                height: 17px;
+                transition: pupOutTransition(all, 150ms);
+
+                svg {
+                    width: 13px;
+                    height: 13px;
+                    fill: rgba($steelBlue, 0.8);
+                    transition: pupOutTransition(fill, 150ms);
+                }
+            }
+
+            .key-text {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                padding: 0.15rem 0.4rem;
+                font-size: 0.7rem;
+                font-weight: 600;
+                color: rgba($steelBlue, 0.8);
+                line-height: 1;
+                transition: pupOutTransition(all, 150ms);
+            }
+        }
+
+        .send-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 18px;
+            height: 18px;
+
+            svg {
+                width: 14px;
+                height: 14px;
+                fill: $steelBlue;
+            }
+        }
+
+        // Slide animation: in hover state, move send icon from left to right inside icons-container
+        .shortcut-hover {
+            .send-icon {
+                position: absolute;
+                left: 0; // start at the left edge when hover content appears
+                // Default (mouse out): short slide back
+                transition: hoverTransition(left, 40ms);
+            }
+        }
+
+        .stop-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 18px;
+            height: 18px;
+
+            svg {
+                width: 18px;  // Increased from 14px to make stop icon more prominent
+                height: 18px; // Increased from 14px to make stop icon more prominent
+                fill: $redPink;
+            }
+        }
+
+        .shortcut-label {
+            font-weight: 500;
+            color: rgba($steelBlue, 0.6);
+        }
+
+    // Note: normal hover styles are applied at the wrapper level when not receiving
+    }
+
+    // Normal hover state (only when NOT receiving)
+    &:not(.receiving) .keyboard-shortcut-hint:hover {
+        opacity: 1;
+        border-color: rgba($steelBlue, 0.3);
+        transition: hoverTransition(all, 250ms);
+
+        .shortcut-default { opacity: 0; pointer-events: none; }
+        .shortcut-hover { opacity: 1; pointer-events: auto; }
+        .shortcut-receiving { opacity: 0; pointer-events: none; }
+
+        .shortcut-hover .shortcut-label { color: $steelBlue; }
+
+        // Animate send icon to the right end during hover reveal
+        .shortcut-hover .icons-container .send-icon {
+            // Hover-in: longer, smoother slide
+            transition: hoverTransition(left, 300ms);
+            left: calc(100% - 18px); // container width minus icon width
+        }
+    }
+
+    // Enhanced visibility when thread is focused
+    &:focus-within .keyboard-shortcut-hint {
+        opacity: 1;
+        transform: translateY(-2px);
+    }
+}
+
+// Keyboard feedback when keys are pressed (applied via ProseMirror decorations)
+.ai-chat-thread-keys-pressed {
+    .keyboard-shortcut-hint {
+        .key-icon.cmd-key,
+        .key-text.ctrl-key {
+            color: $steelBlue !important;
+
+            svg {
+                fill: $steelBlue !important;
+            }
+        }
+    }
+}
+
+// Enter key highlight (only when both mod and enter are pressed)
+.ai-chat-thread-keys-pressed.mod-pressed.enter-pressed {
+    .keyboard-shortcut-hint {
+        .key-icon.enter-key {
+            svg {
+                fill: $steelBlue !important;
+            }
+        }
+    }
+}
+
+// Receiving state overrides (ensure visibility regardless of cascade order)
+.ai-chat-thread-wrapper.receiving {
+    .keyboard-shortcut-hint {
+        // Hide non-receiving states
+        .shortcut-default,
+        .shortcut-hover {
+            opacity: 0 !important;
+            pointer-events: none !important;
+        }
+
+        // Always show receiving content
+        .shortcut-receiving {
+            opacity: 1 !important;
+            pointer-events: auto !important;
+
+            // Default placement: stop icon on the right, ready to slide left on hover
+            .icons-container {
+                .stop-icon {
+                    position: absolute;
+                    left: calc(100% - 18px); // align to right (container width - icon width)
+                    transition: hoverTransition(left, 150ms); // mouse-out timing
+                }
+            }
+        }
+
+        // Keep receiving visible on hover
+        &:hover {
+            .shortcut-receiving {
+                opacity: 1 !important;
+                pointer-events: auto !important;
+
+                // Hover-in: slide stop icon left with same timing as send icon
+                .icons-container {
+                    .stop-icon {
+                        transition: hoverTransition(left, 300ms);
+                        left: 7px;
+                    }
+                }
+            }
+        }
+    }
+}

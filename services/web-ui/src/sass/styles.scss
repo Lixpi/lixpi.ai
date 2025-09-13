@@ -1,0 +1,68 @@
+
+// Some shared variables are imported globally into svelte app via svelte.config.js
+// _variables
+// _transitions
+
+@import 'components/_reset';
+@import '_helpers';
+
+
+@import '_typography';
+
+@import 'components/animations';
+
+@import '../components/proseMirror/ProseMirror.scss';
+@import '../components/proseMirror/CodeMirror.scss';
+
+// @import 'components/_fonts';
+
+// // font-family: 'Source Sans Pro', sans-serif;   Main content font. Also supports cyrilic and other languages
+// // font-family: 'Lato', sans-serif;  Main font ??? is it??
+// // font-family: 'Raleway', sans-serif;   Main header font
+
+
+html, body {
+    overscroll-behavior: none;
+    &, > div, #root, #root > div, main {
+        width: 100%;
+        height: 100%;
+    }
+    background: $mainBackgroundColor;
+}
+
+#root {
+    width: 100%;
+    height: 100%;
+    // TODO fix later
+    // padding-top: 65px;
+}
+
+main {
+    overflow: scroll;
+}
+
+// TODO: cleanup
+img {
+    width: 100%;
+    max-width: 200px;
+}
+
+.full-height {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.scroll-container {
+    overflow: hidden;
+    // height: 100%;
+    max-height: calc(100vh - 100px);
+    // background: #fff;
+    display: flex;
+    flex-direction: column;
+}
+
+.scroll-content {
+    overflow-y: auto;
+    height: 100%;
+}

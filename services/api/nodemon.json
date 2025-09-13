@@ -1,0 +1,12 @@
+{
+    "watch": [
+        "src",
+        "../*/src"
+    ],
+    "ext": "js,ts,env",
+    "ignore": [
+        "src/**/*.spec.ts"
+    ],
+    "legacyWatch": true ,
+    "exec": "node ./src/server.ts"
+}

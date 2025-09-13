@@ -1,0 +1,29 @@
+{
+  "name": "nats-service-discovery-sidecar",
+  "version": "1.0.0",
+  "description": "Lambda function to manage NATS public IP registration in Route53",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@aws-sdk/client-route-53": "^3.0.0",
+    "@aws-sdk/client-ecs": "^3.0.0",
+    "@aws-sdk/client-ec2": "^3.0.0"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.0",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  },
+  "keywords": [
+    "aws",
+    "lambda",
+    "nats",
+    "route53",
+    "service-discovery"
+  ],
+  "author": "Lixpi",
+  "license": "MIT"
+}

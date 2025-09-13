@@ -1,0 +1,30 @@
+{
+    "compilerOptions": {
+        "target": "ESNext",
+
+        "moduleResolution": "NodeNext",
+        "outDir": "./dist",
+        "rootDir": "./src",
+        "esModuleInterop": true,    // Enables emit interoperability between CommonJS and ES Modules via creation of namespace objects for all imports
+        "skipLibCheck": true,    // Skips type checking all .d.ts files
+        "forceConsistentCasingInFileNames": true,
+        "allowJs": true, // Allows JavaScript files to be compiled
+        "resolveJsonModule": true, // Allows importing JSON files
+        "moduleDetection": "force",    // Forces module detection
+        "isolatedModules": true,    // Disables type-checking of all files in the compilation
+        "verbatimModuleSyntax": true,
+        "allowSyntheticDefaultImports": true,    // Allows default imports from modules with no default export
+        // Strictness
+        "strict": true,    // Enables all strict type-checking options
+        "noUncheckedIndexedAccess": true,    // Disallows unchecked indexed access
+        "noImplicitOverride": true,
+
+        // Node Stuff
+        "allowImportingTsExtensions": true,    // Allows importing of .ts files
+        "rewriteRelativeImportExtensions": true,    // Rewrites relative imports to non-relative imports
+        "module": "NodeNext",
+        "noEmit": true    // Disables emitting of output files
+    },
+    "include": ["src/**/*"],
+    "exclude": ["node_modules"]
+}

@@ -1,0 +1,55 @@
+{
+    "name": "lixpi-main-api",
+    "type": "module",
+    "version": "0.3.1",
+    "description": "Lixpi Main API",
+    "author": "Lixpi <lixpi@lixpi.com>",
+    "license": "",
+    "bugs": {
+        "url": "https://github.com/Lixpi/Lixpi-lists-API/issues"
+    },
+    "homepage": "https://github.com/Lixpi/Lixpi-lists-API#readme",
+    "main": "server.ts",
+    "scripts": {
+        "start": "node ./src/server.ts",
+        "dev": "nodemon -L",
+        "aws-login": "aws sso login --use-device-code --sso-session=lixpi"
+    },
+    "dependencies": {
+        "@lixpi/constants": "workspace:*",
+        "@lixpi/dynamodb-service": "workspace:*",
+        "@lixpi/ssm-service": "workspace:*",
+        "@lixpi/sns-service": "workspace:*",
+        "@lixpi/sqs-service": "workspace:*",
+        "@lixpi/lambda-service": "workspace:*",
+        "@lixpi/debug-tools": "workspace:*",
+        "@lixpi/nats-service": "workspace:*",
+        "@lixpi/nats-auth-callout-service": "workspace:*",
+        "@lixpi/markdown-stream-parser": "^0.0.3-34",
+        "axios": "*",
+        "cookie-parser": "*",
+        "cors": "*",
+        "chalk": "*",
+        "decimal.js": "*",
+        "dotenv": "*",
+        "express": "*",
+        "jsonwebtoken": "*",
+        "uuid": "*",
+        "socket.io": "*",
+        "jwks-rsa": "*",
+        "openai": "*",
+        "@anthropic-ai/sdk": "*",
+        "tiktoken": "*",
+        "type-fest": "*"
+    },
+    "devDependencies": {
+        "nodemon": "latest",
+        "@types/node": "*",
+        "@types/express": "*"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/Lixpi/Lixpi-lists-API.git"
+    },
+    "packageManager": "pnpm@9.15.0"
+}
