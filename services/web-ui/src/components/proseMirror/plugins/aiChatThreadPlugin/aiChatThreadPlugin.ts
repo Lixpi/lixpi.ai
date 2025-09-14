@@ -13,12 +13,11 @@ import { TextSelection } from 'prosemirror-state'
 import { Node as PMNode, Schema } from 'prosemirror-model'
 import { nodeTypes, nodeViews } from '../../customNodes/index.js'
 import { documentTitleNodeType } from '../../customNodes/documentTitleNode.js'
-import { aiChatThreadNodeType } from './aiChatThreadNode.ts'
+import { aiChatThreadNodeType, aiChatThreadNodeView } from './aiChatThreadNode.ts'
 import { aiResponseMessageNodeType, aiResponseMessageNodeView } from './aiResponseMessageNode.ts'
-import { keyboardMacCommandIcon, keyboardEnterKeyIcon, sendIcon, stopIcon } from '../../../../svgIcons/index.js'
 import SegmentsReceiver from '../../../../services/segmentsReceiver-service.js'
 
-const IS_RECEIVING_TEMP_DEBUG_STATE = false
+const IS_RECEIVING_TEMP_DEBUG_STATE = false    // For debug purposes only
 
 // ========== TYPE DEFINITIONS ==========
 
@@ -46,6 +45,7 @@ type AiChatThreadPluginState = {
     decorations: DecorationSet
     modPressed: boolean
     enterPressed: boolean
+    hoveredThreadId: string | null
 }
 
 // ========== CONSTANTS ==========
@@ -498,184 +498,15 @@ class AiChatThreadPluginClass {
         }
     }
 
-    // ========== NODE VIEWS ==========
-
-    private createThreadNodeView(node: PMNode, view: EditorView, getPos: () => number | undefined): NodeView {
-        // Create DOM structure
-        const dom = document.createElement('div')
-        dom.className = 'ai-chat-thread-wrapper'
-        dom.setAttribute('data-thread-id', node.attrs.threadId)
-        dom.setAttribute('data-status', node.attrs.status)
-
-        // Create content container
-        const contentDOM = document.createElement('div')
-        contentDOM.className = 'ai-chat-thread-content'
-
-        // Create keyboard shortcut indicator
-        const shortcutIndicator = this.createKeyboardShortcutIndicator(view)
-
-        dom.appendChild(contentDOM)
-        dom.appendChild(shortcutIndicator)
-
-        // Focus handling
-        this.setupContentFocus(contentDOM, view, getPos)
-
-        return {
-            dom,
-            contentDOM,
-            update: (updatedNode: PMNode) => {
-                node = updatedNode
-                return true
-            }
-        }
-    }
-
-
-
-    private setupContentFocus(contentDOM: HTMLElement, view: EditorView, getPos: () => number | undefined): void {
-        contentDOM.addEventListener('mousedown', () => {
-            view.focus()
-            const pos = getPos()
-            if (pos !== undefined) {
-                const $pos = view.state.doc.resolve(pos + 1)
-                const selection = TextSelection.create(view.state.doc, $pos.pos)
-                view.dispatch(view.state.tr.setSelection(selection))
-            }
-        })
-    }
-
-
-
-
-
-    private createKeyboardShortcutIndicator(view: EditorView): HTMLElement {
-        const indicator = document.createElement('div')
-        indicator.className = 'keyboard-shortcut-hint'
-
-        // Detect platform for correct modifier key
-        const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0
-
-        // Default state (showing keyboard shortcut)
-        const defaultContent = document.createElement('div')
-        defaultContent.className = 'shortcut-default'
-
-        const defaultIconsContainer = document.createElement('div')
-        defaultIconsContainer.className = 'icons-container'
-
-        const keysContainer = document.createElement('div')
-        keysContainer.className = 'shortcut-keys'
-
-        if (isMac) {
-            const cmdIcon = document.createElement('span')
-            cmdIcon.className = 'key-icon cmd-key'
-            cmdIcon.innerHTML = keyboardMacCommandIcon
-            keysContainer.appendChild(cmdIcon)
-        } else {
-            const ctrlKey = document.createElement('span')
-            ctrlKey.className = 'key-text ctrl-key'
-            ctrlKey.textContent = 'Ctrl'
-            keysContainer.appendChild(ctrlKey)
-        }
-
-        const enterIcon = document.createElement('span')
-        enterIcon.className = 'key-icon enter-key'
-        enterIcon.innerHTML = keyboardEnterKeyIcon
-        keysContainer.appendChild(enterIcon)
-
-        defaultIconsContainer.appendChild(keysContainer)
-
-        const defaultLabel = document.createElement('span')
-        defaultLabel.className = 'shortcut-label'
-        defaultLabel.textContent = 'send'
-
-        defaultContent.appendChild(defaultIconsContainer)
-        defaultContent.appendChild(defaultLabel)
-
-        // Hover state (showing send button)
-        const hoverContent = document.createElement('div')
-        hoverContent.className = 'shortcut-hover'
-
-        const hoverIconsContainer = document.createElement('div')
-        hoverIconsContainer.className = 'icons-container'
-
-        const sendIconElement = document.createElement('span')
-        sendIconElement.className = 'send-icon'
-        sendIconElement.innerHTML = sendIcon
-
-        hoverIconsContainer.appendChild(sendIconElement)
-
-        const hoverLabel = document.createElement('span')
-        hoverLabel.className = 'shortcut-label'
-        hoverLabel.textContent = 'send'
-
-        hoverContent.appendChild(hoverIconsContainer)
-        hoverContent.appendChild(hoverLabel)
-
-        // Receiving state (showing stop button)
-        const receivingContent = document.createElement('div')
-        receivingContent.className = 'shortcut-receiving'
-
-        const receivingIconsContainer = document.createElement('div')
-        receivingIconsContainer.className = 'icons-container'
-
-        const stopIconElement = document.createElement('span')
-        stopIconElement.className = 'stop-icon'
-        stopIconElement.innerHTML = stopIcon
-
-        receivingIconsContainer.appendChild(stopIconElement)
-
-        const receivingLabel = document.createElement('span')
-        receivingLabel.className = 'shortcut-label'
-        receivingLabel.textContent = 'stop'
-
-        receivingContent.appendChild(receivingIconsContainer)
-        receivingContent.appendChild(receivingLabel)
-
-        // Add all three states to indicator
-        indicator.appendChild(defaultContent)
-        indicator.appendChild(hoverContent)
-        indicator.appendChild(receivingContent)
-
-        // Enable pointer events and add click handler
-        indicator.style.pointerEvents = 'auto'
-        indicator.style.cursor = 'pointer'
-
-        // Add click handler
-        indicator.addEventListener('click', (e) => {
-            e.preventDefault()
-            e.stopPropagation()
-
-            const pluginState = PLUGIN_KEY.getState(view.state)
-
-            console.log('🖱️ BUTTON CLICKED: pluginState.isReceiving =', pluginState?.isReceiving)
-
-            if (pluginState?.isReceiving) {
-                // TODO: Stop AI streaming functionality
-                console.log('🛑 Stop AI streaming - functionality to be implemented')
-            } else {
-                // Trigger AI chat submission
-                console.log('🚀 Triggering AI chat submission')
-                const tr = view.state.tr.setMeta(USE_AI_CHAT_META, true)
-                view.dispatch(tr)
-            }
-        })
-
-        // Note: Keyboard feedback is now handled via ProseMirror decorations in the plugin props
-
-        return indicator
-    }
-
-
-
     // ========== KEYBOARD FEEDBACK ==========
 
     private createKeyboardFeedbackDecorations(state: EditorState, pluginState: AiChatThreadPluginState): Decoration[] {
         const decorations: Decoration[] = []
 
-        // Find all ai-chat-thread nodes and add keyboard feedback and receiving state styling
+        // Find all ai-chat-thread nodes and add keyboard feedback and receiving state styling ONLY
         state.doc.descendants((node, pos) => {
             if (node.type.name === 'aiChatThread') {
-                // Build CSS class based on which keys are pressed and receiving state
+                // Build CSS class based ONLY on keyboard and receiving state
                 let cssClass = 'ai-chat-thread-keys-pressed'
                 if (pluginState.modPressed) {
                     cssClass += ' mod-pressed'
@@ -687,12 +518,30 @@ class AiChatThreadPluginClass {
                     cssClass += ' receiving'
                 }
 
-                console.log('Creating decoration with class:', cssClass, 'modPressed:', pluginState.modPressed, 'enterPressed:', pluginState.enterPressed, 'isReceiving:', pluginState.isReceiving)
-
-                // Create a decoration that applies the feedback class to the entire node
+                // Create a decoration that applies the keyboard feedback class to the entire node
                 decorations.push(
                     Decoration.node(pos, pos + node.nodeSize, {
                         class: cssClass
+                    })
+                )
+            }
+        })
+
+        return decorations
+    }
+
+    // ========== THREAD BOUNDARY SYSTEM ==========
+
+    private createThreadBoundaryDecorations(state: EditorState, pluginState: AiChatThreadPluginState): Decoration[] {
+        const decorations: Decoration[] = []
+
+        // Find all ai-chat-thread nodes and add boundary visibility ONLY for the hovered thread
+        state.doc.descendants((node, pos) => {
+            if (node.type.name === 'aiChatThread' && pluginState.hoveredThreadId === node.attrs.threadId) {
+                // Apply boundary visibility class ONLY to the specific hovered thread
+                decorations.push(
+                    Decoration.node(pos, pos + node.nodeSize, {
+                        class: 'thread-boundary-visible'
                     })
                 )
             }
@@ -778,7 +627,8 @@ class AiChatThreadPluginClass {
                     codeBuffer: '',
                     decorations: DecorationSet.empty,
                     modPressed: false,
-                    enterPressed: false
+                    enterPressed: false,
+                    hoveredThreadId: null
                 }),
                 apply: (tr: Transaction, prev: AiChatThreadPluginState): AiChatThreadPluginState => {
                     // Handle receiving state toggle
@@ -810,6 +660,16 @@ class AiChatThreadPluginClass {
                         return {
                             ...prev,
                             enterPressed: enterToggleMeta,
+                            decorations: prev.decorations.map(tr.mapping, tr.doc)
+                        }
+                    }
+
+                    // Handle hover thread ID change
+                    const hoverThreadMeta = tr.getMeta('hoverThread')
+                    if (hoverThreadMeta !== undefined) {
+                        return {
+                            ...prev,
+                            hoveredThreadId: hoverThreadMeta,
                             decorations: prev.decorations.map(tr.mapping, tr.doc)
                         }
                     }
@@ -923,32 +783,31 @@ class AiChatThreadPluginClass {
                     }
                 },
 
-                // Decorations: combine placeholders with keyboard feedback and receiving state
+                // Decorations: combine all independent decoration systems
                 decorations: (state: EditorState) => {
                     const pluginState = PLUGIN_KEY.getState(state)
                     const placeholders = this.createPlaceholders(state)
+                    const allDecorations = [...placeholders.find()]
 
-                    console.log('🎨 DECORATIONS RENDER: pluginState =', {
-                        modPressed: pluginState?.modPressed,
-                        enterPressed: pluginState?.enterPressed,
-                        isReceiving: pluginState?.isReceiving
-                    })
-
+                    // Independent keyboard feedback system
                     if (pluginState?.modPressed || pluginState?.enterPressed || pluginState?.isReceiving) {
-                        console.log('🎨 DECORATIONS: Applying keyboard/receiving decorations')
-                        // Add keyboard visual feedback and receiving state decorations
                         const keyboardDecorations = this.createKeyboardFeedbackDecorations(state, pluginState)
-                        return DecorationSet.create(state.doc, [...placeholders.find(), ...keyboardDecorations])
+                        allDecorations.push(...keyboardDecorations)
                     }
 
-                    console.log('🎨 DECORATIONS: Only applying placeholders (no keyboard/receiving state)')
-                    return placeholders
+                    // Independent thread boundary system
+                    if (pluginState?.hoveredThreadId) {
+                        const boundaryDecorations = this.createThreadBoundaryDecorations(state, pluginState)
+                        allDecorations.push(...boundaryDecorations)
+                    }
+
+                    return DecorationSet.create(state.doc, allDecorations)
                 },
 
                 // Node views
                 nodeViews: {
                     [aiChatThreadNodeType]: (node: PMNode, view: EditorView, getPos: () => number | undefined) =>
-                        this.createThreadNodeView(node, view, getPos),
+                        aiChatThreadNodeView(node, view, getPos),
                     [aiResponseMessageNodeType]: (node: PMNode, view: EditorView, getPos: () => number | undefined) =>
                         aiResponseMessageNodeView(node, view, getPos),
                 }
