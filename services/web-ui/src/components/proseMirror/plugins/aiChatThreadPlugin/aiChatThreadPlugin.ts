@@ -46,6 +46,7 @@ type AiChatThreadPluginState = {
     decorations: DecorationSet
     modPressed: boolean
     enterPressed: boolean
+    hoveredThreadId: string | null
 }
 
 // ========== CONSTANTS ==========
@@ -501,6 +502,27 @@ class AiChatThreadPluginClass {
     // ========== NODE VIEWS ==========
 
     private createThreadNodeView(node: PMNode, view: EditorView, getPos: () => number | undefined): NodeView {
+        // Ensure node has a proper threadId - if not, assign one via transaction
+        if (!node.attrs.threadId) {
+            const newThreadId = `thread-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+            const pos = getPos()
+            if (pos !== undefined) {
+                // Update the node with a proper threadId
+                setTimeout(() => {
+                    const tr = view.state.tr.setNodeMarkup(pos, undefined, {
+                        ...node.attrs,
+                        threadId: newThreadId
+                    })
+                    view.dispatch(tr)
+                }, 0)
+            }
+            // Use the new threadId for this render
+            node = node.type.create({
+                ...node.attrs,
+                threadId: newThreadId
+            }, node.content)
+        }
+
         // Create DOM structure
         const dom = document.createElement('div')
         dom.className = 'ai-chat-thread-wrapper'
@@ -514,8 +536,12 @@ class AiChatThreadPluginClass {
         // Create keyboard shortcut indicator
         const shortcutIndicator = this.createKeyboardShortcutIndicator(view)
 
+        // Create thread boundary indicator for context visualization
+        const threadBoundaryIndicator = this.createThreadBoundaryIndicator(dom, view, node.attrs.threadId)
+
         dom.appendChild(contentDOM)
         dom.appendChild(shortcutIndicator)
+        dom.appendChild(threadBoundaryIndicator)
 
         // Focus handling
         this.setupContentFocus(contentDOM, view, getPos)
@@ -542,6 +568,22 @@ class AiChatThreadPluginClass {
                 view.dispatch(view.state.tr.setSelection(selection))
             }
         })
+    }
+
+    private createThreadBoundaryIndicator(wrapperDOM: HTMLElement, view: EditorView, threadId: string): HTMLElement {
+        const boundaryIndicator = document.createElement('div')
+        boundaryIndicator.className = 'thread-boundary-indicator'
+
+        // Handle hover events using ProseMirror transactions for consistency with other state management
+        boundaryIndicator.addEventListener('mouseenter', () => {
+            view.dispatch(view.state.tr.setMeta('hoverThread', threadId))
+        })
+
+        boundaryIndicator.addEventListener('mouseleave', () => {
+            view.dispatch(view.state.tr.setMeta('hoverThread', null))
+        })
+
+        return boundaryIndicator
     }
 
 
@@ -672,10 +714,10 @@ class AiChatThreadPluginClass {
     private createKeyboardFeedbackDecorations(state: EditorState, pluginState: AiChatThreadPluginState): Decoration[] {
         const decorations: Decoration[] = []
 
-        // Find all ai-chat-thread nodes and add keyboard feedback and receiving state styling
+        // Find all ai-chat-thread nodes and add keyboard feedback and receiving state styling ONLY
         state.doc.descendants((node, pos) => {
             if (node.type.name === 'aiChatThread') {
-                // Build CSS class based on which keys are pressed and receiving state
+                // Build CSS class based ONLY on keyboard and receiving state
                 let cssClass = 'ai-chat-thread-keys-pressed'
                 if (pluginState.modPressed) {
                     cssClass += ' mod-pressed'
@@ -687,12 +729,30 @@ class AiChatThreadPluginClass {
                     cssClass += ' receiving'
                 }
 
-                console.log('Creating decoration with class:', cssClass, 'modPressed:', pluginState.modPressed, 'enterPressed:', pluginState.enterPressed, 'isReceiving:', pluginState.isReceiving)
-
-                // Create a decoration that applies the feedback class to the entire node
+                // Create a decoration that applies the keyboard feedback class to the entire node
                 decorations.push(
                     Decoration.node(pos, pos + node.nodeSize, {
                         class: cssClass
+                    })
+                )
+            }
+        })
+
+        return decorations
+    }
+
+    // ========== THREAD BOUNDARY SYSTEM ==========
+
+    private createThreadBoundaryDecorations(state: EditorState, pluginState: AiChatThreadPluginState): Decoration[] {
+        const decorations: Decoration[] = []
+
+        // Find all ai-chat-thread nodes and add boundary visibility ONLY for the hovered thread
+        state.doc.descendants((node, pos) => {
+            if (node.type.name === 'aiChatThread' && pluginState.hoveredThreadId === node.attrs.threadId) {
+                // Apply boundary visibility class ONLY to the specific hovered thread
+                decorations.push(
+                    Decoration.node(pos, pos + node.nodeSize, {
+                        class: 'thread-boundary-visible'
                     })
                 )
             }
@@ -778,7 +838,8 @@ class AiChatThreadPluginClass {
                     codeBuffer: '',
                     decorations: DecorationSet.empty,
                     modPressed: false,
-                    enterPressed: false
+                    enterPressed: false,
+                    hoveredThreadId: null
                 }),
                 apply: (tr: Transaction, prev: AiChatThreadPluginState): AiChatThreadPluginState => {
                     // Handle receiving state toggle
@@ -810,6 +871,16 @@ class AiChatThreadPluginClass {
                         return {
                             ...prev,
                             enterPressed: enterToggleMeta,
+                            decorations: prev.decorations.map(tr.mapping, tr.doc)
+                        }
+                    }
+
+                    // Handle hover thread ID change
+                    const hoverThreadMeta = tr.getMeta('hoverThread')
+                    if (hoverThreadMeta !== undefined) {
+                        return {
+                            ...prev,
+                            hoveredThreadId: hoverThreadMeta,
                             decorations: prev.decorations.map(tr.mapping, tr.doc)
                         }
                     }
@@ -923,26 +994,25 @@ class AiChatThreadPluginClass {
                     }
                 },
 
-                // Decorations: combine placeholders with keyboard feedback and receiving state
+                // Decorations: combine all independent decoration systems
                 decorations: (state: EditorState) => {
                     const pluginState = PLUGIN_KEY.getState(state)
                     const placeholders = this.createPlaceholders(state)
+                    const allDecorations = [...placeholders.find()]
 
-                    console.log('🎨 DECORATIONS RENDER: pluginState =', {
-                        modPressed: pluginState?.modPressed,
-                        enterPressed: pluginState?.enterPressed,
-                        isReceiving: pluginState?.isReceiving
-                    })
-
+                    // Independent keyboard feedback system
                     if (pluginState?.modPressed || pluginState?.enterPressed || pluginState?.isReceiving) {
-                        console.log('🎨 DECORATIONS: Applying keyboard/receiving decorations')
-                        // Add keyboard visual feedback and receiving state decorations
                         const keyboardDecorations = this.createKeyboardFeedbackDecorations(state, pluginState)
-                        return DecorationSet.create(state.doc, [...placeholders.find(), ...keyboardDecorations])
+                        allDecorations.push(...keyboardDecorations)
                     }
 
-                    console.log('🎨 DECORATIONS: Only applying placeholders (no keyboard/receiving state)')
-                    return placeholders
+                    // Independent thread boundary system
+                    if (pluginState?.hoveredThreadId) {
+                        const boundaryDecorations = this.createThreadBoundaryDecorations(state, pluginState)
+                        allDecorations.push(...boundaryDecorations)
+                    }
+
+                    return DecorationSet.create(state.doc, allDecorations)
                 },
 
                 // Node views
