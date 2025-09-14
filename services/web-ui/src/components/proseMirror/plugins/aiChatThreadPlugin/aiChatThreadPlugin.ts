@@ -15,7 +15,7 @@ import { nodeTypes, nodeViews } from '../../customNodes/index.js'
 import { documentTitleNodeType } from '../../customNodes/documentTitleNode.js'
 import { aiChatThreadNodeType } from './aiChatThreadNode.ts'
 import { aiResponseMessageNodeType, aiResponseMessageNodeView } from './aiResponseMessageNode.ts'
-import { keyboardMacCommandIcon, keyboardEnterKeyIcon, sendIcon, stopIcon } from '../../../../svgIcons/index.js'
+import { keyboardMacCommandIcon, keyboardEnterKeyIcon, sendIcon, stopIcon, chatThreadBoundariesInfoIcon } from '../../../../svgIcons/index.js'
 import SegmentsReceiver from '../../../../services/segmentsReceiver-service.js'
 
 const IS_RECEIVING_TEMP_DEBUG_STATE = false
@@ -572,7 +572,21 @@ class AiChatThreadPluginClass {
 
     private createThreadBoundaryIndicator(wrapperDOM: HTMLElement, view: EditorView, threadId: string): HTMLElement {
         const boundaryIndicator = document.createElement('div')
-        boundaryIndicator.className = 'thread-boundary-indicator'
+        boundaryIndicator.className = 'ai-thread-boundary-indicator'
+
+        // Create the boundary line element (like ai-response-message-boundaries-indicator)
+        // IMPORTANT: append to the wrapper so it can span the full thread height
+        const boundaryLine = document.createElement('div')
+        boundaryLine.className = 'ai-thread-boundary-indicator-line'
+        wrapperDOM.appendChild(boundaryLine)
+
+        // Create the icon element
+        const iconElement = document.createElement('div')
+        iconElement.className = 'ai-thread-boundary-icon'
+        iconElement.innerHTML = chatThreadBoundariesInfoIcon
+
+        // Add elements to the boundary indicator (icon only; line is sibling on wrapper)
+        boundaryIndicator.appendChild(iconElement)
 
         // Handle hover events using ProseMirror transactions for consistency with other state management
         boundaryIndicator.addEventListener('mouseenter', () => {

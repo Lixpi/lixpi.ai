@@ -1,52 +1,85 @@
 // AI Chat Thread Styles
+@import '../../ProseMirrorMixings.scss';
+
 .ai-chat-thread-wrapper {
     position: relative;
 
-    // Thread boundary indicator: circle (always visible) + vertical line (hidden by default)
-    // Circle indicator
-    &::after {
-        content: '';
-        position: absolute;
-        right: -21px; // -1rem (16px) - 5px = center at -21px for 10px circle
-        top: 8px; // small offset from top; circle is small and non-intrusive
-        width: 10px;
-        height: 10px;
-        border-radius: 50%;
-        background: linear-gradient(to bottom, #ff8844 0%, #ff8844 60%, #ffaa77 100%);
-        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
-        z-index: 2;
-        pointer-events: none; // let the boundary indicator handle interactions
-    }
+    // border: 1px solid pink;
 
-    // Thread context boundary line (hidden by default, shown on hover) - centered to align with circle
-    &::before {
-        content: '';
+    // Thread boundary indicator: small circular element like AI response indicator
+    .ai-thread-boundary-indicator {
         position: absolute;
-        right: -16px; // -1rem = center of circle (16px from right) - centers with circle at -21px + 5px
-        top: 0;
-        bottom: 0;
-        width: 1px;
-        background: linear-gradient(to bottom, #ff8844 0%, #ff8844 60%, #ffaa77 100%);
-        opacity: 0; // HIDDEN by default
-        transform: scaleY(0); // HIDDEN by default
-        transform-origin: top;
-        transition: opacity 250ms cubic-bezier(0.319, 1, 0.01, 1),
-                    transform 250ms cubic-bezier(0.319, 1, 0.01, 1);
-        z-index: 5; // ensure line renders above boundary indicator
-        pointer-events: none; // purely decorative
-    }    // Thread boundary indicator: larger invisible zone around the circle for easier interaction
-    .thread-boundary-indicator {
-        position: absolute;
-        right: -31px; // extend 15px left and right of circle center (-16px - 15px)
-        top: 0;
-        width: 30px; // 3x circle width for larger hover area
-        height: 100%;
+        // border: 1px solid red;
+        right: -47px; // position to the right of the thread content
+        top: -6px; // position vertically similar to AI response indicators
+        width: 32px; // circle container size (larger than icon for easier hover)
+        height: 32px; // circle container size
+        display: flex;
+        align-items: center;
+        justify-content: center;
         background: transparent; // invisible hover area
+        border-radius: 50%; // make it circular
         z-index: 3;
         cursor: pointer;
+
+        // NOTE: line is now a sibling of the indicator under the wrapper
+
+        // Thread boundary icon styling
+        .ai-thread-boundary-icon {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none; // let the parent boundary indicator handle interactions
+
+            // Style the SVG icon
+            svg {
+                width: 20px;
+                height: 20px;
+                fill: $nightBlue; // match the gradient start color
+                // filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.08));
+            }
+        }
+    }
+
+    // Thread boundary line anchored to wrapper (spans full thread height)
+    .ai-thread-boundary-indicator-line {
+        position: absolute;
+        right: -15px; // align with left edge of circle indicator
+        top: 0;
+        bottom: 0; // stretch across full thread height
+        width: 1px;
+        background: $steelBlue;
+        opacity: 0; // hidden by default
+        transform: scaleY(0);
+        min-height: 50px;
+        opacity: 1;
+        transform-origin: top;
+        transition: pupOutTransition(all, 200ms);
+        z-index: 5;
+        pointer-events: none; // only the circle handles hover
+
+        // Triangle pointer aligned near icon at the top, closer to the line
+        @include boundaryPointerTriangle((
+            direction: 'right',
+            anchor: 'top',
+            horizontalOffset: 0px,
+            verticalOffset: 10px,
+            size: 4px,
+            color: $steelBlue,
+            accentColor: $nightBlue
+        ));
     }
 
 
+    // Thread boundary visible state (applied via decorations on hover)
+    &.thread-boundary-visible {
+        .ai-thread-boundary-indicator-line {
+            opacity: 1;
+            transform: scaleY(1);
+        }
+    }
 
     // Receiving state styles (applied via decorations)
     &.receiving {
@@ -268,7 +301,51 @@
         opacity: 1;
         transform: translateY(-2px);
     }
+
+    // Receiving state overrides (ensure visibility regardless of cascade order)
+    &.receiving {
+        .keyboard-shortcut-hint {
+            // Hide non-receiving states
+            .shortcut-default,
+            .shortcut-hover {
+                opacity: 0 !important;
+                pointer-events: none !important;
+            }
+
+            // Always show receiving content
+            .shortcut-receiving {
+                opacity: 1 !important;
+                pointer-events: auto !important;
+
+                // Default placement: stop icon on the right, ready to slide left on hover
+                .icons-container {
+                    .stop-icon {
+                        position: absolute;
+                        left: calc(100% - 18px); // align to right (container width - icon width)
+                        transition: hoverTransition(left, 150ms); // mouse-out timing
+                    }
+                }
+            }
+
+            // Keep receiving visible on hover
+            &:hover {
+                .shortcut-receiving {
+                    opacity: 1 !important;
+                    pointer-events: auto !important;
+
+                    // Hover-in: slide stop icon left with same timing as send icon
+                    .icons-container {
+                        .stop-icon {
+                            transition: hoverTransition(left, 300ms);
+                            left: 7px;
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
+
 
 // Keyboard feedback when keys are pressed (applied via ProseMirror decorations)
 .ai-chat-thread-keys-pressed {
@@ -295,53 +372,93 @@
     }
 }
 
-// Thread boundary visible state (applied via decorations on hover)
-.ai-chat-thread-wrapper.thread-boundary-visible {
-    &::before {
-        opacity: 1;
-        transform: scaleY(1);
-    }
-}
 
-// Receiving state overrides (ensure visibility regardless of cascade order)
-.ai-chat-thread-wrapper.receiving {
-    .keyboard-shortcut-hint {
-        // Hide non-receiving states
-        .shortcut-default,
-        .shortcut-hover {
-            opacity: 0 !important;
-            pointer-events: none !important;
-        }
+.ai-response-message-wrapper {
+	margin: 0;
+	padding: 0.8rem 0 0.7rem;
+	position: relative;
+	.user-avatar {
+		display: block;
+		width:  21px;
+		height:  21px;
+		border-radius: 99px;
+		position: absolute;
+		user-select: none;
+		left: -55px;
+		bottom: 0.01rem;
+		cursor: default;
+		svg {
+			fill: #94999d;
+		}
+		&.assistant-anthropic {
+			left: -55.5px;
+			svg {
+				fill: #D97757;
+				width:  21.5px;
+				height:  21.5px;
+			}
+		}
+		&.assistant-openai {
+			overflow: hidden;
+			svg {
+				fill: $aiGreen;
+			}
+			&.node-receiving-animation {
+				svg {
+					animation: heartbeatAnimation 1.5s infinite;
+					animation-timing-function: ease-in-out;
+				}
+			}
+		}
+	}
 
-        // Always show receiving content
-        .shortcut-receiving {
-            opacity: 1 !important;
-            pointer-events: auto !important;
+	.ai-response-message {
+		position: relative;
+		z-index: 2;
+		margin: 0;
+		display: flex;
+		align-items: center;
+		padding: 0;
+		position: relative;
+		// background: #fff;
+		.ai-response-message-boundaries-indicator {
+			position: absolute;
+			left: -21px;
+			display: block;
+			height: 17px;
+			height: 100%;
+			width: $aiResponseMessageIndicatorBoundariesWidth;
+			transition: height 400ms cubic-bezier(0.19, 1, 0.22, 1);
+			background-color: $aiResponseMessageIndicatorColor;
+			border-radius: 100px;
 
-            // Default placement: stop icon on the right, ready to slide left on hover
-            .icons-container {
-                .stop-icon {
-                    position: absolute;
-                    left: calc(100% - 18px); // align to right (container width - icon width)
-                    transition: hoverTransition(left, 150ms); // mouse-out timing
-                }
-            }
-        }
+			// Use the reusable mixin for pointer triangle - points LEFT towards AI provider icon
+			@include boundaryPointerTriangle((
+				direction: 'left',
+				anchor: 'bottom',
+				horizontalOffset: 0px,
+				verticalOffset: 8px,
+				size: 3px,
+				color: $aiResponseMessageIndicatorColor,
+				accentColor: $aiResponseMessageIndicatorAccentPointerColor
+			));
+			&.node-render-animation {
+				animation: popOutAndGrow 300ms cubic-bezier(0.19, 1, 0.22, 1);
+			}
 
-        // Keep receiving visible on hover
-        &:hover {
-            .shortcut-receiving {
-                opacity: 1 !important;
-                pointer-events: auto !important;
-
-                // Hover-in: slide stop icon left with same timing as send icon
-                .icons-container {
-                    .stop-icon {
-                        transition: hoverTransition(left, 300ms);
-                        left: 7px;
-                    }
-                }
-            }
-        }
-    }
+		}
+		.ai-response-message-content {
+			// padding: .3rem 0;
+			padding: 0;
+			// width: 100%; // TODO: this causes an unexpected weird fly-in-left animation effect, not sure if I want to keep it
+			&.node-render-animation {
+				animation: popOut 400ms cubic-bezier(0.19, 1, 0.22, 1);
+			}
+			h1, h2, h3, h4, h5, h6 {
+				&:first-child {
+					margin-top: 0;
+				}
+			}
+		}
+	}
 }
