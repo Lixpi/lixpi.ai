@@ -18,7 +18,7 @@ import { aiResponseMessageNodeType, aiResponseMessageNodeView } from './aiRespon
 import { keyboardMacCommandIcon, keyboardEnterKeyIcon, sendIcon, stopIcon, chatThreadBoundariesInfoIcon } from '../../../../svgIcons/index.js'
 import SegmentsReceiver from '../../../../services/segmentsReceiver-service.js'
 
-const IS_RECEIVING_TEMP_DEBUG_STATE = false
+const IS_RECEIVING_TEMP_DEBUG_STATE = false    // For debug purposes only
 
 // ========== TYPE DEFINITIONS ==========
 
