@@ -276,8 +276,8 @@
     // Note: normal hover styles are applied at the wrapper level when not receiving
     }
 
-    // Normal hover state (only when NOT receiving)
-    &:not(.receiving) .keyboard-shortcut-hint:hover {
+    // Normal hover state (only when NOT receiving AND NOT when keys are pressed)
+    &:not(.receiving):not(.ai-chat-thread-keys-pressed) .keyboard-shortcut-hint:hover {
         opacity: 1;
         border-color: rgba($steelBlue, 0.3);
         transition: hoverTransition(all, 250ms);

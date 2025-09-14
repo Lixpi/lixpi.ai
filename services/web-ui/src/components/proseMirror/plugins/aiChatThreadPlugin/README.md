@@ -19,7 +19,7 @@ Perfect for documentation with interactive examples, notebooks with AI assistanc
 
 ## Technical Architecture
 
-The plugin is built around a modular class-based architecture with these core components:
+The plugin follows a modular architecture where each node type encapsulates its own UI and behavior:
 
 ```mermaid
 graph TD
@@ -27,8 +27,21 @@ graph TD
     A --> C[ContentExtractor]
     A --> D[PositionFinder]
     A --> E[StreamingInserter]
-    A --> F[NodeViews]
-    A --> G[DecorationSystem]
+    A --> F[DecorationSystem]
+
+    N1[aiChatThreadNode.ts] --> NV1[aiChatThreadNodeView]
+    N2[aiResponseMessageNode.ts] --> NV2[aiResponseMessageNodeView]
+
+    NV1 --> UI1[Keyboard Hint]
+    NV1 --> UI2[Thread Boundary]
+    NV1 --> UI3[Content Focus]
+
+    NV2 --> UI4[Provider Avatar]
+    NV2 --> UI5[Animations]
+    NV2 --> UI6[Boundary Strip]
+
+    A --> N1
+    A --> N2
 
     C --> C1[collectFormattedText]
     C --> C2[getActiveThreadContent]
@@ -40,15 +53,15 @@ graph TD
     E --> E1[insertBlockContent]
     E --> E2[insertInlineContent]
 
-    F --> F1[ThreadNodeView]
-    F --> F2[ResponseNodeView]
-
-    G --> G1[PlaceholderDecorations]
-    G --> G2[KeyboardFeedbackDecorations]
-    G --> G3[BoundaryDecorations]
+    F --> F1[PlaceholderDecorations]
+    F --> F2[KeyboardFeedbackDecorations]
+    F --> F3[BoundaryDecorations]
 ```
 
-### Plugin State Machine
+**Key Design Principle:** Each node type is fully self-contained:
+- `aiChatThreadNode.ts` - Exports both the node spec AND its NodeView (handles keyboard hint, boundary indicator, focus)
+- `aiResponseMessageNode.ts` - Exports both the node spec AND its NodeView (handles avatar, animations, boundary strip)
+- `aiChatThreadPlugin.ts` - Orchestrates streaming, content extraction, and decorations without mixing UI concerns### Plugin State Machine
 
 ```mermaid
 stateDiagram-v2
@@ -256,11 +269,30 @@ Users see:
 
 ## Files in this plugin
 
-- `aiChatThreadNode.ts` - Schema for the thread container
-- `aiResponseMessageNode.ts` - Schema for AI responses + animated avatar
-- `aiChatThreadPlugin.ts` - Main plugin logic (900+ lines, it's complex!)
+- `aiChatThreadNode.ts` - Thread container node (self-contained):
+  - Exports node schema AND its NodeView implementation
+  - Handles keyboard hint UI (⌘⏎ to send)
+  - Creates thread boundary indicator
+  - Manages content focus
+
+- `aiResponseMessageNode.ts` - AI response node (self-contained):
+  - Exports node schema AND its NodeView implementation
+  - Animated provider avatar with state management
+  - Provider-specific rendering (e.g., different icons)
+  - Boundary strip decoration
+
+- `aiChatThreadPlugin.ts` - Main orchestration logic:
+  - Plugin state and lifecycle management
+  - SegmentsReceiver integration for streaming
+  - Content extraction and formatting
+  - Decoration system (placeholders, boundaries)
+  - Keyboard event handling
+  - No UI rendering - delegates to node-specific NodeViews
+
 - `ai-chat-thread.scss` - All the styling and animations
 - `index.ts` - Exports everything
+
+**Architecture Note:** Each node type is a complete unit with its own UI. The plugin focuses on coordination and business logic without mixing UI concerns. This keeps the code modular and easy to understand!
 
 ## Core Helper Classes
 
