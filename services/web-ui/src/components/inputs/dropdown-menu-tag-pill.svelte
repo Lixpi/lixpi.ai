@@ -78,15 +78,29 @@ const injectFillColor = (svg, color) => {
                 in:popOutTransition|global={{duration: 300}}
                 out:popOutTransition|global={{duration: 300}}
             >
-                <ul class="submenu">
+                <ul class="submenu" class:with-header={dropdownOptions.some(o => o.type === 'header')}>
                     {#each dropdownOptions as option}
-                        <li class="flex justify-start items-center" onclick={(e) => onClickHandler(e, id, option.onClick)}>
-                            {#if option.icon}
-                                {@html option.icon}
-                                <!-- {@html injectFillColor(option.icon, option.iconColor)} -->
-                            {/if}
-                            {option.title}
-                        </li>
+                        {#if option.type === 'header'}
+                            <li class="flex justify-start items-center" data-type="header">
+                                {#if option.icon}
+                                    {@html option.icon}
+                                {/if}
+                                <span class="header-text">
+                                    <span class="header-title">{option.title}</span>
+                                    {#if option.meta}
+                                        <span class="header-meta">{option.meta}</span>
+                                    {/if}
+                                </span>
+                            </li>
+                        {:else}
+                            <li class="flex justify-start items-center" onclick={(e) => onClickHandler(e, id, option.onClick)}>
+                                {#if option.icon}
+                                    {@html option.icon}
+                                    <!-- {@html injectFillColor(option.icon, option.iconColor)} -->
+                                {/if}
+                                {option.title}
+                            </li>
+                        {/if}
                     {/each}
                 </ul>
             </nav>

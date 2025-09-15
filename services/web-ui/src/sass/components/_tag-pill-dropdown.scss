@@ -215,6 +215,8 @@
         .submenu {
             width: 100%;
             white-space: nowrap;
+            padding: 0; // reset UL default padding to remove left gap
+            list-style: none; // remove bullets/gutters
             overflow: map-get($s, submenuOverflow);
             border-radius: map-get($s, submenuRadius);
             margin: 0;
@@ -328,6 +330,17 @@
                     margin: map-get($s, itemIconMargin);
                 }
             }
+
+            // Ensure top/bottom items visually conform to submenu radius even when overflow is visible
+            li:first-child {
+                border-top-left-radius: map-get($s, submenuRadius);
+                border-top-right-radius: map-get($s, submenuRadius);
+            }
+
+            li:last-child {
+                border-bottom-left-radius: map-get($s, submenuRadius);
+                border-bottom-right-radius: map-get($s, submenuRadius);
+            }
         }
     }
 }
@@ -393,8 +406,51 @@
                     &:after, li:first-of-type:after { border-color: transparent transparent transparent map-get($s, surfaceBg); }
                 }
 
-            li:first-of-type:hover:after {
+                // When a header item exists, make the inner arrow match the header bg (darker strip)
+                &.with-header {
+                    $headerBg: color.adjust(map-get($s, surfaceBg), $lightness: map-get($s, borderLightnessAdjustment));
+                    @if $arrowSide == 'top' {
+                        &:after, li:first-of-type:after { border-color: transparent transparent $headerBg; }
+                    } @else if $arrowSide == 'bottom' {
+                        &:after, li:first-of-type:after { border-color: $headerBg transparent transparent transparent; }
+                    } @else if $arrowSide == 'left' {
+                        &:after, li:first-of-type:after { border-color: transparent $headerBg transparent transparent; }
+                    } @else if $arrowSide == 'right' {
+                        &:after, li:first-of-type:after { border-color: transparent transparent transparent $headerBg; }
+                    }
+                }
+
+            // Only change arrow fill on first item hover if the first item is NOT a header
+            li:first-of-type:not([data-type='header']):hover:after {
                 border-color: transparent transparent color.adjust(map-get($s, surfaceBg), $lightness: map-get($s, hoverLightnessAdjustment));
+            }
+
+            // Optional header item (darker strip). Use data-type="header" on li.
+            // Background matches the arrow border/background edge color for visual cohesion.
+            li[data-type='header'] {
+                background: color.adjust(map-get($s, surfaceBg), $lightness: map-get($s, borderLightnessAdjustment));
+                cursor: default;
+                align-items: flex-start; // allow meta to stack under title
+
+                &:hover {
+                    background: color.adjust(map-get($s, surfaceBg), $lightness: map-get($s, borderLightnessAdjustment));
+                }
+
+                .header-text {
+                    display: flex;
+                    flex-direction: column;
+                    line-height: 1.15;
+                    gap: .15rem;
+
+                    // .header-title inherits li font size/weight
+                    .header-meta {
+                        // even smaller than item text
+                        font-size: calc(#{map-get($s, itemFontSize)} - 0.35rem);
+                        opacity: .8; // fallback if theme color not applied
+                        text-transform: none;
+                        margin: .1rem 0;
+                    }
+                }
             }
 
             li {
@@ -405,6 +461,11 @@
                 :global(svg) {
                     fill: map-get($s, itemIconColor);
                 }
+            }
+
+            // Muted color for header meta that adapts to theme foreground
+            li[data-type='header'] .header-text .header-meta {
+                color: rgba(map-get($s, surfaceFg), 0.75);
             }
         }
 

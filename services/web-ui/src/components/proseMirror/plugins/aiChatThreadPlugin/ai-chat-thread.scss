@@ -41,13 +41,13 @@
             .submenu-wrapper {
                 display: none;
                 position: absolute;
-                right: 57px; // Position to the left of the boundary line with 25px space
+                right: 50px; // Position to the left of the boundary line with 25px space
                 top: 6px;
                 z-index: 999;
             }
 
             .submenu {
-                min-width: 280px;
+                // min-width: 280px;
                 position: relative;
                 right: 0; // Align to right edge
             }
@@ -112,10 +112,10 @@
 
         // Triangle pointer aligned near icon at the top, closer to the line
         @include boundaryPointerTriangle((
-            direction: 'right',
-            anchor: 'top',
+            direction: 'left',
+            anchor: 'bottom',
             horizontalOffset: 0px,
-            verticalOffset: 10px,
+            verticalOffset: 2px,
             size: 4px,
             color: $steelBlue,
             accentColor: $nightBlue

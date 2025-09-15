@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { keyboardMacCommandIcon, keyboardEnterKeyIcon, sendIcon, stopIcon, chatThreadBoundariesInfoIcon } from '../../../../svgIcons/index.js'
+import { keyboardMacCommandIcon, keyboardEnterKeyIcon, sendIcon, stopIcon, chatThreadBoundariesInfoIcon, aiRobotFaceIcon } from '../../../../svgIcons/index.js'
 import { TextSelection, PluginKey } from 'prosemirror-state'
 
 export const aiChatThreadNodeType = 'aiChatThread'
@@ -175,17 +175,53 @@ function createThreadInfoDropdown() {
 
     const li1 = document.createElement('li')
     li1.className = 'flex justify-start items-center'
-    li1.textContent = 'AI Thread context'
+    li1.setAttribute('data-type', 'header')
+    // header icon
+    const headerIcon = document.createElement('span')
+    headerIcon.innerHTML = aiRobotFaceIcon
+    li1.appendChild(headerIcon)
+    // header label + meta container
+    const headerText = document.createElement('span')
+    headerText.className = 'header-text'
+    const headerTitle = document.createElement('span')
+    headerTitle.className = 'header-title'
+    headerTitle.textContent = 'AI Thread context'
+    const headerMeta = document.createElement('span')
+    headerMeta.className = 'header-meta'
+    headerMeta.textContent = 'AI generated title will be here'
+    headerText.appendChild(headerTitle)
+    headerText.appendChild(headerMeta)
+    li1.appendChild(headerText)
     ul.appendChild(li1)
 
     const li2 = document.createElement('li')
     li2.className = 'flex justify-start items-center'
-    li2.textContent = 'Auto generated thread title will be here later'
+    li2.textContent = 'Add thread below'
     ul.appendChild(li2)
+
+    const li3 = document.createElement('li')
+    li3.className = 'flex justify-start items-center'
+    li3.textContent = 'Add thread above'
+    ul.appendChild(li3)
+
+    const li4 = document.createElement('li')
+    li4.className = 'flex justify-start items-center'
+    li4.textContent = 'Merge with prev thread'
+    ul.appendChild(li4)
+
+    const li5 = document.createElement('li')
+    li5.className = 'flex justify-start items-center'
+    li5.textContent = 'Merge with thread below'
+    ul.appendChild(li5)
 
     nav.appendChild(ul)
     host.appendChild(nav)
     wrapper.appendChild(host)
+
+    // If a header item exists, mark submenu for header-aware styling (arrow fill matches header color)
+    if (ul.querySelector("li[data-type='header']")) {
+        ul.classList.add('with-header')
+    }
 
     // No click toggling — visibility is controlled by thread hover state via CSS (.thread-boundary-visible)
     return wrapper
