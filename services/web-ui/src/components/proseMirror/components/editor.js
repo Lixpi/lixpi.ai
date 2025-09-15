@@ -107,7 +107,7 @@ export class ProseMirrorEditor {
             gapCursor(),
             history(),
             // createSvelteComponentRendererPlugin(TaskRow, 'taskRow', defautSubtaskAttrs),
-            createAiChatThreadPlugin(val => this.onAiChatSubmit(val), {titlePlaceholder: 'New project', paragraphPlaceholder: 'Type something and hit Cmd+Enter on Mac and Ctrl+Enter on PC to trigger AI.\n'}),
+            createAiChatThreadPlugin(val => this.onAiChatSubmit(val), {titlePlaceholder: 'New document', paragraphPlaceholder: 'Type something and hit Cmd+Enter on Mac or Ctrl+Enter on PC to send it to AI.\n'}),
             createAiUserInputPlugin(val => {}),
             // lockCursorPositionPlugin()
             createCodeBlockPlugin(this.editorSchema),

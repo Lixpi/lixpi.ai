@@ -1,0 +1,371 @@
+@use "sass:color";
+@import "../variables";
+@import "../transitions";
+
+// =============================
+// Dropdown Chip (Tag Pill) API
+// =============================
+// Goals:
+// - Zero duplication between themes
+// - Fully modular (structure | positioning | theme)
+// - Reusable for similar components
+// - Named-argument API via $config map
+
+// 1) Wrapper positioning (no structural styles)
+@mixin dropdownChipWrapperPosition($config: ()) {
+    $defaults: (
+    position: relative,
+    top: auto,
+    right: auto,
+    bottom: auto,
+    left: auto,
+    zIndex: null
+    );
+
+    $s: map-merge($defaults, $config);
+
+    position: map-get($s, position);
+    top: map-get($s, top);
+    right: map-get($s, right);
+    bottom: map-get($s, bottom);
+    left: map-get($s, left);
+
+    @if map-get($s, zIndex) {
+        z-index: map-get($s, zIndex);
+    }
+}
+
+// 2) Submenu placement (position of the flyout relative to trigger)
+@mixin dropdownChipSubmenuPlacement($config: ()) {
+    $defaults: (
+    rightOffset: 1px,
+    topOffset: 37px,
+    bottomOffset: 37px,
+    zIndex: 999
+    );
+
+    $s: map-merge($defaults, $config);
+
+    .submenu-wrapper {
+        position: absolute;
+        right: map-get($s, rightOffset);
+        z-index: map-get($s, zIndex);
+
+        &.render-position-top {
+            bottom: map-get($s, bottomOffset);
+        }
+
+        &.render-position-bottom {
+            top: map-get($s, topOffset);
+        }
+    }
+}
+
+// 3) Structure (layout + motion; no colors)
+@mixin dropdownChipStructure($config: ()) {
+    $defaults: (
+    svgSize: 1.4rem,
+    triggerHeight: 23px,
+    triggerPadding: 0.2rem 0.3rem,
+    triggerRadius: 4px,
+    fontSize: 1rem,
+    fontWeight: 500,
+    iconMargin: 0 .4rem 0 .2rem,
+    iconSize: 16px,
+    hoverDuration: 70ms,
+    hoverEasing: cubic-bezier(0.19, 1, 0.22, 1),
+    submenuRadius: 4px,
+    submenuShadow: .05rem .05rem 7px 0px rgba(0,0,0,.5),
+    arrowOffsetRight: 3px,
+    arrowOffsetTop: -.52rem,
+    arrowOuterSize: 8px 11px,
+    arrowInnerSize: 6px 9px,
+    arrowOuterMarginTop: -2px,
+    arrowOuterRight: -1px,
+    itemPadding: .4rem .7rem .4rem .4rem,
+    itemFontSize: .9rem,
+    itemIconSize: .8rem,
+    itemIconMargin: 0 .4rem 0 0,
+    itemTransition: all 30ms cubic-bezier(0.19, 1, 0.22, 1)
+    );
+    $s: map-merge($defaults, $config);
+
+    .dots-dropdown-menu {
+        position: relative;
+        display: block;
+
+        :global(svg) {
+            height: map-get($s, svgSize);
+            width: map-get($s, svgSize);
+        }
+
+        button {
+            background: none;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            padding: map-get($s, triggerPadding);
+            text-align: center;
+            border-radius: map-get($s, triggerRadius);
+            vertical-align: middle;
+            height: map-get($s, triggerHeight);
+            width: auto;
+            font-size: map-get($s, fontSize);
+            font-weight: map-get($s, fontWeight);
+            white-space: nowrap;
+            transition: background map-get($s, hoverDuration) map-get($s, hoverEasing);
+
+            &:before {
+                content: "";
+                display: block;
+                width: 0px;
+                height: 0px;
+                border-radius: map-get($s, triggerRadius);
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                transition: pupOutTransition(all, 130ms);
+            }
+
+            span {
+                z-index: 9;
+                position: relative;
+
+                &.selected-option-icon {
+                    :global(svg) {
+                        margin: map-get($s, iconMargin);
+                        width: map-get($s, iconSize);
+                        height: map-get($s, iconSize);
+                    }
+                }
+
+                &.title {
+                    font-weight: map-get($s, fontWeight);
+                }
+
+                &.state-indicator :global(svg) {
+                    margin: 0;
+                    padding: 0;
+                    transition: fill map-get($s, hoverDuration) map-get($s, hoverEasing);
+                    position: relative;
+                    z-index: 9;
+                }
+            }
+
+            &:hover {
+                &:before {
+                    width: 100%;
+                    height: 100%;
+                }
+            }
+        }
+
+        // Active state behavior (no colors)
+        &.is-active {
+            button {
+                &:before {
+                    width: 100%;
+                    height: 100%;
+                }
+            }
+
+            .submenu {
+                display: block;
+            }
+        }
+
+        .submenu {
+            width: 100%;
+            white-space: nowrap;
+            overflow: hidden;
+            border-radius: map-get($s, submenuRadius);
+            margin: 0;
+            box-shadow: map-get($s, submenuShadow);
+            user-select: none;
+
+            // Arrow scaffolding; theme sets colors
+            &:before,
+            &:after,
+            li:first-of-type:after {
+                content: "";
+                position: absolute;
+                right: map-get($s, arrowOffsetRight);
+                transform: translateX(-50%);
+                top: map-get($s, arrowOffsetTop);
+                z-index: 99;
+            }
+
+            &:before {
+                border-width: 0 map-get($s, arrowOuterSize);
+                border-style: solid;
+                margin-top: map-get($s, arrowOuterMarginTop);
+                right: map-get($s, arrowOuterRight);
+            }
+
+            &:after,
+            li:first-of-type:after {
+                border-width: 0 map-get($s, arrowInnerSize);
+                border-style: solid;
+            }
+
+            li:first-of-type:hover:after {
+                z-index: 999;
+            }
+
+            li {
+                margin: 0;
+                padding: map-get($s, itemPadding);
+                vertical-align: middle;
+                font-size: map-get($s, itemFontSize);
+                text-transform: capitalize;
+                cursor: pointer;
+                transition: map-get($s, itemTransition);
+
+                :global(svg) {
+                    height: map-get($s, itemIconSize);
+                    width: map-get($s, itemIconSize);
+                    padding: 0;
+                    margin: map-get($s, itemIconMargin);
+                }
+            }
+        }
+    }
+}
+
+// 4) Theme (all colors and lightness adjustments)
+@mixin dropdownChipTheme($config: ()) {
+    $defaults: (
+    surfaceBg: $offWhite,          // submenu background
+    surfaceFg: $nightBlue,         // submenu text color
+    glyphBase: null,               // default icon fill for trigger; falls back to surfaceBg
+    triggerBg: null,               // ripple/underlay; falls back to surfaceBg
+    itemIconColor: #151515,
+    borderLightnessAdjustment: -10%,
+    hoverLightnessAdjustment: -6%,
+    hoverGlyphFill: null,          // optional color for trigger icon on hover
+    activeIndicatorFill: null,     // color of state-indicator icon when active; falls back to glyphBase
+    invertIndicatorOnActive: false // whether to flip chevron when active
+    );
+    $s: map-merge($defaults, $config);
+
+    $glyphBase: if(map-get($s, glyphBase) == null, map-get($s, surfaceBg), map-get($s, glyphBase));
+    $triggerBg: if(map-get($s, triggerBg) == null, map-get($s, surfaceBg), map-get($s, triggerBg));
+    $activeFill: if(map-get($s, activeIndicatorFill) == null, $glyphBase, map-get($s, activeIndicatorFill));
+
+    .dots-dropdown-menu {
+        :global(svg) {
+            fill: $glyphBase;
+        }
+
+        button {
+            &:before {
+                background: $triggerBg;
+            }
+
+            @if map-get($s, hoverGlyphFill) {
+                &:hover {
+                    :global(svg) {
+                        fill: map-get($s, hoverGlyphFill);
+                    }
+                }
+            }
+        }
+
+        .submenu {
+            background: map-get($s, surfaceBg);
+            color: map-get($s, surfaceFg);
+            border: .06rem solid color.adjust(map-get($s, surfaceBg), $lightness: map-get($s, borderLightnessAdjustment));
+
+            &:before {
+                border-color: transparent transparent color.adjust(map-get($s, surfaceBg), $lightness: map-get($s, borderLightnessAdjustment));
+            }
+
+            &:after,
+            li:first-of-type:after {
+                border-color: transparent transparent map-get($s, surfaceBg);
+            }
+
+            li:first-of-type:hover:after {
+                border-color: transparent transparent color.adjust(map-get($s, surfaceBg), $lightness: map-get($s, hoverLightnessAdjustment));
+            }
+
+            li {
+                &:hover {
+                    background: color.adjust(map-get($s, surfaceBg), $lightness: map-get($s, hoverLightnessAdjustment));
+                }
+
+                :global(svg) {
+                    fill: map-get($s, itemIconColor);
+                }
+            }
+        }
+
+        &.is-active {
+            button {
+                @if map-get($s, invertIndicatorOnActive) {
+                    span.state-indicator :global(svg) {
+                        transform: scale(-1, -1);
+                    }
+                }
+
+                span.state-indicator :global(svg) {
+                    fill: $activeFill;
+                }
+
+                &:hover {
+                    background: $triggerBg;
+                }
+
+                &:before {
+                    background: $triggerBg;
+                }
+            }
+        }
+    }
+}
+
+// -----------------------------
+// Backward-compatible aliases
+// -----------------------------
+@mixin tagPillDropdownBase($config: ()) { @include dropdownChipStructure($config); }
+@mixin tagPillDropdownSubmenu($config: ()) { @include dropdownChipSubmenuPlacement($config); }
+@mixin tagPillDropdownLightTheme($config: ()) {
+    @include dropdownChipTheme(map-merge((
+    surfaceBg: $offWhite,
+    surfaceFg: $nightBlue,
+    glyphBase: $offWhite,
+    triggerBg: $offWhite,
+    itemIconColor: #151515,
+    borderLightnessAdjustment: -10%,
+    hoverLightnessAdjustment: -6%,
+    hoverGlyphFill: $nightBlue,
+    activeIndicatorFill: $offWhite,
+    invertIndicatorOnActive: false
+    ), $config));
+}
+@mixin tagPillDropdownDarkTheme($config: ()) {
+    @include dropdownChipTheme(map-merge((
+    surfaceBg: $steelBlue,
+    surfaceFg: $offWhite,
+    glyphBase: $steelBlue,
+    triggerBg: $offWhite,
+    itemIconColor: $offWhite,
+    borderLightnessAdjustment: -10%,
+    hoverLightnessAdjustment: -6%,
+    hoverGlyphFill: null,
+    activeIndicatorFill: $steelBlue,
+    invertIndicatorOnActive: true
+    ), $config));
+}
+
+// Convenience one-shot mixin if needed
+@mixin tagPillDropdown($config: ()) {
+    $defaults: ( theme: 'light' );
+    $s: map-merge($defaults, $config);
+    $theme: map-get($s, theme);
+    @include dropdownChipStructure($s);
+    @include dropdownChipSubmenuPlacement($s);
+    @if $theme == 'light' { @include tagPillDropdownLightTheme($s); }
+    @else if $theme == 'dark' { @include tagPillDropdownDarkTheme($s); }
+}
