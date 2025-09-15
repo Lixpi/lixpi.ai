@@ -263,9 +263,19 @@ Users see:
 - A floating "send" button that appears on hover
 - Keyboard shortcuts (Cmd/Ctrl + Enter) with visual feedback
 - Thread boundaries when hovering (shows conversation scope)
+- An info dropdown next to the boundary indicator with thread context notes
 - Different avatars for different AI providers
 - Smooth animations as responses stream in
 - A "stop" button while AI is responding (currently TODO)
+
+### Info Dropdown (Thread Context)
+
+The thread wrapper renders a compact dropdown next to the boundary indicator. It uses the shared `tag-pill-dropdown` mixins for consistent styling and can be reused elsewhere. Initial items:
+
+- AI Thread context
+- Auto generated thread title will be here later
+
+See `ai-chat-thread.scss` for how the dropdown is positioned and themed.
 
 ## Files in this plugin
 

@@ -136,6 +136,10 @@ function createThreadBoundaryIndicator(wrapperDOM, view, threadId) {
     // Add icon to the boundary indicator
     boundaryIndicator.appendChild(iconElement)
 
+    // Attach a compact info dropdown to the indicator (no duplicate icon inside)
+    const infoDropdown = createThreadInfoDropdown()
+    boundaryIndicator.appendChild(infoDropdown)
+
     // Handle hover events using ProseMirror transactions for consistency
     boundaryIndicator.addEventListener('mouseenter', () => {
         view.dispatch(view.state.tr.setMeta('hoverThread', threadId))
@@ -146,6 +150,45 @@ function createThreadBoundaryIndicator(wrapperDOM, view, threadId) {
     })
 
     return boundaryIndicator
+}
+
+// Helper to create a small info dropdown near the boundary indicator
+function createThreadInfoDropdown() {
+    const wrapper = document.createElement('div')
+    wrapper.className = 'ai-thread-info-dropdown theme-dark'
+
+    // Internal structure expected by dropdown mixins
+    const host = document.createElement('span')
+    host.className = 'dots-dropdown-menu'
+
+    // We do not add an icon here to avoid duplicating the boundary icon.
+    // Create a minimal button element to satisfy structure (kept visually hidden via CSS)
+    const button = document.createElement('button')
+    button.className = 'dropdown-trigger-hidden'
+    host.appendChild(button)
+
+    // Submenu
+    const nav = document.createElement('nav')
+    nav.className = 'submenu-wrapper render-position-bottom'
+    const ul = document.createElement('ul')
+    ul.className = 'submenu'
+
+    const li1 = document.createElement('li')
+    li1.className = 'flex justify-start items-center'
+    li1.textContent = 'AI Thread context'
+    ul.appendChild(li1)
+
+    const li2 = document.createElement('li')
+    li2.className = 'flex justify-start items-center'
+    li2.textContent = 'Auto generated thread title will be here later'
+    ul.appendChild(li2)
+
+    nav.appendChild(ul)
+    host.appendChild(nav)
+    wrapper.appendChild(host)
+
+    // No click toggling — visibility is controlled by thread hover state via CSS (.thread-boundary-visible)
+    return wrapper
 }
 
 // Helper function to create keyboard shortcut indicator
