@@ -263,9 +263,27 @@ Users see:
 - A floating "send" button that appears on hover
 - Keyboard shortcuts (Cmd/Ctrl + Enter) with visual feedback
 - Thread boundaries when hovering (shows conversation scope)
+- An info dropdown next to the boundary indicator with thread context notes
 - Different avatars for different AI providers
 - Smooth animations as responses stream in
 - A "stop" button while AI is responding (currently TODO)
+
+### Info Dropdown (Thread Context)
+
+The thread wrapper renders a compact dropdown next to the boundary indicator. It uses the shared `tag-pill-dropdown` mixins for consistent styling and can be reused elsewhere. Initial items:
+
+- AI Thread context
+- Auto generated thread title will be here later
+
+See `ai-chat-thread.scss` for how the dropdown is positioned and themed.
+
+Header items: You can optionally render a non-interactive header strip at the top of the dropdown by marking a list item with `data-type="header"`. It uses a darker background matching the dropdown arrow's background edge color.
+
+Header meta: The header supports an optional meta line underneath the title.
+- DOM shape: `<li data-type="header"><span class="header-text"><span class="header-title">Title</span><span class="header-meta">Meta</span></span></li>`
+- In Svelte, pass an option like `{ type: 'header', title: '...', meta: '...' }` and the submenu will automatically add `with-header` to align arrow fill.
+
+If a header item is present, the submenu receives a `with-header` class so the arrow's inner fill matches the header background. This ensures the arrow visually connects to the header strip when the arrow points at that side.
 
 ## Files in this plugin
 

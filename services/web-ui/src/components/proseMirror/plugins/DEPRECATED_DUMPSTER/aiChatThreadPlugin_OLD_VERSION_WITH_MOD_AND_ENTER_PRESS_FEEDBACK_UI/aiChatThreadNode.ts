@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { keyboardMacCommandIcon, keyboardEnterKeyIcon, sendIcon, pauseIcon, chatThreadBoundariesInfoIcon, aiRobotFaceIcon } from '../../../../svgIcons/index.js'
+import { keyboardMacCommandIcon, keyboardEnterKeyIcon, sendIcon, stopIcon, chatThreadBoundariesInfoIcon, aiRobotFaceIcon } from '../../../../svgIcons/index.js'
 import { TextSelection, PluginKey } from 'prosemirror-state'
 
 export const aiChatThreadNodeType = 'aiChatThread'
@@ -73,15 +73,15 @@ export const aiChatThreadNodeView = (node, view, getPos) => {
     const contentDOM = document.createElement('div')
     contentDOM.className = 'ai-chat-thread-content'
 
-    // Create AI submit button
-    const submitButton = createAiSubmitButton(view)
+    // Create keyboard shortcut indicator
+    const shortcutIndicator = createKeyboardShortcutIndicator(view)
 
     // Create thread boundary indicator for context visualization
     const threadBoundaryIndicator = createThreadBoundaryIndicator(dom, view, node.attrs.threadId)
 
     // Append all elements
     dom.appendChild(contentDOM)
-    dom.appendChild(submitButton)
+    dom.appendChild(shortcutIndicator)
     dom.appendChild(threadBoundaryIndicator)
 
     // Setup content focus handling
@@ -227,55 +227,101 @@ function createThreadInfoDropdown() {
     return wrapper
 }
 
-// Helper function to create AI submit button
-function createAiSubmitButton(view) {
-    const button = document.createElement('div')
-    button.className = 'ai-submit-button'
+// Helper function to create keyboard shortcut indicator
+function createKeyboardShortcutIndicator(view) {
+    const indicator = document.createElement('div')
+    indicator.className = 'keyboard-shortcut-hint'
 
     // Detect platform for correct modifier key
     const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0
 
-    // Default state (showing send icon only)
+    // Default state (showing keyboard shortcut)
     const defaultContent = document.createElement('div')
-    defaultContent.className = 'button-default'
+    defaultContent.className = 'shortcut-default'
+
+    const defaultIconsContainer = document.createElement('div')
+    defaultIconsContainer.className = 'icons-container'
+
+    const keysContainer = document.createElement('div')
+    keysContainer.className = 'shortcut-keys'
+
+    if (isMac) {
+        const cmdIcon = document.createElement('span')
+        cmdIcon.className = 'key-icon cmd-key'
+        cmdIcon.innerHTML = keyboardMacCommandIcon
+        keysContainer.appendChild(cmdIcon)
+    } else {
+        const ctrlKey = document.createElement('span')
+        ctrlKey.className = 'key-text ctrl-key'
+        ctrlKey.textContent = 'Ctrl'
+        keysContainer.appendChild(ctrlKey)
+    }
+
+    const enterIcon = document.createElement('span')
+    enterIcon.className = 'key-icon enter-key'
+    enterIcon.innerHTML = keyboardEnterKeyIcon
+    keysContainer.appendChild(enterIcon)
+
+    defaultIconsContainer.appendChild(keysContainer)
+
+    const defaultLabel = document.createElement('span')
+    defaultLabel.className = 'shortcut-label'
+    defaultLabel.textContent = 'send'
+
+    defaultContent.appendChild(defaultIconsContainer)
+    defaultContent.appendChild(defaultLabel)
+
+    // Hover state (showing send button)
+    const hoverContent = document.createElement('div')
+    hoverContent.className = 'shortcut-hover'
+
+    const hoverIconsContainer = document.createElement('div')
+    hoverIconsContainer.className = 'icons-container'
 
     const sendIconElement = document.createElement('span')
     sendIconElement.className = 'send-icon'
     sendIconElement.innerHTML = sendIcon
 
-    defaultContent.appendChild(sendIconElement)
+    hoverIconsContainer.appendChild(sendIconElement)
 
-    // Hover state (showing send button)
-    const hoverContent = document.createElement('div')
-    hoverContent.className = 'button-hover'
+    const hoverLabel = document.createElement('span')
+    hoverLabel.className = 'shortcut-label'
+    hoverLabel.textContent = 'send'
 
-    const sendIconElementHover = document.createElement('span')
-    sendIconElementHover.className = 'send-icon'
-    sendIconElementHover.innerHTML = sendIcon
-
-    hoverContent.appendChild(sendIconElementHover)
+    hoverContent.appendChild(hoverIconsContainer)
+    hoverContent.appendChild(hoverLabel)
 
     // Receiving state (showing stop button)
     const receivingContent = document.createElement('div')
-    receivingContent.className = 'button-receiving'
+    receivingContent.className = 'shortcut-receiving'
+
+    const receivingIconsContainer = document.createElement('div')
+    receivingIconsContainer.className = 'icons-container'
 
     const stopIconElement = document.createElement('span')
     stopIconElement.className = 'stop-icon'
-    stopIconElement.innerHTML = pauseIcon
+    stopIconElement.innerHTML = stopIcon
 
-    receivingContent.appendChild(stopIconElement)
+    receivingIconsContainer.appendChild(stopIconElement)
 
-    // Add all three states to button
-    button.appendChild(defaultContent)
-    button.appendChild(hoverContent)
-    button.appendChild(receivingContent)
+    const receivingLabel = document.createElement('span')
+    receivingLabel.className = 'shortcut-label'
+    receivingLabel.textContent = 'stop'
+
+    receivingContent.appendChild(receivingIconsContainer)
+    receivingContent.appendChild(receivingLabel)
+
+    // Add all three states to indicator
+    indicator.appendChild(defaultContent)
+    indicator.appendChild(hoverContent)
+    indicator.appendChild(receivingContent)
 
     // Enable pointer events and add click handler
-    button.style.pointerEvents = 'auto'
-    button.style.cursor = 'pointer'
+    indicator.style.pointerEvents = 'auto'
+    indicator.style.cursor = 'pointer'
 
     // Add click handler
-    button.addEventListener('click', (e) => {
+    indicator.addEventListener('click', (e) => {
         e.preventDefault()
         e.stopPropagation()
 
@@ -296,5 +342,5 @@ function createAiSubmitButton(view) {
         }
     })
 
-    return button
+    return indicator
 }
