@@ -2,7 +2,6 @@
 @use "sass:math";
 @import "../variables";
 @import "../transitions";
-@import "./triangle-direction-pointer";
 
 // =============================
 // Dropdown Chip (Tag Pill) API
@@ -109,12 +108,17 @@
         submenuRadius: 4px,
         submenuShadow: .05rem .05rem 7px 0px rgba(0,0,0,.5),
         submenuOverflow: hidden,
-        // Arrow configuration (unified triangle pointer)
+        // Arrow configuration (side-aware)
         arrowSide: 'top',            // 'top' | 'bottom' | 'left' | 'right'
         arrowCrossEdge: null,        // auto: top/bottom -> 'right', left/right -> 'top'
-        arrowCrossOffset: 8px,       // distance from the chosen cross edge
-        arrowMainOffset: null,       // auto: protrude by triangle size along main side
+        arrowCrossOffset: 8px,       // distance from the chosen cross edge (moved 5px toward center)
+        arrowMainOffset: null,       // auto: protrude by outer triangle size along main side
         arrowOuterSize: 9px 9px,    // x y (wider base for less pointy look)
+        arrowInnerSize: 9px 9px,    // widened inner to match outer base with subtle border
+        arrowInnerMainOffset: null,  // auto from inner size; lets inner sit slightly inside vs. outer
+        arrowInnerMainAdjust: 0px,   // fine-tune inset of inner arrow along main side
+        arrowInnerCrossAdjust: null, // fine-tune centering of inner vs outer along cross-axis; auto if null
+        arrowOuterMarginAdjust: 0px,
         itemPadding: .4rem .7rem .4rem .4rem,
         itemFontSize: .9rem,
         itemIconSize: .8rem,
@@ -219,46 +223,92 @@
             box-shadow: map-get($s, submenuShadow);
             user-select: none;
 
-            // Arrow using unified triangle mixin - theme will override colors
-            $arrowDirection: map-get($s, arrowSide);
-            $arrowCrossEdge: map-get($s, arrowCrossEdge);
-            $arrowCrossOffset: map-get($s, arrowCrossOffset);
-            $arrowMainOffset: map-get($s, arrowMainOffset);
-            $arrowOuterSize: nth(map-get($s, arrowOuterSize), 1); // use first dimension
+                    // Arrow scaffolding; theme sets colors. Supports top/bottom/left/right.
+                    $side: map-get($s, arrowSide);
+                    $crossEdgeProvided: map-get($s, arrowCrossEdge);
+                    $crossOffset: map-get($s, arrowCrossOffset);
+                    $outerX: nth(map-get($s, arrowOuterSize), 1);
+                    $outerY: nth(map-get($s, arrowOuterSize), 2);
+                    $innerX: nth(map-get($s, arrowInnerSize), 1);
+                    $innerY: nth(map-get($s, arrowInnerSize), 2);
 
-            // Auto-compute cross position if crossEdge not specified
-            $crossPosition: if($arrowCrossEdge != null,
-                $arrowCrossOffset,
-                if($arrowDirection == 'left' or $arrowDirection == 'right', $arrowCrossOffset, $arrowCrossOffset)
-            );
+                    // Auto compute defaults
+                    $crossEdge: if($crossEdgeProvided != null,
+                        $crossEdgeProvided,
+                        if($side == 'left' or $side == 'right', 'top', 'right')
+                    );
+                    $mainOffsetProvided: map-get($s, arrowMainOffset);
+                    $mainOffset: if($mainOffsetProvided != null, $mainOffsetProvided, -$outerY);
 
-            // Auto-compute main offset if not specified
-            $mainOffset: if($arrowMainOffset != null, $arrowMainOffset, -$arrowOuterSize);
+                    &:before,
+                    &:after,
+                    li:first-of-type:after {
+                        content: "";
+                        position: absolute;
+                        z-index: 99;
 
-            @include trianglePointer((
-                direction: $arrowDirection,
-                crossPosition: $crossPosition,
-                mainOffset: $mainOffset,
-                size: $arrowOuterSize,
-                backgroundColor: transparent, // Theme will override this
-                borderColor: transparent,     // Theme will override this
-                borderWidth: 2px,
-                zIndex: 99
-            ));
+                        // place along the cross edge
+                        #{$crossEdge}: $crossOffset;
+                    }
 
-            // Special hover arrow for first item (non-header) - handled by theme
-            li:first-of-type:not([data-type='header']) {
-                @include trianglePointer((
-                    direction: $arrowDirection,
-                    crossPosition: $crossPosition,
-                    mainOffset: $mainOffset,
-                    size: $arrowOuterSize,
-                    backgroundColor: transparent, // Theme will override
-                    borderColor: transparent,     // Theme will override
-                    borderWidth: 2px,
-                    zIndex: 998
-                ));
-            }
+                    // Outer arrow (border)
+                    &:before {
+                        border-style: solid;
+                        margin-top: if($side == 'top' or $side == 'bottom', map-get($s, arrowOuterMarginAdjust), 0);
+                        margin-left: if($side == 'left' or $side == 'right', map-get($s, arrowOuterMarginAdjust), 0);
+
+                        // main side offset for OUTER (border) arrow
+                        @if $side == 'top' { top: $mainOffset; }
+                        @else if $side == 'bottom' { bottom: $mainOffset; }
+                        @else if $side == 'left' { left: $mainOffset; }
+                        @else if $side == 'right' { right: $mainOffset; }
+
+                        @if $side == 'top' {
+                            border-width: 0 map-get($s, arrowOuterSize);
+                        } @else if $side == 'bottom' {
+                            border-width: nth(map-get($s, arrowOuterSize), 2) nth(map-get($s, arrowOuterSize), 1) 0;
+                        } @else if $side == 'left' {
+                            border-width: nth(map-get($s, arrowOuterSize), 1) nth(map-get($s, arrowOuterSize), 2) nth(map-get($s, arrowOuterSize), 1) 0;
+                        } @else if $side == 'right' {
+                            border-width: nth(map-get($s, arrowOuterSize), 1) 0 nth(map-get($s, arrowOuterSize), 1) nth(map-get($s, arrowOuterSize), 2);
+                        }
+                    }
+
+                    // Inner arrow (fill)
+                    &:after,
+                    li:first-of-type:after {
+                        border-style: solid;
+
+                        // Inner (fill) arrow needs to be inset by 2px from outer to create border effect
+                        $innerProvided: map-get($s, arrowInnerMainOffset);
+                        $innerMainOffset: if($innerProvided != null, $innerProvided, -$innerY + 2px + map-get($s, arrowInnerMainAdjust));
+
+                        // Cross-axis centering: shift inner by half the width difference
+                        $crossProvided: map-get($s, arrowInnerCrossAdjust);
+                        $crossAuto: $outerX - $innerX;
+                        $crossAdjust: if($crossProvided != null, $crossProvided, $crossAuto);
+
+                        @if $side == 'top' { top: $innerMainOffset; }
+                        @else if $side == 'bottom' { bottom: $innerMainOffset; }
+                        @else if $side == 'left' { left: $innerMainOffset; }
+                        @else if $side == 'right' { right: $innerMainOffset; }
+
+                        // Apply cross-axis adjustment based on the chosen cross edge
+                        @if $crossEdge == 'top' { top: $crossOffset + $crossAdjust; }
+                        @else if $crossEdge == 'bottom' { bottom: $crossOffset + $crossAdjust; }
+                        @else if $crossEdge == 'left' { left: $crossOffset + $crossAdjust; }
+                        @else if $crossEdge == 'right' { right: $crossOffset + $crossAdjust; }
+
+                        @if $side == 'top' {
+                            border-width: 0 map-get($s, arrowInnerSize);
+                        } @else if $side == 'bottom' {
+                            border-width: nth(map-get($s, arrowInnerSize), 2) nth(map-get($s, arrowInnerSize), 1) 0;
+                        } @else if $side == 'left' {
+                            border-width: nth(map-get($s, arrowInnerSize), 1) nth(map-get($s, arrowInnerSize), 2) nth(map-get($s, arrowInnerSize), 1) 0;
+                        } @else if $side == 'right' {
+                            border-width: nth(map-get($s, arrowInnerSize), 1) 0 nth(map-get($s, arrowInnerSize), 1) nth(map-get($s, arrowInnerSize), 2);
+                        }
+                    }
 
             li:first-of-type:hover:after {
                 z-index: 999;
@@ -298,17 +348,17 @@
 // 4) Theme (all colors and lightness adjustments)
 @mixin dropdownChipTheme($config: ()) {
         $defaults: (
-    surfaceBg: $offWhite,          // submenu background
-    surfaceFg: $nightBlue,         // submenu text color
-    glyphBase: null,               // default icon fill for trigger; falls back to surfaceBg
-    triggerBg: null,               // ripple/underlay; falls back to surfaceBg
-    itemIconColor: #151515,
-    borderLightnessAdjustment: -10%,
-    hoverLightnessAdjustment: -6%,
-    hoverGlyphFill: null,          // optional color for trigger icon on hover
-            activeIndicatorFill: null,     // color of state-indicator icon when active; falls back to glyphBase
-            invertIndicatorOnActive: false, // whether to flip chevron when active
-            arrowSide: 'top'
+        surfaceBg: $offWhite,          // submenu background
+        surfaceFg: $nightBlue,         // submenu text color
+        glyphBase: null,               // default icon fill for trigger; falls back to surfaceBg
+        triggerBg: null,               // ripple/underlay; falls back to surfaceBg
+        itemIconColor: #151515,
+        borderLightnessAdjustment: -10%,
+        hoverLightnessAdjustment: -6%,
+        hoverGlyphFill: null,          // optional color for trigger icon on hover
+        activeIndicatorFill: null,     // color of state-indicator icon when active; falls back to glyphBase
+        invertIndicatorOnActive: false, // whether to flip chevron when active
+        arrowSide: 'top'
     );
     $s: map-merge($defaults, $config);
 
@@ -339,27 +389,40 @@
             background: map-get($s, surfaceBg);
             color: map-get($s, surfaceFg);
             border: .06rem solid color.adjust(map-get($s, surfaceBg), $lightness: map-get($s, borderLightnessAdjustment));
-            // Arrow colors using unified triangle mixin
-            &::before {
-                border-color: color.adjust(map-get($s, surfaceBg), $lightness: map-get($s, borderLightnessAdjustment)) !important;
-            }
+                $arrowSide: map-get($s, arrowSide);
 
-            &::after {
-                border-color: map-get($s, surfaceBg) !important;
-            }
-
-            // When a header item exists, make the inner arrow match the header bg (darker strip)
-            &.with-header {
-                &::after {
-                    border-color: color.adjust(map-get($s, surfaceBg), $lightness: map-get($s, borderLightnessAdjustment)) !important;
+                // Color the correct arrow side
+                @if $arrowSide == 'top' {
+                    &:before { border-color: transparent transparent color.adjust(map-get($s, surfaceBg), $lightness: map-get($s, borderLightnessAdjustment)); }
+                    &:after, li:first-of-type:after { border-color: transparent transparent map-get($s, surfaceBg); }
+                } @else if $arrowSide == 'bottom' {
+                    &:before { border-color: color.adjust(map-get($s, surfaceBg), $lightness: map-get($s, borderLightnessAdjustment)) transparent transparent transparent; }
+                    &:after, li:first-of-type:after { border-color: map-get($s, surfaceBg) transparent transparent transparent; }
+                } @else if $arrowSide == 'left' {
+                    &:before { border-color: transparent color.adjust(map-get($s, surfaceBg), $lightness: map-get($s, borderLightnessAdjustment)) transparent transparent; }
+                    &:after, li:first-of-type:after { border-color: transparent map-get($s, surfaceBg) transparent transparent; }
+                } @else if $arrowSide == 'right' {
+                    &:before { border-color: transparent transparent transparent color.adjust(map-get($s, surfaceBg), $lightness: map-get($s, borderLightnessAdjustment)); }
+                    &:after, li:first-of-type:after { border-color: transparent transparent transparent map-get($s, surfaceBg); }
                 }
-            }
 
-                        // Hover arrow for first item (non-header)
-            li:first-of-type:not([data-type='header']):hover {
-                &::after {
-                    border-color: color.adjust(map-get($s, surfaceBg), $lightness: map-get($s, hoverLightnessAdjustment)) !important;
+                // When a header item exists, make the inner arrow match the header bg (darker strip)
+                &.with-header {
+                    $headerBg: color.adjust(map-get($s, surfaceBg), $lightness: map-get($s, borderLightnessAdjustment));
+                    @if $arrowSide == 'top' {
+                        &:after, li:first-of-type:after { border-color: transparent transparent $headerBg; }
+                    } @else if $arrowSide == 'bottom' {
+                        &:after, li:first-of-type:after { border-color: $headerBg transparent transparent transparent; }
+                    } @else if $arrowSide == 'left' {
+                        &:after, li:first-of-type:after { border-color: transparent $headerBg transparent transparent; }
+                    } @else if $arrowSide == 'right' {
+                        &:after, li:first-of-type:after { border-color: transparent transparent transparent $headerBg; }
+                    }
                 }
+
+            // Only change arrow fill on first item hover if the first item is NOT a header
+            li:first-of-type:not([data-type='header']):hover:after {
+                border-color: transparent transparent color.adjust(map-get($s, surfaceBg), $lightness: map-get($s, hoverLightnessAdjustment));
             }
 
             // Optional header item (darker strip). Use data-type="header" on li.
