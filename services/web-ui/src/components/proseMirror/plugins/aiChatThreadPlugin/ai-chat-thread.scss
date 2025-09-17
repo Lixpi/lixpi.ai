@@ -2,115 +2,61 @@
 @import '../../ProseMirrorMixings.scss';
 @import '../../../../sass/components/tag-pill-dropdown';
 
+// ========== AI CHAT THREAD WRAPPER ==========
 .ai-chat-thread-wrapper {
     position: relative;
-    // Small info dropdown attached to the boundary indicator
-    .ai-thread-info-dropdown {
-        position: absolute;
-        right: 0;
-        top: 0;
-        pointer-events: none; // Initially disabled
 
-        // Structure + submenu placement from shared mixins
-        @include dropdownChipStructure((
-            triggerHeight: 24px,
-            svgSize: 1.0rem,
-            iconSize: 14px,
-            triggerPadding: 0.15rem 0.25rem,
-            submenuOverflow: visible,
-            arrowSide: 'right'          // arrow on the right side; offsets auto-computed by mixin
-        ));
-        @include dropdownChipSubmenuPlacement((
-            rightOffset: 0px,
-            topOffset: 32px
-        ));
-
-        // Use dark theme to match thread chrome
-        &.theme-dark {
-            @include tagPillDropdownDarkTheme((
-                arrowSide: 'right'
-            ));
-        }
-
-        // Hide everything by default
-        .dots-dropdown-menu {
-            button.dropdown-trigger-hidden {
-                display: none;
-            }
-
-            .submenu-wrapper {
-                display: none;
-                position: absolute;
-                right: 50px; // Position to the left of the boundary line with 25px space
-                top: 6px;
-                z-index: 999;
-            }
-
-            .submenu {
-                // min-width: 280px;
-                position: relative;
-                right: 0; // Align to right edge
-            }
-        }
+    // ===== THREAD CONTENT =====
+    .ai-chat-thread-content {
+        position: relative;
     }
 
-    // border: 1px solid pink;
-
-    // Thread boundary indicator: small circular element like AI response indicator
+    // ===== THREAD BOUNDARY SYSTEM =====
     .ai-thread-boundary-indicator {
         position: absolute;
-        // border: 1px solid red;
-        right: -47px; // position to the right of the thread content
-        top: -6px; // position vertically similar to AI response indicators
-        width: 32px; // circle container size (larger than icon for easier hover)
-        height: 32px; // circle container size
+        right: -47px;
+        top: -6px;
+        width: 32px;
+        height: 32px;
         display: flex;
         align-items: center;
         justify-content: center;
-        background: transparent; // invisible hover area
-        border-radius: 50%; // make it circular
+        background: transparent;
+        border-radius: 50%;
         z-index: 3;
         cursor: pointer;
 
-        // NOTE: line is now a sibling of the indicator under the wrapper
-
-        // Thread boundary icon styling
         .ai-thread-boundary-icon {
             width: 20px;
             height: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
-            pointer-events: none; // let the parent boundary indicator handle interactions
+            pointer-events: none;
 
-            // Style the SVG icon
             svg {
                 width: 20px;
                 height: 20px;
-                fill: $nightBlue; // match the gradient start color
-                // filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.08));
+                fill: $nightBlue;
             }
         }
     }
 
-    // Thread boundary line anchored to wrapper (spans full thread height)
     .ai-thread-boundary-indicator-line {
         position: absolute;
-        right: -15px; // align with left edge of circle indicator
+        right: -15px;
         top: 0;
-        bottom: 0; // stretch across full thread height
+        bottom: 0;
         width: 1px;
         background: $steelBlue;
-        opacity: 0; // hidden by default
+        opacity: 0;
         transform: scaleY(0);
         min-height: 50px;
-        opacity: 1;
         transform-origin: top;
         transition: pupOutTransition(all, 200ms);
         z-index: 5;
-        pointer-events: none; // only the circle handles hover
+        pointer-events: none;
 
-        // Triangle pointer aligned near icon at the top, closer to the line
         @include boundaryPointerTriangle((
             direction: 'left',
             anchor: 'bottom',
@@ -122,88 +68,63 @@
         ));
     }
 
+    // ===== INFO DROPDOWN =====
+    .ai-thread-info-dropdown {
+        position: absolute;
+        right: 0;
+        top: 0;
+        pointer-events: none;
 
-    // Thread boundary visible state (applied via decorations on hover)
-    &.thread-boundary-visible {
-        .ai-thread-boundary-indicator-line {
-            opacity: 1;
-            transform: scaleY(1);
+        @include dropdownChipStructure((
+            triggerHeight: 24px,
+            svgSize: 1.0rem,
+            iconSize: 14px,
+            triggerPadding: 0.15rem 0.25rem,
+            submenuOverflow: visible,
+            arrowSide: 'right'
+        ));
+        @include dropdownChipSubmenuPlacement((
+            rightOffset: 0px,
+            topOffset: 32px
+        ));
+
+        &.theme-dark {
+            @include tagPillDropdownDarkTheme((
+                arrowSide: 'right'
+            ));
         }
-    }
 
-    // Show dropdown only on boundary indicator hover (not entire thread hover)
-    .ai-thread-boundary-indicator:hover {
-        .ai-thread-info-dropdown {
-            pointer-events: auto;
-
-            .dots-dropdown-menu .submenu-wrapper {
-                display: block;
-            }
-        }
-    }
-
-    // Receiving state styles (applied via decorations)
-    &.receiving {
-        .ai-submit-button {
-            border-color: $redPink;
-            background-color: white;
-            transition: hoverTransition(background, 300ms);
-
-            .button-default,
-            .button-hover {
-                opacity: 0;
-                pointer-events: none;
+        .dots-dropdown-menu {
+            button.dropdown-trigger-hidden {
+                display: none;
             }
 
-            .button-receiving {
-                opacity: 1;
-                pointer-events: auto;
-
-                .stop-icon svg {
-                    // fill: $redPink;
-                }
+            .submenu-wrapper {
+                display: none;
+                position: absolute;
+                right: 50px;
+                top: 6px;
+                z-index: 999;
             }
 
-            // Hover over receiving state - only when in receiving mode
-            &:hover {
-                // Ensure default/hover states stay hidden during receiving hover
-                .button-default,
-                .button-hover {
-                    opacity: 0 !important;
-                    pointer-events: none !important;
-                }
-
-                .button-receiving {
-                    opacity: 1 !important;
-                    pointer-events: auto !important;
-
-                    .stop-icon svg {
-                        fill: $redPink;
-                    }
-                }
-
-                // Add red background on hover
-                // background-color: $redPink;
-                // border-color: $redPink;
+            .submenu {
+                position: relative;
+                right: 0;
             }
         }
     }
 
-    .ai-chat-thread-content {
-        position: relative;
-    }
-
+    // ===== AI SUBMIT BUTTON =====
     .ai-submit-button {
         position: absolute;
         bottom: -0.75rem;
         right: 1rem;
-        // background: white;
-        // background: pink;
         border-radius: 50%;
         opacity: 0.8;
-        transition: hoverTransition(all, 400ms); // Longer transition for mouse leave
+        transition: hoverTransition(all, 400ms);
         cursor: pointer;
 
+        // Button state containers
         .button-default,
         .button-hover,
         .button-receiving {
@@ -215,12 +136,14 @@
             transition: hoverTransition(all, 250ms);
         }
 
+        // Default state (always visible)
         .button-default {
             opacity: 1;
-            position: relative; // ensure stacking below absolute states
+            position: relative;
             z-index: 1;
         }
 
+        // Hover and receiving states (overlays)
         .button-hover,
         .button-receiving {
             position: absolute;
@@ -231,10 +154,11 @@
             pointer-events: none;
         }
 
-        // Layering: receiving above hover above default
+        // Z-index layering
         .button-hover { z-index: 2; }
         .button-receiving { z-index: 3; }
 
+        // Icon styles
         .send-icon {
             display: inline-flex;
             align-items: center;
@@ -258,18 +182,36 @@
             height: 30px;
 
             svg {
-                width: 30px;  // Increased from 14px to make stop icon more prominent
-                height: 30px; // Increased from 14px to make stop icon more prominent
-                // fill: $redPink;
+                width: 30px;
+                height: 30px;
                 fill: $nightBlue;
                 transition: hoverTransition(fill, 150ms);
             }
         }
-
-    // Note: normal hover styles are applied at the wrapper level when not receiving
     }
 
-    // Normal hover state (only when NOT receiving)
+    // ===== INTERACTION STATES =====
+
+    // Thread boundary visibility
+    &.thread-boundary-visible {
+        .ai-thread-boundary-indicator-line {
+            opacity: 1;
+            transform: scaleY(1);
+        }
+    }
+
+    // Boundary indicator hover
+    .ai-thread-boundary-indicator:hover {
+        .ai-thread-info-dropdown {
+            pointer-events: auto;
+
+            .dots-dropdown-menu .submenu-wrapper {
+                display: block;
+            }
+        }
+    }
+
+    // Submit button hover (when not receiving)
     &:not(.receiving) .ai-submit-button:hover {
         opacity: 1;
         border-color: rgba($steelBlue, 0.3);
@@ -280,121 +222,148 @@
         .button-receiving { opacity: 0; pointer-events: none; }
     }
 
-    // Enhanced visibility when thread is focused
+    // Thread focus state
     &:focus-within .ai-submit-button {
         opacity: 1;
         transform: translateY(-2px);
     }
 
-    // Receiving state overrides (ensure visibility regardless of cascade order)
+    // ===== RECEIVING STATE =====
     &.receiving {
         .ai-submit-button {
-            // Hide non-receiving states
+            border-color: $redPink;
+            background-color: white;
+            transition: hoverTransition(background, 300ms);
+
+            // Hide normal states
             .button-default,
             .button-hover {
                 opacity: 0 !important;
                 pointer-events: none !important;
             }
 
-            // Always show receiving content
+            // Show receiving state
             .button-receiving {
                 opacity: 1 !important;
                 pointer-events: auto !important;
+            }
+
+            // Receiving hover state
+            &:hover {
+                .button-default,
+                .button-hover {
+                    opacity: 0 !important;
+                    pointer-events: none !important;
+                }
+
+                .button-receiving {
+                    opacity: 1 !important;
+                    pointer-events: auto !important;
+
+                    .stop-icon svg {
+                        fill: $redPink;
+                    }
+                }
             }
         }
     }
 }
 
-
-
-
-
+// ========== AI RESPONSE MESSAGE WRAPPER ==========
 .ai-response-message-wrapper {
-	margin: 0;
-	padding: 0.8rem 0 0.7rem;
-	position: relative;
-	.user-avatar {
-		display: block;
-		width:  21px;
-		height:  21px;
-		border-radius: 99px;
-		position: absolute;
-		user-select: none;
-		left: -55px;
-		bottom: 0.01rem;
-		cursor: default;
-		svg {
-			fill: #94999d;
-		}
-		&.assistant-anthropic {
-			left: -55.5px;
-			svg {
-				fill: #D97757;
-				width:  21.5px;
-				height:  21.5px;
-			}
-		}
-		&.assistant-openai {
-			overflow: hidden;
-			svg {
-				fill: $aiGreen;
-			}
-			&.node-receiving-animation {
-				svg {
-					animation: heartbeatAnimation 1.5s infinite;
-					animation-timing-function: ease-in-out;
-				}
-			}
-		}
-	}
+    margin: 0;
+    padding: 0.8rem 0 0.7rem;
+    position: relative;
 
-	.ai-response-message {
-		position: relative;
-		z-index: 2;
-		margin: 0;
-		display: flex;
-		align-items: center;
-		padding: 0;
-		position: relative;
-		// background: #fff;
-		.ai-response-message-boundaries-indicator {
-			position: absolute;
-			left: -21px;
-			display: block;
-			height: 17px;
-			height: 100%;
-			width: $aiResponseMessageIndicatorBoundariesWidth;
-			transition: height 400ms cubic-bezier(0.19, 1, 0.22, 1);
-			background-color: $aiResponseMessageIndicatorColor;
-			border-radius: 100px;
+    // ===== USER AVATAR =====
+    .user-avatar {
+        display: block;
+        width: 21px;
+        height: 21px;
+        border-radius: 99px;
+        position: absolute;
+        user-select: none;
+        left: -55px;
+        bottom: 0.01rem;
+        cursor: default;
 
-			// Use the reusable mixin for pointer triangle - points LEFT towards AI provider icon
-			@include boundaryPointerTriangle((
-				direction: 'left',
-				anchor: 'bottom',
-				horizontalOffset: 0px,
-				verticalOffset: 8px,
-				size: 3px,
-				color: $aiResponseMessageIndicatorColor,
-				accentColor: $aiResponseMessageIndicatorAccentPointerColor
-			));
-			&.node-render-animation {
-				animation: popOutAndGrow 300ms cubic-bezier(0.19, 1, 0.22, 1);
-			}
+        svg {
+            fill: #94999d;
+        }
 
-		}
-		.ai-response-message-content {
-			// padding: .3rem 0;
-			padding: 0;
-			// width: 100%; // TODO: this causes an unexpected weird fly-in-left animation effect, not sure if I want to keep it
-			&.node-render-animation {
-				animation: popOut 400ms cubic-bezier(0.19, 1, 0.22, 1);
-			}
-			h1, h2, h3, h4, h5, h6 {
-				&:first-child {
-					margin-top: 0;
-				}
-			}
-		}
-	}
+        // Assistant providers
+        &.assistant-anthropic {
+            left: -55.5px;
+
+            svg {
+                fill: #D97757;
+                width: 21.5px;
+                height: 21.5px;
+            }
+        }
+
+        &.assistant-openai {
+            overflow: hidden;
+
+            svg {
+                fill: $aiGreen;
+            }
+
+            &.node-receiving-animation svg {
+                animation: heartbeatAnimation 1.5s infinite;
+                animation-timing-function: ease-in-out;
+            }
+        }
+    }
+
+    // ===== AI RESPONSE MESSAGE =====
+    .ai-response-message {
+        position: relative;
+        z-index: 2;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        padding: 0;
+
+        // Boundary indicator
+        .ai-response-message-boundaries-indicator {
+            position: absolute;
+            left: -21px;
+            display: block;
+            height: 100%;
+            width: $aiResponseMessageIndicatorBoundariesWidth;
+            transition: height 400ms cubic-bezier(0.19, 1, 0.22, 1);
+            background-color: $aiResponseMessageIndicatorColor;
+            border-radius: 100px;
+
+            @include boundaryPointerTriangle((
+                direction: 'left',
+                anchor: 'bottom',
+                horizontalOffset: 0px,
+                verticalOffset: 8px,
+                size: 3px,
+                color: $aiResponseMessageIndicatorColor,
+                accentColor: $aiResponseMessageIndicatorAccentPointerColor
+            ));
+
+            &.node-render-animation {
+                animation: popOutAndGrow 300ms cubic-bezier(0.19, 1, 0.22, 1);
+            }
+        }
+
+        // Message content
+        .ai-response-message-content {
+            padding: 0;
+
+            &.node-render-animation {
+                animation: popOut 400ms cubic-bezier(0.19, 1, 0.22, 1);
+            }
+
+            h1, h2, h3, h4, h5, h6 {
+                &:first-child {
+                    margin-top: 0;
+                }
+            }
+        }
+    }
 }
