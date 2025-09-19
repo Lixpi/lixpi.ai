@@ -1,6 +1,7 @@
 // @ts-nocheck
 import { keyboardMacCommandIcon, keyboardEnterKeyIcon, sendIcon, pauseIcon, chatThreadBoundariesInfoIcon, aiRobotFaceIcon } from '../../../../svgIcons/index.js'
 import { TextSelection, PluginKey } from 'prosemirror-state'
+import { html } from '../../components/domTemplates.ts'
 
 export const aiChatThreadNodeType = 'aiChatThread'
 
@@ -63,7 +64,7 @@ export const aiChatThreadNodeView = (node, view, getPos) => {
         }, node.content)
     }
 
-    // Create DOM structure - the plugin will apply decoration classes like 'ai-chat-thread-keys-pressed mod-pressed' to this DOM element
+    // Create DOM structure - the plugin will apply decoration classes like 'receiving' and 'thread-boundary-visible' to this DOM element
     const dom = document.createElement('div')
     dom.className = 'ai-chat-thread-wrapper'
     dom.setAttribute('data-thread-id', node.attrs.threadId)
@@ -120,162 +121,58 @@ function setupContentFocus(contentDOM, view, getPos) {
 
 // Helper function to create thread boundary indicator
 function createThreadBoundaryIndicator(wrapperDOM, view, threadId) {
-    const boundaryIndicator = document.createElement('div')
-    boundaryIndicator.className = 'ai-thread-boundary-indicator'
-
     // Create the boundary line element (append to wrapper so it can span full thread height)
-    const boundaryLine = document.createElement('div')
-    boundaryLine.className = 'ai-thread-boundary-indicator-line'
+    const boundaryLine = html`
+        <div className="ai-thread-boundary-indicator-line"></div>
+    `
     wrapperDOM.appendChild(boundaryLine)
 
-    // Create the icon element
-    const iconElement = document.createElement('div')
-    iconElement.className = 'ai-thread-boundary-icon'
-    iconElement.innerHTML = chatThreadBoundariesInfoIcon
+    // Cache event handlers
+    const handleEnter = () => view.dispatch(view.state.tr.setMeta('hoverThread', threadId))
+    const handleLeave = () => view.dispatch(view.state.tr.setMeta('hoverThread', null))
 
-    // Add icon to the boundary indicator
-    boundaryIndicator.appendChild(iconElement)
-
-    // Attach a compact info dropdown to the indicator (no duplicate icon inside)
-    const infoDropdown = createThreadInfoDropdown()
-    boundaryIndicator.appendChild(infoDropdown)
-
-    // Handle hover events using ProseMirror transactions for consistency
-    boundaryIndicator.addEventListener('mouseenter', () => {
-        view.dispatch(view.state.tr.setMeta('hoverThread', threadId))
-    })
-
-    boundaryIndicator.addEventListener('mouseleave', () => {
-        view.dispatch(view.state.tr.setMeta('hoverThread', null))
-    })
-
-    return boundaryIndicator
+    return html`
+        <div
+            className="ai-thread-boundary-indicator"
+            onmouseenter=${handleEnter}
+            onmouseleave=${handleLeave}
+        >
+            <div className="ai-thread-boundary-icon" innerHTML=${chatThreadBoundariesInfoIcon}></div>
+            ${createThreadInfoDropdown()}
+        </div>
+    `
 }
 
 // Helper to create a small info dropdown near the boundary indicator
 function createThreadInfoDropdown() {
-    const wrapper = document.createElement('div')
-    wrapper.className = 'ai-thread-info-dropdown theme-dark'
-
-    // Internal structure expected by dropdown mixins
-    const host = document.createElement('span')
-    host.className = 'dots-dropdown-menu'
-
-    // We do not add an icon here to avoid duplicating the boundary icon.
-    // Create a minimal button element to satisfy structure (kept visually hidden via CSS)
-    const button = document.createElement('button')
-    button.className = 'dropdown-trigger-hidden'
-    host.appendChild(button)
-
-    // Submenu
-    const nav = document.createElement('nav')
-    nav.className = 'submenu-wrapper render-position-bottom'
-    const ul = document.createElement('ul')
-    ul.className = 'submenu'
-
-    const li1 = document.createElement('li')
-    li1.className = 'flex justify-start items-center'
-    li1.setAttribute('data-type', 'header')
-    // header icon
-    const headerIcon = document.createElement('span')
-    headerIcon.innerHTML = aiRobotFaceIcon
-    li1.appendChild(headerIcon)
-    // header label + meta container
-    const headerText = document.createElement('span')
-    headerText.className = 'header-text'
-    const headerTitle = document.createElement('span')
-    headerTitle.className = 'header-title'
-    headerTitle.textContent = 'AI Thread context'
-    const headerMeta = document.createElement('span')
-    headerMeta.className = 'header-meta'
-    headerMeta.textContent = 'AI generated title will be here'
-    headerText.appendChild(headerTitle)
-    headerText.appendChild(headerMeta)
-    li1.appendChild(headerText)
-    ul.appendChild(li1)
-
-    const li2 = document.createElement('li')
-    li2.className = 'flex justify-start items-center'
-    li2.textContent = 'Add thread below'
-    ul.appendChild(li2)
-
-    const li3 = document.createElement('li')
-    li3.className = 'flex justify-start items-center'
-    li3.textContent = 'Add thread above'
-    ul.appendChild(li3)
-
-    const li4 = document.createElement('li')
-    li4.className = 'flex justify-start items-center'
-    li4.textContent = 'Merge with prev thread'
-    ul.appendChild(li4)
-
-    const li5 = document.createElement('li')
-    li5.className = 'flex justify-start items-center'
-    li5.textContent = 'Merge with thread below'
-    ul.appendChild(li5)
-
-    nav.appendChild(ul)
-    host.appendChild(nav)
-    wrapper.appendChild(host)
-
-    // If a header item exists, mark submenu for header-aware styling (arrow fill matches header color)
-    if (ul.querySelector("li[data-type='header']")) {
-        ul.classList.add('with-header')
-    }
-
-    // No click toggling — visibility is controlled by thread hover state via CSS (.thread-boundary-visible)
-    return wrapper
+    return html`
+        <div className="ai-thread-info-dropdown theme-dark">
+            <span className="dots-dropdown-menu">
+                <button className="dropdown-trigger-hidden"></button>
+                <nav className="submenu-wrapper render-position-bottom">
+                    <ul className="submenu with-header">
+                        <li className="flex justify-start items-center" data-type="header">
+                            <span innerHTML=${aiRobotFaceIcon}></span>
+                            <span className="header-text">
+                                <span className="header-title">AI Thread context</span>
+                                <span className="header-meta">AI generated title will be here</span>
+                            </span>
+                        </li>
+                        <li className="flex justify-start items-center">Add thread below</li>
+                        <li className="flex justify-start items-center">Add thread above</li>
+                        <li className="flex justify-start items-center">Merge with prev thread</li>
+                        <li className="flex justify-start items-center">Merge with thread below</li>
+                    </ul>
+                </nav>
+            </span>
+        </div>
+    `
 }
 
 // Helper function to create AI submit button
 function createAiSubmitButton(view) {
-    const button = document.createElement('div')
-    button.className = 'ai-submit-button'
-
-    // Detect platform for correct modifier key
-    const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0
-
-    // Default state (showing send icon only)
-    const defaultContent = document.createElement('div')
-    defaultContent.className = 'button-default'
-
-    const sendIconElement = document.createElement('span')
-    sendIconElement.className = 'send-icon'
-    sendIconElement.innerHTML = sendIcon
-
-    defaultContent.appendChild(sendIconElement)
-
-    // Hover state (showing send button)
-    const hoverContent = document.createElement('div')
-    hoverContent.className = 'button-hover'
-
-    const sendIconElementHover = document.createElement('span')
-    sendIconElementHover.className = 'send-icon'
-    sendIconElementHover.innerHTML = sendIcon
-
-    hoverContent.appendChild(sendIconElementHover)
-
-    // Receiving state (showing stop button)
-    const receivingContent = document.createElement('div')
-    receivingContent.className = 'button-receiving'
-
-    const stopIconElement = document.createElement('span')
-    stopIconElement.className = 'stop-icon'
-    stopIconElement.innerHTML = pauseIcon
-
-    receivingContent.appendChild(stopIconElement)
-
-    // Add all three states to button
-    button.appendChild(defaultContent)
-    button.appendChild(hoverContent)
-    button.appendChild(receivingContent)
-
-    // Enable pointer events and add click handler
-    button.style.pointerEvents = 'auto'
-    button.style.cursor = 'pointer'
-
-    // Add click handler
-    button.addEventListener('click', (e) => {
+    // Cache the click handler to avoid recreation
+    const handleClick = (e) => {
         e.preventDefault()
         e.stopPropagation()
 
@@ -294,7 +191,23 @@ function createAiSubmitButton(view) {
             const tr = view.state.tr.setMeta('use:aiChat', true)
             view.dispatch(tr)
         }
-    })
+    }
 
-    return button
+    return html`
+        <div
+            className="ai-submit-button"
+            onclick=${handleClick}
+            style=${{ pointerEvents: 'auto', cursor: 'pointer' }}
+        >
+            <div className="button-default">
+                <span className="send-icon" innerHTML=${sendIcon}></span>
+            </div>
+            <div className="button-hover">
+                <span className="send-icon" innerHTML=${sendIcon}></span>
+            </div>
+            <div className="button-receiving">
+                <span className="stop-icon" innerHTML=${pauseIcon}></span>
+            </div>
+        </div>
+    `
 }

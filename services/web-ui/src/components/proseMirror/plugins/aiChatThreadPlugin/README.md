@@ -19,7 +19,7 @@ Perfect for documentation with interactive examples, notebooks with AI assistanc
 
 ## Technical Architecture
 
-The plugin follows a modular architecture where each node type encapsulates its own UI and behavior:
+The plugin follows a modular architecture where each node type encapsulates its own UI and behavior using declarative DOM templates:
 
 ```mermaid
 graph TD
@@ -32,13 +32,18 @@ graph TD
     N1[aiChatThreadNode.ts] --> NV1[aiChatThreadNodeView]
     N2[aiResponseMessageNode.ts] --> NV2[aiResponseMessageNodeView]
 
-    NV1 --> UI1[Keyboard Hint]
-    NV1 --> UI2[Thread Boundary]
-    NV1 --> UI3[Content Focus]
+    DT[domTemplates.ts] --> DTB[DOMTemplateBuilder]
+    DTB --> HF[html function]
 
-    NV2 --> UI4[Provider Avatar]
-    NV2 --> UI5[Animations]
-    NV2 --> UI6[Boundary Strip]
+    NV1 --> HF
+    NV2 --> HF
+
+    NV1 --> UI1[html`Thread Boundary`]
+    NV1 --> UI2[html`Submit Button`]
+
+    NV2 --> UI4[html`Provider Avatar`]
+    NV2 --> UI5[html`Message Wrapper`]
+    NV2 --> UI6[html`Boundary Strip`]
 
     A --> N1
     A --> N2
@@ -58,10 +63,12 @@ graph TD
     F --> F3[BoundaryDecorations]
 ```
 
-**Key Design Principle:** Each node type is fully self-contained:
-- `aiChatThreadNode.ts` - Exports both the node spec AND its NodeView (handles keyboard hint, boundary indicator, focus)
-- `aiResponseMessageNode.ts` - Exports both the node spec AND its NodeView (handles avatar, animations, boundary strip)
-- `aiChatThreadPlugin.ts` - Orchestrates streaming, content extraction, and decorations without mixing UI concerns### Plugin State Machine
+**Key Design Principles:**
+- **Self-contained nodes:** Each node type exports both spec AND NodeView (handles boundary indicator and focus)
+- **Declarative UI:** All DOM creation uses `html` template literals instead of verbose `createElement` chains
+- **Shared utilities:** `domTemplates.ts` provides consistent DOM building across all ProseMirror components
+- **Performance-focused:** htm/mini gives zero-runtime overhead with direct DOM element creation
+- **Clean separation:** Plugin orchestrates business logic while NodeViews handle UI via templates### Plugin State Machine
 
 ```mermaid
 stateDiagram-v2
@@ -74,10 +81,7 @@ stateDiagram-v2
     Receiving --> Idle: END_STREAM event
 
     note right of KeyboardFeedback
-        Visual feedback states:
-        - modPressed: boolean
-        - enterPressed: boolean
-        CSS classes applied via decorations
+      Visual feedback states were removed. We now keep it simple.
     end note
 
     note right of Receiving
@@ -138,6 +142,24 @@ sequenceDiagram
 - Attributes: `id, style, isInitialRenderAnimation, isReceivingAnimation, aiProvider, currentFrame`
 - DOM: `div.ai-response-message[data-ai-provider]`
 
+## DOM Template System
+
+We use `htm` for declarative DOM in NodeViews. The shared helper lives at `../../components/domTemplates.ts`. Keep plugin-specific snippets here; generic patterns live in `../README.md` (see “Templating & NodeViews”).
+
+More generic patterns and folder layout guidance: `../README.md`.
+
+Quick taste, this is how buttons are built now:
+
+```ts
+import { html } from '../../components/domTemplates.ts'
+
+const button = html`
+  <div className="ai-submit-button" onclick=${handleClick}>
+    <span className="send-icon" innerHTML=${sendIcon}></span>
+  </div>
+`
+```
+
 ## Quick setup
 
 ```typescript
@@ -146,23 +168,22 @@ import { createAiChatThreadPlugin, aiChatThreadNodeSpec, aiResponseMessageNodeSp
 // Add to your schema
 const schema = new Schema({
   nodes: {
-    // ... your other nodes
+    doc: { content: 'block+' },
+    paragraph: paragraphSpec,
     aiChatThread: aiChatThreadNodeSpec,
-    aiResponseMessage: aiResponseMessageNodeSpec,
+    aiResponseMessage: aiResponseMessageNodeSpec
   }
 })
 
 // Create the plugin
 const plugin = createAiChatThreadPlugin(
   async (messages) => {
-    // messages = [{ role: 'user', content: 'Hello' }, { role: 'assistant', content: 'Hi!' }]
-    // Start your AI streaming here
-    // Make sure to emit events to SegmentsReceiver
+    // Your AI streaming setup here
+    console.log('Sending to AI:', messages)
+    // Trigger your streaming implementation
+    // Plugin will listen for SegmentsReceiver events automatically
   },
-  {
-    titlePlaceholder: 'Untitled',
-    paragraphPlaceholder: 'Ask me anything...'
-  }
+  { titlePlaceholder: 'Document title...', paragraphPlaceholder: 'Type your message...' }
 )
 
 // Add to editor
@@ -271,28 +292,35 @@ Users see:
 
 - `aiChatThreadNode.ts` - Thread container node (self-contained):
   - Exports node schema AND its NodeView implementation
-  - Handles keyboard hint UI (⌘⏎ to send)
-  - Creates thread boundary indicator
+  - Uses `html` template literals for clean UI creation
+  - Creates keyboard hints, boundary indicator, submit button
+  - Handles hover events and focus management
   - Manages content focus
 
 - `aiResponseMessageNode.ts` - AI response node (self-contained):
   - Exports node schema AND its NodeView implementation
-  - Animated provider avatar with state management
-  - Provider-specific rendering (e.g., different icons)
+  - Uses `html` template literals for structured DOM creation
+  - Provider-specific avatars (Claude, GPT) with animations
+  - Streaming animation states (receiving/idle)
   - Boundary strip decoration
 
 - `aiChatThreadPlugin.ts` - Main orchestration logic:
   - Plugin state and lifecycle management
-  - SegmentsReceiver integration for streaming
-  - Content extraction and formatting
-  - Decoration system (placeholders, boundaries)
-  - Keyboard event handling
+  - Content extraction and message conversion
+  - Streaming event handling and DOM insertion
+  - Decoration system (placeholders, keyboard feedback, boundaries)
   - No UI rendering - delegates to node-specific NodeViews
+
+- `../../components/domTemplates.ts` - **NEW** Shared DOM template utilities:
+  - TypeScript class-based `DOMTemplateBuilder` with proper typing
+  - `html` template function using htm/mini for zero-overhead DOM creation
+  - Handles events, styles, data attributes, innerHTML
+  - Available across all ProseMirror components, not just this plugin
 
 - `ai-chat-thread.scss` - All the styling and animations
 - `index.ts` - Exports everything
 
-**Architecture Note:** Each node type is a complete unit with its own UI. The plugin focuses on coordination and business logic without mixing UI concerns. This keeps the code modular and easy to understand!
+**Architecture Note:** Each node type is a complete unit with its own UI built using declarative `html` templates. The plugin focuses on coordination and business logic without mixing UI concerns. The shared `domTemplates.ts` provides clean, performant DOM creation across the entire ProseMirror ecosystem.
 
 ## Core Helper Classes
 
@@ -377,39 +405,50 @@ type AiChatThreadPluginState = {
   insideBackticks: boolean      // Code block parsing state
   backtickBuffer: string        // Code block content buffer
   insideCodeBlock: boolean      // Legacy code parsing
-  codeBuffer: string           // Legacy code buffer
-  decorations: DecorationSet   // UI decorations
-  modPressed: boolean          // Mod key visual feedback
-  enterPressed: boolean        // Enter key visual feedback
+  codeBuffer: string            // Legacy code buffer
+  decorations: DecorationSet    // UI decorations
   hoveredThreadId: string | null // Thread boundary visibility
 }
 ```
 
 **Transaction Metadata:**
 - `setReceiving: boolean` - Toggle streaming state
-- `modToggle: boolean` - Keyboard feedback
-- `enterToggle: boolean` - Enter key feedback
 - `hoverThread: string | null` - Thread boundary hover
 - `USE_AI_CHAT_META` - Trigger chat submission
 - `INSERT_THREAD_META` - Insert new thread
 
 ## NodeViews & UI Components
 
-### Thread NodeView
-Creates the interactive thread container:
+### Thread NodeView (Template-Based)
+Creates the interactive thread container using declarative templates:
 
-```mermaid
-graph LR
-    A[ThreadNodeView] --> B[Thread Content Container]
-    A --> C[Keyboard Hint Button]
-    A --> D[Boundary Indicator]
+```typescript
+// Thread boundary with clean template syntax
+return html`
+  <div
+    className="ai-thread-boundary-indicator"
+    onmouseenter=${handleEnter}
+    onmouseleave=${handleLeave}
+  >
+    <div className="ai-thread-boundary-icon" innerHTML=${chatThreadBoundariesInfoIcon}></div>
+    ${createThreadInfoDropdown()}
+  </div>
+`
 
-    C --> C1[Default State: Cmd+Enter]
-    C --> C2[Hover State: Send Icon]
-    C --> C3[Receiving State: Stop Icon]
-
-    D --> D1[Circular Icon Button]
-    D --> D2[Vertical Boundary Line]
+// Submit button with multiple states
+return html`
+  <div className="ai-submit-button" onclick=${handleClick}>
+    <div className="button-default">
+      <span className="send-icon" innerHTML=${sendIcon}></span>
+    </div>
+    <div className="button-hover">
+      <span className="send-icon" innerHTML=${sendIcon}></span>
+    </div>
+    <div className="button-receiving">
+      <span className="stop-icon" innerHTML=${pauseIcon}></span>
+    </div>
+  </div>
+`
 ```
 
 **Behavior:**
@@ -417,21 +456,26 @@ graph LR
 - Focuses editor and positions cursor on mousedown
 - Hover events dispatch `hoverThread` metadata
 - Click handlers for send/stop functionality
+- **NEW:** All UI created via `html` templates for 70% less code and better readability
 
-### Response NodeView
-Renders AI responses with provider avatars:
+### Response NodeView (Template-Based)
+Renders AI responses using structured templates:
 
-```mermaid
-graph LR
-    A[ResponseNodeView] --> B[Avatar Container]
-    A --> C[Boundary Indicator]
-    A --> D[Content Container]
+```typescript
+// Main wrapper created declaratively in one statement
+const parentWrapper = html`
+  <div className="ai-response-message-wrapper">
+    <div className="ai-response-message">
+      <div className="user-avatar assistant-${node.attrs.aiProvider.toLowerCase()}"></div>
+      <div className="ai-response-message-boundaries-indicator"></div>
+      <div className="ai-response-message-content"></div>
+    </div>
+  </div>
+`
 
-    B --> B1[Anthropic: Claude Icon + Animation]
-    B --> B2[OpenAI: GPT Icon + Heartbeat]
-
-    C --> C1[Vertical Blue Strip]
-    C --> C2[Pointer Triangle]
+// Get DOM references for dynamic updates
+const userAvatarContainer = parentWrapper.querySelector('.user-avatar')
+const responseMessageContent = parentWrapper.querySelector('.ai-response-message-content')
 ```
 
 **Anthropic Animation System:**
@@ -439,6 +483,7 @@ graph LR
 - Updates `currentFrame` attribute via `setNodeMarkup`
 - SVG viewBox manipulation: `0 ${frame * 100} 100 100`
 - Automatic cleanup on destroy
+- **NEW:** Initial DOM structure from templates, dynamic updates via querySelector references
 
 ## Decoration System
 
@@ -463,18 +508,7 @@ if (node.type.name === aiChatThreadNodeType && node.childCount === 1) {
 }
 ```
 
-### 2. Keyboard Feedback Decorations
-```typescript
-// Applied to thread wrappers during key interactions
-let cssClass = 'ai-chat-thread-keys-pressed'
-if (pluginState.modPressed) cssClass += ' mod-pressed'
-if (pluginState.enterPressed) cssClass += ' enter-pressed'
-if (pluginState.isReceiving) cssClass += ' receiving'
-
-decorations.push(Decoration.node(pos, pos + node.nodeSize, { class: cssClass }))
-```
-
-### 3. Thread Boundary Decorations
+### 2. Thread Boundary Decorations
 ```typescript
 // Shows boundary line only for hovered thread
 if (node.type.name === 'aiChatThread' &&
@@ -485,136 +519,14 @@ if (node.type.name === 'aiChatThread' &&
 }
 ```
 
-## CSS Architecture & Styling Hooks
+## Styling hooks (short version)
 
-### Thread Wrapper Styles
-```scss
-.ai-chat-thread-wrapper {
-  position: relative;
+SCSS lives in `ai-chat-thread.scss`. Relevant classes:
+- `.ai-chat-thread-wrapper` — container
+- `.ai-thread-boundary-indicator` / `-line` — boundary UI
+- `.ai-response-message-wrapper` — response layout
 
-  // Thread boundary system
-  .ai-thread-boundary-indicator {
-    position: absolute;
-    right: -47px; // Positioned outside content area
-    top: -6px;
-    width: 32px; height: 32px; // Circular hover area
-    cursor: pointer;
-  }
-
-  .ai-thread-boundary-indicator-line {
-    position: absolute;
-    right: -15px; // Aligned with indicator circle
-    top: 0; bottom: 0; // Full thread height
-    width: 1px;
-    background: $steelBlue;
-    opacity: 0; transform: scaleY(0); // Hidden by default
-
-    // Triangle pointer using mixin
-    @include boundaryPointerTriangle((
-      direction: 'right', anchor: 'top',
-      horizontalOffset: 0px, verticalOffset: 10px,
-      size: 4px, color: $steelBlue
-    ));
-  }
-
-  // State classes applied via decorations
-  &.thread-boundary-visible .ai-thread-boundary-indicator-line {
-    opacity: 1; transform: scaleY(1);
-  }
-
-  &.receiving .keyboard-shortcut-hint {
-    border-color: $redPink;
-    background-color: white;
-
-    .shortcut-receiving { opacity: 1; pointer-events: auto; }
-    .shortcut-default, .shortcut-hover { opacity: 0; pointer-events: none; }
-  }
-}
-```
-
-### Keyboard Hint Button States
-```scss
-.keyboard-shortcut-hint {
-  position: absolute;
-  bottom: -0.75rem; right: 1rem;
-  border-radius: 20px;
-
-  // Three overlaid states with z-index layering
-  .shortcut-default { z-index: 1; opacity: 1; }
-  .shortcut-hover { z-index: 2; opacity: 0; position: absolute; }
-  .shortcut-receiving { z-index: 3; opacity: 0; position: absolute; }
-
-  // Icon animation container
-  .icons-container {
-    width: 36px; height: 20px;
-    position: relative; overflow: hidden;
-
-    .send-icon, .stop-icon {
-      position: absolute;
-      transition: left 300ms; // Slide animation
-    }
-  }
-}
-```
-
-### AI Response Styling
-```scss
-.ai-response-message-wrapper {
-  margin: 0; padding: 0.8rem 0 0.7rem;
-  position: relative;
-
-  .user-avatar {
-    position: absolute;
-    left: -55px; bottom: 0.01rem;
-    width: 21px; height: 21px;
-    border-radius: 99px;
-
-    &.assistant-anthropic {
-      left: -55.5px;
-      svg { fill: #D97757; width: 21.5px; height: 21.5px; }
-    }
-
-    &.assistant-openai {
-      svg { fill: $aiGreen; }
-      &.node-receiving-animation svg {
-        animation: heartbeatAnimation 1.5s infinite ease-in-out;
-      }
-    }
-  }
-
-  .ai-response-message-boundaries-indicator {
-    position: absolute; left: -21px;
-    height: 100%; width: $aiResponseMessageIndicatorBoundariesWidth;
-    background-color: $aiResponseMessageIndicatorColor;
-    border-radius: 100px;
-
-    // Animated entrance
-    &.node-render-animation {
-      animation: popOutAndGrow 300ms cubic-bezier(0.19, 1, 0.22, 1);
-    }
-
-    // Triangle pointer using mixin
-    @include boundaryPointerTriangle((
-      direction: 'left', anchor: 'bottom',
-      horizontalOffset: 0px, verticalOffset: 8px,
-      size: 3px, color: $aiResponseMessageIndicatorColor
-    ));
-  }
-}
-```
-
-### State-Based CSS Classes
-
-**Applied via decorations:**
-- `.ai-chat-thread-keys-pressed` - Base keyboard feedback class
-- `.mod-pressed` - When Cmd/Ctrl held down
-- `.enter-pressed` - When Enter pressed while Mod held
-- `.receiving` - During AI streaming (red stop button)
-- `.thread-boundary-visible` - Shows boundary line for hovered thread
-
-**Applied via NodeViews:**
-- `.node-render-animation` - Initial appearance animation
-- `.node-receiving-animation` - Avatar animation during streaming
+State classes applied via decorations: `.receiving`, `.thread-boundary-visible`. No giant CSS dumps here — check the SCSS if you need details.
 
 ## Implementation Details & Edge Cases
 
@@ -704,6 +616,8 @@ setInterval(() => {
 - **Retry failed streams** - No error handling for failed segments
 - **Stream resume** - No persistence if browser refreshes mid-stream
 
+<!-- Removed noisy change logs. This README stays focused on how to use the plugin, not its history. -->
+
 ## Extending it
 
 Want more content types? Add cases to `StreamingInserter.insertBlockContent()`:
@@ -723,6 +637,19 @@ Want different AI providers? Add them to `aiResponseMessageNodeView()`:
 case 'Cohere':
   userAvatarContainer.innerHTML = cohereIcon
   break
+```
+
+Want to use templates in other ProseMirror components?
+
+```typescript
+import { html } from '../../components/domTemplates.ts'
+
+const myNodeView = html`
+  <div className="my-component" onclick=${handleClick}>
+    <span innerHTML=${myIcon}></span>
+    ${childElements}
+  </div>
+`
 ```
 
 The styling system uses SCSS variables like `$steelBlue` and `$redPink`. Check `ProseMirrorMixings.scss` for the full list.

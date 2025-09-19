@@ -7,19 +7,6 @@
         chevronUpIcon,
     } from '../../svgIcons'
 
-    /**
-     * @typedef {Object} Props
-     * @property {any} [selectedValue]
-     * @property {any} [submenuState]
-     * @property {any} toggleSubmenuHandler
-     * @property {any} id
-     * @property {string} [theme]
-     * @property {string} [renderPosition]
-     * @property {any} [dropdownOptions]
-     * @property {any} [buttonIcon]
-     */
-
-    /** @type {Props} */
     let {
         selectedValue = {},
         submenuState = $bindable({}),
