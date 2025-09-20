@@ -14,6 +14,7 @@ import { Node as PMNode, Schema } from 'prosemirror-model'
 import { nodeTypes, nodeViews } from '../../customNodes/index.js'
 import { documentTitleNodeType } from '../../customNodes/documentTitleNode.js'
 import { aiChatThreadNodeType, aiChatThreadNodeView } from './aiChatThreadNode.ts'
+import { AI_CHAT_THREAD_PLUGIN_KEY } from './aiChatThreadPluginKey.ts'
 import { aiResponseMessageNodeType, aiResponseMessageNodeView } from './aiResponseMessageNode.ts'
 import SegmentsReceiver from '../../../../services/segmentsReceiver-service.js'
 
@@ -44,11 +45,12 @@ type AiChatThreadPluginState = {
     codeBuffer: string
     decorations: DecorationSet
     hoveredThreadId: string | null
+    dropdownStates: Map<string, boolean> // Track dropdown open states by threadId
 }
 
 // ========== CONSTANTS ==========
 
-const PLUGIN_KEY = new PluginKey<AiChatThreadPluginState>('aiChatThread')
+const PLUGIN_KEY = AI_CHAT_THREAD_PLUGIN_KEY as PluginKey<AiChatThreadPluginState>
 const INSERT_THREAD_META = `insert:${aiChatThreadNodeType}`
 const USE_AI_CHAT_META = 'use:aiChat'
 
@@ -541,6 +543,31 @@ class AiChatThreadPluginClass {
         return decorations
     }
 
+    // ========== DROPDOWN OPEN STATE DECORATIONS ==========
+
+    private createDropdownOpenDecorations(state: EditorState, pluginState: AiChatThreadPluginState): Decoration[] {
+        const decorations: Decoration[] = []
+
+        if (!pluginState?.dropdownStates || pluginState.dropdownStates.size === 0) return decorations
+
+        state.doc.descendants((node, pos) => {
+            if (node.type.name !== aiChatThreadNodeType) return
+
+            const threadId = node.attrs.threadId
+            if (threadId && pluginState.dropdownStates.get(threadId)) {
+                // Mark this node as having an open dropdown. This will trigger NodeView.update
+                // and can also be used for CSS if we decide to toggle classes there.
+                decorations.push(
+                    Decoration.node(pos, pos + node.nodeSize, {
+                        class: 'dropdown-open'
+                    })
+                )
+            }
+        })
+
+        return decorations
+    }
+
     // ========== PLACEHOLDERS ==========
 
     private createPlaceholders(state: EditorState): DecorationSet {
@@ -617,7 +644,8 @@ class AiChatThreadPluginClass {
                     insideCodeBlock: false,
                     codeBuffer: '',
                     decorations: DecorationSet.empty,
-                    hoveredThreadId: null
+                    hoveredThreadId: null,
+                    dropdownStates: new Map()
                 }),
                 apply: (tr: Transaction, prev: AiChatThreadPluginState): AiChatThreadPluginState => {
                     // Handle receiving state toggle
@@ -639,6 +667,29 @@ class AiChatThreadPluginClass {
                         return {
                             ...prev,
                             hoveredThreadId: hoverThreadMeta,
+                            decorations: prev.decorations.map(tr.mapping, tr.doc)
+                        }
+                    }
+
+                    // Handle dropdown state toggle
+                    const dropdownToggleMeta = tr.getMeta('toggleDropdown')
+                    if (dropdownToggleMeta !== undefined) {
+                        const { threadId, isOpen } = dropdownToggleMeta
+                        const newDropdownStates = new Map(prev.dropdownStates)
+                        const currentState = prev.dropdownStates.get(threadId) || false
+                        
+                        if (isOpen !== undefined) {
+                            console.log('💾 Setting dropdown state explicitly:', { threadId, isOpen, currentState })
+                            newDropdownStates.set(threadId, isOpen)
+                        } else {
+                            // Toggle current state
+                            const newState = !currentState
+                            console.log('🔄 Toggling dropdown state:', { threadId, currentState, newState })
+                            newDropdownStates.set(threadId, newState)
+                        }
+                        return {
+                            ...prev,
+                            dropdownStates: newDropdownStates,
                             decorations: prev.decorations.map(tr.mapping, tr.doc)
                         }
                     }
@@ -669,7 +720,33 @@ class AiChatThreadPluginClass {
 
             view: (view: EditorView) => {
                 this.startStreaming(view)
+                
+                // Bridge plugin state to view for NodeView access
+                const updateViewState = () => {
+                    console.log('🌉 DEBUG: updateViewState called')
+                    console.log('🌉 DEBUG: PLUGIN_KEY:', PLUGIN_KEY)
+                    console.log('🌉 DEBUG: view.state:', view.state)
+                    
+                    const pluginState = PLUGIN_KEY.getState(view.state)
+                    console.log('🌉 DEBUG: Plugin state from PLUGIN_KEY:', pluginState)
+                    console.log('🌉 DEBUG: Plugin state type:', typeof pluginState)
+                    
+                    if (pluginState && typeof pluginState === 'object') {
+                        console.log('🌉 DEBUG: dropdownStates from plugin:', pluginState.dropdownStates)
+                        ;(view as any).__aiDropdownStates = pluginState.dropdownStates
+                        console.log('🌉 DEBUG: Set __aiDropdownStates on view:', (view as any).__aiDropdownStates)
+                    } else {
+                        console.log('🌉 DEBUG: No valid plugin state, not bridging')
+                    }
+                }
+                
+                // Initial state setup
+                updateViewState()
+                
                 return {
+                    update: () => {
+                        updateViewState()
+                    },
                     destroy: () => {
                         if (this.unsubscribeFromSegments) {
                             this.unsubscribeFromSegments()
@@ -711,6 +788,12 @@ class AiChatThreadPluginClass {
                     if (pluginState?.hoveredThreadId) {
                         const boundaryDecorations = this.createThreadBoundaryDecorations(state, pluginState)
                         allDecorations.push(...boundaryDecorations)
+                    }
+
+                    // Dropdown open-state decorations to trigger NodeView.update on meta-only toggle
+                    if (pluginState?.dropdownStates && pluginState.dropdownStates.size > 0) {
+                        const dropdownDecorations = this.createDropdownOpenDecorations(state, pluginState)
+                        allDecorations.push(...dropdownDecorations)
                     }
 
                     return DecorationSet.create(state.doc, allDecorations)

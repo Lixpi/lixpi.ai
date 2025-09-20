@@ -114,6 +114,45 @@
         }
     }
 
+    // ===== AI MODEL SELECTOR DROPDOWN =====
+    .ai-model-selector-dropdown {
+        position: absolute;
+        bottom: -0.75rem;
+        right: 4rem; // Position to the left of submit button
+        z-index: 999;
+
+        // Import dropdown styles
+        .dropdown-menu-tag-pill-wrapper {
+            @include dropdownChipWrapperPosition((
+                position: relative
+            ));
+            @include dropdownChipStructure();
+            @include dropdownChipSubmenuPlacement();
+            @include tagPillDropdownDarkTheme();
+
+            // Hidden by default; shown when wrapper gets .dropdown-open via decoration
+            .dots-dropdown-menu {
+                .submenu-wrapper {
+                    display: none;
+                }
+            }
+        }
+    }
+
+    // When the plugin marks the thread as dropdown-open, reveal the submenu via CSS
+    &.dropdown-open {
+        .ai-model-selector-dropdown {
+            .dropdown-menu-tag-pill-wrapper {
+                .dots-dropdown-menu {
+                    .submenu-wrapper {
+                        display: block;
+                        animation: popOut 300ms cubic-bezier(0.19, 1, 0.22, 1);
+                    }
+                }
+            }
+        }
+    }
+
     // ===== AI SUBMIT BUTTON =====
     .ai-submit-button {
         position: absolute;

@@ -1,0 +1,26 @@
+/* Import animations and base dropdown styles */
+@import '../../../../sass/components/animations';
+@import '../../../../sass/components/tag-pill-dropdown';
+
+/* Dropdown Plugin Styles */
+.dropdown-open {
+    .submenu-wrapper {
+        animation: popOut 300ms cubic-bezier(0.19, 1, 0.22, 1);
+        animation-fill-mode: both;
+    }
+}
+
+.dropdown-menu-tag-pill-wrapper {
+    // Position wrapper only (no structural styles)  
+    @include dropdownChipWrapperPosition((
+        position: relative
+    ));
+
+    // Common structure + submenu placement
+    @include dropdownChipStructure();
+    @include dropdownChipSubmenuPlacement();
+
+    // Themes
+    &.theme-light { @include tagPillDropdownLightTheme(); }
+    &.theme-dark  { @include tagPillDropdownDarkTheme(); }
+}

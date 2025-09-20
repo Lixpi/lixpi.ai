@@ -1,7 +1,10 @@
 // @ts-nocheck
-import { keyboardMacCommandIcon, keyboardEnterKeyIcon, sendIcon, pauseIcon, chatThreadBoundariesInfoIcon, aiRobotFaceIcon } from '../../../../svgIcons/index.js'
-import { TextSelection, PluginKey } from 'prosemirror-state'
+import { keyboardMacCommandIcon, keyboardEnterKeyIcon, sendIcon, pauseIcon, chatThreadBoundariesInfoIcon, aiRobotFaceIcon, gptAvatarIcon, claudeIcon, chevronDownIcon } from '../../../../svgIcons/index.js'
+import { TextSelection } from 'prosemirror-state'
+import { AI_CHAT_THREAD_PLUGIN_KEY } from './aiChatThreadPluginKey.ts'
 import { html } from '../../components/domTemplates.ts'
+import { aiModelsStore } from '../../../../stores/aiModelsStore.js'
+import { documentStore } from '../../../../stores/documentStore.js'
 
 export const aiChatThreadNodeType = 'aiChatThread'
 
@@ -74,6 +77,9 @@ export const aiChatThreadNodeView = (node, view, getPos) => {
     const contentDOM = document.createElement('div')
     contentDOM.className = 'ai-chat-thread-content'
 
+    // Create AI model selector dropdown
+    const modelSelectorDropdown = createAiModelSelectorDropdown(view, node)
+
     // Create AI submit button
     const submitButton = createAiSubmitButton(view)
 
@@ -82,6 +88,7 @@ export const aiChatThreadNodeView = (node, view, getPos) => {
 
     // Append all elements
     dom.appendChild(contentDOM)
+    dom.appendChild(modelSelectorDropdown)
     dom.appendChild(submitButton)
     dom.appendChild(threadBoundaryIndicator)
 
@@ -91,8 +98,11 @@ export const aiChatThreadNodeView = (node, view, getPos) => {
     return {
         dom,
         contentDOM,
-        update: (updatedNode) => {
+        update: (updatedNode, decorations) => {
+            console.log('🔄 DEBUG: NodeView update called for thread', updatedNode.attrs.threadId)
+            
             if (updatedNode.type.name !== aiChatThreadNodeType) {
+                console.log('🔄 DEBUG: Wrong node type, returning false')
                 return false
             }
 
@@ -101,7 +111,36 @@ export const aiChatThreadNodeView = (node, view, getPos) => {
             dom.setAttribute('data-status', updatedNode.attrs.status)
 
             node = updatedNode
+            
+            // Apply decoration-driven classes (e.g., dropdown-open)
+            try {
+                let hasDropdownOpen = Array.isArray(decorations) && decorations.some(d => {
+                    const cls = d?.spec?.attrs?.class || ''
+                    return typeof cls === 'string' && cls.split(/\s+/).includes('dropdown-open')
+                })
+                // Fallback to bridged view state if decoration array doesn't include it
+                if (!hasDropdownOpen) {
+                    const viewStates = (view as any).__aiDropdownStates
+                    if (viewStates instanceof Map) {
+                        const open = viewStates.get(updatedNode.attrs.threadId)
+                        if (open === true) hasDropdownOpen = true
+                    }
+                }
+                dom.classList.toggle('dropdown-open', !!hasDropdownOpen)
+                console.log('🔄 DEBUG: hasDropdownOpen decoration:', !!hasDropdownOpen)
+            } catch (e) {
+                console.warn('⚠️ DEBUG: Failed to apply decoration classes in NodeView.update', e)
+            }
+
+            console.log('🔄 DEBUG: Wrapper classes (expect dropdown-open when open):', dom.className)
+            
             return true
+        },
+        destroy: () => {
+            // Clean up dropdown event listeners
+            if (modelSelectorDropdown && modelSelectorDropdown._cleanup) {
+                modelSelectorDropdown._cleanup()
+            }
         }
     }
 }
@@ -169,6 +208,207 @@ function createThreadInfoDropdown() {
     `
 }
 
+// Helper function to create AI model selector dropdown
+function createAiModelSelectorDropdown(view, node) {
+    const aiAvatarIcons = {
+        gptAvatarIcon,
+        claudeIcon,
+    }
+
+    // Get AI models from store
+    const aiModelsData = aiModelsStore.getData()
+    const currentAiModel = documentStore.getData('aiModel')
+
+    // Transform data to match dropdown format (same as Svelte component)
+    const aiModelsSelectorDropdownOptions = aiModelsData.map(aiModel => ({
+        title: aiModel.title,
+        icon: aiAvatarIcons[aiModel.iconName],
+        color: aiModel.color,
+        aiModel: `${aiModel.provider}:${aiModel.model}`,
+        onClick: (e, id) => {
+            console.log('AI Model Selected:', {provider: aiModel.provider, model: aiModel.model})
+            // Update document store with new AI model
+            documentStore.setDataValues({
+                aiModel: `${aiModel.provider}:${aiModel.model}`
+            })
+            documentStore.setMetaValues({
+                requiresSave: true
+            })
+        }
+    }))
+
+    // Find selected value
+    const selectedValue = aiModelsSelectorDropdownOptions.find(model => model.aiModel === currentAiModel)
+
+    // State management for dropdown - use plugin state
+    let submenuRef = null
+    
+    // Get dropdown state from plugin
+    const getDropdownState = () => {
+        const pluginState = AI_CHAT_THREAD_PLUGIN_KEY.getState(view.state)
+        if (pluginState && typeof pluginState === 'object' && pluginState.dropdownStates instanceof Map) {
+            const currentState = pluginState.dropdownStates.get(node.attrs.threadId)
+            return currentState || false
+        }
+        const viewDropdownStates = (view as any).__aiDropdownStates
+        if (viewDropdownStates instanceof Map) {
+            const fallbackState = viewDropdownStates.get(node.attrs.threadId)
+            return fallbackState || false
+        }
+        return false
+    }
+
+    // Handle toggle dropdown
+    const toggleSubmenuHandler = (e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        
+        console.log('🖱️ DEBUG: Dropdown toggle clicked for thread', node.attrs.threadId)
+        console.log('🖱️ DEBUG: Current view.state:', view.state)
+        console.log('🖱️ DEBUG: Creating transaction...')
+        
+        // Toggle via plugin transaction
+        const tr = view.state.tr.setMeta('toggleDropdown', {
+            threadId: node.attrs.threadId
+        })
+        
+        console.log('🖱️ DEBUG: Transaction created:', tr)
+        console.log('🖱️ DEBUG: Transaction meta:', tr.getMeta('toggleDropdown'))
+        console.log('🖱️ DEBUG: Dispatching transaction...')
+        
+        view.dispatch(tr)
+        
+        console.log('🖱️ DEBUG: Transaction dispatched')
+    }
+
+    // Handle option click
+    const onClickHandler = (e, onClick) => {
+        e.preventDefault()
+        e.stopPropagation()
+        
+        // Close the dropdown via plugin transaction
+        const tr = view.state.tr.setMeta('toggleDropdown', {
+            threadId: node.attrs.threadId,
+            isOpen: false
+        })
+        view.dispatch(tr)
+        
+        // Execute the option click handler if provided
+        if (onClick && typeof onClick === 'function') {
+            onClick(e)
+        }
+    }
+
+    // Handle window click to close dropdown
+    const handleWindowClick = (e) => {
+        if (submenuRef && !e.composedPath().includes(submenuRef)) {
+            // Close the dropdown via plugin transaction
+            const tr = view.state.tr.setMeta('toggleDropdown', {
+                threadId: node.attrs.threadId,
+                isOpen: false
+            })
+            view.dispatch(tr)
+        }
+    }    // Inject fill color utility
+    const injectFillColor = (svg, color) => {
+        if (!svg || !color) {
+            return svg || ''
+        }
+        return svg.replace(/<svg([\s\S]*?)>/, `<svg$1 style="fill: ${color}">`)
+    }
+
+    // Create the dropdown structure using html templates
+    const dropdownDOM = html`
+        <div className="ai-model-selector-dropdown">
+            <div className="dropdown-menu-tag-pill-wrapper theme-dark">
+                <span className="dots-dropdown-menu" onclick=${(e) => e.stopPropagation()}>
+                    <button 
+                        className="flex justify-between items-center"
+                        onclick=${toggleSubmenuHandler}
+                    >
+                        <span className="selected-option-icon flex items-center">
+                            ${selectedValue?.icon ? html`<span innerHTML=${injectFillColor(selectedValue.icon, selectedValue.color)}></span>` : ''}
+                        </span>
+                        <span className="title">${selectedValue?.title || ''}</span>
+                        <span className="state-indicator flex items-center">
+                            <span innerHTML=${chevronDownIcon}></span>
+                        </span>
+                    </button>
+                    <nav className="submenu-wrapper render-position-bottom">
+                        <ul className="submenu">
+                            ${aiModelsSelectorDropdownOptions.map(option => html`
+                                <li 
+                                    className="flex justify-start items-center"
+                                    onclick=${(e) => onClickHandler(e, option.onClick)}
+                                >
+                                    ${option.icon ? html`<span innerHTML=${injectFillColor(option.icon, option.color)}></span>` : ''}
+                                    ${option.title}
+                                </li>
+                            `)}
+                        </ul>
+                    </nav>
+                </span>
+            </div>
+        </div>
+    `
+
+    // Set up refs and event listeners
+    submenuRef = dropdownDOM
+    document.addEventListener('click', handleWindowClick)
+
+    // DOM refs for live updates when store changes
+    const titleEl = dropdownDOM.querySelector('.dots-dropdown-menu button .title')
+    const iconHost = dropdownDOM.querySelector('.dots-dropdown-menu button .selected-option-icon')
+
+    const renderSelected = (aiModelStr) => {
+        try {
+            let opt = aiModelsSelectorDropdownOptions.find(m => m.aiModel === aiModelStr)
+            if (!opt) {
+                const models = aiModelsStore.getData()
+                const mapOpt = models.map(m => {
+                    const provider = m.provider
+                    const modelId = m.model || m.modelName
+                    return {
+                        title: m.title || `${provider} ${modelId || ''}`.trim(),
+                        icon: aiAvatarIcons[m.iconName],
+                        color: m.color,
+                        aiModel: `${provider}:${modelId}`,
+                    }
+                })
+                opt = mapOpt.find(m => m.aiModel === aiModelStr)
+            }
+            if (titleEl) titleEl.textContent = opt?.title || ''
+            if (iconHost) {
+                iconHost.innerHTML = ''
+                if (opt?.icon) {
+                    const span = document.createElement('span')
+                    span.innerHTML = injectFillColor(opt.icon, opt.color)
+                    iconHost.appendChild(span)
+                }
+            }
+        } catch (e) {
+            console.warn('⚠️ DEBUG: Failed to render selected AI model in NodeView', e)
+        }
+    }
+
+    // Subscribe to documentStore so PM dropdown reflects selection changes
+    const unsubscribeDoc = documentStore.subscribe((store) => {
+        const aiModelStr = store?.data?.aiModel
+        renderSelected(aiModelStr)
+    })
+
+    // Ensure initial selected value is in sync as well
+    renderSelected(currentAiModel)
+
+    // Clean up function (will need to be called when NodeView is destroyed)
+    dropdownDOM._cleanup = () => {
+        document.removeEventListener('click', handleWindowClick)
+        if (typeof unsubscribeDoc === 'function') unsubscribeDoc()
+    }
+
+    return dropdownDOM
+}
+
 // Helper function to create AI submit button
 function createAiSubmitButton(view) {
     // Cache the click handler to avoid recreation
@@ -176,9 +416,8 @@ function createAiSubmitButton(view) {
         e.preventDefault()
         e.stopPropagation()
 
-        // Get plugin state to check if receiving
-        const pluginKey = new PluginKey('aiChatThread')
-        const pluginState = pluginKey.getState(view.state)
+    // Get plugin state to check if receiving
+    const pluginState = AI_CHAT_THREAD_PLUGIN_KEY.getState(view.state)
 
         console.log('🖱️ BUTTON CLICKED: pluginState.isReceiving =', pluginState?.isReceiving)
 
