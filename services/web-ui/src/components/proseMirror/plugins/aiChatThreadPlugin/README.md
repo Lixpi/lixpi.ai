@@ -2,6 +2,8 @@
 
 Adds ChatGPT-style conversations directly inside ProseMirror documents. Users can type messages, hit Cmd+Enter (or Ctrl+Enter on Windows), and get AI responses streamed back in real-time.
 
+This README reflects the current implementation, including the ProseMirror-native AI model selector dropdown that uses plugin state + decorations.
+
 ## What it does
 
 This plugin lets you embed chat threads anywhere in a document. Each thread can contain:
@@ -64,11 +66,13 @@ graph TD
 ```
 
 **Key Design Principles:**
-- **Self-contained nodes:** Each node type exports both spec AND NodeView (handles boundary indicator and focus)
+- **Self-contained nodes:** Each node type exports both spec AND NodeView (handles boundary indicator, focus, and per-thread dropdown UI)
 - **Declarative UI:** All DOM creation uses `html` template literals instead of verbose `createElement` chains
 - **Shared utilities:** `domTemplates.ts` provides consistent DOM building across all ProseMirror components
 - **Performance-focused:** htm/mini gives zero-runtime overhead with direct DOM element creation
-- **Clean separation:** Plugin orchestrates business logic while NodeViews handle UI via templates### Plugin State Machine
+- **Clean separation:** Plugin orchestrates business logic while NodeViews handle UI via templates
+
+### Plugin State Machine
 
 ```mermaid
 stateDiagram-v2
@@ -159,6 +163,14 @@ const button = html`
   </div>
 `
 ```
+
+### AI Model Selector Dropdown (current)
+
+- Visibility is controlled by plugin decorations applying `dropdown-open` to the thread wrapper element.
+- The NodeView dispatches intent via `view.state.tr.setMeta('toggleDropdown', { threadId, isOpen? })` on click.
+- Plugin state holds `dropdownStates: Map<string, boolean>` keyed by `threadId` and drives decorations in `props.decorations`.
+- NodeView.update reads its `decorations` argument and toggles the wrapper class accordingly. No inline style toggling.
+- The selected model label/icon is kept in sync with the Svelte `documentStore` via a subscription; NodeView updates DOM refs directly and unsubscribes in `destroy()`.
 
 ## Quick setup
 
@@ -293,9 +305,12 @@ Users see:
 - `aiChatThreadNode.ts` - Thread container node (self-contained):
   - Exports node schema AND its NodeView implementation
   - Uses `html` template literals for clean UI creation
-  - Creates keyboard hints, boundary indicator, submit button
+  - Creates boundary indicator, AI model selector dropdown, submit button
   - Handles hover events and focus management
   - Manages content focus
+  - Subscribes to `documentStore` to mirror selected AI model label/icon in the dropdown button
+  - Reads decoration classes in `update()` to toggle `dropdown-open` on wrapper
+  - Cleans up listeners and subscriptions in `destroy()`
 
 - `aiResponseMessageNode.ts` - AI response node (self-contained):
   - Exports node schema AND its NodeView implementation
@@ -308,8 +323,10 @@ Users see:
   - Plugin state and lifecycle management
   - Content extraction and message conversion
   - Streaming event handling and DOM insertion
-  - Decoration system (placeholders, keyboard feedback, boundaries)
+  - Decoration system (placeholders, boundaries, dropdown-open)
   - No UI rendering - delegates to node-specific NodeViews
+
+- `aiChatThreadPluginKey.ts` - Shared `PluginKey` to avoid identity mismatch and circular imports between NodeView and plugin. Import this key in both places and call `AI_CHAT_THREAD_PLUGIN_KEY.getState(view.state)` when needed.
 
 - `../../components/domTemplates.ts` - **NEW** Shared DOM template utilities:
   - TypeScript class-based `DOMTemplateBuilder` with proper typing
@@ -487,7 +504,7 @@ const responseMessageContent = parentWrapper.querySelector('.ai-response-message
 
 ## Decoration System
 
-The plugin applies three independent decoration layers:
+The plugin applies multiple independent decoration layers:
 
 ### 1. Placeholder Decorations
 ```typescript
@@ -516,6 +533,17 @@ if (node.type.name === 'aiChatThread' &&
   decorations.push(Decoration.node(pos, pos + node.nodeSize, {
     class: 'thread-boundary-visible'
   }))
+}
+```
+
+### 3. Dropdown Open Decorations
+```typescript
+// Applies open class per thread based on plugin state's dropdownStates Map
+if (node.type.name === 'aiChatThread') {
+  const isOpen = pluginState.dropdownStates?.get(node.attrs.threadId) === true
+  if (isOpen) {
+    decorations.push(Decoration.node(pos, pos + node.nodeSize, { class: 'dropdown-open' }))
+  }
 }
 ```
 
@@ -615,6 +643,7 @@ setInterval(() => {
 - **Multiple concurrent streams** - Response targeting needs scoping
 - **Retry failed streams** - No error handling for failed segments
 - **Stream resume** - No persistence if browser refreshes mid-stream
+- **Single-open policy for multiple dropdowns** - Optional: in `state.apply`, when opening a dropdown, close other entries in the `dropdownStates` Map.
 
 <!-- Removed noisy change logs. This README stays focused on how to use the plugin, not its history. -->
 
@@ -653,6 +682,12 @@ const myNodeView = html`
 ```
 
 The styling system uses SCSS variables like `$steelBlue` and `$redPink`. Check `ProseMirrorMixings.scss` for the full list.
+
+## Operational notes for future contributors
+
+- The dropdown must not keep open/closed state in the NodeView. It will be lost across updates. Always use plugin state + decorations.
+- Never import the plugin module inside NodeViews; import only the shared `PluginKey` from `aiChatThreadPluginKey.ts` and read state via `getState(view.state)`.
+- When subscribing to external stores (Svelte), keep references to DOM nodes and update textContent/innerHTML. Unsubscribe in `destroy()` and remove global listeners like `document.click`.
 
 ## Debug mode
 
