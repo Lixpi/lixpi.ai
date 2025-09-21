@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { html } from '../../components/domTemplates.ts'
+import { html } from '../../../components/domTemplates.ts'
 import { chevronDownIcon } from '../../../../../svgIcons/index.js'
 
 export const dropdownNodeType = 'dropdown'
@@ -9,24 +9,30 @@ export const dropdownNodeView = (node, view, getPos) => {
         id,
         selectedValue = {},
         dropdownOptions = [],
-        theme = 'light',
+        theme = 'dark',
         renderPosition = 'bottom',
         buttonIcon = chevronDownIcon
     } = node.attrs
 
     let submenuRef = null
+    let dom = null
 
     // Handle toggle dropdown
     const toggleSubmenuHandler = (e, dropdownId) => {
+        console.log('🖱️ DROPDOWN DEBUG: Toggle clicked', { dropdownId, id })
         e.preventDefault()
         e.stopPropagation()
         
+        console.log('🖱️ DROPDOWN DEBUG: Creating transaction with toggleDropdown meta')
         const tr = view.state.tr.setMeta('toggleDropdown', { id: dropdownId })
+        console.log('🖱️ DROPDOWN DEBUG: Transaction meta:', tr.getMeta('toggleDropdown'))
+        console.log('🖱️ DROPDOWN DEBUG: Dispatching transaction...')
         view.dispatch(tr)
+        console.log('🖱️ DROPDOWN DEBUG: Transaction dispatched')
     }
 
     // Handle option click
-    const onClickHandler = (e, dropdownId, onClick) => {
+    const onClickHandler = (e, dropdownId, option) => {
         e.preventDefault()
         e.stopPropagation()
         
@@ -35,8 +41,8 @@ export const dropdownNodeView = (node, view, getPos) => {
         view.dispatch(tr)
         
         // Execute the option click handler if provided
-        if (onClick && typeof onClick === 'function') {
-            onClick(e, dropdownId)
+        if (option?.onClick && typeof option.onClick === 'function') {
+            option.onClick(e, dropdownId)
         }
     }
 
@@ -58,35 +64,60 @@ export const dropdownNodeView = (node, view, getPos) => {
 
     // Check if dropdown is open from decorations
     const isOpen = () => {
+        console.log('🔍 DROPDOWN DEBUG: Checking if open for id:', id)
         const pluginKey = view.state.plugins.find(p => p.key && p.key.key === 'dropdown')?.key
-        if (!pluginKey) return false
+        console.log('🔍 DROPDOWN DEBUG: Found dropdown plugin key:', !!pluginKey)
+        if (!pluginKey) {
+            console.log('🔍 DROPDOWN DEBUG: No dropdown plugin found!')
+            return false
+        }
         
         const pluginState = pluginKey.getState(view.state)
-        return pluginState?.openDropdownId === id
+        console.log('🔍 DROPDOWN DEBUG: Plugin state:', pluginState)
+        const isOpenResult = pluginState?.openDropdownId === id
+        console.log('🔍 DROPDOWN DEBUG: Is open result:', isOpenResult, 'openDropdownId:', pluginState?.openDropdownId, 'comparing with id:', id)
+        return isOpenResult
     }
 
-    // Create the dropdown structure using html templates
+    // Create the dropdown structure using html templates - ALL RENDERING LOGIC HERE
     const createDropdownDOM = () => {
         const dropdownDOM = html`
-            <div class="dropdown-menu-tag-pill-wrapper theme-${theme}">
-                <span 
-                    class="dots-dropdown-menu ${isOpen() ? 'is-active' : ''}"
-                    onclick=${(e) => e.stopPropagation()}
-                >
-                    <button 
-                        class="flex justify-between items-center"
-                        onclick=${(e) => toggleSubmenuHandler(e, id)}
+            <div class="ai-model-selector-dropdown">
+                <div class="dropdown-menu-tag-pill-wrapper theme-${theme}">
+                    <span 
+                        class="dots-dropdown-menu"
+                        onclick=${(e) => e.stopPropagation()}
                     >
-                        <span class="selected-option-icon flex items-center">
-                            ${injectFillColor(selectedValue?.icon, selectedValue?.color)}
-                        </span>
-                        <span class="title">${selectedValue?.title || ''}</span>
-                        <span class="state-indicator flex items-center">
-                            ${buttonIcon}
-                        </span>
-                    </button>
-                    ${createSubmenu()}
-                </span>
+                        <button 
+                            class="flex justify-between items-center"
+                            onclick=${(e) => {
+                                console.log('🖱️ DROPDOWN DEBUG: Button clicked for dropdown id:', id)
+                                toggleSubmenuHandler(e, id)
+                            }}
+                        >
+                            <span class="selected-option-icon flex items-center">
+                                ${selectedValue?.icon ? html`<span innerHTML=${injectFillColor(selectedValue.icon, selectedValue.color)}></span>` : ''}
+                            </span>
+                            <span class="title">${selectedValue?.title || ''}</span>
+                            <span class="state-indicator flex items-center">
+                                <span innerHTML=${buttonIcon}></span>
+                            </span>
+                        </button>
+                        <nav class="submenu-wrapper render-position-${renderPosition}">
+                            <ul class="submenu">
+                                ${dropdownOptions.map(option => html`
+                                    <li 
+                                        class="flex justify-start items-center"
+                                        onclick=${(e) => onClickHandler(e, id, option)}
+                                    >
+                                        ${option.icon ? html`<span innerHTML=${injectFillColor(option.icon, option.color)}></span>` : ''}
+                                        ${option.title}
+                                    </li>
+                                `)}
+                            </ul>
+                        </nav>
+                    </span>
+                </div>
             </div>
         `
 
@@ -96,63 +127,54 @@ export const dropdownNodeView = (node, view, getPos) => {
         return dropdownDOM
     }
 
-    // Create submenu structure
-    const createSubmenu = () => {
-        if (!isOpen() || dropdownOptions.length === 0) {
-            return ''
-        }
-
-        const hasHeader = dropdownOptions.some(o => o.type === 'header')
-
-        return html`
-            <nav class="submenu-wrapper render-position-${renderPosition}">
-                <ul class="submenu ${hasHeader ? 'with-header' : ''}">
-                    ${dropdownOptions.map(option => createOption(option)).join('')}
-                </ul>
-            </nav>
-        `
-    }
-
-    // Create individual option
-    const createOption = (option) => {
-        if (option.type === 'header') {
-            return html`
-                <li class="flex justify-start items-center" data-type="header">
-                    ${option.icon ? option.icon : ''}
-                    <span class="header-text">
-                        <span class="header-title">${option.title}</span>
-                        ${option.meta ? `<span class="header-meta">${option.meta}</span>` : ''}
-                    </span>
-                </li>
-            `
-        } else {
-            return html`
-                <li 
-                    class="flex justify-start items-center"
-                    onclick=${(e) => onClickHandler(e, id, option.onClick)}
-                >
-                    ${option.icon ? option.icon : ''}
-                    ${option.title}
-                </li>
-            `
-        }
-    }
-
-    const dom = createDropdownDOM()
+    // Initial DOM creation
+    dom = createDropdownDOM()
 
     // Add window click listener
     document.addEventListener('click', handleWindowClick)
 
     return {
         dom,
-        update: (updatedNode) => {
+        update: (updatedNode, decorations) => {
+            console.log('🔄 DROPDOWN DEBUG: Update called for dropdown id:', id)
+            console.log('🔄 DROPDOWN DEBUG: UpdatedNode type:', updatedNode?.type?.name)
+            console.log('🔄 DROPDOWN DEBUG: Decorations:', decorations)
+            
             if (updatedNode.type.name !== dropdownNodeType) {
+                console.log('🔄 DROPDOWN DEBUG: Wrong node type, returning false')
                 return false
             }
 
-            // Update the DOM if state changed
-            const newDOM = createDropdownDOM()
-            dom.replaceWith(newDOM)
+            // Check if dropdown is open from decorations
+            let hasDropdownOpen = Array.isArray(decorations) && decorations.some(d => {
+                // For Decoration.node(), class is in d.type.attrs.class
+                const cls = d?.type?.attrs?.class || d?.spec?.attrs?.class || ''
+                const hasClass = typeof cls === 'string' && cls.split(/\s+/).includes('dropdown-open')
+                console.log('🔄 DROPDOWN DEBUG: Decoration class:', cls, 'has dropdown-open:', hasClass)
+                console.log('🔄 DROPDOWN DEBUG: Decoration structure:', {
+                    type: d?.type,
+                    spec: d?.spec,
+                    attrs: d?.type?.attrs || d?.spec?.attrs
+                })
+                return hasClass
+            })
+            
+            console.log('🔄 DROPDOWN DEBUG: hasDropdownOpen from decorations:', hasDropdownOpen)
+
+            // Toggle submenu visibility based on decoration state
+            const submenuWrapper = dom.querySelector('.submenu-wrapper')
+            console.log('🔄 DROPDOWN DEBUG: submenuWrapper found:', !!submenuWrapper)
+            if (submenuWrapper) {
+                submenuWrapper.style.display = hasDropdownOpen ? 'block' : 'none'
+                console.log('🔄 DROPDOWN DEBUG: Set submenu display to:', hasDropdownOpen ? 'block' : 'none')
+            }
+
+            // Update wrapper class for CSS animations
+            dom.classList.toggle('dropdown-open', !!hasDropdownOpen)
+            console.log('🔄 DROPDOWN DEBUG: Updated DOM classes:', dom.className)
+
+            // Update node reference
+            node = updatedNode
             
             return true
         },

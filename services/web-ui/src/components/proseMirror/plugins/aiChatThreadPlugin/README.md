@@ -166,11 +166,10 @@ const button = html`
 
 ### AI Model Selector Dropdown (current)
 
-- Visibility is controlled by plugin decorations applying `dropdown-open` to the thread wrapper element.
-- The NodeView dispatches intent via `view.state.tr.setMeta('toggleDropdown', { threadId, isOpen? })` on click.
-- Plugin state holds `dropdownStates: Map<string, boolean>` keyed by `threadId` and drives decorations in `props.decorations`.
-- NodeView.update reads its `decorations` argument and toggles the wrapper class accordingly. No inline style toggling.
-- The selected model label/icon is kept in sync with the Svelte `documentStore` via a subscription; NodeView updates DOM refs directly and unsubscribes in `destroy()`.
+- **Uses the dropdown primitive component**: ALL rendering, layout, and state management is handled by `services/web-ui/src/components/proseMirror/plugins/primitives/dropdown`.
+- `createAiModelSelectorDropdown()` only transforms data and passes it to the dropdown primitive - no DOM creation or event handling.
+- The primitive component manages its own open/close state via decorations and handles all click events internally.
+- The selected model label/icon sync is handled via subscription to `documentStore` with proper cleanup.
 
 ## Quick setup
 
@@ -305,12 +304,10 @@ Users see:
 - `aiChatThreadNode.ts` - Thread container node (self-contained):
   - Exports node schema AND its NodeView implementation
   - Uses `html` template literals for clean UI creation
-  - Creates boundary indicator, AI model selector dropdown, submit button
-  - Handles hover events and focus management
-  - Manages content focus
-  - Subscribes to `documentStore` to mirror selected AI model label/icon in the dropdown button
-  - Reads decoration classes in `update()` to toggle `dropdown-open` on wrapper
-  - Cleans up listeners and subscriptions in `destroy()`
+  - Creates boundary indicator, submit button, and **delegates dropdown to primitive component**
+  - `createAiModelSelectorDropdown()` transforms data and passes it to `services/web-ui/src/components/proseMirror/plugins/primitives/dropdown`
+  - No dropdown DOM creation or event handling - all handled by the primitive
+  - Handles hover events and focus management for non-dropdown elements
 
 - `aiResponseMessageNode.ts` - AI response node (self-contained):
   - Exports node schema AND its NodeView implementation
@@ -323,10 +320,16 @@ Users see:
   - Plugin state and lifecycle management
   - Content extraction and message conversion
   - Streaming event handling and DOM insertion
-  - Decoration system (placeholders, boundaries, dropdown-open)
-  - No UI rendering - delegates to node-specific NodeViews
+  - Decoration system (placeholders, boundaries) - **dropdown decorations removed, now handled by primitive**
+  - No UI rendering - delegates to node-specific NodeViews and primitive components
 
 - `aiChatThreadPluginKey.ts` - Shared `PluginKey` to avoid identity mismatch and circular imports between NodeView and plugin. Import this key in both places and call `AI_CHAT_THREAD_PLUGIN_KEY.getState(view.state)` when needed.
+
+- `../primitives/dropdown/` - **NEW** Dropdown primitive component:
+  - Handles ALL dropdown rendering, layout, state management, and decorations
+  - `dropdownPlugin.ts` - Plugin state and decoration system for dropdown open/close
+  - `dropdownNode.ts` - NodeView with complete dropdown UI implementation
+  - Used by aiChatThreadNode for the AI model selector - no dropdown code in aiChatThreadNode itself
 
 - `../../components/domTemplates.ts` - **NEW** Shared DOM template utilities:
   - TypeScript class-based `DOMTemplateBuilder` with proper typing
@@ -537,15 +540,7 @@ if (node.type.name === 'aiChatThread' &&
 ```
 
 ### 3. Dropdown Open Decorations
-```typescript
-// Applies open class per thread based on plugin state's dropdownStates Map
-if (node.type.name === 'aiChatThread') {
-  const isOpen = pluginState.dropdownStates?.get(node.attrs.threadId) === true
-  if (isOpen) {
-    decorations.push(Decoration.node(pos, pos + node.nodeSize, { class: 'dropdown-open' }))
-  }
-}
-```
+**Note:** Dropdown decorations are now handled by the dropdown primitive plugin (`services/web-ui/src/components/proseMirror/plugins/primitives/dropdown/dropdownPlugin.ts`), not by aiChatThreadPlugin.
 
 ## Styling hooks (short version)
 
@@ -685,7 +680,8 @@ The styling system uses SCSS variables like `$steelBlue` and `$redPink`. Check `
 
 ## Operational notes for future contributors
 
-- The dropdown must not keep open/closed state in the NodeView. It will be lost across updates. Always use plugin state + decorations.
+- **Dropdown rendering**: All dropdown UI, state, and events are handled by the dropdown primitive component in `services/web-ui/src/components/proseMirror/plugins/primitives/dropdown/`. Do NOT put dropdown layout/rendering logic in aiChatThreadNode.
+- The dropdown primitive follows the plugin state + decorations pattern. Never store UI state in NodeViews.
 - Never import the plugin module inside NodeViews; import only the shared `PluginKey` from `aiChatThreadPluginKey.ts` and read state via `getState(view.state)`.
 - When subscribing to external stores (Svelte), keep references to DOM nodes and update textContent/innerHTML. Unsubscribe in `destroy()` and remove global listeners like `document.click`.
 

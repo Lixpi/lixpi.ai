@@ -26,6 +26,7 @@ import {
     aiResponseMessageNodeType,
     aiResponseMessageNodeSpec
 } from '../plugins/aiChatThreadPlugin'
+import { createDropdownPlugin, dropdownNodeSpec } from '../plugins/primitives/dropdown/dropdownPlugin.js'
 import { createCodeBlockPlugin, codeBlockInputRule } from '../plugins/codeBlockPlugin.js'
 import { activeNodePlugin } from "../plugins/activeNodePlugin"
 
@@ -86,7 +87,8 @@ export class ProseMirrorEditor {
         const allNodes = {
             ...customNodes,
             [aiChatThreadNodeType]: aiChatThreadNodeSpec,
-            [aiResponseMessageNodeType]: aiResponseMessageNodeSpec
+            [aiResponseMessageNodeType]: aiResponseMessageNodeSpec,
+            dropdown: dropdownNodeSpec
         }
 
         return new Schema({
@@ -107,6 +109,7 @@ export class ProseMirrorEditor {
             gapCursor(),
             history(),
             // createSvelteComponentRendererPlugin(TaskRow, 'taskRow', defautSubtaskAttrs),
+            createDropdownPlugin(),
             createAiChatThreadPlugin(val => this.onAiChatSubmit(val), {titlePlaceholder: 'New document', paragraphPlaceholder: 'Type something and hit Cmd+Enter on Mac or Ctrl+Enter on PC to send it to AI.\n'}),
             createAiUserInputPlugin(val => {}),
             // lockCursorPositionPlugin()
