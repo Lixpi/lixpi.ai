@@ -101,7 +101,7 @@ export const aiChatThreadNodeView = (node, view, getPos) => {
         contentDOM,
         update: (updatedNode, decorations) => {
             console.log('🔄 DEBUG: NodeView update called for thread', updatedNode.attrs.threadId)
-            
+
             if (updatedNode.type.name !== aiChatThreadNodeType) {
                 console.log('🔄 DEBUG: Wrong node type, returning false')
                 return false
@@ -112,12 +112,12 @@ export const aiChatThreadNodeView = (node, view, getPos) => {
             dom.setAttribute('data-status', updatedNode.attrs.status)
 
             node = updatedNode
-            
+
             // Note: Dropdown open/close state is now handled by the dropdown primitive's own decorations
             // The aiChatThreadNode just needs to translate threadId-based events to dropdown-primitive events
 
             console.log('🔄 DEBUG: Wrapper classes (expect dropdown-open when open):', dom.className)
-            
+
             return true
         },
         destroy: () => {
@@ -195,13 +195,13 @@ function createThreadInfoDropdown() {
 // Helper function to create AI model selector dropdown using the dropdown primitive
 function createAiModelSelectorDropdown(view, node, getPos) {
     const dropdownId = `ai-model-dropdown-${node.attrs.threadId}`
-    
+
     // Check if dropdown already exists in this thread to prevent duplicates
     const pos = getPos()
     const threadStart = pos
     const threadEnd = pos + node.nodeSize
     let dropdownExists = false
-    
+
     view.state.doc.nodesBetween(threadStart, threadEnd, (childNode, childPos) => {
         if (childNode.type.name === 'dropdown' && childNode.attrs.id === dropdownId) {
             dropdownExists = true
@@ -209,13 +209,13 @@ function createAiModelSelectorDropdown(view, node, getPos) {
             return false // Stop iteration
         }
     })
-    
+
     if (dropdownExists) {
         return { _cleanup: () => {} }
     }
-    
+
     console.log('🔍 DROPDOWN DEBUG: Creating new dropdown for thread', node.attrs.threadId)
-    
+
     const aiAvatarIcons = {
         gptAvatarIcon,
         claudeIcon,
@@ -245,15 +245,15 @@ function createAiModelSelectorDropdown(view, node, getPos) {
 
     // Find selected value
     const selectedValue = aiModelsSelectorDropdownOptions.find(model => model.aiModel === currentAiModel) || {}
-    
+
     // Insert dropdown at the beginning of the thread content (after thread wrapper, before first paragraph)
     const insertPos = pos + 1 // Insert after opening of aiChatThread node
-    
+
     if (!view.state.schema.nodes.dropdown) {
         console.error('❌ SCHEMA ERROR: dropdown node not found in schema')
         return { _cleanup: () => {} }
     }
-    
+
     try {
         const dropdownNode = view.state.schema.nodes.dropdown.create({
             id: dropdownId,
@@ -263,9 +263,9 @@ function createAiModelSelectorDropdown(view, node, getPos) {
             renderPosition: 'bottom',
             buttonIcon: chevronDownIcon
         })
-        
+
         console.log('🔍 DROPDOWN DEBUG: Inserting dropdown at position:', insertPos)
-        
+
         // Insert the dropdown node into the document
         const tr = view.state.tr.insert(insertPos, dropdownNode)
         view.dispatch(tr)
@@ -274,26 +274,26 @@ function createAiModelSelectorDropdown(view, node, getPos) {
         console.error('❌ DROPDOWN ERROR: Failed to create/insert dropdown node:', error)
         return { _cleanup: () => {} }
     }
-    
+
     console.log('✅ DROPDOWN DEBUG: Inserted dropdown node at pos', pos, 'with id', dropdownId)
-    
+
     // Subscribe to documentStore to update the dropdown when selection changes
     let currentSelectedValue = selectedValue
     const unsubscribeDoc = documentStore.subscribe((store) => {
         const aiModelStr = store?.data?.aiModel
         const newSelected = aiModelsSelectorDropdownOptions.find(model => model.aiModel === aiModelStr) || {}
-        
+
         if (newSelected.aiModel !== currentSelectedValue.aiModel) {
             currentSelectedValue = newSelected
             console.log('🔄 DROPDOWN DEBUG: Updating dropdown with new selection', newSelected.title)
-            
+
             // Find the dropdown node in the document and update it
             const currentPos = getPos()
             if (currentPos !== undefined) {
                 const dropdownPos = currentPos + node.nodeSize - 1
                 const doc = view.state.doc
                 const dropdownNode = doc.nodeAt(dropdownPos)
-                
+
                 if (dropdownNode && dropdownNode.type.name === 'dropdown' && dropdownNode.attrs.id === dropdownId) {
                     const updatedAttrs = {
                         ...dropdownNode.attrs,

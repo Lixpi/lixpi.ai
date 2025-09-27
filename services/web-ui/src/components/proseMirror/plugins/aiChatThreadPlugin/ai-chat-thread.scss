@@ -116,7 +116,8 @@
     }
 
     // ===== AI MODEL SELECTOR DROPDOWN =====
-    .ai-model-selector-dropdown {
+    // Target dropdown nodes within this aiChatThread for positioning
+    .dropdown-menu-tag-pill-wrapper {
         position: absolute;
         bottom: -0.75rem;
         right: 4rem; // Position to the left of submit button

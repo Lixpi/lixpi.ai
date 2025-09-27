@@ -53,13 +53,13 @@ class DropdownPlugin {
     createPlugin(): Plugin<DropdownPluginState> {
         return new Plugin<DropdownPluginState>({
             key: this.key,
-            
+
             state: {
                 init: () => ({
                     decorations: DecorationSet.empty,
                     openDropdownId: null
                 }),
-                
+
                 apply: (tr: Transaction, pluginState: DropdownPluginState) => {
                     console.log('🔧 DROPDOWN PLUGIN DEBUG: apply() called')
                     console.log('🔧 DROPDOWN PLUGIN DEBUG: Current pluginState:', pluginState)
@@ -78,7 +78,7 @@ class DropdownPlugin {
                         openDropdownId = newOpenId
                     }
 
-                    // Handle close dropdown metadata  
+                    // Handle close dropdown metadata
                     const closeDropdown = tr.getMeta('closeDropdown')
                     console.log('🔧 DROPDOWN PLUGIN DEBUG: closeDropdown meta:', closeDropdown)
                     if (closeDropdown) {
@@ -105,7 +105,7 @@ class DropdownPlugin {
                     const pluginState = this.key.getState(state)
                     return pluginState?.decorations
                 },
-                
+
                 nodeViews: {
                     [dropdownNodeType]: dropdownNodeView
                 }

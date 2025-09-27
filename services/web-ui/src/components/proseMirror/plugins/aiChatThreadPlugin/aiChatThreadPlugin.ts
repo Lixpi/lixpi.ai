@@ -677,9 +677,9 @@ class AiChatThreadPluginClass {
 
             view: (view: EditorView) => {
                 this.startStreaming(view)
-                
+
                 // Note: Dropdown state bridging removed - now handled by dropdown primitive plugin
-                
+
                 return {
                     destroy: () => {
                         if (this.unsubscribeFromSegments) {
