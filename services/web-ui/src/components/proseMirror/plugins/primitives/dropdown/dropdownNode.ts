@@ -14,6 +14,10 @@ export const dropdownNodeView = (node, view, getPos) => {
         buttonIcon = chevronDownIcon
     } = node.attrs
 
+    console.log('🔧 DROPDOWN NODE DEBUG: Creating dropdown view with options:', dropdownOptions)
+    console.log('🔧 DROPDOWN NODE DEBUG: First option details:', dropdownOptions[0])
+    console.log('🔧 DROPDOWN NODE DEBUG: Node attrs:', node.attrs)
+
     let submenuRef = null
     let dom = null
 
@@ -33,15 +37,60 @@ export const dropdownNodeView = (node, view, getPos) => {
 
     // Handle option click
     const onClickHandler = (e, dropdownId, option) => {
+        console.log('🎯 DROPDOWN DEBUG: Option clicked!', { dropdownId, optionTitle: option?.title, optionId: option?.id, fullOption: option })
         e.preventDefault()
         e.stopPropagation()
 
-        // Close the dropdown
-        const tr = view.state.tr.setMeta('closeDropdown', true)
-        view.dispatch(tr)
+        const pos = getPos()
+        console.log('🎯 DROPDOWN DEBUG: getPos() returned', pos)
 
-        // Execute the option click handler if provided
+        // Build base transaction
+        let tr = view.state.tr
+
+        // Attach selection meta first
+        if (option) {
+            const selectionMeta = { dropdownId, option, nodePos: pos }
+            tr = tr.setMeta('dropdownOptionSelected', selectionMeta)
+            console.log('🎯 DROPDOWN DEBUG: Added dropdownOptionSelected meta', selectionMeta)
+        }
+
+        // Always close dropdown after selection
+        tr = tr.setMeta('closeDropdown', true)
+        console.log('🎯 DROPDOWN DEBUG: Added closeDropdown meta')
+
+        // Attempt immediate node attr update (optimistic UI) BEFORE dispatching
+        try {
+            if (typeof pos === 'number') {
+                // Our dropdown node should be at pos (since getPos() returns its start) or we just rely on node variable
+                const currentNode = view.state.doc.nodeAt(pos)
+                console.log('🎯 DROPDOWN DEBUG: nodeAt(pos) before update', { pos, type: currentNode?.type?.name, attrs: currentNode?.attrs })
+                if (currentNode?.type?.name === dropdownNodeType) {
+                    const updatedAttrs = { ...currentNode.attrs, selectedValue: option }
+                    tr = tr.setNodeMarkup(pos, undefined, updatedAttrs)
+                    console.log('🎯 DROPDOWN DEBUG: Added setNodeMarkup to transaction with new selectedValue.title', option?.title)
+                } else {
+                    console.log('⚠️ DROPDOWN DEBUG: currentNode not dropdown (cannot optimistic update)', currentNode?.type?.name)
+                }
+            } else {
+                console.log('⚠️ DROPDOWN DEBUG: getPos() not a number, skipping optimistic update')
+            }
+        } catch (err) {
+            console.log('❌ DROPDOWN DEBUG: Error during optimistic selectedValue update', err)
+        }
+
+        // Final sanity log of metas on transaction
+        console.log('🎯 DROPDOWN DEBUG: Final transaction metas', {
+            dropdownOptionSelected: tr.getMeta('dropdownOptionSelected'),
+            closeDropdown: tr.getMeta('closeDropdown')
+        })
+
+        view.dispatch(tr)
+        console.log('🎯 DROPDOWN DEBUG: Dispatched transaction with selection + close metas')
+
+        // Note: onClick handlers cannot be serialized in ProseMirror attributes
+        // The dropdownOptionSelected meta event will be handled by the parent plugin
         if (option?.onClick && typeof option.onClick === 'function') {
+            console.log('🎯 DROPDOWN DEBUG: Executing option onClick handler directly')
             option.onClick(e, dropdownId)
         }
     }
@@ -141,6 +190,43 @@ export const dropdownNodeView = (node, view, getPos) => {
             if (updatedNode.type.name !== dropdownNodeType) {
                 console.log('🔄 DROPDOWN DEBUG: Wrong node type, returning false')
                 return false
+            }
+
+            // Detect selectedValue attr changes
+            const prevSelected = node?.attrs?.selectedValue || {}
+            const nextSelected = updatedNode?.attrs?.selectedValue || {}
+            const changed = (prevSelected?.title !== nextSelected?.title) || (prevSelected?.icon !== nextSelected?.icon)
+            if (changed) {
+                console.log('🔄 DROPDOWN DEBUG: selectedValue changed', { prev: prevSelected?.title, next: nextSelected?.title })
+                try {
+                    const titleEl = dom.querySelector('.title')
+                    if (titleEl) {
+                        titleEl.textContent = nextSelected?.title || ''
+                        console.log('🔄 DROPDOWN DEBUG: Updated title textContent to', titleEl.textContent)
+                    } else {
+                        console.log('⚠️ DROPDOWN DEBUG: .title element not found for update')
+                    }
+                    const iconWrap = dom.querySelector('.selected-option-icon')
+                    if (iconWrap) {
+                        if (nextSelected?.icon) {
+                            iconWrap.innerHTML = ''
+                            const span = document.createElement('span')
+                            span.setAttribute('innerHTML', injectFillColor(nextSelected.icon, nextSelected.color))
+                            // Using setAttribute like template system does
+                            span.innerHTML = injectFillColor(nextSelected.icon, nextSelected.color)
+                            iconWrap.appendChild(span)
+                        } else {
+                            iconWrap.innerHTML = ''
+                        }
+                        console.log('🔄 DROPDOWN DEBUG: Updated icon HTML')
+                    } else {
+                        console.log('⚠️ DROPDOWN DEBUG: .selected-option-icon not found for update')
+                    }
+                } catch (err) {
+                    console.log('❌ DROPDOWN DEBUG: Error updating selectedValue DOM', err)
+                }
+            } else {
+                console.log('🔄 DROPDOWN DEBUG: selectedValue unchanged')
             }
 
             // Check if dropdown is open from decorations

@@ -81,21 +81,23 @@ export const documentStore = {
         return returnValue
     },
 
-    setMetaValues: (values: Partial<Meta> = {}): void => store.update(state => ({
-        ...state,
-        meta: {
-            ...state.meta,
-            ...values
-        }
-    })),
+    setMetaValues: (values: Partial<Meta> = {}): void => store.update(state => {
+        const before = { ...state.meta }
+        const next = { ...state.meta, ...values }
+        console.log('🧪 DOCUMENT STORE META UPDATE', { before, values, next })
+        return { ...state, meta: next }
+    }),
 
-    setDataValues: (values: Partial<Document> = {}): void => store.update(state => ({
-        ...state,
-        data: {
-            ...state.data,
-            ...values
+    setDataValues: (values: Partial<Document> = {}): void => store.update(state => {
+        const before = { ...state.data }
+        const next = { ...state.data, ...values }
+        if ('aiModel' in values) {
+            console.log('🧪 DOCUMENT STORE DATA UPDATE (aiModel)', { beforeAiModel: before.aiModel, newAiModel: values.aiModel })
+        } else {
+            console.log('🧪 DOCUMENT STORE DATA UPDATE', { keys: Object.keys(values) })
         }
-    })),
+        return { ...state, data: next }
+    }),
 
     resetStore: (): void => store.set(document),
 }

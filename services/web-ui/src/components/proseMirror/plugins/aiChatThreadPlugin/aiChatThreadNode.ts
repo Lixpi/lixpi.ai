@@ -192,6 +192,10 @@ function createThreadInfoDropdown() {
     `
 }
 
+// Note: We no longer use a global registry for dropdown handlers.
+// Instead, we dispatch metadata through ProseMirror transactions
+// and handle the selection in the aiChatThreadPlugin
+
 // Helper function to create AI model selector dropdown using the dropdown primitive
 function createAiModelSelectorDropdown(view, node, getPos) {
     const dropdownId = `ai-model-dropdown-${node.attrs.threadId}`
@@ -205,8 +209,6 @@ function createAiModelSelectorDropdown(view, node, getPos) {
     view.state.doc.nodesBetween(threadStart, threadEnd, (childNode, childPos) => {
         if (childNode.type.name === 'dropdown' && childNode.attrs.id === dropdownId) {
             dropdownExists = true
-            console.log('🔍 DROPDOWN DEBUG: Dropdown already exists, skipping creation')
-            return false // Stop iteration
         }
     })
 
@@ -225,22 +227,15 @@ function createAiModelSelectorDropdown(view, node, getPos) {
     const aiModelsData = aiModelsStore.getData()
     const currentAiModel = documentStore.getData('aiModel')
 
-    // Transform data to match dropdown format (same as Svelte component)
+    // Transform data to match dropdown format
     const aiModelsSelectorDropdownOptions = aiModelsData.map(aiModel => ({
         title: aiModel.title,
         icon: aiAvatarIcons[aiModel.iconName],
         color: aiModel.color,
         aiModel: `${aiModel.provider}:${aiModel.model}`,
-        onClick: (e, id) => {
-            console.log('AI Model Selected:', {provider: aiModel.provider, model: aiModel.model})
-            // Update document store with new AI model
-            documentStore.setDataValues({
-                aiModel: `${aiModel.provider}:${aiModel.model}`
-            })
-            documentStore.setMetaValues({
-                requiresSave: true
-            })
-        }
+        // Store provider and model separately so we can use them in the nodeview
+        provider: aiModel.provider,
+        model: aiModel.model
     }))
 
     // Find selected value
@@ -255,6 +250,8 @@ function createAiModelSelectorDropdown(view, node, getPos) {
     }
 
     try {
+        console.log('🔍 DROPDOWN DEBUG: Creating dropdown node with options:', aiModelsSelectorDropdownOptions)
+
         const dropdownNode = view.state.schema.nodes.dropdown.create({
             id: dropdownId,
             selectedValue: selectedValue,
@@ -264,6 +261,7 @@ function createAiModelSelectorDropdown(view, node, getPos) {
             buttonIcon: chevronDownIcon
         })
 
+        console.log('🔍 DROPDOWN DEBUG: Created dropdown node, attrs:', dropdownNode.attrs)
         console.log('🔍 DROPDOWN DEBUG: Inserting dropdown at position:', insertPos)
 
         // Insert the dropdown node into the document
@@ -280,8 +278,15 @@ function createAiModelSelectorDropdown(view, node, getPos) {
     // Subscribe to documentStore to update the dropdown when selection changes
     let currentSelectedValue = selectedValue
     const unsubscribeDoc = documentStore.subscribe((store) => {
+        console.log('📊 STORE DEBUG: DocumentStore subscription triggered', store?.data?.aiModel)
         const aiModelStr = store?.data?.aiModel
         const newSelected = aiModelsSelectorDropdownOptions.find(model => model.aiModel === aiModelStr) || {}
+
+        console.log('📊 STORE DEBUG: Current vs new selection', {
+            current: currentSelectedValue.aiModel,
+            new: newSelected.aiModel,
+            same: newSelected.aiModel === currentSelectedValue.aiModel
+        })
 
         if (newSelected.aiModel !== currentSelectedValue.aiModel) {
             currentSelectedValue = newSelected
@@ -290,17 +295,24 @@ function createAiModelSelectorDropdown(view, node, getPos) {
             // Find the dropdown node in the document and update it
             const currentPos = getPos()
             if (currentPos !== undefined) {
-                const dropdownPos = currentPos + node.nodeSize - 1
+                // The dropdown is the first child of the aiChatThread, so it's at currentPos + 1
+                const dropdownPos = currentPos + 1
                 const doc = view.state.doc
                 const dropdownNode = doc.nodeAt(dropdownPos)
 
+                console.log('🔄 DROPDOWN DEBUG: Trying to update dropdown at position:', dropdownPos)
+                console.log('🔄 DROPDOWN DEBUG: Found node:', dropdownNode?.type?.name, 'with id:', dropdownNode?.attrs?.id)
+
                 if (dropdownNode && dropdownNode.type.name === 'dropdown' && dropdownNode.attrs.id === dropdownId) {
+                    console.log('✅ DROPDOWN DEBUG: Found matching dropdown, updating selectedValue to:', newSelected.title)
                     const updatedAttrs = {
                         ...dropdownNode.attrs,
                         selectedValue: newSelected
                     }
                     const tr = view.state.tr.setNodeMarkup(dropdownPos, null, updatedAttrs)
                     view.dispatch(tr)
+                } else {
+                    console.log('❌ DROPDOWN DEBUG: Could not find dropdown node to update')
                 }
             }
         }
@@ -310,6 +322,12 @@ function createAiModelSelectorDropdown(view, node, getPos) {
     return {
         _cleanup: () => {
             if (typeof unsubscribeDoc === 'function') unsubscribeDoc()
+            // Clean up handlers from registry
+            aiModelsSelectorDropdownOptions.forEach(option => {
+                if (option.id && dropdownHandlersRegistry.has(option.id)) {
+                    dropdownHandlersRegistry.delete(option.id)
+                }
+            })
         }
     }
 }
