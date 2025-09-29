@@ -171,12 +171,6 @@ export const dropdownNodeView = (node, view, getPos) => {
                 // For Decoration.node(), class is in d.type.attrs.class
                 const cls = d?.type?.attrs?.class || d?.spec?.attrs?.class || ''
                 const hasClass = typeof cls === 'string' && cls.split(/\s+/).includes('dropdown-open')
-                console.log('🔄 DROPDOWN DEBUG: Decoration class:', cls, 'has dropdown-open:', hasClass)
-                console.log('🔄 DROPDOWN DEBUG: Decoration structure:', {
-                    type: d?.type,
-                    spec: d?.spec,
-                    attrs: d?.type?.attrs || d?.spec?.attrs
-                })
                 return hasClass
             })
 

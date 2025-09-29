@@ -61,42 +61,35 @@ class DropdownPlugin {
                 }),
 
                 apply: (tr: Transaction, pluginState: DropdownPluginState) => {
-                    console.log('🔧 DROPDOWN PLUGIN DEBUG: apply() called')
-                    console.log('🔧 DROPDOWN PLUGIN DEBUG: Current pluginState:', pluginState)
                     let { decorations, openDropdownId } = pluginState
+                    let stateChanged = false
 
                     // Handle dropdown toggle metadata
                     const toggleDropdown = tr.getMeta('toggleDropdown')
-                    console.log('🔧 DROPDOWN PLUGIN DEBUG: toggleDropdown meta:', toggleDropdown)
                     if (toggleDropdown) {
                         const newOpenId = openDropdownId === toggleDropdown.id ? null : toggleDropdown.id
-                        console.log('🔧 DROPDOWN PLUGIN DEBUG: Toggling dropdown', {
-                            currentOpenId: openDropdownId,
-                            toggleId: toggleDropdown.id,
-                            newOpenId: newOpenId
-                        })
-                        openDropdownId = newOpenId
+                        if (newOpenId !== openDropdownId) {
+                            openDropdownId = newOpenId
+                            stateChanged = true
+                        }
                     }
 
                     // Handle close dropdown metadata
                     const closeDropdown = tr.getMeta('closeDropdown')
-                    console.log('🔧 DROPDOWN PLUGIN DEBUG: closeDropdown meta:', closeDropdown)
-                    if (closeDropdown) {
-                        console.log('🔧 DROPDOWN PLUGIN DEBUG: Closing dropdown, was:', openDropdownId)
+                    if (closeDropdown && openDropdownId !== null) {
                         openDropdownId = null
+                        stateChanged = true
                     }
 
-                    // Create decorations for open state
-                    console.log('🔧 DROPDOWN PLUGIN DEBUG: Creating decorations for openDropdownId:', openDropdownId)
-                    decorations = this.createDecorations(tr.doc, openDropdownId)
-                    console.log('🔧 DROPDOWN PLUGIN DEBUG: Created decorations:', decorations)
+                    // Only recreate decorations if state changed or document structure changed
+                    if (stateChanged || tr.docChanged) {
+                        decorations = this.createDecorations(tr.doc, openDropdownId)
+                    }
 
-                    const newState = {
+                    return {
                         decorations: decorations.map(tr.mapping, tr.doc),
                         openDropdownId
                     }
-                    console.log('🔧 DROPDOWN PLUGIN DEBUG: Returning new state:', newState)
-                    return newState
                 }
             },
 
@@ -113,21 +106,12 @@ class DropdownPlugin {
         })
     }
 
-    private createDecorations(doc, openDropdownId: string | null): DecorationSet {
-        console.log('🎨 DROPDOWN PLUGIN DEBUG: createDecorations called with openDropdownId:', openDropdownId)
+    private createDecorations(doc: any, openDropdownId: string | null): DecorationSet {
         const decorations: Decoration[] = []
 
         if (openDropdownId) {
-            console.log('🎨 DROPDOWN PLUGIN DEBUG: Looking for dropdown nodes with id:', openDropdownId)
-            doc.descendants((node, pos) => {
-                console.log('🎨 DROPDOWN PLUGIN DEBUG: Checking node:', {
-                    nodeType: node.type.name,
-                    nodeId: node.attrs?.id,
-                    position: pos,
-                    targetId: openDropdownId
-                })
+            doc.descendants((node: any, pos: number) => {
                 if (node.type.name === dropdownNodeType && node.attrs.id === openDropdownId) {
-                    console.log('🎨 DROPDOWN PLUGIN DEBUG: Found matching dropdown node! Creating decoration')
                     decorations.push(
                         Decoration.node(pos, pos + node.nodeSize, {
                             class: 'dropdown-open'
@@ -135,11 +119,8 @@ class DropdownPlugin {
                     )
                 }
             })
-        } else {
-            console.log('🎨 DROPDOWN PLUGIN DEBUG: No openDropdownId, no decorations to create')
         }
 
-        console.log('🎨 DROPDOWN PLUGIN DEBUG: Final decorations array length:', decorations.length)
         return DecorationSet.create(doc, decorations)
     }
 }
