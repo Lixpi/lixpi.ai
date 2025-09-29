@@ -122,9 +122,12 @@
 .ProseMirror-hideselection *::-moz-selection { background: transparent; }
 .ProseMirror-hideselection { caret-color: transparent; }
 
-.ProseMirror-selectednode {
-	outline: 2px solid #8cf;
-}
+
+// Commented out to disable ugly outline around selected nodes.
+// Though keeping commented code as a reference so that I remember that there's such class bein applied to selected nodes
+// .ProseMirror-selectednode {
+// 	outline: 2px solid #8cf;
+// }
 
 /* Make sure li selections wrap around markers */
 
