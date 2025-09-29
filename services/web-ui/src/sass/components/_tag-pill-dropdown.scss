@@ -196,6 +196,12 @@
                     height: 100%;
                 }
             }
+
+            &:focus {
+                outline: none !important;
+                box-shadow: none !important;
+                border: none !important;
+            }
         }
 
         // Active state behavior (no colors)
@@ -362,18 +368,14 @@
     );
     $s: map-merge($defaults, $config);
 
-    $glyphBase: if(map-get($s, glyphBase) == null, map-get($s, surfaceBg), map-get($s, glyphBase));
-    $triggerBg: if(map-get($s, triggerBg) == null, map-get($s, surfaceBg), map-get($s, triggerBg));
-    $activeFill: if(map-get($s, activeIndicatorFill) == null, $glyphBase, map-get($s, activeIndicatorFill));
-
     .dots-dropdown-menu {
         :global(svg) {
-            fill: $glyphBase;
+            fill: map-get($s, glyphBase);
         }
 
         button {
             &:before {
-                background: $triggerBg;
+                background: map-get($s, triggerBg);
             }
 
             @if map-get($s, hoverGlyphFill) {
@@ -478,15 +480,15 @@
                 }
 
                 span.state-indicator :global(svg) {
-                    fill: $activeFill;
+                    fill: map-get($s, activeIndicatorFill);
                 }
 
                 &:hover {
-                    background: $triggerBg;
+                    background: map-get($s, triggerBg);
                 }
 
                 &:before {
-                    background: $triggerBg;
+                    background: map-get($s, triggerBg);
                 }
             }
         }
@@ -517,7 +519,7 @@
     surfaceBg: $steelBlue,
     surfaceFg: $offWhite,
     glyphBase: $steelBlue,
-    triggerBg: $offWhite,
+    triggerBg: transparent,
     itemIconColor: $offWhite,
     borderLightnessAdjustment: -10%,
     hoverLightnessAdjustment: -6%,
