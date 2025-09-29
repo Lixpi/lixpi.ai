@@ -18,6 +18,13 @@ plugins/
 		anotherNode.ts            # …more nodes if needed
 		some-plugin.scss          # styles for that plugin
 
+	primitives/                   # reusable node primitives
+		dropdown/                 # generic dropdown component
+			README.md             # dropdown-specific docs
+			dropdownPlugin.ts     # state management
+			dropdownNode.ts       # NodeView + rendering
+			dropdownSpec.ts       # node schema definition
+
 	README.md                   # this file (shared patterns)
 
 components/
@@ -30,7 +37,16 @@ components/
 - UI is decoration-first. Visual states come from classes via `DecorationSet` (placeholders, keyboard feedback, boundary highlights, etc.). NodeViews render structure; decorations toggle classes.
 - Templating uses `htm` via our `html` helper from `components/domTemplates.ts`. No JSX, no VDOM. Tagged templates → direct DOM.
 - The plugin class does orchestration only: selection checks, content extraction, transactions, streaming insertions, state flags.
+- **Reuse primitives**: For common UI patterns (dropdowns, modals, tooltips), use or create reusable primitives in `primitives/` rather than duplicating code across plugins.
 - Keep code small and obvious. If it feels like "framework", you're over-engineering it.
+
+## Reusable Primitives
+
+The `primitives/` folder contains reusable node components that can be embedded in any plugin:
+
+- **`dropdown/`** - Generic dropdown menus with decoration-driven state management. Used by AI Chat Thread for model selection. See `primitives/dropdown/README.md` for full documentation and usage patterns.
+
+When building new plugins, check if your UI needs match existing primitives before creating custom components.
 
 ## Plugin state & rendering: the decoration-first contract
 

@@ -653,10 +653,8 @@ class AiChatThreadPluginClass {
                     // Handle dropdown option selection
                     const dropdownSelection = tr.getMeta('dropdownOptionSelected')
                     if (dropdownSelection && dropdownSelection.dropdownId?.startsWith('ai-model-dropdown-')) {
-                        console.log('🎯 AI CHAT THREAD PLUGIN: Dropdown option selected (raw):', dropdownSelection)
                         const { option } = dropdownSelection
                         const beforeModel = documentStore.getData('aiModel')
-                        console.log('🤖 AI MODEL DEBUG: Current model before update:', beforeModel)
 
                         // Fallback resolution if provider/model missing
                         let provider = option?.provider
@@ -667,25 +665,15 @@ class AiChatThreadPluginClass {
                             if (found) {
                                 provider = provider || found.provider
                                 model = model || found.model
-                                console.log('🔍 AI MODEL DEBUG: Resolved missing provider/model from title fallback', { provider, model })
-                            } else {
-                                console.log('⚠️ AI MODEL DEBUG: Could not resolve provider/model from title fallback', option.title)
                             }
                         }
 
                         if (provider && model) {
                             const newModel = `${provider}:${model}`
                             if (newModel !== beforeModel) {
-                                console.log('🔄 AI MODEL DEBUG: Updating model', { from: beforeModel, to: newModel })
                                 documentStore.setDataValues({ aiModel: newModel })
                                 documentStore.setMetaValues({ requiresSave: true })
-                                const afterModel = documentStore.getData('aiModel')
-                                console.log('✅ AI MODEL DEBUG: documentStore updated', { afterModel })
-                            } else {
-                                console.log('ℹ️ AI MODEL DEBUG: Selected model matches current, no update performed')
                             }
-                        } else {
-                            console.log('❌ AI MODEL DEBUG: Missing provider/model after fallback, not updating store', { option })
                         }
                     }
 
