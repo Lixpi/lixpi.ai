@@ -14,11 +14,8 @@ import { Node as PMNode, Schema } from 'prosemirror-model'
 import { nodeTypes, nodeViews } from '../../customNodes/index.js'
 import { documentTitleNodeType } from '../../customNodes/documentTitleNode.js'
 import { aiChatThreadNodeType, aiChatThreadNodeView } from './aiChatThreadNode.ts'
-import { AI_CHAT_THREAD_PLUGIN_KEY } from './aiChatThreadPluginKey.ts'
 import { aiResponseMessageNodeType, aiResponseMessageNodeView } from './aiResponseMessageNode.ts'
 import SegmentsReceiver from '../../../../services/segmentsReceiver-service.js'
-import { documentStore } from '../../../../stores/documentStore.js'
-import { aiModelsStore } from '../../../../stores/aiModelsStore.js'
 
 const IS_RECEIVING_TEMP_DEBUG_STATE = false    // For debug purposes only
 
@@ -46,13 +43,14 @@ type AiChatThreadPluginState = {
     insideCodeBlock: boolean
     codeBuffer: string
     decorations: DecorationSet
+    modPressed: boolean
+    enterPressed: boolean
     hoveredThreadId: string | null
-    // Note: dropdownStates removed - now handled by dropdown primitive plugin
 }
 
 // ========== CONSTANTS ==========
 
-const PLUGIN_KEY = AI_CHAT_THREAD_PLUGIN_KEY as PluginKey<AiChatThreadPluginState>
+const PLUGIN_KEY = new PluginKey<AiChatThreadPluginState>('aiChatThread')
 const INSERT_THREAD_META = `insert:${aiChatThreadNodeType}`
 const USE_AI_CHAT_META = 'use:aiChat'
 
@@ -500,20 +498,27 @@ class AiChatThreadPluginClass {
         }
     }
 
-    // ========== RECEIVING STATE DECORATIONS ==========
+    // ========== KEYBOARD FEEDBACK ==========
 
-    private createReceivingStateDecorations(state: EditorState, pluginState: AiChatThreadPluginState): Decoration[] {
+    private createKeyboardFeedbackDecorations(state: EditorState, pluginState: AiChatThreadPluginState): Decoration[] {
         const decorations: Decoration[] = []
 
-        // Find all ai-chat-thread nodes and add receiving state styling ONLY
+        // Find all ai-chat-thread nodes and add keyboard feedback and receiving state styling ONLY
         state.doc.descendants((node, pos) => {
             if (node.type.name === 'aiChatThread') {
-                let cssClass = 'ai-chat-thread'
+                // Build CSS class based ONLY on keyboard and receiving state
+                let cssClass = 'ai-chat-thread-keys-pressed'
+                if (pluginState.modPressed) {
+                    cssClass += ' mod-pressed'
+                }
+                if (pluginState.enterPressed) {
+                    cssClass += ' enter-pressed'
+                }
                 if (pluginState.isReceiving) {
                     cssClass += ' receiving'
                 }
 
-                // Create a decoration that applies the receiving state class to the entire node
+                // Create a decoration that applies the keyboard feedback class to the entire node
                 decorations.push(
                     Decoration.node(pos, pos + node.nodeSize, {
                         class: cssClass
@@ -544,9 +549,6 @@ class AiChatThreadPluginClass {
 
         return decorations
     }
-
-    // ========== DROPDOWN STATE HANDLING ==========
-    // Note: Dropdown decorations and state are now handled by the dropdown primitive plugin
 
     // ========== PLACEHOLDERS ==========
 
@@ -624,6 +626,8 @@ class AiChatThreadPluginClass {
                     insideCodeBlock: false,
                     codeBuffer: '',
                     decorations: DecorationSet.empty,
+                    modPressed: false,
+                    enterPressed: false,
                     hoveredThreadId: null
                 }),
                 apply: (tr: Transaction, prev: AiChatThreadPluginState): AiChatThreadPluginState => {
@@ -638,7 +642,27 @@ class AiChatThreadPluginClass {
                         }
                     }
 
+                    // Handle mod key toggle
+                    const modToggleMeta = tr.getMeta('modToggle')
+                    if (modToggleMeta !== undefined) {
+                        return {
+                            ...prev,
+                            modPressed: modToggleMeta,
+                            // Clear enter pressed when mod is released
+                            enterPressed: modToggleMeta ? prev.enterPressed : false,
+                            decorations: prev.decorations.map(tr.mapping, tr.doc)
+                        }
+                    }
 
+                    // Handle enter key toggle (only when mod is pressed)
+                    const enterToggleMeta = tr.getMeta('enterToggle')
+                    if (enterToggleMeta !== undefined && prev.modPressed) {
+                        return {
+                            ...prev,
+                            enterPressed: enterToggleMeta,
+                            decorations: prev.decorations.map(tr.mapping, tr.doc)
+                        }
+                    }
 
                     // Handle hover thread ID change
                     const hoverThreadMeta = tr.getMeta('hoverThread')
@@ -649,36 +673,6 @@ class AiChatThreadPluginClass {
                             decorations: prev.decorations.map(tr.mapping, tr.doc)
                         }
                     }
-
-                    // Handle dropdown option selection
-                    const dropdownSelection = tr.getMeta('dropdownOptionSelected')
-                    if (dropdownSelection && dropdownSelection.dropdownId?.startsWith('ai-model-dropdown-')) {
-                        const { option } = dropdownSelection
-                        const beforeModel = documentStore.getData('aiModel')
-
-                        // Fallback resolution if provider/model missing
-                        let provider = option?.provider
-                        let model = option?.model
-                        if ((!provider || !model) && option?.title) {
-                            const allModels = aiModelsStore.getData()
-                            const found = allModels.find(m => m.title === option.title)
-                            if (found) {
-                                provider = provider || found.provider
-                                model = model || found.model
-                            }
-                        }
-
-                        if (provider && model) {
-                            const newModel = `${provider}:${model}`
-                            if (newModel !== beforeModel) {
-                                documentStore.setDataValues({ aiModel: newModel })
-                                documentStore.setMetaValues({ requiresSave: true })
-                            }
-                        }
-                    }
-
-                    // Note: dropdown state toggle is now handled by dropdown primitive plugin
-                    // aiChatThreadNode converts threadId-based meta to dropdownId-based meta for the primitive
 
                     // Map existing decorations to new document
                     return {
@@ -706,9 +700,6 @@ class AiChatThreadPluginClass {
 
             view: (view: EditorView) => {
                 this.startStreaming(view)
-
-                // Note: Dropdown state bridging removed - now handled by dropdown primitive plugin
-
                 return {
                     destroy: () => {
                         if (this.unsubscribeFromSegments) {
@@ -719,16 +710,73 @@ class AiChatThreadPluginClass {
             },
 
             props: {
-                // Keyboard handling for mod+enter
+                // Keyboard handling
                 handleDOMEvents: {
                     keydown: (_view: EditorView, event: KeyboardEvent) => {
-                        // Handle Mod+Enter for AI chat
+                        const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0
+                        const isModKey = (isMac && event.metaKey) || (!isMac && event.ctrlKey)
+                        const pluginState = PLUGIN_KEY.getState(_view.state)
+
+                        console.log('Keydown event:', event.key, 'isModKey:', isModKey, 'modPressed:', pluginState?.modPressed, 'enterPressed:', pluginState?.enterPressed)
+
+                        // Handle Mod key press for visual feedback
+                        if (isModKey && !pluginState?.modPressed) {
+                            console.log('Mod key pressed - setting modPressed to true')
+                            const { state, dispatch } = _view
+                            dispatch(state.tr.setMeta('modToggle', true))
+                            return false
+                        }
+
+                        // Handle Enter key press for visual feedback (only when mod is already pressed)
+                        if (event.key === 'Enter' && pluginState?.modPressed && !pluginState?.enterPressed) {
+                            console.log('Enter key pressed while mod is held - setting enterPressed to true')
+                            const { state, dispatch } = _view
+                            dispatch(state.tr.setMeta('enterToggle', true))
+
+                            // After setting visual feedback, handle the AI chat submission
+                            setTimeout(() => {
+                                event.preventDefault()
+                                const { state: currentState, dispatch: currentDispatch } = _view
+                                const { $from } = currentState.selection
+                                currentDispatch(currentState.tr.setMeta(USE_AI_CHAT_META, { pos: $from.pos }))
+                            }, 50) // Small delay to allow visual feedback to show
+
+                            return true // Prevent default Enter behavior
+                        }
+
+                        // Handle Mod+Enter for AI chat (fallback if Enter wasn't handled above)
                         if (KeyboardHandler.isModEnter(event)) {
                             event.preventDefault()
                             const { state, dispatch } = _view
                             const { $from } = state.selection
                             dispatch(state.tr.setMeta(USE_AI_CHAT_META, { pos: $from.pos }))
                             return true
+                        }
+
+                        return false
+                    },
+
+                    keyup: (_view: EditorView, event: KeyboardEvent) => {
+                        const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0
+                        const isModKey = (isMac && event.metaKey) || (!isMac && event.ctrlKey)
+                        const pluginState = PLUGIN_KEY.getState(_view.state)
+
+                        console.log('Keyup event:', event.key, 'isModKey:', isModKey, 'modPressed:', pluginState?.modPressed, 'enterPressed:', pluginState?.enterPressed)
+
+                        // Handle Mod key release
+                        if (!isModKey && pluginState?.modPressed) {
+                            console.log('Mod key released - setting modPressed to false')
+                            const { state, dispatch } = _view
+                            dispatch(state.tr.setMeta('modToggle', false))
+                            return false
+                        }
+
+                        // Handle Enter key release (only when mod is still pressed)
+                        if (event.key === 'Enter' && pluginState?.enterPressed) {
+                            console.log('Enter key released - setting enterPressed to false')
+                            const { state, dispatch } = _view
+                            dispatch(state.tr.setMeta('enterToggle', false))
+                            return false
                         }
 
                         return false
@@ -741,10 +789,10 @@ class AiChatThreadPluginClass {
                     const placeholders = this.createPlaceholders(state)
                     const allDecorations = [...placeholders.find()]
 
-                    // Independent receiving state system
-                    if (pluginState?.isReceiving) {
-                        const receivingDecorations = this.createReceivingStateDecorations(state, pluginState)
-                        allDecorations.push(...receivingDecorations)
+                    // Independent keyboard feedback system
+                    if (pluginState?.modPressed || pluginState?.enterPressed || pluginState?.isReceiving) {
+                        const keyboardDecorations = this.createKeyboardFeedbackDecorations(state, pluginState)
+                        allDecorations.push(...keyboardDecorations)
                     }
 
                     // Independent thread boundary system
@@ -752,8 +800,6 @@ class AiChatThreadPluginClass {
                         const boundaryDecorations = this.createThreadBoundaryDecorations(state, pluginState)
                         allDecorations.push(...boundaryDecorations)
                     }
-
-                    // Note: Dropdown decorations are now handled by the dropdown primitive plugin
 
                     return DecorationSet.create(state.doc, allDecorations)
                 },
