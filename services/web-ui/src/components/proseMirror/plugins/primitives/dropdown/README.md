@@ -194,6 +194,8 @@ view.dispatch(tr)
 - **`theme: string`** - Visual theme: `'light'` | `'dark'` (default: `'dark'`)
 - **`renderPosition: string`** - Menu position: `'top'` | `'bottom'` | `'left'` | `'right'` (default: `'bottom'`)
 - **`buttonIcon: string`** - SVG string for the dropdown arrow/indicator (default: `chevronDownIcon`)
+- **`ignoreColorValuesForOptions: boolean`** - Skip inline color injection for dropdown menu items, allowing CSS to control icon colors (default: `false`)
+- **`ignoreColorValuesForSelectedValue: boolean`** - Skip inline color injection for selected value icon, allowing CSS to control color (default: `false`)
 
 ## Integration with Parent Plugins
 
@@ -220,7 +222,9 @@ function createAiModelSelectorDropdown(view, node, getPos) {
         selectedValue: currentSelection,
         dropdownOptions: options,
         theme: 'dark',
-        renderPosition: 'bottom'
+        renderPosition: 'bottom',
+        ignoreColorValuesForOptions: true,        // Use CSS itemIconColor for menu items
+        ignoreColorValuesForSelectedValue: false  // Keep inline colors for selected display
     })
 
     // Subscribe to documentStore to update selection when model changes
@@ -285,6 +289,35 @@ The dropdown generates this DOM structure:
 ```scss
 .submenu-wrapper { display: none; }
 .dropdown-open .submenu-wrapper { display: block; }
+```
+
+## Color Control System
+
+The dropdown supports two modes for icon colors:
+
+### Default Behavior (Inline Colors)
+When `ignoreColorValuesForOptions: false` and `ignoreColorValuesForSelectedValue: false`:
+- Icons use inline `style="fill: color"` from the `color` property in option data
+- Each icon can have individual colors specified in the data
+
+### CSS-Controlled Colors
+When `ignoreColorValuesForOptions: true`:
+- Dropdown menu item icons ignore inline colors and use CSS `itemIconColor`
+- Allows consistent theming via SCSS mixins
+
+```scss
+&.theme-dark {
+    @include tagPillDropdownDarkTheme((
+        itemIconColor: #your-color-here  // Controls all menu item icons
+    ));
+}
+```
+
+### Hybrid Approach
+Common pattern: CSS for menu items, inline for selected value:
+```ts
+ignoreColorValuesForOptions: true,        // Menu items use CSS
+ignoreColorValuesForSelectedValue: false  // Selected shows individual colors
 ```
 
 ## Event Handling Details

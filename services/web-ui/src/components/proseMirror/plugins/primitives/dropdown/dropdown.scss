@@ -12,8 +12,16 @@
     @include dropdownChipSubmenuPlacement();
 
     // Themes
-    &.theme-light { @include tagPillDropdownLightTheme(); }
-    &.theme-dark  { @include tagPillDropdownDarkTheme(); }
+    &.theme-light {
+        @include tagPillDropdownLightTheme((
+            // itemIconColor: red
+        ));
+    }
+    &.theme-dark  {
+        @include tagPillDropdownDarkTheme((
+            // itemIconColor: blue
+        ));
+    }
 
     // Hidden by default; shown when parent gets .dropdown-open class
     .dots-dropdown-menu {

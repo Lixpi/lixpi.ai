@@ -251,7 +251,9 @@ function createAiModelSelectorDropdown(view, node, getPos) {
             dropdownOptions: aiModelsSelectorDropdownOptions,
             theme: 'dark',
             renderPosition: 'bottom',
-            buttonIcon: chevronDownIcon
+            buttonIcon: chevronDownIcon,
+            ignoreColorValuesForOptions: true,
+            ignoreColorValuesForSelectedValue: false
         })
 
         // Insert the dropdown node into the document

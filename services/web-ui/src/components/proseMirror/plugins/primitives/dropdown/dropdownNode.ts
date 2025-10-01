@@ -11,7 +11,9 @@ export const dropdownNodeView = (node, view, getPos) => {
         dropdownOptions = [],
         theme = 'dark',
         renderPosition = 'bottom',
-        buttonIcon = chevronDownIcon
+        buttonIcon = chevronDownIcon,
+        ignoreColorValuesForOptions = false,
+        ignoreColorValuesForSelectedValue = false
     } = node.attrs
 
     let submenuRef = null
@@ -101,7 +103,7 @@ export const dropdownNodeView = (node, view, getPos) => {
                         onclick=${(e) => toggleSubmenuHandler(e, id)}
                     >
                         <span class="selected-option-icon flex items-center">
-                            ${selectedValue?.icon ? html`<span innerHTML=${injectFillColor(selectedValue.icon, selectedValue.color)}></span>` : ''}
+                            ${selectedValue?.icon ? html`<span innerHTML=${ignoreColorValuesForSelectedValue ? selectedValue.icon : injectFillColor(selectedValue.icon, selectedValue.color)}></span>` : ''}
                         </span>
                         <span class="title">${selectedValue?.title || ''}</span>
                         <span class="state-indicator flex items-center">
@@ -115,7 +117,7 @@ export const dropdownNodeView = (node, view, getPos) => {
                                     class="flex justify-start items-center"
                                     onclick=${(e) => onClickHandler(e, id, option)}
                                 >
-                                    ${option.icon ? html`<span innerHTML=${injectFillColor(option.icon, option.color)}></span>` : ''}
+                                    ${option.icon ? html`<span innerHTML=${ignoreColorValuesForOptions ? option.icon : injectFillColor(option.icon, option.color)}></span>` : ''}
                                     ${option.title}
                                 </li>
                             `)}
@@ -147,6 +149,7 @@ export const dropdownNodeView = (node, view, getPos) => {
             // Detect selectedValue attr changes
             const prevSelected = node?.attrs?.selectedValue || {}
             const nextSelected = updatedNode?.attrs?.selectedValue || {}
+            const nextIgnoreColorForSelectedValue = updatedNode?.attrs?.ignoreColorValuesForSelectedValue || false
             const changed = (prevSelected?.title !== nextSelected?.title) || (prevSelected?.icon !== nextSelected?.icon)
             if (changed) {
                 const titleEl = dom.querySelector('.title')
@@ -158,7 +161,7 @@ export const dropdownNodeView = (node, view, getPos) => {
                     if (nextSelected?.icon) {
                         iconWrap.innerHTML = ''
                         const span = document.createElement('span')
-                        span.innerHTML = injectFillColor(nextSelected.icon, nextSelected.color)
+                        span.innerHTML = nextIgnoreColorForSelectedValue ? nextSelected.icon : injectFillColor(nextSelected.icon, nextSelected.color)
                         iconWrap.appendChild(span)
                     } else {
                         iconWrap.innerHTML = ''

@@ -14,7 +14,9 @@ export const dropdownNodeSpec = {
         dropdownOptions: { default: [] },
         theme: { default: 'light' },
         renderPosition: { default: 'bottom' },
-        buttonIcon: { default: null }
+        buttonIcon: { default: null },
+        ignoreColorValuesForOptions: { default: false },
+        ignoreColorValuesForSelectedValue: { default: false }
     },
     parseDOM: [
         {
