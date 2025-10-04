@@ -24,7 +24,7 @@ const IS_RECEIVING_TEMP_DEBUG_STATE = false    // For debug purposes only
 
 // ========== TYPE DEFINITIONS ==========
 
-type AiChatCallback = (messages: Array<{ role: string; content: string }>) => void
+type AiChatCallback = (data: { messages: Array<{ role: string; content: string }>; aiModel: string }) => void
 type PlaceholderOptions = { titlePlaceholder: string; paragraphPlaceholder: string }
 type StreamStatus = 'START_STREAM' | 'STREAMING' | 'END_STREAM'
 type SegmentEvent = {
@@ -607,7 +607,25 @@ class AiChatThreadPluginClass {
     private handleChatRequest(newState: EditorState): void {
         const threadContent = ContentExtractor.getActiveThreadContent(newState)
         const messages = ContentExtractor.toMessages(threadContent)
-        this.callback(messages)
+
+        // Extract aiModel from the active thread
+        const { selection } = newState
+        const $from = selection.$from
+
+        // Find the containing aiChatThread
+        let threadNode = null
+        for (let depth = $from.depth; depth >= 0; depth--) {
+            const node = $from.node(depth)
+            if (node.type.name === 'aiChatThread') {
+                threadNode = node
+                break
+            }
+        }
+
+    // Use thread node's aiModel; if empty, backend will reject so we ensure NodeView assigns first available model earlier
+    const aiModel = threadNode?.attrs?.aiModel || ''
+        console.log('[AI_DBG][SUBMIT] handleChatRequest', { aiModel, threadHasNode: !!threadNode, threadAttrs: threadNode?.attrs, messagesCount: messages.length })
+        this.callback({ messages, aiModel })
     }
 
     // ========== PLUGIN CREATION ==========
@@ -653,28 +671,8 @@ class AiChatThreadPluginClass {
                     // Handle dropdown option selection
                     const dropdownSelection = tr.getMeta('dropdownOptionSelected')
                     if (dropdownSelection && dropdownSelection.dropdownId?.startsWith('ai-model-dropdown-')) {
-                        const { option } = dropdownSelection
-                        const beforeModel = documentStore.getData('aiModel')
-
-                        // Fallback resolution if provider/model missing
-                        let provider = option?.provider
-                        let model = option?.model
-                        if ((!provider || !model) && option?.title) {
-                            const allModels = aiModelsStore.getData()
-                            const found = allModels.find(m => m.title === option.title)
-                            if (found) {
-                                provider = provider || found.provider
-                                model = model || found.model
-                            }
-                        }
-
-                        if (provider && model) {
-                            const newModel = `${provider}:${model}`
-                            if (newModel !== beforeModel) {
-                                documentStore.setDataValues({ aiModel: newModel })
-                                documentStore.setMetaValues({ requiresSave: true })
-                            }
-                        }
+                        console.log('[AI_DBG][PLUGIN.apply] dropdownSelection meta received (deferring attr update to appendTransaction)', { dropdownSelection })
+                        // We intentionally DO NOT mutate tr/doc here; appendTransaction will perform attr update
                     }
 
                     // Note: dropdown state toggle is now handled by dropdown primitive plugin
@@ -699,6 +697,52 @@ class AiChatThreadPluginClass {
                 const insertTransaction = transactions.find(tr => tr.getMeta(INSERT_THREAD_META))
                 if (insertTransaction) {
                     return this.handleInsertThread(insertTransaction, newState)
+                }
+
+                // Handle deferred aiModel attr update after dropdown selection
+                const dropdownTx = transactions.find(tr => tr.getMeta('dropdownOptionSelected'))
+                if (dropdownTx) {
+                    const dropdownSelection = dropdownTx.getMeta('dropdownOptionSelected')
+                    const { option, nodePos } = dropdownSelection || {}
+                    let provider = option?.provider
+                    let model = option?.model
+                    if ((!provider || !model) && option?.title) {
+                        const allModels = aiModelsStore.getData()
+                        const found = allModels.find(m => m.title === option.title)
+                        if (found) {
+                            provider = provider || found.provider
+                            model = model || found.model
+                        }
+                    }
+                    if (provider && model && typeof nodePos === 'number') {
+                        const newModel = `${provider}:${model}`
+                        let threadPos = -1
+                        let threadNode: PMNode | null = null
+                        newState.doc.nodesBetween(0, newState.doc.content.size, (node, pos) => {
+                            if (node.type.name === 'aiChatThread') {
+                                const threadStart = pos
+                                const threadEnd = pos + node.nodeSize
+                                if (nodePos >= threadStart && nodePos < threadEnd) {
+                                    threadPos = pos
+                                    threadNode = node
+                                    console.log('[AI_DBG][APPEND_TX] matched thread for aiModel update', { threadPos, nodePos, threadAttrs: node.attrs, newModel })
+                                    return false
+                                }
+                            }
+                        })
+                        if (threadPos !== -1 && threadNode && threadNode.attrs.aiModel !== newModel) {
+                            const tr = newState.tr
+                            const newAttrs = { ...threadNode.attrs, aiModel: newModel }
+                            tr.setNodeMarkup(threadPos, undefined, newAttrs)
+                            console.log('[AI_DBG][APPEND_TX] committing aiModel change', { from: threadNode.attrs.aiModel, to: newModel, threadPos })
+                            documentStore.setMetaValues({ requiresSave: true })
+                            return tr
+                        } else {
+                            console.log('[AI_DBG][APPEND_TX] aiModel already current or thread not found', { threadPos, existing: threadNode?.attrs?.aiModel, desired: newModel })
+                        }
+                    } else {
+                        console.log('[AI_DBG][APPEND_TX] insufficient data to update aiModel', { provider, model, nodePos })
+                    }
                 }
 
                 return null

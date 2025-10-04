@@ -39,6 +39,7 @@ export const dropdownNodeView = (node, view, getPos) => {
         // Attach selection meta first
         if (option) {
             const selectionMeta = { dropdownId, option, nodePos: pos }
+            console.log('[AI_DBG][DROPDOWN] option click', { dropdownId, option, nodePos: pos, currentThreadModel: node?.attrs?.aiModel, selectedValueBefore: node?.attrs?.selectedValue })
             tr = tr.setMeta('dropdownOptionSelected', selectionMeta)
         }
 
@@ -50,10 +51,20 @@ export const dropdownNodeView = (node, view, getPos) => {
             const currentNode = view.state.doc.nodeAt(pos)
             if (currentNode?.type?.name === dropdownNodeType) {
                 const updatedAttrs = { ...currentNode.attrs, selectedValue: option }
+                console.log('[AI_DBG][DROPDOWN] optimistic selectedValue update', { pos, updatedAttrs })
                 tr = tr.setNodeMarkup(pos, undefined, updatedAttrs)
+            } else {
+                console.log('[AI_DBG][DROPDOWN] optimistic update skipped - node mismatch', { pos, foundType: currentNode?.type?.name })
             }
+        } else {
+            console.log('[AI_DBG][DROPDOWN] getPos() not number for optimistic update', { pos })
         }
 
+        console.log('[AI_DBG][DROPDOWN] dispatching transaction with metas', {
+            hasDropdownSelectionMeta: !!tr.getMeta('dropdownOptionSelected'),
+            hasCloseDropdownMeta: !!tr.getMeta('closeDropdown'),
+            trSteps: tr.steps.length
+        })
         view.dispatch(tr)
 
         // Note: onClick handlers cannot be serialized in ProseMirror attributes
@@ -152,6 +163,7 @@ export const dropdownNodeView = (node, view, getPos) => {
             const nextIgnoreColorForSelectedValue = updatedNode?.attrs?.ignoreColorValuesForSelectedValue || false
             const changed = (prevSelected?.title !== nextSelected?.title) || (prevSelected?.icon !== nextSelected?.icon)
             if (changed) {
+                console.log('[AI_DBG][DROPDOWN.update] selectedValue changed', { prevSelected, nextSelected })
                 const titleEl = dom.querySelector('.title')
                 if (titleEl) {
                     titleEl.textContent = nextSelected?.title || ''
@@ -185,6 +197,7 @@ export const dropdownNodeView = (node, view, getPos) => {
 
             // Update wrapper class for CSS animations
             dom.classList.toggle('dropdown-open', !!hasDropdownOpen)
+            console.log('[AI_DBG][DROPDOWN.update] open state sync', { hasDropdownOpen, decorationsCount: Array.isArray(decorations) ? decorations.length : 'n/a' })
 
             // Update node reference
             node = updatedNode

@@ -46,7 +46,6 @@ export type Document = {
     documentId: string
     revision: number
     title: string
-    aiModel: string
     content: string
     prevRevision: number
     createdAt: number

@@ -48,8 +48,8 @@
     const documentService = new DocumentService()
 
 
-    const onAiChatSubmit = value => {
-        // console.log('onAiChatSubmit', {value, aiChatInstance})
+    const onAiChatSubmit = ({ messages, aiModel }) => {
+        // console.log('onAiChatSubmit', {messages, aiModel, aiChatInstance})
 
         if (!aiChatInstance) {
             console.log('call->onAiChatSubmit', {aiChatInstance, projectKey: $routerStore.data.currentRoute?.routeParams.key})
@@ -58,7 +58,7 @@
             return false
         }
 
-        aiChatInstance.sendMessage(value)
+        aiChatInstance.sendMessage(messages, aiModel)
     }
 
     const onProjectTitleChange = inputValue => {

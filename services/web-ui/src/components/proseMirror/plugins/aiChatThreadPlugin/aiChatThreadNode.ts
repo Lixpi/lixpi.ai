@@ -19,14 +19,17 @@ export const aiChatThreadNodeSpec = {
     isolating: false, // Changed to false to allow cursor interaction
     attrs: {
         threadId: { default: null },
-        status: { default: 'active' } // active, paused, completed
+        status: { default: 'active' }, // active, paused, completed
+        // Leave aiModel blank initially; we'll assign first available model from store when models load
+        aiModel: { default: '' }
     },
     parseDOM: [
         {
             tag: 'div.ai-chat-thread-wrapper',
             getAttrs: (dom) => ({
                 threadId: dom.getAttribute('data-thread-id'),
-                status: dom.getAttribute('data-status') || 'active'
+                status: dom.getAttribute('data-status') || 'active',
+                aiModel: dom.getAttribute('data-ai-model') || ''
             })
         }
     ],
@@ -35,7 +38,8 @@ export const aiChatThreadNodeSpec = {
         {
             class: 'ai-chat-thread-wrapper',
             'data-thread-id': node.attrs.threadId,
-            'data-status': node.attrs.status
+            'data-status': node.attrs.status,
+            'data-ai-model': node.attrs.aiModel
         },
         0
     ]
@@ -59,6 +63,7 @@ export const aiChatThreadNodeView = (node, view, getPos) => {
                     threadId: newThreadId
                 })
                 view.dispatch(tr)
+                console.log('[AI_DBG][THREAD.nodeView] assigned new threadId', { pos, newThreadId })
             }
         }, 0)
         // Use the new threadId for this render
@@ -79,6 +84,7 @@ export const aiChatThreadNodeView = (node, view, getPos) => {
     contentDOM.className = 'ai-chat-thread-content'
 
     // Create AI model selector dropdown
+    console.log('[AI_DBG][THREAD.nodeView] creating node view', { threadId: node.attrs.threadId, initialAiModel: node.attrs.aiModel })
     const modelSelectorDropdown = createAiModelSelectorDropdown(view, node, getPos)
 
     // Create AI submit button
@@ -108,6 +114,9 @@ export const aiChatThreadNodeView = (node, view, getPos) => {
             dom.setAttribute('data-thread-id', updatedNode.attrs.threadId)
             dom.setAttribute('data-status', updatedNode.attrs.status)
 
+            if (node.attrs.aiModel !== updatedNode.attrs.aiModel) {
+                console.log('[AI_DBG][THREAD.nodeView.update] aiModel attr changed', { from: node.attrs.aiModel, to: updatedNode.attrs.aiModel, threadId: updatedNode.attrs.threadId })
+            }
             node = updatedNode
 
             // Note: Dropdown open/close state is now handled by the dropdown primitive's own decorations
@@ -208,6 +217,7 @@ function createAiModelSelectorDropdown(view, node, getPos) {
     })
 
     if (dropdownExists) {
+        console.log('[AI_DBG][THREAD.dropdown] already exists - skip duplicate', { threadId: node.attrs.threadId, dropdownId })
         return { _cleanup: () => {} }
     }
 
@@ -220,7 +230,8 @@ function createAiModelSelectorDropdown(view, node, getPos) {
 
     // Get AI models from store
     const aiModelsData = aiModelsStore.getData()
-    const currentAiModel = documentStore.getData('aiModel')
+    const currentAiModel = node.attrs.aiModel || ''
+    console.log('[AI_DBG][THREAD.dropdown] building options', { threadId: node.attrs.threadId, currentAiModel, modelsCount: aiModelsData.length })
 
     // Transform data to match dropdown format
     const aiModelsSelectorDropdownOptions = aiModelsData.map(aiModel => ({
@@ -234,7 +245,22 @@ function createAiModelSelectorDropdown(view, node, getPos) {
     }))
 
     // Find selected value
-    const selectedValue = aiModelsSelectorDropdownOptions.find(model => model.aiModel === currentAiModel) || {}
+    let selectedValue = aiModelsSelectorDropdownOptions.find(model => model.aiModel === currentAiModel) || {}
+
+    // If current thread has no aiModel or it's invalid, pick first available model and update node attr
+    if ((!currentAiModel || !selectedValue.aiModel) && aiModelsSelectorDropdownOptions.length > 0) {
+        selectedValue = aiModelsSelectorDropdownOptions[0]
+        const pos = getPos()
+        if (pos !== undefined) {
+            const threadNode = view.state.doc.nodeAt(pos)
+            if (threadNode) {
+                const newAttrs = { ...threadNode.attrs, aiModel: selectedValue.aiModel }
+                const trSet = view.state.tr.setNodeMarkup(pos, undefined, newAttrs)
+                view.dispatch(trSet)
+                console.log('[AI_DBG][THREAD.dropdown] auto-assigned first model', { threadId: node.attrs.threadId, assignedModel: selectedValue.aiModel })
+            }
+        }
+    }
 
     // Insert dropdown at the beginning of the thread content (after thread wrapper, before first paragraph)
     const insertPos = pos + 1 // Insert after opening of aiChatThread node
@@ -259,52 +285,31 @@ function createAiModelSelectorDropdown(view, node, getPos) {
         // Insert the dropdown node into the document
         const tr = view.state.tr.insert(insertPos, dropdownNode)
         view.dispatch(tr)
+        console.log('[AI_DBG][THREAD.dropdown] inserted dropdown node', { threadId: node.attrs.threadId, dropdownId, insertPos, selectedValue })
     } catch (error) {
         console.error('Failed to create/insert dropdown node:', error)
         return { _cleanup: () => {} }
     }
 
-    // Subscribe to documentStore to update the dropdown when selection changes
-    let currentSelectedValue = selectedValue
-    const unsubscribeDoc = documentStore.subscribe((store) => {
-        const aiModelStr = store?.data?.aiModel
-        const newSelected = aiModelsSelectorDropdownOptions.find(model => model.aiModel === aiModelStr) || {}
-
-        if (newSelected.aiModel !== currentSelectedValue.aiModel) {
-            currentSelectedValue = newSelected
-
-            // Find the dropdown node in the document and update it
-            const currentPos = getPos()
-            if (currentPos !== undefined) {
-                // The dropdown is the first child of the aiChatThread, so it's at currentPos + 1
-                const dropdownPos = currentPos + 1
-                const doc = view.state.doc
-                const dropdownNode = doc.nodeAt(dropdownPos)
-
-                if (dropdownNode && dropdownNode.type.name === 'dropdown' && dropdownNode.attrs.id === dropdownId) {
-                    const updatedAttrs = {
-                        ...dropdownNode.attrs,
-                        selectedValue: newSelected
-                    }
-                    const tr = view.state.tr.setNodeMarkup(dropdownPos, null, updatedAttrs)
-                    view.dispatch(tr)
-                }
-            }
-        }
-    })
+    // Note: Dropdown now syncs with thread node aiModel attribute directly
+    // The dropdown selection handling in aiChatThreadPlugin will update the thread's aiModel
+    // and the NodeView update() method will reflect changes to the dropdown accordingly
 
     // Return cleanup function
-    return {
-        _cleanup: () => {
-            if (typeof unsubscribeDoc === 'function') unsubscribeDoc()
-            // Clean up handlers from registry
-            aiModelsSelectorDropdownOptions.forEach(option => {
-                if (option.id && dropdownHandlersRegistry.has(option.id)) {
-                    dropdownHandlersRegistry.delete(option.id)
-                }
-            })
-        }
+    // If models list was empty at creation time, subscribe and create dropdown later
+    if (!aiModelsSelectorDropdownOptions.length) {
+        const unsubscribe = aiModelsStore.subscribe(storeValue => {
+            if (storeValue.data.length) {
+                unsubscribe()
+                // Avoid duplicate creation (will be caught by duplicate check at top on re-entry)
+                createAiModelSelectorDropdown(view, node, getPos)
+                console.log('[AI_DBG][THREAD.dropdown] models loaded later - reattempt creation', { threadId: node.attrs.threadId })
+            }
+        })
+        return { _cleanup: () => unsubscribe() }
     }
+
+    return { _cleanup: () => {} }
 }
 
 // Helper function to create AI submit button

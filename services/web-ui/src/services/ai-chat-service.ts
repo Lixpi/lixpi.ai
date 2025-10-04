@@ -47,18 +47,20 @@ export default class ChatService {
         this.segmentsReceiver.receiveSegment(data.content);
     }
 
-    async sendMessage(inputValue) {
+    async sendMessage(chatContent, aiModel) {
+        console.log('[AI_DBG][SERVICE.sendMessage] called', { aiModel, chatContentPreview: (chatContent||'').slice(0,120), length: chatContent?.length })
         const organizationId = organizationStore.getData('organizationId')
 
         const user = userStore.getData()
-
-        servicesStore.getData('nats')!.publish(AI_CHAT_SUBJECTS.SEND_MESSAGE, {
+        const payload = {
             token: await AuthService.getTokenSilently(),
             documentId: this.instanceKey,
-            aiModel: documentStore.getData('aiModel'),
-            chatContent: inputValue,
+            aiModel: aiModel,
+            chatContent: chatContent,
             organizationId
-        })
+        }
+        console.log('[AI_DBG][SERVICE.sendMessage] publishing', payload)
+        servicesStore.getData('nats')!.publish(AI_CHAT_SUBJECTS.SEND_MESSAGE, payload)
 
         // SocketService.emit({
         //     event: AI_CHAT_SUBJECTS.SEND_MESSAGE,

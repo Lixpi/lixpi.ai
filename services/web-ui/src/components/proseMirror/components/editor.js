@@ -26,7 +26,7 @@ import {
     aiResponseMessageNodeType,
     aiResponseMessageNodeSpec
 } from '../plugins/aiChatThreadPlugin'
-import { createDropdownPlugin, dropdownNodeSpec } from '../plugins/primitives/dropdown/dropdownPlugin.js'
+import { createDropdownPlugin, dropdownNodeSpec } from '../plugins/primitives/dropdown/index.ts'
 import { createCodeBlockPlugin, codeBlockInputRule } from '../plugins/codeBlockPlugin.js'
 import { activeNodePlugin } from "../plugins/activeNodePlugin"
 
