@@ -20,9 +20,21 @@ import {
 describe('Action Timeline shared contract', () => {
     it('calculates a ceiling grid with a shorter final segment', () => {
         expect(createActionTimelineGrid(5500, 2000)).toEqual([
-            { slotIndex: 0, startMs: 0, endMs: 2000 },
-            { slotIndex: 1, startMs: 2000, endMs: 4000 },
-            { slotIndex: 2, startMs: 4000, endMs: 5500 },
+            {
+                slotIndex: 0,
+                startMs: 0,
+                endMs: 2000,
+            },
+            {
+                slotIndex: 1,
+                startMs: 2000,
+                endMs: 4000,
+            },
+            {
+                slotIndex: 2,
+                startMs: 4000,
+                endMs: 5500,
+            },
         ])
     })
 
@@ -43,40 +55,62 @@ describe('Action Timeline shared contract', () => {
         [
             [
                 'Build a 15-second action timeline with 3-second beats.',
-                { durationMs: 15000, precisionMs: 3000 },
+                {
+                    durationMs: 15000,
+                    precisionMs: 3000,
+                },
             ],
             [
                 'Use 2.5 seconds per beat across a 12.5 second sequence.',
-                { durationMs: 12500, precisionMs: 2500 },
+                {
+                    durationMs: 12500,
+                    precisionMs: 2500,
+                },
             ],
             [
                 'Action timeline: 9s 1.5s',
-                { durationMs: 9000, precisionMs: 1500 },
+                {
+                    durationMs: 9000,
+                    precisionMs: 1500,
+                },
             ],
             [
                 'Make this 8 seconds total with a 2 second cadence.',
-                { durationMs: 8000, precisionMs: 2000 },
+                {
+                    durationMs: 8000,
+                    precisionMs: 2000,
+                },
             ],
             [
                 'Break a 10-second clip into 2-second actions.',
-                { durationMs: 10000, precisionMs: 2000 },
+                {
+                    durationMs: 10000,
+                    precisionMs: 2000,
+                },
             ],
             [
                 'Create a 14 second sequence with each action lasting 3.5 seconds.',
-                { durationMs: 14000, precisionMs: 3500 },
+                {
+                    durationMs: 14000,
+                    precisionMs: 3500,
+                },
             ],
             [
                 'Create 17s duration 2ms details for an imaginary film.',
-                { durationMs: 17000, precisionMs: 2 },
+                {
+                    durationMs: 17000,
+                    precisionMs: 2,
+                },
             ],
             [
                 'Use a 250ms cadence for a 1.5 minute sequence.',
-                { durationMs: 90000, precisionMs: 250 },
+                {
+                    durationMs: 90000,
+                    precisionMs: 250,
+                },
             ],
         ] as const,
-    )('extracts duration and precision from natural prompt wording: %s', (prompt, expected) => {
-        expect(parseActionTimelineTiming(prompt)).toEqual(expected)
-    })
+    )('extracts duration and precision from natural prompt wording: %s', (prompt, expected) => void expect(parseActionTimelineTiming(prompt)).toEqual(expected))
 
     it('rejects sub-millisecond values instead of rounding timing', () => {
         expect(parseActionTimelineTiming('Create a 2s timeline with 0.5ms details.')).toEqual({
@@ -85,13 +119,28 @@ describe('Action Timeline shared contract', () => {
     })
 
     it('keeps timing immutable while permitting prose and media-chip edits', () => {
-        const original = buildActionTimelineDocument({ durationMs: 2500, precisionMs: 1000 }, [
-            { slotIndex: 0, runs: [{ text: 'Start ' }, { assetId: 'asset-a' }] },
-            { slotIndex: 1, runs: [{ text: 'Continue' }] },
-            { slotIndex: 2, runs: [{ text: 'Finish' }] },
+        const original = buildActionTimelineDocument({
+            durationMs: 2500,
+            precisionMs: 1000,
+        }, [
+            {
+                slotIndex: 0,
+                runs: [{ text: 'Start ' }, { assetId: 'asset-a' }],
+            },
+            {
+                slotIndex: 1,
+                runs: [{ text: 'Continue' }],
+            },
+            {
+                slotIndex: 2,
+                runs: [{ text: 'Finish' }],
+            },
         ])
         const edited = structuredClone(original)
-        edited.content![0]!.content![0]!.content = [{ type: 'text', text: 'A different opening' }]
+        edited.content![0]!.content![0]!.content = [{
+            type: 'text',
+            text: 'A different opening',
+        }]
 
         expect(() => assertActionTimelineEditableMutation(original, edited)).not.toThrow()
         const timingMutation = structuredClone(edited)
@@ -106,9 +155,18 @@ describe('Action Timeline shared contract', () => {
 
     it('serializes complete readable content and deduplicates cited Assets in first-use order', () => {
         const longText = 'x'.repeat(25000)
-        const document = buildActionTimelineDocument({ durationMs: 2000, precisionMs: 1000 }, [
-            { slotIndex: 0, runs: [{ text: longText }, { assetId: 'asset-b' }] },
-            { slotIndex: 1, runs: [{ assetId: 'asset-b' }, { text: ' then ' }, { assetId: 'asset-a' }] },
+        const document = buildActionTimelineDocument({
+            durationMs: 2000,
+            precisionMs: 1000,
+        }, [
+            {
+                slotIndex: 0,
+                runs: [{ text: longText }, { assetId: 'asset-b' }],
+            },
+            {
+                slotIndex: 1,
+                runs: [{ assetId: 'asset-b' }, { text: ' then ' }, { assetId: 'asset-a' }],
+            },
         ])
         const serialized = serializeActionTimelineForModel(
             document,
@@ -135,8 +193,14 @@ describe('Action Timeline shared contract', () => {
 
     it('requires an authorized canonical title for every serialized reference', () => {
         const document = buildActionTimelineDocument(
-            { durationMs: 1000, precisionMs: 1000 },
-            [{ slotIndex: 0, runs: [{ assetId: 'asset-missing-title' }] }],
+            {
+                durationMs: 1000,
+                precisionMs: 1000,
+            },
+            [{
+                slotIndex: 0,
+                runs: [{ assetId: 'asset-missing-title' }],
+            }],
         )
 
         expect(() => serializeActionTimelineForModel(document, new Map()))
@@ -145,9 +209,18 @@ describe('Action Timeline shared contract', () => {
 
     it('persists canonical Asset titles on reference atoms', () => {
         const document = buildActionTimelineDocument(
-            { durationMs: 1000, precisionMs: 1000 },
-            [{ slotIndex: 0, runs: [{ text: 'Board ' }, { assetId: 'asset-train' }] }],
-            new Map([['asset-train', { mediaKind: 'image', displayName: 'Slop Train' }]]),
+            {
+                durationMs: 1000,
+                precisionMs: 1000,
+            },
+            [{
+                slotIndex: 0,
+                runs: [{ text: 'Board ' }, { assetId: 'asset-train' }],
+            }],
+            new Map([['asset-train', {
+                mediaKind: 'image',
+                displayName: 'Slop Train',
+            }]]),
         )
 
         expect(document.content?.[0]?.content?.[0]?.content?.[1]?.attrs).toMatchObject({
@@ -158,13 +231,22 @@ describe('Action Timeline shared contract', () => {
     })
 
     it('rejects nested Artifact references and malformed timing grids', () => {
-        const document = buildActionTimelineDocument({ durationMs: 1000, precisionMs: 1000 }, [
-            { slotIndex: 0, runs: [{ text: 'Only beat' }] },
+        const document = buildActionTimelineDocument({
+            durationMs: 1000,
+            precisionMs: 1000,
+        }, [
+            {
+                slotIndex: 0,
+                runs: [{ text: 'Only beat' }],
+            },
         ])
         const nested = structuredClone(document)
         nested.content![0]!.content![0]!.content = [{
             type: 'prompt_reference',
-            attrs: { referenceType: 'capability-artifact', assetId: 'artifact-a' },
+            attrs: {
+                referenceType: 'capability-artifact',
+                assetId: 'artifact-a',
+            },
         }]
         expect(() => assertActionTimelineDocument(nested)).toThrow('ACTION_TIMELINE_REFERENCE_INVALID:0')
 

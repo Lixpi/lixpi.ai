@@ -35,8 +35,15 @@ describe('LangGraph TS parity', () => {
 
         const compiled = graph.compile()
         const final = await compiled.invoke({
-            messages: [{ role: 'user', content: 'hi' }],
-            aiModelMetaInfo: { provider: 'OpenAI', model: 'gpt', modelVersion: 'gpt-5' },
+            messages: [{
+                role: 'user',
+                content: 'hi',
+            }],
+            aiModelMetaInfo: {
+                provider: 'OpenAI',
+                model: 'gpt',
+                modelVersion: 'gpt-5',
+            },
             eventMeta: {},
             workspaceId: '',
             aiChatThreadId: '',
@@ -68,11 +75,12 @@ describe('LangGraph TS parity', () => {
             .addNode('longRunning', async () => {
                 // Cooperative cancellation: poll the signal in a loop.
                 for (let i = 0; i < 100; i++) {
-                    if (controller.signal.aborted) {
+                    if (controller.signal.aborted)
                         throw new Error('aborted')
-                    }
+
                     await new Promise(resolve => setTimeout(resolve, 10))
                 }
+
                 return { workspaceId: 'completed' }
             })
 
@@ -103,25 +111,27 @@ describe('LangGraph TS parity', () => {
 
     it('async conditional edges route correctly twice in a row', async () => {
         const calls: string[] = []
-        const router = async (s: ProviderState): Promise<'yes' | 'no'> => {
-            return s.generatedImagePrompt ? 'yes' : 'no'
-        }
+        const router = async (s: ProviderState): Promise<'yes' | 'no'> => s.generatedImagePrompt ? 'yes' : 'no'
 
         const graph = new StateGraph<ProviderState>({ channels: channels as any })
             .addNode('first', async (_s: ProviderState) => {
                 calls.push('first')
+
                 return { generatedImagePrompt: 'a prompt' }
             })
             .addNode('validateBranch', async (_s: ProviderState) => {
                 calls.push('validateBranch')
+
                 return {}
             })
             .addNode('executeBranch', async (_s: ProviderState) => {
                 calls.push('executeBranch')
+
                 return {}
             })
             .addNode('skipBranch', async (_s: ProviderState) => {
                 calls.push('skipBranch')
+
                 return {}
             })
 
@@ -129,12 +139,18 @@ describe('LangGraph TS parity', () => {
         graph.addConditionalEdges(
             'first' as any,
             router,
-            { yes: 'validateBranch' as any, no: 'skipBranch' as any },
+            {
+                yes: 'validateBranch' as any,
+                no: 'skipBranch' as any,
+            },
         )
         graph.addConditionalEdges(
             'validateBranch' as any,
             router,
-            { yes: 'executeBranch' as any, no: 'skipBranch' as any },
+            {
+                yes: 'executeBranch' as any,
+                no: 'skipBranch' as any,
+            },
         )
         graph.addEdge('executeBranch' as any, END)
         graph.addEdge('skipBranch' as any, END)

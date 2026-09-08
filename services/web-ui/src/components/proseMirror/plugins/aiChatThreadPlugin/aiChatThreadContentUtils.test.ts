@@ -18,7 +18,7 @@ import {
     type VideoGenerationTrace,
 } from '@lixpi/constants'
 
-function createTrace(): ImageGenerationTrace {
+const createTrace = (): ImageGenerationTrace => {
     return {
         traceVersion: 'image-generation-trace-v1',
         chatModelProvider: 'Anthropic',
@@ -40,7 +40,10 @@ describe('parseProseMirrorJsonContent', () => {
 
         expect(content).toEqual({
             type: 'doc',
-            content: [{ type: 'text', text: 'hello' }],
+            content: [{
+                type: 'text',
+                text: 'hello',
+            }],
         })
     })
 
@@ -59,10 +62,19 @@ describe('collectProseMirrorText', () => {
                 {
                     type: 'paragraph',
                     content: [
-                        { type: 'text', text: 'First line' },
+                        {
+                            type: 'text',
+                            text: 'First line',
+                        },
                         { type: 'hard_break' },
-                        { type: 'text', text: 'Second line' },
-                        { type: 'text', text: 'No space' },
+                        {
+                            type: 'text',
+                            text: 'Second line',
+                        },
+                        {
+                            type: 'text',
+                            text: 'No space',
+                        },
                     ],
                 },
             ],
@@ -75,9 +87,15 @@ describe('collectProseMirrorText', () => {
         const imageNode = {
             type: 'aiGeneratedImage',
             attrs: { revisedPrompt: 'Image brief' },
-            content: [{ type: 'text', text: 'Should be ignored' }],
+            content: [{
+                type: 'text',
+                text: 'Should be ignored',
+            }],
         }
-        const plainTextNode = { type: 'text', text: 'Keep me' }
+        const plainTextNode = {
+            type: 'text',
+            text: 'Keep me',
+        }
 
         expect(collectProseMirrorText({
             type: 'doc',
@@ -102,21 +120,45 @@ describe('collectResponseTextById', () => {
                     content: [
                         {
                             type: 'aiUserMessage',
-                            content: [{ type: 'paragraph', content: [{ type: 'text', text: 'First prompt' }] }],
+                            content: [{
+                                type: 'paragraph',
+                                content: [{
+                                    type: 'text',
+                                    text: 'First prompt',
+                                }],
+                            }],
                         },
                         {
                             type: 'aiResponseMessage',
                             attrs: { id: 'response-1' },
-                            content: [{ type: 'paragraph', content: [{ type: 'text', text: 'First answer' }] }],
+                            content: [{
+                                type: 'paragraph',
+                                content: [{
+                                    type: 'text',
+                                    text: 'First answer',
+                                }],
+                            }],
                         },
                         {
                             type: 'aiUserMessage',
-                            content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Second prompt' }] }],
+                            content: [{
+                                type: 'paragraph',
+                                content: [{
+                                    type: 'text',
+                                    text: 'Second prompt',
+                                }],
+                            }],
                         },
                         {
                             type: 'aiResponseMessage',
                             attrs: { id: 'response-2' },
-                            content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Second answer' }] }],
+                            content: [{
+                                type: 'paragraph',
+                                content: [{
+                                    type: 'text',
+                                    text: 'Second answer',
+                                }],
+                            }],
                         },
                     ],
                 },
@@ -142,28 +184,54 @@ describe('buildGeneratedMediaTurnProjectionFromThreadContent', () => {
                     content: [
                         {
                             type: 'aiUserMessage',
-                            content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Prompt from user' }] }],
+                            content: [{
+                                type: 'paragraph',
+                                content: [{
+                                    type: 'text',
+                                    text: 'Prompt from user',
+                                }],
+                            }],
                         },
                         {
                             type: 'aiResponseMessage',
-                            attrs: { id: 'response-1', aiProvider: 'OpenAI' },
+                            attrs: {
+                                id: 'response-1',
+                                aiProvider: 'OpenAI',
+                            },
                             content: [
                                 {
                                     type: 'aiReasoningSection',
-                                    attrs: { reasoningModelId: 'OpenAI:gpt-4.1', reasoningRunId: 'run-1' },
+                                    attrs: {
+                                        reasoningModelId: 'OpenAI:gpt-4.1',
+                                        reasoningRunId: 'run-1',
+                                    },
                                     content: [
                                         {
                                             type: 'aiCollapsibleBlock',
                                             attrs: { imageGenerationTrace: createTrace() },
-                                            content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Generated prompt text' }] }],
+                                            content: [{
+                                                type: 'paragraph',
+                                                content: [{
+                                                    type: 'text',
+                                                    text: 'Generated prompt text',
+                                                }],
+                                            }],
                                         },
                                         {
                                             type: 'aiGeneratedImage',
-                                            attrs: { mediaRunId: 'run-1', mediaType: 'image', fileId: 'file-1' },
+                                            attrs: {
+                                                mediaRunId: 'run-1',
+                                                mediaType: 'image',
+                                                fileId: 'file-1',
+                                            },
                                         },
                                         {
                                             type: 'aiGeneratedImage',
-                                            attrs: { mediaRunId: 'run-2', mediaType: 'image', fileId: 'file-2' },
+                                            attrs: {
+                                                mediaRunId: 'run-2',
+                                                mediaType: 'image',
+                                                fileId: 'file-2',
+                                            },
                                         },
                                     ],
                                 },
@@ -206,14 +274,29 @@ describe('buildGeneratedMediaTurnProjectionFromThreadContent', () => {
                     content: [
                         {
                             type: 'aiUserMessage',
-                            content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Only prompt' }] }],
+                            content: [{
+                                type: 'paragraph',
+                                content: [{
+                                    type: 'text',
+                                    text: 'Only prompt',
+                                }],
+                            }],
                         },
                         {
                             type: 'aiResponseMessage',
                             attrs: { id: 'response-2' },
                             content: [
-                                { type: 'paragraph', content: [{ type: 'text', text: 'Fallback answer' }] },
-                                { type: 'aiGeneratedImage', attrs: { mediaRunId: 'latest-media' } },
+                                {
+                                    type: 'paragraph',
+                                    content: [{
+                                        type: 'text',
+                                        text: 'Fallback answer',
+                                    }],
+                                },
+                                {
+                                    type: 'aiGeneratedImage',
+                                    attrs: { mediaRunId: 'latest-media' },
+                                },
                             ],
                         },
                     ],
@@ -239,26 +322,56 @@ describe('aiChatThreadContentUtils', () => {
         const content = {
             type: 'doc',
             content: [
-                { type: 'documentTitle', content: [{ type: 'text', text: 'Thread' }] },
+                {
+                    type: 'documentTitle',
+                    content: [{
+                        type: 'text',
+                        text: 'Thread',
+                    }],
+                },
                 {
                     type: 'aiChatThread',
                     attrs: { threadId: 'thread-1' },
                     content: [
                         {
                             type: 'aiUserMessage',
-                            content: [{ type: 'paragraph', content: [{ type: 'text', text: 'make the scene cinematic' }] }],
+                            content: [{
+                                type: 'paragraph',
+                                content: [{
+                                    type: 'text',
+                                    text: 'make the scene cinematic',
+                                }],
+                            }],
                         },
                         {
                             type: 'aiResponseMessage',
-                            attrs: { id: 'response-1', aiProvider: 'Anthropic' },
+                            attrs: {
+                                id: 'response-1',
+                                aiProvider: 'Anthropic',
+                            },
                             content: [
                                 {
                                     type: 'aiCollapsibleBlock',
                                     attrs: { imageGenerationTrace: trace },
-                                    content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Prompt written in the response.' }] }],
+                                    content: [{
+                                        type: 'paragraph',
+                                        content: [{
+                                            type: 'text',
+                                            text: 'Prompt written in the response.',
+                                        }],
+                                    }],
                                 },
-                                { type: 'paragraph', content: [{ type: 'text', text: 'Generated it.' }] },
-                                { type: 'aiGeneratedImage', attrs: { revisedPrompt: 'thumbnail prompt' } },
+                                {
+                                    type: 'paragraph',
+                                    content: [{
+                                        type: 'text',
+                                        text: 'Generated it.',
+                                    }],
+                                },
+                                {
+                                    type: 'aiGeneratedImage',
+                                    attrs: { revisedPrompt: 'thumbnail prompt' },
+                                },
                             ],
                         },
                     ],
@@ -301,18 +414,39 @@ describe('aiChatThreadContentUtils', () => {
                     content: [
                         {
                             type: 'aiUserMessage',
-                            content: [{ type: 'paragraph', content: [{ type: 'text', text: 'animate the seaside' }] }],
+                            content: [{
+                                type: 'paragraph',
+                                content: [{
+                                    type: 'text',
+                                    text: 'animate the seaside',
+                                }],
+                            }],
                         },
                         {
                             type: 'aiResponseMessage',
-                            attrs: { id: 'response-2', aiProvider: 'Google' },
+                            attrs: {
+                                id: 'response-2',
+                                aiProvider: 'Google',
+                            },
                             content: [
                                 {
                                     type: 'aiCollapsibleBlock',
                                     attrs: { videoGenerationTrace: videoTrace },
-                                    content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Video prompt text.' }] }],
+                                    content: [{
+                                        type: 'paragraph',
+                                        content: [{
+                                            type: 'text',
+                                            text: 'Video prompt text.',
+                                        }],
+                                    }],
                                 },
-                                { type: 'paragraph', content: [{ type: 'text', text: 'Generated the clip.' }] },
+                                {
+                                    type: 'paragraph',
+                                    content: [{
+                                        type: 'text',
+                                        text: 'Generated the clip.',
+                                    }],
+                                },
                             ],
                         },
                     ],
@@ -328,8 +462,15 @@ describe('aiChatThreadContentUtils', () => {
     })
 
     it('resolves each model to its own section in a multi-model response (no history mixing)', () => {
-        const claudeTrace = { ...createTrace(), toolPrompt: 'Claude prompt' }
-        const geminiTrace = { ...createTrace(), imageModelId: 'gemini-2.5-flash-image', toolPrompt: 'Gemini prompt' }
+        const claudeTrace = {
+            ...createTrace(),
+            toolPrompt: 'Claude prompt',
+        }
+        const geminiTrace = {
+            ...createTrace(),
+            imageModelId: 'gemini-2.5-flash-image',
+            toolPrompt: 'Gemini prompt',
+        }
         const content = {
             type: 'doc',
             content: [
@@ -339,7 +480,13 @@ describe('aiChatThreadContentUtils', () => {
                     content: [
                         {
                             type: 'aiUserMessage',
-                            content: [{ type: 'paragraph', content: [{ type: 'text', text: 'swap the characters' }] }],
+                            content: [{
+                                type: 'paragraph',
+                                content: [{
+                                    type: 'text',
+                                    text: 'swap the characters',
+                                }],
+                            }],
                         },
                         {
                             type: 'aiResponseMessage',
@@ -347,19 +494,57 @@ describe('aiChatThreadContentUtils', () => {
                             content: [
                                 {
                                     type: 'aiReasoningSection',
-                                    attrs: { reasoningModelId: 'Anthropic:claude-sonnet-4-6', reasoningRunId: 'run-0' },
+                                    attrs: {
+                                        reasoningModelId: 'Anthropic:claude-sonnet-4-6',
+                                        reasoningRunId: 'run-0',
+                                    },
                                     content: [
-                                        { type: 'paragraph', content: [{ type: 'text', text: 'Claude reply.' }] },
-                                        { type: 'aiCollapsibleBlock', attrs: { imageGenerationTrace: claudeTrace }, content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Claude prompt text.' }] }] },
-                                        { type: 'aiGeneratedImage', attrs: { revisedPrompt: 'claude thumb' } },
+                                        {
+                                            type: 'paragraph',
+                                            content: [{
+                                                type: 'text',
+                                                text: 'Claude reply.',
+                                            }],
+                                        },
+                                        {
+                                            type: 'aiCollapsibleBlock',
+                                            attrs: { imageGenerationTrace: claudeTrace },
+                                            content: [{
+                                                type: 'paragraph',
+                                                content: [{
+                                                    type: 'text',
+                                                    text: 'Claude prompt text.',
+                                                }],
+                                            }],
+                                        },
+                                        {
+                                            type: 'aiGeneratedImage',
+                                            attrs: { revisedPrompt: 'claude thumb' },
+                                        },
                                     ],
                                 },
                                 {
                                     type: 'aiReasoningSection',
-                                    attrs: { reasoningModelId: 'Google:gemini-flash-latest', reasoningRunId: 'run-1' },
+                                    attrs: {
+                                        reasoningModelId: 'Google:gemini-flash-latest',
+                                        reasoningRunId: 'run-1',
+                                    },
                                     content: [
-                                        { type: 'aiCollapsibleBlock', attrs: { imageGenerationTrace: geminiTrace }, content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Gemini prompt text.' }] }] },
-                                        { type: 'aiGeneratedImage', attrs: { revisedPrompt: 'gemini thumb' } },
+                                        {
+                                            type: 'aiCollapsibleBlock',
+                                            attrs: { imageGenerationTrace: geminiTrace },
+                                            content: [{
+                                                type: 'paragraph',
+                                                content: [{
+                                                    type: 'text',
+                                                    text: 'Gemini prompt text.',
+                                                }],
+                                            }],
+                                        },
+                                        {
+                                            type: 'aiGeneratedImage',
+                                            attrs: { revisedPrompt: 'gemini thumb' },
+                                        },
                                     ],
                                 },
                             ],
@@ -382,8 +567,14 @@ describe('aiChatThreadContentUtils', () => {
     })
 
     it('prefers reasoningRunId over reasoningModelId when the same model appears twice', () => {
-        const firstTrace = { ...createTrace(), toolPrompt: 'First run prompt' }
-        const secondTrace = { ...createTrace(), toolPrompt: 'Second run prompt' }
+        const firstTrace = {
+            ...createTrace(),
+            toolPrompt: 'First run prompt',
+        }
+        const secondTrace = {
+            ...createTrace(),
+            toolPrompt: 'Second run prompt',
+        }
         const sharedModelId = 'Google:gemini-flash-latest'
         const content = {
             type: 'doc',
@@ -394,7 +585,13 @@ describe('aiChatThreadContentUtils', () => {
                     content: [
                         {
                             type: 'aiUserMessage',
-                            content: [{ type: 'paragraph', content: [{ type: 'text', text: 'make two variants' }] }],
+                            content: [{
+                                type: 'paragraph',
+                                content: [{
+                                    type: 'text',
+                                    text: 'make two variants',
+                                }],
+                            }],
                         },
                         {
                             type: 'aiResponseMessage',
@@ -402,20 +599,70 @@ describe('aiChatThreadContentUtils', () => {
                             content: [
                                 {
                                     type: 'aiReasoningSection',
-                                    attrs: { reasoningModelId: sharedModelId, reasoningRunId: 'run-first' },
+                                    attrs: {
+                                        reasoningModelId: sharedModelId,
+                                        reasoningRunId: 'run-first',
+                                    },
                                     content: [
-                                        { type: 'paragraph', content: [{ type: 'text', text: 'First run reply.' }] },
-                                        { type: 'aiCollapsibleBlock', attrs: { imageGenerationTrace: firstTrace }, content: [{ type: 'paragraph', content: [{ type: 'text', text: 'First run prompt text.' }] }] },
-                                        { type: 'aiGeneratedImage', attrs: { revisedPrompt: 'first thumb', mediaRunId: 'media-first' } },
+                                        {
+                                            type: 'paragraph',
+                                            content: [{
+                                                type: 'text',
+                                                text: 'First run reply.',
+                                            }],
+                                        },
+                                        {
+                                            type: 'aiCollapsibleBlock',
+                                            attrs: { imageGenerationTrace: firstTrace },
+                                            content: [{
+                                                type: 'paragraph',
+                                                content: [{
+                                                    type: 'text',
+                                                    text: 'First run prompt text.',
+                                                }],
+                                            }],
+                                        },
+                                        {
+                                            type: 'aiGeneratedImage',
+                                            attrs: {
+                                                revisedPrompt: 'first thumb',
+                                                mediaRunId: 'media-first',
+                                            },
+                                        },
                                     ],
                                 },
                                 {
                                     type: 'aiReasoningSection',
-                                    attrs: { reasoningModelId: sharedModelId, reasoningRunId: 'run-second' },
+                                    attrs: {
+                                        reasoningModelId: sharedModelId,
+                                        reasoningRunId: 'run-second',
+                                    },
                                     content: [
-                                        { type: 'paragraph', content: [{ type: 'text', text: 'Second run reply.' }] },
-                                        { type: 'aiCollapsibleBlock', attrs: { imageGenerationTrace: secondTrace }, content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Second run prompt text.' }] }] },
-                                        { type: 'aiGeneratedImage', attrs: { revisedPrompt: 'second thumb', mediaRunId: 'media-second' } },
+                                        {
+                                            type: 'paragraph',
+                                            content: [{
+                                                type: 'text',
+                                                text: 'Second run reply.',
+                                            }],
+                                        },
+                                        {
+                                            type: 'aiCollapsibleBlock',
+                                            attrs: { imageGenerationTrace: secondTrace },
+                                            content: [{
+                                                type: 'paragraph',
+                                                content: [{
+                                                    type: 'text',
+                                                    text: 'Second run prompt text.',
+                                                }],
+                                            }],
+                                        },
+                                        {
+                                            type: 'aiGeneratedImage',
+                                            attrs: {
+                                                revisedPrompt: 'second thumb',
+                                                mediaRunId: 'media-second',
+                                            },
+                                        },
                                     ],
                                 },
                             ],
@@ -437,8 +684,14 @@ describe('aiChatThreadContentUtils', () => {
     })
 
     it('uses mediaRunId to resolve the exact section when run metadata only exists on the media node', () => {
-        const firstTrace = { ...createTrace(), toolPrompt: 'First media prompt' }
-        const secondTrace = { ...createTrace(), toolPrompt: 'Second media prompt' }
+        const firstTrace = {
+            ...createTrace(),
+            toolPrompt: 'First media prompt',
+        }
+        const secondTrace = {
+            ...createTrace(),
+            toolPrompt: 'Second media prompt',
+        }
         const content = {
             type: 'doc',
             content: [
@@ -448,7 +701,13 @@ describe('aiChatThreadContentUtils', () => {
                     content: [
                         {
                             type: 'aiUserMessage',
-                            content: [{ type: 'paragraph', content: [{ type: 'text', text: 'render both images' }] }],
+                            content: [{
+                                type: 'paragraph',
+                                content: [{
+                                    type: 'text',
+                                    text: 'render both images',
+                                }],
+                            }],
                         },
                         {
                             type: 'aiResponseMessage',
@@ -458,18 +717,62 @@ describe('aiChatThreadContentUtils', () => {
                                     type: 'aiReasoningSection',
                                     attrs: { reasoningModelId: 'Anthropic:claude-sonnet-4-6' },
                                     content: [
-                                        { type: 'paragraph', content: [{ type: 'text', text: 'Claude media reply.' }] },
-                                        { type: 'aiCollapsibleBlock', attrs: { imageGenerationTrace: firstTrace }, content: [{ type: 'paragraph', content: [{ type: 'text', text: 'First media prompt text.' }] }] },
-                                        { type: 'aiGeneratedImage', attrs: { revisedPrompt: 'first thumb', mediaRunId: 'media-first' } },
+                                        {
+                                            type: 'paragraph',
+                                            content: [{
+                                                type: 'text',
+                                                text: 'Claude media reply.',
+                                            }],
+                                        },
+                                        {
+                                            type: 'aiCollapsibleBlock',
+                                            attrs: { imageGenerationTrace: firstTrace },
+                                            content: [{
+                                                type: 'paragraph',
+                                                content: [{
+                                                    type: 'text',
+                                                    text: 'First media prompt text.',
+                                                }],
+                                            }],
+                                        },
+                                        {
+                                            type: 'aiGeneratedImage',
+                                            attrs: {
+                                                revisedPrompt: 'first thumb',
+                                                mediaRunId: 'media-first',
+                                            },
+                                        },
                                     ],
                                 },
                                 {
                                     type: 'aiReasoningSection',
                                     attrs: { reasoningModelId: 'Google:gemini-flash-latest' },
                                     content: [
-                                        { type: 'paragraph', content: [{ type: 'text', text: 'Gemini media reply.' }] },
-                                        { type: 'aiCollapsibleBlock', attrs: { imageGenerationTrace: secondTrace }, content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Second media prompt text.' }] }] },
-                                        { type: 'aiGeneratedImage', attrs: { revisedPrompt: 'second thumb', mediaRunId: 'media-second' } },
+                                        {
+                                            type: 'paragraph',
+                                            content: [{
+                                                type: 'text',
+                                                text: 'Gemini media reply.',
+                                            }],
+                                        },
+                                        {
+                                            type: 'aiCollapsibleBlock',
+                                            attrs: { imageGenerationTrace: secondTrace },
+                                            content: [{
+                                                type: 'paragraph',
+                                                content: [{
+                                                    type: 'text',
+                                                    text: 'Second media prompt text.',
+                                                }],
+                                            }],
+                                        },
+                                        {
+                                            type: 'aiGeneratedImage',
+                                            attrs: {
+                                                revisedPrompt: 'second thumb',
+                                                mediaRunId: 'media-second',
+                                            },
+                                        },
                                     ],
                                 },
                             ],
@@ -500,12 +803,24 @@ describe('buildGeneratedMediaTurnProjectionFromThreadContent — projection filt
                     content: [
                         {
                             type: 'aiUserMessage',
-                            content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Prompt one' }] }],
+                            content: [{
+                                type: 'paragraph',
+                                content: [{
+                                    type: 'text',
+                                    text: 'Prompt one',
+                                }],
+                            }],
                         },
                         {
                             type: 'aiResponseMessage',
                             attrs: { id: 'response-1' },
-                            content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Answer one' }] }],
+                            content: [{
+                                type: 'paragraph',
+                                content: [{
+                                    type: 'text',
+                                    text: 'Answer one',
+                                }],
+                            }],
                         },
                     ],
                 },
@@ -530,12 +845,24 @@ describe('buildGeneratedMediaTurnProjectionFromThreadContent — projection filt
                     content: [
                         {
                             type: 'aiUserMessage',
-                            content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Prompt one' }] }],
+                            content: [{
+                                type: 'paragraph',
+                                content: [{
+                                    type: 'text',
+                                    text: 'Prompt one',
+                                }],
+                            }],
                         },
                         {
                             type: 'aiResponseMessage',
                             attrs: { id: 'response-1' },
-                            content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Answer one' }] }],
+                            content: [{
+                                type: 'paragraph',
+                                content: [{
+                                    type: 'text',
+                                    text: 'Answer one',
+                                }],
+                            }],
                         },
                     ],
                 },
@@ -556,22 +883,57 @@ describe('buildGeneratedMediaTurnProjectionFromThreadContent — projection filt
                     content: [
                         {
                             type: 'aiUserMessage',
-                            content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Generate two files' }] }],
+                            content: [{
+                                type: 'paragraph',
+                                content: [{
+                                    type: 'text',
+                                    text: 'Generate two files',
+                                }],
+                            }],
                         },
                         {
                             type: 'aiResponseMessage',
-                            attrs: { id: 'response-1', aiProvider: 'OpenAI' },
+                            attrs: {
+                                id: 'response-1',
+                                aiProvider: 'OpenAI',
+                            },
                             content: [
-                                { type: 'paragraph', content: [{ type: 'text', text: 'Here are both images.' }] },
+                                {
+                                    type: 'paragraph',
+                                    content: [{
+                                        type: 'text',
+                                        text: 'Here are both images.',
+                                    }],
+                                },
                                 {
                                     type: 'aiCollapsibleBlock',
                                     attrs: {
                                         imageGenerationTrace: createTrace(),
                                     },
-                                    content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Trace prompt.' }] }],
+                                    content: [{
+                                        type: 'paragraph',
+                                        content: [{
+                                            type: 'text',
+                                            text: 'Trace prompt.',
+                                        }],
+                                    }],
                                 },
-                                { type: 'aiGeneratedImage', attrs: { assetId: 'file-a', mediaType: 'image', mediaRunId: 'run-a' } },
-                                { type: 'aiGeneratedImage', attrs: { assetId: 'file-b', mediaType: 'image', mediaRunId: 'run-b' } },
+                                {
+                                    type: 'aiGeneratedImage',
+                                    attrs: {
+                                        assetId: 'file-a',
+                                        mediaType: 'image',
+                                        mediaRunId: 'run-a',
+                                    },
+                                },
+                                {
+                                    type: 'aiGeneratedImage',
+                                    attrs: {
+                                        assetId: 'file-b',
+                                        mediaType: 'image',
+                                        mediaRunId: 'run-b',
+                                    },
+                                },
                             ],
                         },
                     ],
@@ -586,20 +948,30 @@ describe('buildGeneratedMediaTurnProjectionFromThreadContent — projection filt
         )
         const filteredProjection = buildGeneratedMediaTurnProjectionFromThreadContent(
             content,
-            { responseMessageId: 'response-1', assetId: 'file-b', mediaType: 'image' },
+            {
+                responseMessageId: 'response-1',
+                assetId: 'file-b',
+                mediaType: 'image',
+            },
             { limitToLocatorMedia: true },
         )
 
         const collectMediaFileIds = (root: any) => {
             const files: any[] = []
-            function walk(node: any) {
-                if (node?.type === 'aiGeneratedImage' || node?.type === 'aiGeneratedVideo') {
+            const walk = (node: any) => {
+                if (
+                    node?.type === 'aiGeneratedImage'
+                    || node?.type === 'aiGeneratedVideo'
+                ) {
                     files.push(node.attrs?.assetId)
+
                     return
                 }
+
                 ;(node?.content ?? []).forEach((child: any) => walk(child))
             }
             walk(root)
+
             return files
         }
 
@@ -619,22 +991,61 @@ describe('getGeneratedImageTurnInfoFromThreadContent — locator edge cases', ()
                     content: [
                         {
                             type: 'aiUserMessage',
-                            content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Create multiple variants' }] }],
+                            content: [{
+                                type: 'paragraph',
+                                content: [{
+                                    type: 'text',
+                                    text: 'Create multiple variants',
+                                }],
+                            }],
                         },
                         {
                             type: 'aiResponseMessage',
-                            attrs: { id: 'response-1', aiProvider: 'OpenAI' },
+                            attrs: {
+                                id: 'response-1',
+                                aiProvider: 'OpenAI',
+                            },
                             content: [
-                                { type: 'paragraph', content: [{ type: 'text', text: 'Candidate text.' }] },
+                                {
+                                    type: 'paragraph',
+                                    content: [{
+                                        type: 'text',
+                                        text: 'Candidate text.',
+                                    }],
+                                },
                                 {
                                     type: 'aiCollapsibleBlock',
                                     attrs: {
                                         imageGenerationTrace: createTrace(),
                                     },
-                                    content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Seed prompt one.' }] }],
+                                    content: [{
+                                        type: 'paragraph',
+                                        content: [{
+                                            type: 'text',
+                                            text: 'Seed prompt one.',
+                                        }],
+                                    }],
                                 },
-                                { type: 'aiGeneratedImage', attrs: { assetId: 'file-a', variantIndex: 1, mediaType: 'image', mediaRunId: 'run-a', revisedPrompt: 'variant one' } },
-                                { type: 'aiGeneratedImage', attrs: { assetId: 'file-a', variantIndex: 2, mediaType: 'image', mediaRunId: 'run-b', revisedPrompt: 'variant two' } },
+                                {
+                                    type: 'aiGeneratedImage',
+                                    attrs: {
+                                        assetId: 'file-a',
+                                        variantIndex: 1,
+                                        mediaType: 'image',
+                                        mediaRunId: 'run-a',
+                                        revisedPrompt: 'variant one',
+                                    },
+                                },
+                                {
+                                    type: 'aiGeneratedImage',
+                                    attrs: {
+                                        assetId: 'file-a',
+                                        variantIndex: 2,
+                                        mediaType: 'image',
+                                        mediaRunId: 'run-b',
+                                        revisedPrompt: 'variant two',
+                                    },
+                                },
                             ],
                         },
                     ],

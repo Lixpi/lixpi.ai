@@ -17,7 +17,7 @@ import {
     type StageLogger,
 } from './types.ts'
 
-function makeState(): StyleExtractionState {
+const makeState = (): StyleExtractionState => {
     return {
         input: {
             styleExtractionRunId: 'run-1',
@@ -63,12 +63,12 @@ function makeState(): StyleExtractionState {
     }
 }
 
-function makeExtractor(args: {
+const makeExtractor = (args: {
     axis: string
     minDominance: number
     applicable?: boolean
     extract?: StyleExtractor['extract']
-}): StyleExtractor {
+}): StyleExtractor => {
     return {
         axis: args.axis,
         displayName: args.axis,
@@ -85,7 +85,7 @@ function makeExtractor(args: {
     }
 }
 
-function makeLogger(): StageLogger {
+const makeLogger = (): StageLogger => {
     return {
         styleExtractionRunId: 'run-1',
         emit: vi.fn(),
@@ -97,9 +97,19 @@ function makeLogger(): StageLogger {
 describe('Style Extraction axis selection', () => {
     it('selects every applicable axis above its configured dominance floor', () => {
         const selected = selectApplicableExtractors(makeState(), [
-            makeExtractor({ axis: 'palette', minDominance: 0.3 }),
-            makeExtractor({ axis: 'lighting', minDominance: 0.3 }),
-            makeExtractor({ axis: 'character', minDominance: 0.5, applicable: false }),
+            makeExtractor({
+                axis: 'palette',
+                minDominance: 0.3,
+            }),
+            makeExtractor({
+                axis: 'lighting',
+                minDominance: 0.3,
+            }),
+            makeExtractor({
+                axis: 'character',
+                minDominance: 0.5,
+                applicable: false,
+            }),
         ])
 
         expect(selected.map((extractor) => extractor.axis)).toEqual(['palette'])
@@ -109,7 +119,10 @@ describe('Style Extraction axis selection', () => {
         const state = makeState()
         state.sceneAssessment = undefined
 
-        expect(selectApplicableExtractors(state, [makeExtractor({ axis: 'palette', minDominance: 0.3 })])).toEqual([])
+        expect(selectApplicableExtractors(state, [makeExtractor({
+            axis: 'palette',
+            minDominance: 0.3,
+        })])).toEqual([])
     })
 })
 
@@ -138,6 +151,9 @@ describe('Style Extraction single-axis action boundary', () => {
         )
 
         expect(result.axisExtractions).toEqual({})
-        expect(result.failedAxes).toEqual([{ axis: 'palette', error: 'provider disconnected' }])
+        expect(result.failedAxes).toEqual([{
+            axis: 'palette',
+            error: 'provider disconnected',
+        }])
     })
 })

@@ -187,7 +187,7 @@ export const createCharacterVlmPorts = (args: CharacterVlmArgs): {
     }
 }
 
-export function describeCharacterPanelAssessmentFailure(error: unknown): CharacterPanelAssessmentFailureDescription {
+export const describeCharacterPanelAssessmentFailure = (error: unknown): CharacterPanelAssessmentFailureDescription => {
     if (error instanceof CharacterPanelAssessmentResponseError) {
         return {
             code: error.code,

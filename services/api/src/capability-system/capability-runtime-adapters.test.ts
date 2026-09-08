@@ -51,8 +51,14 @@ describe('mirrorCapabilityRunEventToChat', () => {
                 layoutRevision: 5,
                 nodes: [{
                     nodeId: 'asset-node-1',
-                    position: { x: 10, y: 20 },
-                    dimensions: { width: 100, height: 100 },
+                    position: {
+                        x: 10,
+                        y: 20,
+                    },
+                    dimensions: {
+                        width: 100,
+                        height: 100,
+                    },
                 }],
             },
         }

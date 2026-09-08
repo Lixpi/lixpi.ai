@@ -65,6 +65,7 @@ const createRegistry = () => {
     const stopGroup = vi.fn(async () => undefined)
     const stopGroupsWithPrefix = vi.fn(async () => undefined)
     const shutdown = vi.fn(async () => undefined)
+
     return {
         process,
         preflightAdmission,
@@ -90,7 +91,10 @@ const createRequest = (overrides: Partial<MatrixRequestData> = {}): MatrixReques
     aiReasoningModels: ['Anthropic:claude-sonnet-4-6'],
     aiImageModels: ['Google:gemini-2.5-flash-image'],
     aiVideoModels: ['Google:veo-3.1-generate-preview'],
-    eventMeta: { organizationId: 'organization-1', userId: 'user-1' },
+    eventMeta: {
+        organizationId: 'organization-1',
+        userId: 'user-1',
+    },
     imageSize: '1024x1024',
     videoAspectRatio: '16:9',
     videoResolution: '720p',
@@ -136,9 +140,7 @@ describe('MediaGenerationMatrixOrchestrator key helpers', () => {
             .toBe('ws-1:thread-1:request-1')
     })
 
-    it('builds deterministic thread-scoped stop prefixes', () => {
-        expect(buildMediaGenerationThreadGroupPrefix('ws-1', 'thread-1')).toBe('ws-1:thread-1:')
-    })
+    it('builds deterministic thread-scoped stop prefixes', () => void expect(buildMediaGenerationThreadGroupPrefix('ws-1', 'thread-1')).toBe('ws-1:thread-1:'))
 })
 
 describe('MediaGenerationMatrixOrchestrator', () => {
@@ -147,7 +149,10 @@ describe('MediaGenerationMatrixOrchestrator', () => {
         const orchestrator = new MediaGenerationMatrixOrchestrator(registry.asRegistry as any, natsService)
         const getAiModel = vi.spyOn(AiModelModelModule.default, 'getAiModel')
 
-        getAiModel.mockImplementation(async ({ model }: { provider: string; model: string }) => {
+        getAiModel.mockImplementation(async ({ model }: {
+            provider: string
+            model: string
+        }) => {
             if (model === 'claude-3-opus-20240229') {
                 return {
                     provider: 'Anthropic',
@@ -156,6 +161,7 @@ describe('MediaGenerationMatrixOrchestrator', () => {
                     modalities: [{ modality: 'text' }],
                 } as any
             }
+
             if (model === 'claude-3-sonnet-20240229') {
                 return {
                     provider: 'Anthropic',
@@ -164,6 +170,7 @@ describe('MediaGenerationMatrixOrchestrator', () => {
                     modalities: [{ modality: 'text' }],
                 } as any
             }
+
             if (model === 'gemini-2.5-flash-image') {
                 return {
                     provider: 'Google',
@@ -173,6 +180,7 @@ describe('MediaGenerationMatrixOrchestrator', () => {
                     maxCompletionSize: 4096,
                 } as any
             }
+
             return {
                 provider: 'Google',
                 model: 'veo-3.1-generate-preview',
@@ -234,7 +242,10 @@ describe('MediaGenerationMatrixOrchestrator', () => {
         const orchestrator = new MediaGenerationMatrixOrchestrator(registry.asRegistry as any, natsService)
         const getAiModel = vi.spyOn(AiModelModelModule.default, 'getAiModel')
 
-        getAiModel.mockImplementation(async ({ model }: { provider: string; model: string }) => {
+        getAiModel.mockImplementation(async ({ model }: {
+            provider: string
+            model: string
+        }) => {
             if (model === 'claude-sonnet-4-6') {
                 return {
                     provider: 'Anthropic',
@@ -243,6 +254,7 @@ describe('MediaGenerationMatrixOrchestrator', () => {
                     modalities: [{ modality: 'text' }],
                 } as any
             }
+
             if (model === 'veo-3.1-generate-preview') {
                 return {
                     provider: 'Google',
@@ -251,6 +263,7 @@ describe('MediaGenerationMatrixOrchestrator', () => {
                     modalities: [{ modality: 'video_generation' }],
                 } as any
             }
+
             return {
                 provider: 'Google',
                 model,
@@ -292,7 +305,10 @@ describe('MediaGenerationMatrixOrchestrator', () => {
         const orchestrator = new MediaGenerationMatrixOrchestrator(registry.asRegistry as any, natsService)
         const getAiModel = vi.spyOn(AiModelModelModule.default, 'getAiModel')
 
-        getAiModel.mockImplementation(async ({ model }: { provider: string; model: string }) => {
+        getAiModel.mockImplementation(async ({ model }: {
+            provider: string
+            model: string
+        }) => {
             if (model === 'claude-sonnet-4-6') {
                 return {
                     provider: 'Anthropic',
@@ -301,6 +317,7 @@ describe('MediaGenerationMatrixOrchestrator', () => {
                     modalities: [{ modality: 'text' }],
                 } as any
             }
+
             return {
                 provider: 'Google',
                 model,
@@ -462,7 +479,10 @@ describe('MediaGenerationMatrixOrchestrator', () => {
     it('rejects requests with no reasoning model ids', async () => {
         const registry = createRegistry()
         const orchestrator = new MediaGenerationMatrixOrchestrator(registry.asRegistry as any, natsService)
-        const request = { workspaceId: 'ws-1', aiChatThreadId: 'thread-1' } as MatrixRequestData
+        const request = {
+            workspaceId: 'ws-1',
+            aiChatThreadId: 'thread-1',
+        } as MatrixRequestData
 
         await expect(orchestrator.process(request)).rejects.toThrow('at least one reasoning model')
         expect(registry.process).not.toHaveBeenCalled()
@@ -491,7 +511,10 @@ describe('MediaGenerationMatrixOrchestrator', () => {
         const orchestrator = new MediaGenerationMatrixOrchestrator(registry.asRegistry as any, natsService)
         const getAiModel = vi.spyOn(AiModelModelModule.default, 'getAiModel')
 
-        getAiModel.mockImplementation(async ({ model }: { provider: string; model: string }) => {
+        getAiModel.mockImplementation(async ({ model }: {
+            provider: string
+            model: string
+        }) => {
             if (model === 'claude-sonnet-4-6') {
                 return {
                     provider: 'Anthropic',
@@ -500,6 +523,7 @@ describe('MediaGenerationMatrixOrchestrator', () => {
                     modalities: [{ modality: 'text' }],
                 } as any
             }
+
             if (model === 'gemini-2.5-flash-image') {
                 return {
                     provider: 'Google',
@@ -508,15 +532,34 @@ describe('MediaGenerationMatrixOrchestrator', () => {
                     modalities: [{ modality: 'image_generation' }],
                 } as any
             }
+
             return {
                 provider: 'Google',
                 model: 'veo-3.1-generate-preview',
                 modelVersion: 'veo-3.1-generate-preview',
                 modalities: [{ modality: 'video_generation' }],
                 videoGenerationControls: [
-                    { key: 'aspectRatio', label: 'Aspect ratio', kind: 'aspect-ratio', options: [{ value: '16:9' }], defaultValue: '16:9' },
-                    { key: 'resolution', label: 'Resolution', kind: 'segmented', options: [{ value: '720p' }], defaultValue: '720p' },
-                    { key: 'duration', label: 'Duration', kind: 'segmented', options: [{ value: '8' }], defaultValue: '8' },
+                    {
+                        key: 'aspectRatio',
+                        label: 'Aspect ratio',
+                        kind: 'aspect-ratio',
+                        options: [{ value: '16:9' }],
+                        defaultValue: '16:9',
+                    },
+                    {
+                        key: 'resolution',
+                        label: 'Resolution',
+                        kind: 'segmented',
+                        options: [{ value: '720p' }],
+                        defaultValue: '720p',
+                    },
+                    {
+                        key: 'duration',
+                        label: 'Duration',
+                        kind: 'segmented',
+                        options: [{ value: '8' }],
+                        defaultValue: '8',
+                    },
                 ],
             } as any
         })
@@ -563,7 +606,10 @@ describe('MediaGenerationMatrixOrchestrator', () => {
         const orchestrator = new MediaGenerationMatrixOrchestrator(registry.asRegistry as any, natsService)
         const getAiModel = vi.spyOn(AiModelModelModule.default, 'getAiModel')
 
-        getAiModel.mockImplementation(async ({ model }: { provider: string; model: string }) => {
+        getAiModel.mockImplementation(async ({ model }: {
+            provider: string
+            model: string
+        }) => {
             if (model === 'claude-sonnet-4-6') {
                 return {
                     provider: 'Anthropic',
@@ -572,6 +618,7 @@ describe('MediaGenerationMatrixOrchestrator', () => {
                     modalities: [{ modality: 'text' }],
                 } as any
             }
+
             if (model === 'gemini-2.5-flash-image') {
                 return {
                     provider: 'Google',
@@ -580,15 +627,34 @@ describe('MediaGenerationMatrixOrchestrator', () => {
                     modalities: [{ modality: 'image_generation' }],
                 } as any
             }
+
             return {
                 provider: 'Google',
                 model: 'veo-3.1-generate-preview',
                 modelVersion: 'veo-3.1-generate-preview',
                 modalities: [{ modality: 'video_generation' }],
                 videoGenerationControls: [
-                    { key: 'aspectRatio', label: 'Aspect ratio', kind: 'aspect-ratio', options: [{ value: '16:9' }], defaultValue: '16:9' },
-                    { key: 'resolution', label: 'Resolution', kind: 'segmented', options: [{ value: '720p' }], defaultValue: '720p' },
-                    { key: 'duration', label: 'Duration', kind: 'segmented', options: [{ value: '8' }], defaultValue: '8' },
+                    {
+                        key: 'aspectRatio',
+                        label: 'Aspect ratio',
+                        kind: 'aspect-ratio',
+                        options: [{ value: '16:9' }],
+                        defaultValue: '16:9',
+                    },
+                    {
+                        key: 'resolution',
+                        label: 'Resolution',
+                        kind: 'segmented',
+                        options: [{ value: '720p' }],
+                        defaultValue: '720p',
+                    },
+                    {
+                        key: 'duration',
+                        label: 'Duration',
+                        kind: 'segmented',
+                        options: [{ value: '8' }],
+                        defaultValue: '8',
+                    },
                 ],
             } as any
         })
@@ -599,7 +665,10 @@ describe('MediaGenerationMatrixOrchestrator', () => {
             capabilityReferenceImages: ['data:image/png;base64,CAPABILITY-REF'],
         } as any)
         vi.spyOn(mediaBranchResolver, 'resolveMediaBranch').mockResolvedValue({
-            mediaBranchResolution: { mode: 'fresh-branch', referenceCandidateIds: ['node-a', 'node-b'] },
+            mediaBranchResolution: {
+                mode: 'fresh-branch',
+                referenceCandidateIds: ['node-a', 'node-b'],
+            },
             videoReferenceImages: ['data:image/png;base64,VIDEO-REF-1', 'data:image/png;base64,VIDEO-REF-2'],
         } as any)
 
@@ -626,7 +695,10 @@ describe('MediaGenerationMatrixOrchestrator', () => {
         const orchestrator = new MediaGenerationMatrixOrchestrator(registry.asRegistry as any, natsService)
         const getAiModel = vi.spyOn(AiModelModelModule.default, 'getAiModel')
 
-        getAiModel.mockImplementation(async ({ model }: { provider: string; model: string }) => {
+        getAiModel.mockImplementation(async ({ model }: {
+            provider: string
+            model: string
+        }) => {
             if (model === 'claude-sonnet-4-6') {
                 return {
                     provider: 'Anthropic',
@@ -635,6 +707,7 @@ describe('MediaGenerationMatrixOrchestrator', () => {
                     modalities: [{ modality: 'text' }],
                 } as any
             }
+
             if (model === 'gemini-2.5-flash-image') {
                 return {
                     provider: 'Google',
@@ -643,15 +716,34 @@ describe('MediaGenerationMatrixOrchestrator', () => {
                     modalities: [{ modality: 'image_generation' }],
                 } as any
             }
+
             return {
                 provider: 'Google',
                 model: 'veo-3.1-generate-preview',
                 modelVersion: 'veo-3.1-generate-preview',
                 modalities: [{ modality: 'video_generation' }],
                 videoGenerationControls: [
-                    { key: 'aspectRatio', label: 'Aspect ratio', kind: 'aspect-ratio', options: [{ value: '16:9' }], defaultValue: '16:9' },
-                    { key: 'resolution', label: 'Resolution', kind: 'segmented', options: [{ value: '720p' }], defaultValue: '720p' },
-                    { key: 'duration', label: 'Duration', kind: 'segmented', options: [{ value: '8' }], defaultValue: '8' },
+                    {
+                        key: 'aspectRatio',
+                        label: 'Aspect ratio',
+                        kind: 'aspect-ratio',
+                        options: [{ value: '16:9' }],
+                        defaultValue: '16:9',
+                    },
+                    {
+                        key: 'resolution',
+                        label: 'Resolution',
+                        kind: 'segmented',
+                        options: [{ value: '720p' }],
+                        defaultValue: '720p',
+                    },
+                    {
+                        key: 'duration',
+                        label: 'Duration',
+                        kind: 'segmented',
+                        options: [{ value: '8' }],
+                        defaultValue: '8',
+                    },
                 ],
             } as any
         })
@@ -687,7 +779,10 @@ describe('MediaGenerationMatrixOrchestrator', () => {
         const getAiModel = vi.spyOn(AiModelModelModule.default, 'getAiModel')
         const resolveMediaBranchSpy = vi.spyOn(mediaBranchResolver, 'resolveMediaBranch')
 
-        getAiModel.mockImplementation(async ({ model }: { provider: string; model: string }) => {
+        getAiModel.mockImplementation(async ({ model }: {
+            provider: string
+            model: string
+        }) => {
             if (model === 'claude-sonnet-4-6') {
                 return {
                     provider: 'Anthropic',
@@ -696,6 +791,7 @@ describe('MediaGenerationMatrixOrchestrator', () => {
                     modalities: [{ modality: 'text' }],
                 } as any
             }
+
             if (model === 'gemini-2.5-flash-image') {
                 return {
                     provider: 'Google',
@@ -704,15 +800,34 @@ describe('MediaGenerationMatrixOrchestrator', () => {
                     modalities: [{ modality: 'image_generation' }],
                 } as any
             }
+
             return {
                 provider: 'Google',
                 model,
                 modelVersion: model,
                 modalities: [{ modality: 'video_generation' }],
                 videoGenerationControls: [
-                    { key: 'aspectRatio', label: 'Aspect ratio', kind: 'aspect-ratio', options: [{ value: '16:9' }], defaultValue: '16:9' },
-                    { key: 'resolution', label: 'Resolution', kind: 'segmented', options: [{ value: '720p' }], defaultValue: '720p' },
-                    { key: 'duration', label: 'Duration', kind: 'segmented', options: [{ value: '8' }], defaultValue: '8' },
+                    {
+                        key: 'aspectRatio',
+                        label: 'Aspect ratio',
+                        kind: 'aspect-ratio',
+                        options: [{ value: '16:9' }],
+                        defaultValue: '16:9',
+                    },
+                    {
+                        key: 'resolution',
+                        label: 'Resolution',
+                        kind: 'segmented',
+                        options: [{ value: '720p' }],
+                        defaultValue: '720p',
+                    },
+                    {
+                        key: 'duration',
+                        label: 'Duration',
+                        kind: 'segmented',
+                        options: [{ value: '8' }],
+                        defaultValue: '8',
+                    },
                 ],
             } as any
         })
@@ -772,7 +887,10 @@ describe('MediaGenerationMatrixOrchestrator', () => {
         const resolveCapabilitiesSpy = vi.spyOn(capabilityStateResolver, 'executeRequiredCapabilitiesForState')
         const resolveMediaBranchSpy = vi.spyOn(mediaBranchResolver, 'resolveMediaBranch')
 
-        getAiModel.mockImplementation(async ({ model }: { provider: string; model: string }) => {
+        getAiModel.mockImplementation(async ({ model }: {
+            provider: string
+            model: string
+        }) => {
             if (model === 'claude-sonnet-4-6') {
                 return {
                     provider: 'Anthropic',
@@ -781,6 +899,7 @@ describe('MediaGenerationMatrixOrchestrator', () => {
                     modalities: [{ modality: 'text' }],
                 } as any
             }
+
             if (model === 'gemini-2.5-flash-image') {
                 return {
                     provider: 'Google',
@@ -789,15 +908,34 @@ describe('MediaGenerationMatrixOrchestrator', () => {
                     modalities: [{ modality: 'image_generation' }],
                 } as any
             }
+
             return {
                 provider: 'Google',
                 model: 'veo-3.1-generate-preview',
                 modelVersion: 'veo-3.1-generate-preview',
                 modalities: [{ modality: 'video_generation' }],
                 videoGenerationControls: [
-                    { key: 'aspectRatio', label: 'Aspect ratio', kind: 'aspect-ratio', options: [{ value: '16:9' }], defaultValue: '16:9' },
-                    { key: 'resolution', label: 'Resolution', kind: 'segmented', options: [{ value: '720p' }], defaultValue: '720p' },
-                    { key: 'duration', label: 'Duration', kind: 'segmented', options: [{ value: '8' }], defaultValue: '8' },
+                    {
+                        key: 'aspectRatio',
+                        label: 'Aspect ratio',
+                        kind: 'aspect-ratio',
+                        options: [{ value: '16:9' }],
+                        defaultValue: '16:9',
+                    },
+                    {
+                        key: 'resolution',
+                        label: 'Resolution',
+                        kind: 'segmented',
+                        options: [{ value: '720p' }],
+                        defaultValue: '720p',
+                    },
+                    {
+                        key: 'duration',
+                        label: 'Duration',
+                        kind: 'segmented',
+                        options: [{ value: '8' }],
+                        defaultValue: '8',
+                    },
                 ],
             } as any
         })
@@ -822,22 +960,53 @@ describe('MediaGenerationMatrixOrchestrator', () => {
         const getAiModel = vi.spyOn(AiModelModelModule.default, 'getAiModel')
         const workspaceContextSpy = vi.spyOn(workspaceContextResolver, 'resolveWorkspaceContext')
 
-        getAiModel.mockImplementation(async ({ model }: { provider: string; model: string }) => {
-            if (model === 'claude-sonnet-4-6') {
-                return { provider: 'Anthropic', model, modelVersion: model, modalities: [{ modality: 'text' }] } as any
-            }
-            if (model === 'gemini-2.5-flash-image') {
-                return { provider: 'Google', model, modelVersion: model, modalities: [{ modality: 'image_generation' }] } as any
-            }
+        getAiModel.mockImplementation(async ({ model }: {
+            provider: string
+            model: string
+        }) => {
+            if (model === 'claude-sonnet-4-6')
+                return {
+                    provider: 'Anthropic',
+                    model,
+                    modelVersion: model,
+                    modalities: [{ modality: 'text' }],
+                } as any
+
+            if (model === 'gemini-2.5-flash-image')
+                return {
+                    provider: 'Google',
+                    model,
+                    modelVersion: model,
+                    modalities: [{ modality: 'image_generation' }],
+                } as any
+
             return {
                 provider: 'Google',
                 model,
                 modelVersion: model,
                 modalities: [{ modality: 'video_generation' }],
                 videoGenerationControls: [
-                    { key: 'aspectRatio', label: 'Aspect ratio', kind: 'aspect-ratio', options: [{ value: '16:9' }], defaultValue: '16:9' },
-                    { key: 'resolution', label: 'Resolution', kind: 'segmented', options: [{ value: '720p' }], defaultValue: '720p' },
-                    { key: 'duration', label: 'Duration', kind: 'segmented', options: [{ value: '8' }], defaultValue: '8' },
+                    {
+                        key: 'aspectRatio',
+                        label: 'Aspect ratio',
+                        kind: 'aspect-ratio',
+                        options: [{ value: '16:9' }],
+                        defaultValue: '16:9',
+                    },
+                    {
+                        key: 'resolution',
+                        label: 'Resolution',
+                        kind: 'segmented',
+                        options: [{ value: '720p' }],
+                        defaultValue: '720p',
+                    },
+                    {
+                        key: 'duration',
+                        label: 'Duration',
+                        kind: 'segmented',
+                        options: [{ value: '8' }],
+                        defaultValue: '8',
+                    },
                 ],
             } as any
         })
@@ -863,14 +1032,32 @@ describe('MediaGenerationMatrixOrchestrator', () => {
         const orchestrator = new MediaGenerationMatrixOrchestrator(registry.asRegistry as any, natsService)
         const getAiModel = vi.spyOn(AiModelModelModule.default, 'getAiModel')
 
-        getAiModel.mockImplementation(async ({ model }: { provider: string; model: string }) => {
-            if (model === 'claude-3-opus-20240229') {
-                return { provider: 'Anthropic', model: 'claude-3-opus-20240229', modelVersion: 'claude-3-opus-20240229', modalities: [{ modality: 'text' }] } as any
-            }
-            if (model === 'claude-3-sonnet-20240229') {
-                return { provider: 'Anthropic', model: 'claude-3-sonnet-20240229', modelVersion: 'claude-3-sonnet-20240229', modalities: [{ modality: 'text' }] } as any
-            }
-            return { provider: 'Google', model: 'gemini-2.5-flash-image', modelVersion: 'gemini-2.5-flash-image', modalities: [{ modality: 'image_generation' }] } as any
+        getAiModel.mockImplementation(async ({ model }: {
+            provider: string
+            model: string
+        }) => {
+            if (model === 'claude-3-opus-20240229')
+                return {
+                    provider: 'Anthropic',
+                    model: 'claude-3-opus-20240229',
+                    modelVersion: 'claude-3-opus-20240229',
+                    modalities: [{ modality: 'text' }],
+                } as any
+
+            if (model === 'claude-3-sonnet-20240229')
+                return {
+                    provider: 'Anthropic',
+                    model: 'claude-3-sonnet-20240229',
+                    modelVersion: 'claude-3-sonnet-20240229',
+                    modalities: [{ modality: 'text' }],
+                } as any
+
+            return {
+                provider: 'Google',
+                model: 'gemini-2.5-flash-image',
+                modelVersion: 'gemini-2.5-flash-image',
+                modalities: [{ modality: 'image_generation' }],
+            } as any
         })
 
         vi.spyOn(workspaceContextResolver, 'resolveWorkspaceContext').mockResolvedValue({
@@ -903,6 +1090,7 @@ describe('MediaGenerationMatrixOrchestrator', () => {
         }))
 
         expect(registry.process).toHaveBeenCalledTimes(2)
+
         for (const call of registry.process.mock.calls) {
             const childState = call[2] as any
             expect(childState.videoReferenceImages).toEqual(['data:image/png;base64,VID-1', 'data:image/png;base64,VID-2'])
@@ -922,7 +1110,10 @@ describe('MediaGenerationMatrixOrchestrator', () => {
         const orchestrator = new MediaGenerationMatrixOrchestrator(registry.asRegistry as any, natsService)
         const getAiModel = vi.spyOn(AiModelModelModule.default, 'getAiModel')
 
-        getAiModel.mockImplementation(async ({ model }: { provider: string; model: string }) => {
+        getAiModel.mockImplementation(async ({ model }: {
+            provider: string
+            model: string
+        }) => {
             if (model === 'claude-sonnet-4-6') {
                 return {
                     provider: 'Anthropic',
@@ -931,6 +1122,7 @@ describe('MediaGenerationMatrixOrchestrator', () => {
                     modalities: [{ modality: 'text' }],
                 } as any
             }
+
             if (model === 'gemini-image-a') {
                 return {
                     provider: 'Google',
@@ -940,6 +1132,7 @@ describe('MediaGenerationMatrixOrchestrator', () => {
                     imageSizes: [{ value: '1024x1024' }, { value: '768x768' }],
                 } as any
             }
+
             return {
                 provider: 'Google',
                 model: 'gemini-image-b',
@@ -990,7 +1183,10 @@ describe('MediaGenerationMatrixOrchestrator', () => {
         const orchestrator = new MediaGenerationMatrixOrchestrator(registry.asRegistry as any, natsService)
         const getAiModel = vi.spyOn(AiModelModelModule.default, 'getAiModel')
 
-        getAiModel.mockImplementation(async ({ model }: { provider: string; model: string }) => {
+        getAiModel.mockImplementation(async ({ model }: {
+            provider: string
+            model: string
+        }) => {
             if (model === 'claude-sonnet-4-6') {
                 return {
                     provider: 'Anthropic',
@@ -1008,6 +1204,7 @@ describe('MediaGenerationMatrixOrchestrator', () => {
                     ],
                 } as any
             }
+
             if (model === 'gemini-image-a') {
                 return {
                     provider: 'Google',
@@ -1033,6 +1230,7 @@ describe('MediaGenerationMatrixOrchestrator', () => {
                     ],
                 } as any
             }
+
             return {
                 provider: 'Google',
                 model: 'gemini-image-b',
@@ -1089,7 +1287,10 @@ describe('MediaGenerationMatrixOrchestrator', () => {
                         {
                             groupId: 'img-a',
                             modelIds: ['Google:gemini-image-a'],
-                            values: { imageSize: 'invalid-size', quality: 'high' },
+                            values: {
+                                imageSize: 'invalid-size',
+                                quality: 'high',
+                            },
                         },
                         {
                             groupId: 'img-b',
@@ -1133,7 +1334,10 @@ describe('MediaGenerationMatrixOrchestrator', () => {
         const orchestrator = new MediaGenerationMatrixOrchestrator(registry.asRegistry as any, natsService)
         const getAiModel = vi.spyOn(AiModelModelModule.default, 'getAiModel')
 
-        getAiModel.mockImplementation(async ({ model }: { provider: string; model: string }) => {
+        getAiModel.mockImplementation(async ({ model }: {
+            provider: string
+            model: string
+        }) => {
             if (model === 'claude-sonnet-4-6') {
                 return {
                     provider: 'Anthropic',
@@ -1142,17 +1346,48 @@ describe('MediaGenerationMatrixOrchestrator', () => {
                     modalities: [{ modality: 'text' }],
                 } as any
             }
+
             return {
                 provider: 'Google',
                 model: 'veo-3.1-generate-preview',
                 modelVersion: 'veo-3.1-generate-preview',
                 modalities: [{ modality: 'video_generation' }],
                 videoGenerationControls: [
-                    { key: 'aspectRatio', label: 'Aspect ratio', kind: 'aspect-ratio', options: [{ value: '16:9' }, { value: '4:3' }], defaultValue: '16:9' },
-                    { key: 'resolution', label: 'Resolution', kind: 'segmented', options: [{ value: '720p' }, { value: '1080p' }], defaultValue: '720p' },
-                    { key: 'duration', label: 'Duration', kind: 'segmented', options: [{ value: '8' }, { value: '12' }], defaultValue: '8' },
-                    { key: 'outputFormat', label: 'Output format', kind: 'segmented', options: [{ value: 'mp4' }, { value: 'mov' }], defaultValue: 'mp4' },
-                    { key: 'generateAudio', label: 'Audio', kind: 'toggle', options: [{ value: 'true' }, { value: 'false' }], defaultValue: 'true' },
+                    {
+                        key: 'aspectRatio',
+                        label: 'Aspect ratio',
+                        kind: 'aspect-ratio',
+                        options: [{ value: '16:9' }, { value: '4:3' }],
+                        defaultValue: '16:9',
+                    },
+                    {
+                        key: 'resolution',
+                        label: 'Resolution',
+                        kind: 'segmented',
+                        options: [{ value: '720p' }, { value: '1080p' }],
+                        defaultValue: '720p',
+                    },
+                    {
+                        key: 'duration',
+                        label: 'Duration',
+                        kind: 'segmented',
+                        options: [{ value: '8' }, { value: '12' }],
+                        defaultValue: '8',
+                    },
+                    {
+                        key: 'outputFormat',
+                        label: 'Output format',
+                        kind: 'segmented',
+                        options: [{ value: 'mp4' }, { value: 'mov' }],
+                        defaultValue: 'mp4',
+                    },
+                    {
+                        key: 'generateAudio',
+                        label: 'Audio',
+                        kind: 'toggle',
+                        options: [{ value: 'true' }, { value: 'false' }],
+                        defaultValue: 'true',
+                    },
                 ],
             } as any
         })
@@ -1242,20 +1477,20 @@ describe('MediaGenerationMatrixOrchestrator', () => {
         const callOrder: string[] = []
         const publisher = {
             beginMediaGenerationRequestCancellation: vi.fn(() => callOrder.push('begin-cancellation')),
-            cancelProseMirrorGenerationRequest: vi.fn(async () => {
-                callOrder.push('cancel-transcript')
-            }),
+            cancelProseMirrorGenerationRequest: vi.fn(async () => void callOrder.push('cancel-transcript')),
             mediaGenerationRequestComplete: vi.fn(() => callOrder.push('complete-request')),
             drainPendingWrites: vi.fn(async () => undefined),
             finishProseMirrorStream: vi.fn(async () => undefined),
         }
         const requestGroupKey = buildMediaGenerationRequestGroupKey('ws-1', 'thread-1', 'request-1')
-        registry.stopGroup.mockImplementationOnce(async () => {
-            callOrder.push('stop-providers')
-        })
+        registry.stopGroup.mockImplementationOnce(async () => void callOrder.push('stop-providers'))
         ;(orchestrator as any).requestPublishers.set(requestGroupKey, publisher)
 
-        await orchestrator.stop({ workspaceId: 'ws-1', aiChatThreadId: 'thread-1', generationRequestId: 'request-1' })
+        await orchestrator.stop({
+            workspaceId: 'ws-1',
+            aiChatThreadId: 'thread-1',
+            generationRequestId: 'request-1',
+        })
 
         expect(registry.stopGroup).toHaveBeenCalledWith(requestGroupKey)
         expect(registry.stopGroupsWithPrefix).not.toHaveBeenCalled()
@@ -1302,7 +1537,10 @@ describe('MediaGenerationMatrixOrchestrator', () => {
         const registry = createRegistry()
         const orchestrator = new MediaGenerationMatrixOrchestrator(registry.asRegistry as any, natsService)
 
-        await orchestrator.stop({ workspaceId: 'ws-1', aiChatThreadId: 'thread-1' })
+        await orchestrator.stop({
+            workspaceId: 'ws-1',
+            aiChatThreadId: 'thread-1',
+        })
 
         expect(registry.stopGroupsWithPrefix).toHaveBeenCalledWith('ws-1:thread-1:')
         expect(registry.stopGroup).not.toHaveBeenCalled()

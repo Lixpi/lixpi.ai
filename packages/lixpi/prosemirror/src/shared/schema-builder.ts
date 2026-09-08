@@ -70,7 +70,7 @@ export const createProseMirrorSchema = (documentType: ProseMirrorDocumentType | 
     })
 }
 
-export function getSupportedNodes(documentType: ProseMirrorDocumentType | string): Record<string, NodeSpec> {
+export const getSupportedNodes = (documentType: ProseMirrorDocumentType | string): Record<string, NodeSpec> => {
     if (
         documentType === DOCUMENT_TYPE.ASSET_CONVERSATION
         || documentType === DOCUMENT_TYPE.ASSET_PROVENANCE
@@ -90,7 +90,7 @@ export function getSupportedNodes(documentType: ProseMirrorDocumentType | string
     return { ...customNodeSpecs }
 }
 
-function getDocContent(documentType: ProseMirrorDocumentType | string): string {
+const getDocContent = (documentType: ProseMirrorDocumentType | string): string => {
     if (
         documentType === DOCUMENT_TYPE.ASSET_CONVERSATION
         || documentType === DOCUMENT_TYPE.ASSET_PROVENANCE

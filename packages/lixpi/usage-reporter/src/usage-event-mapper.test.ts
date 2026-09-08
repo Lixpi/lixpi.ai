@@ -15,7 +15,11 @@ import {
     type VideoCallSpend,
 } from './usage-reporter.ts'
 
-const eventMeta = { organizationId: 'org_1', userId: 'usr_1', workspaceId: 'ws_1' }
+const eventMeta = {
+    organizationId: 'org_1',
+    userId: 'usr_1',
+    workspaceId: 'ws_1',
+}
 const head = {
     eventMeta,
     aiVendorRequestId: 'req_77',
@@ -28,8 +32,14 @@ const head = {
 describe('usageRecordForTextCall', () => {
     const report = {
         ...head,
-        prompt: { usageTokens: 700, cachedTokens: 100 },
-        completion: { usageTokens: 112, reasoningTokens: 30 },
+        prompt: {
+            usageTokens: 700,
+            cachedTokens: 100,
+        },
+        completion: {
+            usageTokens: 112,
+            reasoningTokens: 30,
+        },
         total: { usageTokens: 812 },
     } as unknown as TextCallSpend
 
@@ -45,7 +55,12 @@ describe('usageRecordForTextCall', () => {
             model: 'gpt-5',
             modality: 'tokens',
             measuringUnit: 'tokens',
-            usage: { promptTokens: 700, completionTokens: 112, cachedTokens: 100, reasoningTokens: 30 },
+            usage: {
+                promptTokens: 700,
+                completionTokens: 112,
+                cachedTokens: 100,
+                reasoningTokens: 30,
+            },
             currency: 'USD',
         })
         expect(req.occurredAt).toBe('2026-01-01T00:00:00.000Z')
@@ -56,7 +71,14 @@ describe('usageRecordForTextCall', () => {
 describe('usageRecordForImageCall', () => {
     const report = {
         ...head,
-        image: { size: '1024x1024', quality: 'high', count: 1, pricePerImageResale: '0.05', purchasedFor: '0.04', soldToClientFor: '0.05' },
+        image: {
+            size: '1024x1024',
+            quality: 'high',
+            count: 1,
+            pricePerImageResale: '0.05',
+            purchasedFor: '0.04',
+            soldToClientFor: '0.05',
+        },
     } as unknown as ImageCallSpend
 
     it('maps an image call to count/size/quality dimensions', () => {
@@ -65,7 +87,11 @@ describe('usageRecordForImageCall', () => {
             modality: 'image',
             measuringUnit: 'images',
             workflowSeq: 2,
-            usage: { imageCount: 1, imageSize: '1024x1024', imageQuality: 'high' },
+            usage: {
+                imageCount: 1,
+                imageSize: '1024x1024',
+                imageQuality: 'high',
+            },
         })
     })
 })
@@ -74,20 +100,37 @@ describe('usageRecordForVideoCall', () => {
     it('maps a per-second (VEO) video call to durationSeconds + resolution', () => {
         const report = {
             ...head,
-            video: { measuringUnit: 'seconds', durationSeconds: 8, resolution: '720p', aspectRatio: '16:9', purchasedFor: '0.64', soldToClientFor: '0.80' },
+            video: {
+                measuringUnit: 'seconds',
+                durationSeconds: 8,
+                resolution: '720p',
+                aspectRatio: '16:9',
+                purchasedFor: '0.64',
+                soldToClientFor: '0.80',
+            },
         } as unknown as VideoCallSpend
         const req = usageRecordForVideoCall(report, 'wf_a1b2', 3)
         expect(req).toMatchObject({
             modality: 'video',
             measuringUnit: 'seconds',
-            usage: { durationSeconds: 8, resolution: '720p' },
+            usage: {
+                durationSeconds: 8,
+                resolution: '720p',
+            },
         })
     })
 
     it('maps a token-metered (Seedance) video call to videoTokens', () => {
         const report = {
             ...head,
-            video: { measuringUnit: 'tokens', durationSeconds: 5, totalTokens: 1000, completionTokens: 1000, purchasedFor: '0.02', soldToClientFor: '0.03' },
+            video: {
+                measuringUnit: 'tokens',
+                durationSeconds: 5,
+                totalTokens: 1000,
+                completionTokens: 1000,
+                purchasedFor: '0.02',
+                soldToClientFor: '0.03',
+            },
         } as unknown as VideoCallSpend
         const req = usageRecordForVideoCall(report, 'wf_a1b2', 4)
         expect(req).toMatchObject({

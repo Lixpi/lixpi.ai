@@ -20,16 +20,12 @@ describe('remote image import network safety', () => {
         'fd00::1',
         'fe80::1',
         '::ffff:127.0.0.1',
-    ])('rejects private or local address %s', (address) => {
-        expect(isPrivateNetworkAddress(address)).toBe(true)
-    })
+    ])('rejects private or local address %s', (address) => void expect(isPrivateNetworkAddress(address)).toBe(true))
 
     it.each([
         '93.184.216.34',
         '2001:4860:4860::8888',
-    ])('allows a public address %s', (address) => {
-        expect(isPrivateNetworkAddress(address)).toBe(false)
-    })
+    ])('allows a public address %s', (address) => void expect(isPrivateNetworkAddress(address)).toBe(false))
 
     it('rejects loopback IPv4 and bracketed IPv6 URLs without fetching', async () => {
         await expect(assertRemoteImageUrlIsPublic(new URL('https://127.0.0.1/image.png')))

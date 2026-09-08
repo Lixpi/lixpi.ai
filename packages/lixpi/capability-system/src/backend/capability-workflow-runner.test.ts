@@ -30,15 +30,14 @@ import {
     type CapabilityRunPersistence,
 } from './capability-workflow-runner.ts'
 
-function bytes(value: string): Uint8Array {
-    return new TextEncoder().encode(value)
-}
+const bytes = (value: string): Uint8Array => new TextEncoder().encode(value)
 
-function hash(value: Uint8Array): string {
-    return `sha256:${createHash('sha256').update(value).digest('hex')}`
-}
+const hash = (value: Uint8Array): string => `sha256:${createHash('sha256').update(value).digest('hex')}`
 
-function schemaResource(resourceId: string, schema: unknown): { ref: CapabilityResourceRef; loaded: LoadedCapabilityResource } {
+const schemaResource = (resourceId: string, schema: unknown): {
+    ref: CapabilityResourceRef
+    loaded: LoadedCapabilityResource
+} => {
     const schemaBytes = bytes(JSON.stringify(schema))
     const ref: CapabilityResourceRef = {
         resourceId,
@@ -46,13 +45,18 @@ function schemaResource(resourceId: string, schema: unknown): { ref: CapabilityR
         mediaType: 'application/schema+json',
         role: 'schema',
     }
+
     return {
         ref,
-        loaded: { capabilityId: 'tool', ref, bytes: schemaBytes },
+        loaded: {
+            capabilityId: 'tool',
+            ref,
+            bytes: schemaBytes,
+        },
     }
 }
 
-function makePlan(manifest: CapabilityManifest, resources: LoadedCapabilityResource[]): SealedResolvedCapabilityPlan {
+const makePlan = (manifest: CapabilityManifest, resources: LoadedCapabilityResource[]): SealedResolvedCapabilityPlan => {
     const serializable: ResolvedCapabilityPlan = {
         rootCapabilityIds: [manifest.capabilityId],
         capabilities: [{
@@ -66,14 +70,21 @@ function makePlan(manifest: CapabilityManifest, resources: LoadedCapabilityResou
             manifestBlobHash: 'sha256:manifest',
         }],
     }
+
     return new SealedResolvedCapabilityPlan(serializable, resources)
 }
 
-function makeToolManifest(): { manifest: CapabilityManifest; resources: LoadedCapabilityResource[] } {
+const makeToolManifest = (): {
+    manifest: CapabilityManifest
+    resources: LoadedCapabilityResource[]
+} => {
     const input = schemaResource('input', {
         type: 'object',
         required: ['prompt'],
-        properties: { prompt: { type: 'string', minLength: 1 } },
+        properties: { prompt: {
+            type: 'string',
+            minLength: 1,
+        } },
         additionalProperties: false,
     })
     const output = schemaResource('output', {
@@ -109,7 +120,10 @@ function makeToolManifest(): { manifest: CapabilityManifest; resources: LoadedCa
                         title: 'First',
                         action: 'test.first',
                         dependsOn: [],
-                        input: { prompt: { source: 'input', path: ['prompt'] } },
+                        input: { prompt: {
+                            source: 'input',
+                            path: ['prompt'],
+                        } },
                         progress: { group: 'parallel' },
                     },
                     {
@@ -117,8 +131,14 @@ function makeToolManifest(): { manifest: CapabilityManifest; resources: LoadedCa
                         title: 'Second',
                         action: 'test.second',
                         dependsOn: [],
-                        input: { prompt: { source: 'input', path: ['prompt'] } },
-                        retry: { maxAttempts: 2, backoffMs: 0 },
+                        input: { prompt: {
+                            source: 'input',
+                            path: ['prompt'],
+                        } },
+                        retry: {
+                            maxAttempts: 2,
+                            backoffMs: 0,
+                        },
                         progress: { group: 'parallel' },
                     },
                     {
@@ -126,30 +146,49 @@ function makeToolManifest(): { manifest: CapabilityManifest; resources: LoadedCa
                         title: 'Conditional',
                         action: 'test.conditional',
                         dependsOn: ['first', 'second'],
-                        input: { value: { source: 'step', stepId: 'first', path: ['value'] } },
+                        input: { value: {
+                            source: 'step',
+                            stepId: 'first',
+                            path: ['value'],
+                        } },
                         condition: {
                             type: 'compare',
-                            left: { source: 'step', stepId: 'first', path: ['value'] },
+                            left: {
+                                source: 'step',
+                                stepId: 'first',
+                                path: ['value'],
+                            },
                             operator: 'equals',
-                            right: { source: 'literal', value: 'done' },
+                            right: {
+                                source: 'literal',
+                                value: 'done',
+                            },
                         },
                         progress: {},
                     },
                 ],
                 outputs: {
-                    result: { source: 'step', stepId: 'conditional', path: ['result'] },
+                    result: {
+                        source: 'step',
+                        stepId: 'conditional',
+                        path: ['result'],
+                    },
                 },
             },
         },
     }
-    return { manifest, resources: [input.loaded, output.loaded] }
+
+    return {
+        manifest,
+        resources: [input.loaded, output.loaded],
+    }
 }
 
-function action(
+const action = (
     key: string,
     execute: CapabilityActionDefinition['execute'],
     overrides: Partial<CapabilityActionDefinition> = {},
-): CapabilityActionDefinition {
+): CapabilityActionDefinition => {
     return {
         key,
         timeoutMs: 1000,
@@ -162,21 +201,19 @@ function action(
     }
 }
 
-function makePersistence(): CapabilityRunPersistence & { runs: CapabilityRun[]; events: CapabilityRunEvent[] } {
+const makePersistence = (): CapabilityRunPersistence & {
+    runs: CapabilityRun[]
+    events: CapabilityRunEvent[]
+} => {
     const runs: CapabilityRun[] = []
     const events: CapabilityRunEvent[] = []
+
     return {
         runs,
         events,
-        createRun: vi.fn(async run => {
-            runs.push(structuredClone(run))
-        }),
-        updateRun: vi.fn(async run => {
-            runs.push(structuredClone(run))
-        }),
-        appendEvent: vi.fn(async event => {
-            events.push(structuredClone(event))
-        }),
+        createRun: vi.fn(async run => void runs.push(structuredClone(run))),
+        updateRun: vi.fn(async run => void runs.push(structuredClone(run))),
+        appendEvent: vi.fn(async event => void events.push(structuredClone(event))),
     }
 }
 
@@ -186,7 +223,10 @@ function makePersistence(): CapabilityRunPersistence & { runs: CapabilityRun[]; 
 
 describe('CapabilityWorkflowRunner', () => {
     it('runs ready steps concurrently, retries classified failures, evaluates conditions, and records provenance', async () => {
-        const { manifest, resources } = makeToolManifest()
+        const {
+            manifest,
+            resources,
+        } = makeToolManifest()
         const registry = new CapabilityActionRegistry()
         let active = 0
         let maximumActive = 0
@@ -198,6 +238,7 @@ describe('CapabilityWorkflowRunner', () => {
             maximumActive = Math.max(maximumActive, active)
             await Promise.resolve()
             active -= 1
+
             return { value: 'done' }
         }))
         registry.register(action('test.second', async () => {
@@ -205,13 +246,24 @@ describe('CapabilityWorkflowRunner', () => {
             maximumActive = Math.max(maximumActive, active)
             secondAttempts += 1
             active -= 1
-            if (secondAttempts === 1) throw new Error('temporary')
+
+            if (secondAttempts === 1)
+                throw new Error('temporary')
+
             return { ok: true }
         }, { classifyRetry: () => 'retryable' }))
-        const canvasGeometry = { generationRequestId: 'request-1', layoutRevision: 9, nodes: [] }
+        const canvasGeometry = {
+            generationRequestId: 'request-1',
+            layoutRevision: 9,
+            nodes: [],
+        }
         registry.register(action('test.conditional', async (input, context) => {
             actionTrace = context.getRunEvents()
-            return { result: `${input.value}-result`, canvasGeometry }
+
+            return {
+                result: `${input.value}-result`,
+                canvasGeometry,
+            }
         }, {
             authorize,
             collectCanvasGeometry: output => (output as { canvasGeometry: typeof canvasGeometry }).canvasGeometry,
@@ -223,7 +275,8 @@ describe('CapabilityWorkflowRunner', () => {
             createRunId: () => 'run-1',
             now: (() => {
                 let now = 100
-                return () => ++now
+
+                return () => void (++now)
             })(),
         })
 
@@ -255,7 +308,10 @@ describe('CapabilityWorkflowRunner', () => {
         }))
         expect(actionTrace.every(event => !Object.hasOwn(event, 'input') && !Object.hasOwn(event, 'output'))).toBe(true)
         expect(result.run.resolvedManifests).toEqual([
-            { capabilityId: 'tool', manifestBlobHash: 'sha256:manifest' },
+            {
+                capabilityId: 'tool',
+                manifestBlobHash: 'sha256:manifest',
+            },
         ])
         expect(persistence.events.map(event => event.eventType)).toEqual([
             'RUN_STARTED',
@@ -273,13 +329,22 @@ describe('CapabilityWorkflowRunner', () => {
     })
 
     it('skips a false conditional step and allows downstream dependencies to settle', async () => {
-        const { manifest, resources } = makeToolManifest()
+        const {
+            manifest,
+            resources,
+        } = makeToolManifest()
         manifest.tool!.workflow.steps[2]!.condition = {
             type: 'exists',
-            value: { source: 'input', path: ['missing'] },
+            value: {
+                source: 'input',
+                path: ['missing'],
+            },
         }
         manifest.tool!.workflow.outputs = {
-            result: { source: 'literal', value: 'skipped' },
+            result: {
+                source: 'literal',
+                value: 'skipped',
+            },
         }
         const registry = new CapabilityActionRegistry()
         registry.register(action('test.first', async () => ({ value: 'done' })))
@@ -287,7 +352,10 @@ describe('CapabilityWorkflowRunner', () => {
         registry.register(action('test.conditional', async () => ({ result: 'unexpected' })))
         const persistence = makePersistence()
 
-        const result = await new CapabilityWorkflowRunner({ registry, persistence }).run({
+        const result = await new CapabilityWorkflowRunner({
+            registry,
+            persistence,
+        }).run({
             plan: makePlan(manifest, resources),
             rootCapabilityId: 'tool',
             input: { prompt: 'hello' },
@@ -301,14 +369,20 @@ describe('CapabilityWorkflowRunner', () => {
     })
 
     it('fails before creating a run when model arguments violate the Tool input schema', async () => {
-        const { manifest, resources } = makeToolManifest()
+        const {
+            manifest,
+            resources,
+        } = makeToolManifest()
         const registry = new CapabilityActionRegistry()
         registry.register(action('test.first', async () => ({})))
         registry.register(action('test.second', async () => ({})))
         registry.register(action('test.conditional', async () => ({})))
         const persistence = makePersistence()
 
-        await expect(new CapabilityWorkflowRunner({ registry, persistence }).run({
+        await expect(new CapabilityWorkflowRunner({
+            registry,
+            persistence,
+        }).run({
             plan: makePlan(manifest, resources),
             rootCapabilityId: 'tool',
             input: {},
@@ -320,14 +394,20 @@ describe('CapabilityWorkflowRunner', () => {
     })
 
     it('fails closed on action authorization and cancels pending steps', async () => {
-        const { manifest, resources } = makeToolManifest()
+        const {
+            manifest,
+            resources,
+        } = makeToolManifest()
         const registry = new CapabilityActionRegistry()
         registry.register(action('test.first', async () => ({ value: 'done' }), { authorize: () => false }))
         registry.register(action('test.second', async () => ({ ok: true })))
         registry.register(action('test.conditional', async () => ({ result: 'done' })))
         const persistence = makePersistence()
 
-        await expect(new CapabilityWorkflowRunner({ registry, persistence }).run({
+        await expect(new CapabilityWorkflowRunner({
+            registry,
+            persistence,
+        }).run({
             plan: makePlan(manifest, resources),
             rootCapabilityId: 'tool',
             input: { prompt: 'hello' },
@@ -341,20 +421,24 @@ describe('CapabilityWorkflowRunner', () => {
     })
 
     it('propagates cancellation to an active action and emits terminal cancellation events', async () => {
-        const { manifest, resources } = makeToolManifest()
+        const {
+            manifest,
+            resources,
+        } = makeToolManifest()
         const registry = new CapabilityActionRegistry()
         const controller = new AbortController()
         registry.register(action('test.first', async (_input, context) => {
             controller.abort(new Error('user stopped'))
             context.signal.throwIfAborted()
         }))
-        registry.register(action('test.second', async (_input, context) => {
-            context.signal.throwIfAborted()
-        }))
+        registry.register(action('test.second', async (_input, context) => void context.signal.throwIfAborted()))
         registry.register(action('test.conditional', async () => ({ result: 'done' })))
         const persistence = makePersistence()
 
-        await expect(new CapabilityWorkflowRunner({ registry, persistence }).run({
+        await expect(new CapabilityWorkflowRunner({
+            registry,
+            persistence,
+        }).run({
             plan: makePlan(manifest, resources),
             rootCapabilityId: 'tool',
             input: { prompt: 'hello' },
@@ -369,16 +453,25 @@ describe('CapabilityWorkflowRunner', () => {
     })
 
     it('blocks prototype traversal in bindings', async () => {
-        const { manifest, resources } = makeToolManifest()
+        const {
+            manifest,
+            resources,
+        } = makeToolManifest()
         manifest.tool!.workflow.steps[0]!.input = {
-            unsafe: { source: 'input', path: ['constructor'] },
+            unsafe: {
+                source: 'input',
+                path: ['constructor'],
+            },
         }
         const registry = new CapabilityActionRegistry()
         registry.register(action('test.first', async () => ({})))
         registry.register(action('test.second', async () => ({})))
         registry.register(action('test.conditional', async () => ({ result: 'done' })))
 
-        await expect(new CapabilityWorkflowRunner({ registry, persistence: makePersistence() }).run({
+        await expect(new CapabilityWorkflowRunner({
+            registry,
+            persistence: makePersistence(),
+        }).run({
             plan: makePlan(manifest, resources),
             rootCapabilityId: 'tool',
             input: { prompt: 'hello' },
@@ -389,7 +482,10 @@ describe('CapabilityWorkflowRunner', () => {
     })
 
     it('bounds actions that ignore their cancellation signal by the registered timeout', async () => {
-        const { manifest, resources } = makeToolManifest()
+        const {
+            manifest,
+            resources,
+        } = makeToolManifest()
         const registry = new CapabilityActionRegistry()
         registry.register(action('test.first', async () => await new Promise(() => {}), {
             timeoutMs: 5,
@@ -398,7 +494,10 @@ describe('CapabilityWorkflowRunner', () => {
         registry.register(action('test.conditional', async () => ({ result: 'done' })))
         const persistence = makePersistence()
 
-        await expect(new CapabilityWorkflowRunner({ registry, persistence }).run({
+        await expect(new CapabilityWorkflowRunner({
+            registry,
+            persistence,
+        }).run({
             plan: makePlan(manifest, resources),
             rootCapabilityId: 'tool',
             input: { prompt: 'hello' },
@@ -415,7 +514,7 @@ describe('CapabilityWorkflowRunner', () => {
 // EXECUTION TRACES ON RUN EVENTS
 // =============================================================================
 
-function runRequest(manifest: CapabilityManifest, resources: LoadedCapabilityResource[]) {
+const runRequest = (manifest: CapabilityManifest, resources: LoadedCapabilityResource[]) => {
     return {
         plan: makePlan(manifest, resources),
         rootCapabilityId: 'tool',
@@ -426,17 +525,18 @@ function runRequest(manifest: CapabilityManifest, resources: LoadedCapabilityRes
     }
 }
 
-function stepEvents(
+const stepEvents = (
     events: readonly CapabilityRunEvent[],
     stepId: string,
     eventType: CapabilityRunEvent['eventType'],
-): CapabilityRunEvent[] {
-    return events.filter(event => event.stepId === stepId && event.eventType === eventType)
-}
+): CapabilityRunEvent[] => events.filter(event => event.stepId === stepId && event.eventType === eventType)
 
 describe('CapabilityWorkflowRunner — execution traces', () => {
     it('emits declared input handles on STEP_STARTED before the step produces anything', async () => {
-        const { manifest, resources } = makeToolManifest()
+        const {
+            manifest,
+            resources,
+        } = makeToolManifest()
         const registry = new CapabilityActionRegistry()
         registry.register(action('test.first', async () => ({ value: 'done' }), {
             collectInputHandles: () => [{
@@ -451,7 +551,10 @@ describe('CapabilityWorkflowRunner — execution traces', () => {
         registry.register(action('test.conditional', async () => ({ result: 'done' })))
         const persistence = makePersistence()
 
-        await new CapabilityWorkflowRunner({ registry, persistence }).run(runRequest(manifest, resources))
+        await new CapabilityWorkflowRunner({
+            registry,
+            persistence,
+        }).run(runRequest(manifest, resources))
 
         const started = stepEvents(persistence.events, 'first', 'STEP_STARTED')[0]
         expect(started?.trace?.handles).toEqual([{
@@ -465,7 +568,10 @@ describe('CapabilityWorkflowRunner — execution traces', () => {
     })
 
     it('emits model calls an action recorded while running on its STEP_COMPLETED event', async () => {
-        const { manifest, resources } = makeToolManifest()
+        const {
+            manifest,
+            resources,
+        } = makeToolManifest()
         const registry = new CapabilityActionRegistry()
         registry.register(action('test.first', async (_input, context) => {
             context.trace.setReasoning('Selected the identity anchor first')
@@ -474,45 +580,77 @@ describe('CapabilityWorkflowRunner — execution traces', () => {
                 role: 'media',
                 provider: 'openai',
                 modelId: 'openai:gpt-image-1',
-                params: [{ name: 'size', value: '1024x1536' }],
+                params: [{
+                    name: 'size',
+                    value: '1024x1536',
+                }],
             })
             context.trace.addFact('Planned shots', '3')
+
             return { value: 'done' }
         }))
         registry.register(action('test.second', async () => ({ ok: true })))
         registry.register(action('test.conditional', async () => ({ result: 'done' })))
         const persistence = makePersistence()
 
-        await new CapabilityWorkflowRunner({ registry, persistence }).run(runRequest(manifest, resources))
+        await new CapabilityWorkflowRunner({
+            registry,
+            persistence,
+        }).run(runRequest(manifest, resources))
 
         const completed = stepEvents(persistence.events, 'first', 'STEP_COMPLETED')[0]
         expect(completed?.trace?.reasoning).toBe('Selected the identity anchor first')
-        expect(completed?.trace?.modelCalls?.[0]?.params).toEqual([{ name: 'size', value: '1024x1536' }])
-        expect(completed?.trace?.facts).toEqual([{ label: 'Planned shots', value: '3' }])
+        expect(completed?.trace?.modelCalls?.[0]?.params).toEqual([{
+            name: 'size',
+            value: '1024x1536',
+        }])
+        expect(completed?.trace?.facts).toEqual([{
+            label: 'Planned shots',
+            value: '3',
+        }])
         expect(completed?.trace?.outputSummary).toBe(completed?.safeOutputSummary)
     })
 
     it('appends declared output handles to the completed step trace', async () => {
-        const { manifest, resources } = makeToolManifest()
+        const {
+            manifest,
+            resources,
+        } = makeToolManifest()
         const registry = new CapabilityActionRegistry()
         registry.register(action('test.first', async (_input, context) => {
-            context.trace.addHandles({ kind: 'media', id: 'input-asset', displayName: 'input-asset' })
+            context.trace.addHandles({
+                kind: 'media',
+                id: 'input-asset',
+                displayName: 'input-asset',
+            })
+
             return { value: 'done' }
         }, {
-            collectOutputHandles: () => [{ kind: 'media', id: 'output-asset', displayName: 'output-asset', role: 'output' }],
+            collectOutputHandles: () => [{
+                kind: 'media',
+                id: 'output-asset',
+                displayName: 'output-asset',
+                role: 'output',
+            }],
         }))
         registry.register(action('test.second', async () => ({ ok: true })))
         registry.register(action('test.conditional', async () => ({ result: 'done' })))
         const persistence = makePersistence()
 
-        await new CapabilityWorkflowRunner({ registry, persistence }).run(runRequest(manifest, resources))
+        await new CapabilityWorkflowRunner({
+            registry,
+            persistence,
+        }).run(runRequest(manifest, resources))
 
         const completed = stepEvents(persistence.events, 'first', 'STEP_COMPLETED')[0]
         expect(completed?.trace?.handles?.map(handle => handle.id)).toEqual(['input-asset', 'output-asset'])
     })
 
     it('keeps what a failing step already recorded and settles it with the error', async () => {
-        const { manifest, resources } = makeToolManifest()
+        const {
+            manifest,
+            resources,
+        } = makeToolManifest()
         const registry = new CapabilityActionRegistry()
         registry.register(action('test.first', async (_input, context) => {
             context.trace.addModelCall({
@@ -521,13 +659,17 @@ describe('CapabilityWorkflowRunner — execution traces', () => {
                 provider: 'openai',
                 modelId: 'openai:gpt-image-1',
             })
+
             throw new Error('Provider refused the request')
         }))
         registry.register(action('test.second', async () => ({ ok: true })))
         registry.register(action('test.conditional', async () => ({ result: 'done' })))
         const persistence = makePersistence()
 
-        await expect(new CapabilityWorkflowRunner({ registry, persistence })
+        await expect(new CapabilityWorkflowRunner({
+            registry,
+            persistence,
+        })
             .run(runRequest(manifest, resources))).rejects.toBeInstanceOf(CapabilityError)
 
         const failed = stepEvents(persistence.events, 'first', 'STEP_FAILED')[0]
@@ -536,14 +678,20 @@ describe('CapabilityWorkflowRunner — execution traces', () => {
     })
 
     it('omits the trace entirely when a step recorded nothing and has no declared handles', async () => {
-        const { manifest, resources } = makeToolManifest()
+        const {
+            manifest,
+            resources,
+        } = makeToolManifest()
         const registry = new CapabilityActionRegistry()
         registry.register(action('test.first', async () => ({ value: 'done' })))
         registry.register(action('test.second', async () => ({ ok: true })))
         registry.register(action('test.conditional', async () => ({ result: 'done' })))
         const persistence = makePersistence()
 
-        await new CapabilityWorkflowRunner({ registry, persistence }).run(runRequest(manifest, resources))
+        await new CapabilityWorkflowRunner({
+            registry,
+            persistence,
+        }).run(runRequest(manifest, resources))
 
         const skipped = persistence.events.filter(event => event.eventType === 'STEP_SKIPPED')
         expect(skipped.every(event => event.trace === undefined)).toBe(true)
@@ -555,24 +703,38 @@ describe('CapabilityWorkflowRunner — execution traces', () => {
     })
 
     it('gives each step its own recorder so traces never leak between steps', async () => {
-        const { manifest, resources } = makeToolManifest()
+        const {
+            manifest,
+            resources,
+        } = makeToolManifest()
         const registry = new CapabilityActionRegistry()
         registry.register(action('test.first', async (_input, context) => {
             context.trace.addFact('owner', 'first')
+
             return { value: 'done' }
         }))
         registry.register(action('test.second', async (_input, context) => {
             context.trace.addFact('owner', 'second')
+
             return { ok: true }
         }))
         registry.register(action('test.conditional', async () => ({ result: 'done' })))
         const persistence = makePersistence()
 
-        await new CapabilityWorkflowRunner({ registry, persistence }).run(runRequest(manifest, resources))
+        await new CapabilityWorkflowRunner({
+            registry,
+            persistence,
+        }).run(runRequest(manifest, resources))
 
         expect(stepEvents(persistence.events, 'first', 'STEP_COMPLETED')[0]?.trace?.facts)
-            .toEqual([{ label: 'owner', value: 'first' }])
+            .toEqual([{
+                label: 'owner',
+                value: 'first',
+            }])
         expect(stepEvents(persistence.events, 'second', 'STEP_COMPLETED')[0]?.trace?.facts)
-            .toEqual([{ label: 'owner', value: 'second' }])
+            .toEqual([{
+                label: 'owner',
+                value: 'second',
+            }])
     })
 })

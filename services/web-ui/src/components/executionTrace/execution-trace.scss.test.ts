@@ -7,20 +7,22 @@ import {
 } from 'vitest'
 import { withoutLayout } from '@lixpi/test-utils'
 
-function extractFlatRule(source: string, selector: string): string {
+const extractFlatRule = (source: string, selector: string): string => {
     const start = source.indexOf(`${selector} {`)
     const end = source.indexOf('\n}', start)
-    if (start === -1 || end === -1) throw new Error(`Missing flat SCSS rule: ${selector}`)
+
+    if (
+        start === -1
+        || end === -1
+    )
+        throw new Error(`Missing flat SCSS rule: ${selector}`)
+
     return source.slice(start, end)
 }
 
-function expectRuleToContain(rule: string, snippet: string, label: string): void {
-    expect(withoutLayout(rule).includes(withoutLayout(snippet)), `${label} should contain:\n${snippet}`).toBe(true)
-}
+const expectRuleToContain = (rule: string, snippet: string, label: string): void => void expect(withoutLayout(rule).includes(withoutLayout(snippet)), `${label} should contain:\n${snippet}`).toBe(true)
 
-function expectRuleNotToContain(rule: string, snippet: string, label: string): void {
-    expect(withoutLayout(rule).includes(withoutLayout(snippet)), `${label} should not contain:\n${snippet}`).toBe(false)
-}
+const expectRuleNotToContain = (rule: string, snippet: string, label: string): void => void expect(withoutLayout(rule).includes(withoutLayout(snippet)), `${label} should not contain:\n${snippet}`).toBe(false)
 
 describe('execution-trace.scss', () => {
     const scss = readFileSync(resolve(import.meta.dirname, 'execution-trace.scss'), 'utf-8')

@@ -31,10 +31,19 @@ const coordinate = (objectKey: string, byteLength: number, organizationId = 'org
 
 const portraitFixture = async (accent: string): Promise<Buffer> =>
     await sharp({
-        create: { width: 320, height: 320, channels: 3, background: '#d8c2a6' },
+        create: {
+            width: 320,
+            height: 320,
+            channels: 3,
+            background: '#d8c2a6',
+        },
     })
         .composite([
-            { input: Buffer.from(`<svg width="320" height="320"><ellipse cx="160" cy="150" rx="92" ry="118" fill="${accent}"/><circle cx="125" cy="130" r="12" fill="#121820"/><circle cx="195" cy="130" r="12" fill="#121820"/><path d="M115 205 Q160 235 205 205" fill="none" stroke="#121820" stroke-width="10"/></svg>`), left: 0, top: 0 },
+            {
+                input: Buffer.from(`<svg width="320" height="320"><ellipse cx="160" cy="150" rx="92" ry="118" fill="${accent}"/><circle cx="125" cy="130" r="12" fill="#121820"/><circle cx="195" cy="130" r="12" fill="#121820"/><path d="M115 205 Q160 235 205 205" fill="none" stroke="#121820" stroke-width="10"/></svg>`),
+                left: 0,
+                top: 0,
+            },
         ])
         .png()
         .toBuffer()
@@ -89,11 +98,17 @@ describe('character fidelity scorer', () => {
         await expect(assessCharacterFidelity(
             request(portrait, portrait, { sourceMedium: 'illustration' }),
             storage(portrait, portrait),
-        )).resolves.toMatchObject({ metric: { available: false, unavailableReason: 'non-photographic' } })
+        )).resolves.toMatchObject({ metric: {
+            available: false,
+            unavailableReason: 'non-photographic',
+        } })
         await expect(assessCharacterFidelity(
             request(flat, portrait),
             storage(flat, portrait),
-        )).resolves.toMatchObject({ metric: { available: false, unavailableReason: 'source-face-not-found' } })
+        )).resolves.toMatchObject({ metric: {
+            available: false,
+            unavailableReason: 'source-face-not-found',
+        } })
     }, 30000)
 
     it('rejects cross-organization coordinates and cancellation before object reads', async () => {
@@ -111,13 +126,23 @@ describe('character fidelity scorer', () => {
 
     it('rejects mismatched media types and out-of-bounds dimensions', async () => {
         const jpeg = await sharp({
-            create: { width: 64, height: 64, channels: 3, background: '#ffffff' },
+            create: {
+                width: 64,
+                height: 64,
+                channels: 3,
+                background: '#ffffff',
+            },
         }).jpeg().toBuffer()
         await expect(assessCharacterFidelity(request(jpeg, jpeg), storage(jpeg, jpeg)))
             .rejects.toThrow('CHARACTER_FIDELITY_OBJECT_MEDIA_TYPE_INVALID')
 
         const oversized = await sharp({
-            create: { width: 8_193, height: 1, channels: 3, background: '#ffffff' },
+            create: {
+                width: 8_193,
+                height: 1,
+                channels: 3,
+                background: '#ffffff',
+            },
         }).png().toBuffer()
         await expect(assessCharacterFidelity(request(oversized, oversized), storage(oversized, oversized)))
             .rejects.toThrow('CHARACTER_FIDELITY_IMAGE_DIMENSIONS_INVALID')

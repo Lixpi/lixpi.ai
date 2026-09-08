@@ -10,7 +10,10 @@ import { generateKeyPairSync } from 'node:crypto'
 import jwt from 'jsonwebtoken'
 
 const createGetKeyFunctionMock = vi.hoisted(() => vi.fn())
-const { privateKey, publicKey } = generateKeyPairSync('rsa', {
+const {
+    privateKey,
+    publicKey,
+} = generateKeyPairSync('rsa', {
     modulusLength: 2048,
     publicKeyEncoding: {
         type: 'pkcs1',
@@ -24,7 +27,10 @@ const { privateKey, publicKey } = generateKeyPairSync('rsa', {
 
 const createJwtToken = (claims: Record<string, unknown>) =>
     jwt.sign(
-        { sub: 'user-123', ...claims },
+        {
+            sub: 'user-123',
+            ...claims,
+        },
         privateKey,
         {
             audience: 'lixpi-audience',
@@ -121,9 +127,7 @@ describe('createJwtVerifier', () => {
         vi.clearAllMocks()
     })
 
-    afterEach(() => {
-        createGetKeyFunctionMock.mockReset()
-    })
+    afterEach(() => void createGetKeyFunctionMock.mockReset())
 
     it('creates verifier with configured jwks URI and exposes getKey', () => {
         createGetKeyFunctionMock.mockReturnValue(makeGetKey(publicKey))

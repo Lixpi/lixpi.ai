@@ -7,23 +7,27 @@ import { readFileSync } from 'fs'
 import { resolve } from 'path'
 import { withoutLayout } from '@lixpi/test-utils'
 
-function expectSourceToContain(source: string, snippet: string): void {
-    expect(withoutLayout(source).includes(withoutLayout(snippet)), `source should contain: ${snippet}`).toBe(true)
-}
+const expectSourceToContain = (source: string, snippet: string): void => void expect(withoutLayout(source).includes(withoutLayout(snippet)), `source should contain: ${snippet}`).toBe(true)
 
-function getPropertyValue(source: string, selector: string, propertyName: string): string | undefined {
+const getPropertyValue = (source: string, selector: string, propertyName: string): string | undefined => {
     let searchStart = 0
 
     while (searchStart < source.length) {
         const ruleStart = source.indexOf(selector, searchStart)
-        if (ruleStart < 0) return undefined
+
+        if (ruleStart < 0)
+            return undefined
 
         const ruleEnd = source.indexOf('}', ruleStart)
-        if (ruleEnd < 0) return undefined
+
+        if (ruleEnd < 0)
+            return undefined
 
         const rule = source.slice(ruleStart, ruleEnd)
         const propertyMatch = rule.match(new RegExp(`${propertyName}:\\s*([^;]+);`))
-        if (propertyMatch?.[1]) return propertyMatch[1].trim()
+
+        if (propertyMatch?.[1])
+            return propertyMatch[1].trim()
 
         searchStart = ruleEnd + 1
     }
@@ -31,18 +35,25 @@ function getPropertyValue(source: string, selector: string, propertyName: string
     return undefined
 }
 
-function getBraceBalancedBlock(source: string, selector: string): string {
+const getBraceBalancedBlock = (source: string, selector: string): string => {
     const selectorIndex = source.indexOf(selector)
     expect(selectorIndex, `source should contain selector: ${selector}`).toBeGreaterThanOrEqual(0)
     const openBraceIndex = source.indexOf('{', selectorIndex)
     expect(openBraceIndex, `selector should open a block: ${selector}`).toBeGreaterThan(selectorIndex)
 
     let depth = 0
+
     for (let index = openBraceIndex; index < source.length; index += 1) {
-        if (source[index] === '{') depth += 1
-        if (source[index] !== '}') continue
+        if (source[index] === '{')
+            depth += 1
+
+        if (source[index] !== '}')
+            continue
+
         depth -= 1
-        if (depth === 0) return source.slice(selectorIndex, index + 1)
+
+        if (depth === 0)
+            return source.slice(selectorIndex, index + 1)
     }
 
     throw new Error(`selector block should close: ${selector}`)
@@ -84,9 +95,7 @@ describe('ai-chat-thread.scss', () => {
         expectSourceToContain(scss, '.ai-response-message-content')
     })
 
-    it('keeps materialized lineage icons free of canvas-node shadows', () => {
-        expect(getPropertyValue(scss, '.ai-lineage-event-icon {', 'box-shadow')).toBe('none')
-    })
+    it('keeps materialized lineage icons free of canvas-node shadows', () => void expect(getPropertyValue(scss, '.ai-lineage-event-icon {', 'box-shadow')).toBe('none'))
 
     it('shares the generation-prompt surface style with the prompt timeline item', () => {
         const traceBlock = getBraceBalancedBlock(scss, '.ai-generation-trace-block')

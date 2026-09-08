@@ -48,7 +48,7 @@ export const loadCharacterPoseReference = async (panel: CharacterPanelSpec): Pro
 
 export const hasCharacterPoseReference = (panel: CharacterPanelSpec): boolean => Boolean(poseReferenceFileByPanelId[panel.panelId])
 
-function loadPoseReferenceBytes(fileName: string): Promise<Buffer> {
+const loadPoseReferenceBytes = (fileName: string): Promise<Buffer> => {
     const cached = poseReferenceBytesByFileName.get(fileName)
 
     if (cached)

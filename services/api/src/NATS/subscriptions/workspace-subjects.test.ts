@@ -29,7 +29,11 @@ const mocks = vi.hoisted(() => ({
     },
 }))
 
-vi.mock('@lixpi/debug-tools', () => ({ info: vi.fn(), err: vi.fn(), warn: vi.fn() }))
+vi.mock('@lixpi/debug-tools', () => ({
+    info: vi.fn(),
+    err: vi.fn(),
+    warn: vi.fn(),
+}))
 vi.mock('../../models/workspace.ts', () => ({ default: mocks.workspace }))
 vi.mock('../../models/organization.ts', () => ({ default: mocks.organization }))
 vi.mock('../../models/asset.ts', () => ({ default: mocks.asset }))
@@ -54,9 +58,15 @@ describe('Workspace subject handlers', () => {
         })
         mocks.workspace.getWorkspace.mockResolvedValue({
             workspaceId: 'ws-1',
-            accessList: [{ userId: 'user-1', accessLevel: 'owner' }],
+            accessList: [{
+                userId: 'user-1',
+                accessLevel: 'owner',
+            }],
         })
-        mocks.workspace.delete.mockResolvedValue({ status: 'deleted', workspaceId: 'ws-1' })
+        mocks.workspace.delete.mockResolvedValue({
+            status: 'deleted',
+            workspaceId: 'ws-1',
+        })
         mocks.workspace.markDeleting.mockResolvedValue(undefined)
         mocks.workspace.getUserWorkspaces.mockResolvedValue([{ workspaceId: 'ws-1' }])
         mocks.workspace.update.mockResolvedValue({ status: 'ok' })
@@ -119,7 +129,10 @@ describe('Workspace subject handlers', () => {
                 accessLevel: 'owner',
             },
         })
-        expect(result).toEqual({ workspaceId: 'ws-1', name: 'Workspace' })
+        expect(result).toEqual({
+            workspaceId: 'ws-1',
+            name: 'Workspace',
+        })
     })
 
     it('denies workspace creation for an organization the user does not belong to', async () => {
@@ -140,7 +153,10 @@ describe('Workspace subject handlers', () => {
             name: 'Renamed',
         })
 
-        expect(result).toEqual({ success: true, workspaceId: 'ws-1' })
+        expect(result).toEqual({
+            success: true,
+            workspaceId: 'ws-1',
+        })
         expect(mocks.workspace.update).toHaveBeenCalledWith({
             userId: 'user-1',
             workspaceId: 'ws-1',
@@ -188,13 +204,19 @@ describe('Workspace subject handlers', () => {
             userId: 'user-1',
             workspaceId: 'ws-1',
         })
-        expect(result).toEqual({ success: true, workspaceId: 'ws-1' })
+        expect(result).toEqual({
+            success: true,
+            workspaceId: 'ws-1',
+        })
     })
 
     it('denies deletion for a non-owner accessor', async () => {
         mocks.workspace.getWorkspace.mockResolvedValueOnce({
             workspaceId: 'ws-1',
-            accessList: [{ userId: 'user-1', accessLevel: 'editor' }],
+            accessList: [{
+                userId: 'user-1',
+                accessLevel: 'editor',
+            }],
         })
 
         const result = await getHandler(WORKSPACE_SUBJECTS.DELETE_WORKSPACE)({

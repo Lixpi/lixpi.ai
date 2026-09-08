@@ -10,11 +10,12 @@ import {
 } from '../shared/schema-builder.ts'
 import { HeadlessProseMirrorEngine } from './headless-engine.ts'
 
-function createDocJson() {
+const createDocJson = () => {
     const schema = createProseMirrorSchema(DOCUMENT_TYPE.ASSET_CONTENT)
     const title = schema.nodes.documentTitle.create(null, schema.text('Title'))
     const paragraph = schema.nodes.paragraph.create(null, schema.text('ready'))
     const doc = schema.nodes.doc.create(null, [title, paragraph])
+
     return doc.toJSON()
 }
 
@@ -79,14 +80,15 @@ describe('HeadlessProseMirrorEngine', () => {
 
     it('throws for invalid step JSON and malformed doc JSON', () => {
         const engine = new HeadlessProseMirrorEngine({ documentType: DOCUMENT_TYPE.ASSET_CONTENT })
-        expect(() => {
-            engine.applyStepJson({} as never)
-        }).toThrow()
+        expect(() => void engine.applyStepJson({} as never)).toThrow()
 
         expect(() => {
             new HeadlessProseMirrorEngine({
                 documentType: DOCUMENT_TYPE.ASSET_CONTENT,
-                doc: { type: 'nope', content: [] } as never,
+                doc: {
+                    type: 'nope',
+                    content: [],
+                } as never,
             })
         }).toThrow()
     })

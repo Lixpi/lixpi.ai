@@ -57,7 +57,10 @@ const moduleCatalog = {
     listModules: vi.fn(() => [moduleMeta]),
     getModule: vi.fn(() => ({
         ...moduleMeta,
-        entry: { capabilityId: 'global.character-creator', kind: 'tool' },
+        entry: {
+            capabilityId: 'global.character-creator',
+            kind: 'tool',
+        },
         tools: [{ capabilityId: 'global.character-creator' }],
         skills: [{ capabilityId: 'global.character-sheet-layout' }],
     })),
@@ -70,8 +73,14 @@ beforeEach(() => {
     mocks.getWorkspace.mockResolvedValue({
         workspaceId: 'workspace-1',
         organizationId: 'organization-1',
-        accessList: [{ userId: 'user-1', accessLevel: 'owner' }],
-        canvasState: { nodes: [], edges: [] },
+        accessList: [{
+            userId: 'user-1',
+            accessLevel: 'owner',
+        }],
+        canvasState: {
+            nodes: [],
+            edges: [],
+        },
     })
     mocks.getOrganization.mockResolvedValue({ organizationId: 'organization-1' })
     mocks.getRequester.mockResolvedValue({
@@ -84,19 +93,28 @@ beforeEach(() => {
     mocks.listModules.mockResolvedValue([moduleMeta])
     mocks.getModule.mockResolvedValue({
         meta: moduleMeta,
-        entry: { capabilityId: 'global.character-creator', kind: 'tool' },
+        entry: {
+            capabilityId: 'global.character-creator',
+            kind: 'tool',
+        },
     })
 })
 
 describe('prompt-reference transport', () => {
     it('requires Workspace access before listing top-level modules', async () => {
-        const allowed = await handler(MODULES.LIST)({ user: { userId: 'user-1' }, workspaceId: 'workspace-1' })
+        const allowed = await handler(MODULES.LIST)({
+            user: { userId: 'user-1' },
+            workspaceId: 'workspace-1',
+        })
         expect(allowed).toEqual({ items: [moduleMeta] })
         expect(allowed).not.toHaveProperty('tools')
         expect(allowed).not.toHaveProperty('skills')
 
         mocks.getWorkspace.mockResolvedValueOnce({ error: 'WORKSPACE_NOT_FOUND' })
-        await expect(handler(MODULES.LIST)({ user: { userId: 'user-2' }, workspaceId: 'workspace-1' }))
+        await expect(handler(MODULES.LIST)({
+            user: { userId: 'user-2' },
+            workspaceId: 'workspace-1',
+        }))
             .resolves.toEqual({ error: 'WORKSPACE_ACCESS_DENIED' })
     })
 
@@ -109,7 +127,10 @@ describe('prompt-reference transport', () => {
 
         expect(result).toEqual({
             meta: moduleMeta,
-            entry: { capabilityId: 'global.character-creator', kind: 'tool' },
+            entry: {
+                capabilityId: 'global.character-creator',
+                kind: 'tool',
+            },
         })
     })
 

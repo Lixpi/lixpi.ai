@@ -7,13 +7,9 @@ import {
 } from 'vitest'
 import { withoutLayout } from '@lixpi/test-utils'
 
-const expectSourceToContain = (source: string, snippet: string, label: string): void => {
-    expect(withoutLayout(source).includes(withoutLayout(snippet)), `${label} should contain:\n${snippet}`).toBe(true)
-}
+const expectSourceToContain = (source: string, snippet: string, label: string): void => void expect(withoutLayout(source).includes(withoutLayout(snippet)), `${label} should contain:\n${snippet}`).toBe(true)
 
-const expectSourceNotToContain = (source: string, snippet: string, label: string): void => {
-    expect(withoutLayout(source).includes(withoutLayout(snippet)), `${label} should not contain:\n${snippet}`).toBe(false)
-}
+const expectSourceNotToContain = (source: string, snippet: string, label: string): void => void expect(withoutLayout(source).includes(withoutLayout(snippet)), `${label} should not contain:\n${snippet}`).toBe(false)
 
 describe('AssetDocumentService settlement scheduling', () => {
     it('uses one keyed idle scheduler instead of arming a timer for every accepted step batch', () => {

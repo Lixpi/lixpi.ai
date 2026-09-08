@@ -21,7 +21,11 @@ describe('normalizeBranchLineageNodeGap', () => {
 
 describe('applyBranchLineageNodeGap', () => {
     it('uses the branch-lineage node gap as the collision margin without changing resolver behavior', () => {
-        const sourceSettings = { iterations: 50, margin: 4, overlapThreshold: 0 }
+        const sourceSettings = {
+            iterations: 50,
+            margin: 4,
+            overlapThreshold: 0,
+        }
 
         expect(applyBranchLineageNodeGap(sourceSettings, 64)).toEqual({
             iterations: 50,
@@ -32,7 +36,11 @@ describe('applyBranchLineageNodeGap', () => {
     })
 
     it('returns the original object when the margin is already normalized', () => {
-        const sourceSettings = { iterations: 20, margin: 32, overlapThreshold: 0.5 }
+        const sourceSettings = {
+            iterations: 20,
+            margin: 32,
+            overlapThreshold: 0.5,
+        }
 
         expect(applyBranchLineageNodeGap(sourceSettings, 32)).toBe(sourceSettings)
     })

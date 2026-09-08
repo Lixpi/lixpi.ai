@@ -9,9 +9,7 @@ import {
 
 import { createGeneratedOutputDetailsSidebar } from './generated-output-details-sidebar.ts'
 
-afterEach(() => {
-    document.body.innerHTML = ''
-})
+afterEach(() => void (document.body.innerHTML = ''))
 
 describe('createGeneratedOutputDetailsSidebar', () => {
     it('owns the single scroll body and delegates all item content to one renderer', () => {
@@ -20,6 +18,7 @@ describe('createGeneratedOutputDetailsSidebar', () => {
             onClose: vi.fn(),
             renderContent: (body) => {
                 body.append('Unified item metadata and history')
+
                 return { destroy: destroyContent }
             },
         })

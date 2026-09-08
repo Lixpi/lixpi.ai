@@ -66,7 +66,7 @@ export class CapabilityArtifactSharedRegistry {
     }
 }
 
-export function assertCompleteSharedDefinition(definition: CapabilityArtifactSharedDefinition): void {
+export const assertCompleteSharedDefinition = (definition: CapabilityArtifactSharedDefinition): void => {
     if (!definition.artifactTypeId.trim())
         throw new Error('CAPABILITY_ARTIFACT_TYPE_ID_REQUIRED')
 

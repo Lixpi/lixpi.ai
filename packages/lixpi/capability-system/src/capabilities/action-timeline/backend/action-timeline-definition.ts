@@ -88,10 +88,10 @@ export const seedActionTimelineTool = async (
     })
 }
 
-export function buildActionTimelineManifest(resources: {
+export const buildActionTimelineManifest = (resources: {
     inputSchema: CapabilityResourceRef
     outputSchema: CapabilityResourceRef
-}): CapabilityManifest {
+}): CapabilityManifest => {
     return {
         schemaVersion: 1,
         capabilityId: ACTION_TIMELINE_TOOL_ID,
@@ -210,11 +210,11 @@ export function buildActionTimelineManifest(resources: {
     }
 }
 
-async function storeResource(
+const storeResource = async (
     storage: ActionTimelineCapabilityStorage,
     storageOwnerId: string,
     source: ResourceSource,
-): Promise<CapabilityResourceRef> {
+): Promise<CapabilityResourceRef> => {
     const bytes = await readFile(
         new URL(`./resources/${source.fileName}`, import.meta.url),
     )

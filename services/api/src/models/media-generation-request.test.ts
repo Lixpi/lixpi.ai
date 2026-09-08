@@ -94,7 +94,10 @@ describe('MediaGenerationRequest.create', () => {
 describe('MediaGenerationRequest.transition', () => {
     it('requires an exact single revision increment before writing', async () => {
         await expect(MediaGenerationRequestModel.transition({
-            request: { ...request, revision: 3 },
+            request: {
+                ...request,
+                revision: 3,
+            },
             expectedRevision: 1,
         })).rejects.toThrow('MEDIA_REQUEST_REVISION_INCREMENT_REQUIRED')
 
@@ -102,9 +105,18 @@ describe('MediaGenerationRequest.transition', () => {
     })
 
     it('conditions both primary and meta writes on the expected revision', async () => {
-        const transitioned = { ...request, status: 'running' as const, revision: 2, updatedAt: 20, statusUpdatedAt: 20 }
+        const transitioned = {
+            ...request,
+            status: 'running' as const,
+            revision: 2,
+            updatedAt: 20,
+            statusUpdatedAt: 20,
+        }
 
-        await MediaGenerationRequestModel.transition({ request: transitioned, expectedRevision: 1 })
+        await MediaGenerationRequestModel.transition({
+            request: transitioned,
+            expectedRevision: 1,
+        })
 
         const transaction = dynamo.transactWrite.mock.calls[0][0]
         expect(transaction.origin).toBe('MediaGenerationRequest.transition')
@@ -115,7 +127,10 @@ describe('MediaGenerationRequest.transition', () => {
                 expressionAttributeValues: { ':expectedRevision': 1 },
             }),
             expect.objectContaining({
-                item: expect.objectContaining({ revision: 2, status: 'running' }),
+                item: expect.objectContaining({
+                    revision: 2,
+                    status: 'running',
+                }),
                 conditionExpression: '#revision = :expectedRevision',
                 expressionAttributeValues: { ':expectedRevision': 1 },
             }),
@@ -132,21 +147,33 @@ describe('MediaGenerationRequest.delete', () => {
         expect(transaction.operations).toEqual(expect.arrayContaining([
             expect.objectContaining({
                 type: 'delete',
-                key: { generationRequestId: request.generationRequestId, workspaceId: request.workspaceId },
+                key: {
+                    generationRequestId: request.generationRequestId,
+                    workspaceId: request.workspaceId,
+                },
                 expressionAttributeValues: { ':expectedRevision': request.revision },
             }),
             expect.objectContaining({
                 type: 'delete',
-                key: { workspaceId: request.workspaceId, generationRequestId: request.generationRequestId },
+                key: {
+                    workspaceId: request.workspaceId,
+                    generationRequestId: request.generationRequestId,
+                },
                 expressionAttributeValues: { ':expectedRevision': request.revision },
             }),
             expect.objectContaining({
                 type: 'delete',
-                key: { generationRequestId: request.generationRequestId, principalId: 'user#owner-1' },
+                key: {
+                    generationRequestId: request.generationRequestId,
+                    principalId: 'user#owner-1',
+                },
             }),
             expect.objectContaining({
                 type: 'delete',
-                key: { generationRequestId: request.generationRequestId, principalId: 'workspace#workspace-1' },
+                key: {
+                    generationRequestId: request.generationRequestId,
+                    principalId: 'workspace#workspace-1',
+                },
             }),
         ]))
     })

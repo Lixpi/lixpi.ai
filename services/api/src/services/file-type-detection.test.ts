@@ -10,7 +10,11 @@ import {
     type MediaKind,
 } from '@lixpi/constants'
 
-const policyByMime: Record<string, { kind: MediaKind; modelSafe: boolean; canonicalMime: string }> = {
+const policyByMime: Record<string, {
+    kind: MediaKind
+    modelSafe: boolean
+    canonicalMime: string
+}> = {
     'application/pdf': {
         kind: MEDIA_POLICY['application/pdf'].kind as MediaKind,
         modelSafe: MEDIA_POLICY['application/pdf'].modelSafe,
@@ -30,7 +34,10 @@ describe('file type detection', () => {
     it('rejects empty input with explicit reason', async () => {
         const result = await detectFileType(Buffer.alloc(0), 'empty.txt')
 
-        expect(result).toEqual({ rejected: true, reason: 'The uploaded file is empty.' })
+        expect(result).toEqual({
+            rejected: true,
+            reason: 'The uploaded file is empty.',
+        })
     })
 
     it('classifies markdown by extension when file type is textual', async () => {

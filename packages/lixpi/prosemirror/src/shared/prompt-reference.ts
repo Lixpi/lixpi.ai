@@ -167,14 +167,9 @@ export const getPromptReferenceStableId = (reference: PromptReference): string =
     return reference.capabilityId
 }
 
-function isMediaKind(input: unknown): input is MediaPromptReference['mediaKind'] {
-    return input === 'image' || input === 'video' || input === 'audio' || input === 'document'
-}
+const isMediaKind = (input: unknown): input is MediaPromptReference['mediaKind'] =>
+    input === 'image' || input === 'video' || input === 'audio' || input === 'document'
 
-function isNonEmptyString(input: unknown): input is string {
-    return typeof input === 'string' && input.trim().length > 0
-}
+const isNonEmptyString = (input: unknown): input is string => typeof input === 'string' && input.trim().length > 0
 
-function hasNonEmptyString(input: unknown): boolean {
-    return typeof input === 'string' && input.trim().length > 0
-}
+const hasNonEmptyString = (input: unknown): boolean => typeof input === 'string' && input.trim().length > 0

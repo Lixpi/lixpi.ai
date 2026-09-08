@@ -19,52 +19,73 @@ const canvasState = (): CanvasState => ({
         nodeId: 'image-1',
         type: 'image',
         assetId: 'asset-1',
-        position: { x: 0, y: 0 },
-        dimensions: { width: 100, height: 100 },
+        position: {
+            x: 0,
+            y: 0,
+        },
+        dimensions: {
+            width: 100,
+            height: 100,
+        },
     }],
     edges: [],
-    viewport: { x: 10, y: 20, zoom: 1 },
+    viewport: {
+        x: 10,
+        y: 20,
+        zoom: 1,
+    },
 })
 
-function setup() {
+const setup = () => {
     let workspaceId = 'first'
     let renderedWorkspaceId: string | null = 'first'
     let state: CanvasState | null = null
-    let keys = { nodeStructure: '', visual: '', documents: '', threads: '' }
+    let keys = {
+        nodeStructure: '',
+        visual: '',
+        documents: '',
+        threads: '',
+    }
     const renderNodes = vi.fn()
     const releaseWorkspaceResources = vi.fn()
     const clearWorkspaceRuntime = vi.fn()
     const createComposer = vi.fn()
     const ports: WorkspaceCanvasRenderingPorts = {
         getWorkspaceId: () => workspaceId,
-        setWorkspaceId: value => {
-            workspaceId = value
-        },
+        setWorkspaceId: value => void (workspaceId = value),
         getRenderedWorkspaceId: () => renderedWorkspaceId,
-        setRenderedWorkspaceId: value => {
-            renderedWorkspaceId = value
-        },
+        setRenderedWorkspaceId: value => void (renderedWorkspaceId = value),
         getLoadingStatus: () => LoadingStatus.success,
         setLoadingVisible: vi.fn(),
         getPendingVisualCommit: () => null,
         setPendingVisualCommit: vi.fn(),
         getState: () => state,
-        setState: value => {
-            state = value
-        },
+        setState: value => void (state = value),
         setDocuments: vi.fn(),
         setThreads: vi.fn(),
-        getPanelState: () => ({ isOpen: false, topLevelMode: 'aiThreads', contextChips: [] } as CanvasAiChatPanelState),
+        getPanelState: () => ({
+            isOpen: false,
+            topLevelMode: 'aiThreads',
+            contextChips: [],
+        } as CanvasAiChatPanelState),
         getKeys: () => keys,
-        setKeys: value => {
-            keys = { ...keys, ...value }
-        },
-        getLiveViewport: () => ({ x: 0, y: 0, zoom: 1 }),
+        setKeys: value => void (keys = {
+            ...keys,
+            ...value,
+        }),
+        getLiveViewport: () => ({
+            x: 0,
+            y: 0,
+            zoom: 1,
+        }),
         isViewportLocked: () => false,
         syncPanZoom: vi.fn(),
         syncViewportInteraction: vi.fn(),
         applyViewport: vi.fn(),
-        resetStaleMediaAnalysis: value => ({ state: value, changed: false }),
+        resetStaleMediaAnalysis: value => ({
+            state: value,
+            changed: false,
+        }),
         preserveActiveMedia: value => value,
         mergeThreads: threads => threads,
         getDocumentsKey: documents => documents.map(document => document.documentId).join(','),
@@ -95,6 +116,7 @@ function setup() {
         isDebugEnabled: () => false,
         debug: vi.fn(),
     }
+
     return {
         owner: new WorkspaceCanvasRendering(ports),
         renderNodes,
@@ -115,7 +137,11 @@ describe('WorkspaceCanvasRendering', () => {
 
         expect(fixture.getState()).toEqual({
             ...state,
-            viewport: { x: 0, y: 0, zoom: 1 },
+            viewport: {
+                x: 0,
+                y: 0,
+                zoom: 1,
+            },
         })
         expect(fixture.renderNodes).toHaveBeenCalledOnce()
         expect(fixture.releaseWorkspaceResources).not.toHaveBeenCalled()

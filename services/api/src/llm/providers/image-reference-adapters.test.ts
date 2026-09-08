@@ -65,7 +65,10 @@ describe('image reference adapters', () => {
             'prop-crop',
         ])
         expect(result.omitted).toEqual(expect.arrayContaining([
-            expect.objectContaining({ role: 'body-outfit-crop', reason: 'identity-budget' }),
+            expect.objectContaining({
+                role: 'body-outfit-crop',
+                reason: 'identity-budget',
+            }),
         ]))
         expect(result.explicitInputFidelity).toBe('high')
     })
@@ -86,7 +89,10 @@ describe('image reference adapters', () => {
         })
 
         expect(result.included.map(({ role }) => role)).toEqual(['canonical-anchor', 'pose-reference'])
-        expect(result.omitted).toEqual([expect.objectContaining({ role: 'face-crop', reason: 'reference-budget' })])
+        expect(result.omitted).toEqual([expect.objectContaining({
+            role: 'face-crop',
+            reason: 'reference-budget',
+        })])
     })
 
     it('keeps all three generated anchors and required pose control when identity slots are exhausted', () => {
@@ -112,7 +118,10 @@ describe('image reference adapters', () => {
             'pose-reference',
         ])
         expect(result.omitted).toEqual([
-            expect.objectContaining({ role: 'original-source', reason: 'identity-budget' }),
+            expect.objectContaining({
+                role: 'original-source',
+                reason: 'identity-budget',
+            }),
         ])
     })
 

@@ -61,12 +61,19 @@ describe('Content-addressed blob storage', () => {
             mimeType: 'application/json',
         })
 
-        expect(stored).toMatchObject({ blobHash, objectKey, byteSize: bytes.byteLength })
+        expect(stored).toMatchObject({
+            blobHash,
+            objectKey,
+            byteSize: bytes.byteLength,
+        })
         expect(mocks.putObject).toHaveBeenCalledWith(
             'blobs-organization-1-files',
             objectKey,
             bytes,
-            { name: objectKey, description: `sha256:${blobHash}` },
+            {
+                name: objectKey,
+                description: `sha256:${blobHash}`,
+            },
         )
         expect(mocks.getObject).not.toHaveBeenCalled()
     })

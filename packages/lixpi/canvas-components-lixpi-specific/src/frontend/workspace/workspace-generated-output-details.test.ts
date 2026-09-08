@@ -19,14 +19,32 @@ const node: ImageCanvasNode = {
     nodeId: 'image-1',
     type: 'image',
     assetId: 'asset-1',
-    position: { x: 0, y: 0 },
-    dimensions: { width: 100, height: 100 },
+    position: {
+        x: 0,
+        y: 0,
+    },
+    dimensions: {
+        width: 100,
+        height: 100,
+    },
 }
 
 describe('WorkspaceGeneratedOutputDetails', () => {
     it('opens, toggles and closes a generated-output target through panel ports', () => {
-        const canvasState = { nodes: [node], edges: [], viewport: { x: 0, y: 0, zoom: 1 } } satisfies CanvasState
-        let panelState = { isOpen: false, topLevelMode: 'media', contextChips: [] } as CanvasAiChatPanelState
+        const canvasState = {
+            nodes: [node],
+            edges: [],
+            viewport: {
+                x: 0,
+                y: 0,
+                zoom: 1,
+            },
+        } satisfies CanvasState
+        let panelState = {
+            isOpen: false,
+            topLevelMode: 'media',
+            contextChips: [],
+        } as CanvasAiChatPanelState
         const renderPanel = vi.fn()
         const syncFooters = vi.fn()
         const ports = {
@@ -35,17 +53,22 @@ describe('WorkspaceGeneratedOutputDetails', () => {
             review: {},
             getState: () => canvasState,
             getPanelState: () => panelState,
-            persistPanelState: (state: CanvasAiChatPanelState) => {
-                panelState = state
-            },
+            persistPanelState: (state: CanvasAiChatPanelState) => void (panelState = state),
             renderPanel,
             syncFooters,
         } as WorkspaceGeneratedOutputDetailsPorts
         const owner = new WorkspaceGeneratedOutputDetails(ports)
-        const target = { kind: 'output', nodeId: node.nodeId } as const
+        const target = {
+            kind: 'output',
+            nodeId: node.nodeId,
+        } as const
 
         owner.open(target)
-        expect(panelState).toMatchObject({ isOpen: true, topLevelMode: 'aiThreads', generatedOutputDetailsTarget: target })
+        expect(panelState).toMatchObject({
+            isOpen: true,
+            topLevelMode: 'aiThreads',
+            generatedOutputDetailsTarget: target,
+        })
         expect(syncFooters).toHaveBeenCalledWith(canvasState)
 
         owner.open(target, { toggle: true })
@@ -74,7 +97,12 @@ describe('WorkspaceGeneratedOutputDetails', () => {
         expect(owner.isProgressActive(node)).toBe(true)
         await owner.accept('output-node', node.nodeId)
         await owner.reject('output-node', node.nodeId)
-        await owner.regenerate({ scope: 'output-node', mode: 'existing-prompt', targetNodeId: node.nodeId, outputNodes: [node] })
+        await owner.regenerate({
+            scope: 'output-node',
+            mode: 'existing-prompt',
+            targetNodeId: node.nodeId,
+            outputNodes: [node],
+        })
         expect(accept).toHaveBeenCalledOnce()
         expect(reject).toHaveBeenCalledOnce()
         expect(regenerate).toHaveBeenCalledOnce()

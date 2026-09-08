@@ -390,31 +390,29 @@ class ActionConcurrencyLimiter {
     }
 }
 
-function authorizeStyleExtraction(context: { rootCapabilityId: string }): boolean {
-    return context.rootCapabilityId === STYLE_EXTRACTION_CAPABILITY_IDS.tool
-}
+const authorizeStyleExtraction = (context: { rootCapabilityId: string }): boolean => context.rootCapabilityId === STYLE_EXTRACTION_CAPABILITY_IDS.tool
 
-function mergeCopy(
+const mergeCopy = (
     state: StyleExtractionRuntimeState,
     update: Partial<StyleExtractionRuntimeState>,
-): StyleExtractionRuntimeState {
+): StyleExtractionRuntimeState => {
     const copy = structuredClone(state)
     mergeState(copy, update)
 
     return copy
 }
 
-function mergeState(
+const mergeState = (
     state: StyleExtractionRuntimeState,
     update: Readonly<Record<string, unknown>>,
-): void {
+): void => {
     for (const [key, value] of Object.entries(update)) {
         if (value !== undefined)
             state[key] = value
     }
 }
 
-function readState(value: unknown): StyleExtractionRuntimeState {
+const readState = (value: unknown): StyleExtractionRuntimeState => {
     const state = asRecord(value)
 
     if (
@@ -431,10 +429,10 @@ function readState(value: unknown): StyleExtractionRuntimeState {
     return value as StyleExtractionRuntimeState
 }
 
-function requireInstructions(
+const requireInstructions = (
     value: unknown,
     label: string,
-): void {
+): void => {
     const resource = asRecord(value)
 
     if (
@@ -444,7 +442,7 @@ function requireInstructions(
         throw new CapabilityError('CAPABILITY_RESOURCE_INVALID', `${label} are missing`)
 }
 
-function readResource(
+const readResource = (
     value: unknown,
     label: string,
 ): {
@@ -453,7 +451,7 @@ function readResource(
         resourceId: string
         mediaType: string
     }
-} {
+} => {
     const resource = asRecord(value)
     const ref = asRecord(resource?.ref)
 
@@ -473,10 +471,10 @@ function readResource(
     }
 }
 
-function readString(
+const readString = (
     value: unknown,
     label: string,
-): string {
+): string => {
     if (
         typeof value !== 'string'
         || !value
@@ -486,28 +484,28 @@ function readString(
     return value
 }
 
-function validateObject(value: unknown): CapabilityActionValidationResult {
+const validateObject = (value: unknown): CapabilityActionValidationResult => {
     return asRecord(value) ? { valid: true } : {
         valid: false,
         message: 'Value must be an object',
     }
 }
 
-function validateStateInput(value: Readonly<Record<string, unknown>>): CapabilityActionValidationResult {
+const validateStateInput = (value: Readonly<Record<string, unknown>>): CapabilityActionValidationResult => {
     return asRecord(value.state) ? { valid: true } : {
         valid: false,
         message: 'state must be an object',
     }
 }
 
-function validateStateOutput(value: unknown): CapabilityActionValidationResult {
+const validateStateOutput = (value: unknown): CapabilityActionValidationResult => {
     return asRecord(asRecord(value)?.state) ? { valid: true } : {
         valid: false,
         message: 'output.state must be an object',
     }
 }
 
-function validateAxisInput(value: Readonly<Record<string, unknown>>): CapabilityActionValidationResult {
+const validateAxisInput = (value: Readonly<Record<string, unknown>>): CapabilityActionValidationResult => {
     return asRecord(value.state)
         && typeof value.axis === 'string'
         ? { valid: true }
@@ -517,7 +515,7 @@ function validateAxisInput(value: Readonly<Record<string, unknown>>): Capability
         }
 }
 
-function validateAxisOutput(value: unknown): CapabilityActionValidationResult {
+const validateAxisOutput = (value: unknown): CapabilityActionValidationResult => {
     const output = asRecord(value)
 
     return output
@@ -530,7 +528,7 @@ function validateAxisOutput(value: unknown): CapabilityActionValidationResult {
         }
 }
 
-function validateCropsOutput(value: unknown): CapabilityActionValidationResult {
+const validateCropsOutput = (value: unknown): CapabilityActionValidationResult => {
     return Array.isArray(asRecord(value)?.sourceCrops)
         ? { valid: true }
         : {
@@ -539,7 +537,7 @@ function validateCropsOutput(value: unknown): CapabilityActionValidationResult {
         }
 }
 
-function validateVisualStyleInput(value: Readonly<Record<string, unknown>>): CapabilityActionValidationResult {
+const validateVisualStyleInput = (value: Readonly<Record<string, unknown>>): CapabilityActionValidationResult => {
     return asRecord(value.instructions)
         && asRecord(value.configuration)
         ? { valid: true }
@@ -549,7 +547,7 @@ function validateVisualStyleInput(value: Readonly<Record<string, unknown>>): Cap
         }
 }
 
-function validateVisualStyleOutput(value: unknown): CapabilityActionValidationResult {
+const validateVisualStyleOutput = (value: unknown): CapabilityActionValidationResult => {
     const output = asRecord(value)
 
     return output?.mediaGenerationMode === 'visual-style'
@@ -564,7 +562,7 @@ function validateVisualStyleOutput(value: unknown): CapabilityActionValidationRe
         }
 }
 
-function validateMergeInput(value: Readonly<Record<string, unknown>>): CapabilityActionValidationResult {
+const validateMergeInput = (value: Readonly<Record<string, unknown>>): CapabilityActionValidationResult => {
     return asRecord(value.state)
         && asRecord(value.crops)
         ? { valid: true }
@@ -574,7 +572,7 @@ function validateMergeInput(value: Readonly<Record<string, unknown>>): Capabilit
         }
 }
 
-function validatePersistOutput(value: unknown): CapabilityActionValidationResult {
+const validatePersistOutput = (value: unknown): CapabilityActionValidationResult => {
     const output = asRecord(value)
 
     return output
@@ -587,15 +585,15 @@ function validatePersistOutput(value: unknown): CapabilityActionValidationResult
         }
 }
 
-function registerIfMissing(
+const registerIfMissing = (
     registry: CapabilityActionRegistry,
     definition: Parameters<CapabilityActionRegistry['register']>[0],
-): void {
+): void => {
     if (!registry.has(definition.key))
         registry.register(definition)
 }
 
-function classifyProviderRetry(error: unknown): 'retryable' | 'terminal' {
+const classifyProviderRetry = (error: unknown): 'retryable' | 'terminal' => {
     const message = error instanceof Error ? error.message : String(error)
 
     return /timeout|rate.?limit|connection|temporar|unavailable|429|502|503|504/i.test(message)
@@ -603,17 +601,15 @@ function classifyProviderRetry(error: unknown): 'retryable' | 'terminal' {
         : 'terminal'
 }
 
-function isRetryablePersistenceError(error: unknown): boolean {
+const isRetryablePersistenceError = (error: unknown): boolean => {
     const message = error instanceof Error ? error.message : String(error)
 
     return /throttl|timeout|conflict|temporar|unavailable/i.test(message)
 }
 
-function arrayLength(value: unknown): number {
-    return Array.isArray(value) ? value.length : 0
-}
+const arrayLength = (value: unknown): number => (Array.isArray(value) ? value.length : 0)
 
-function asRecord(value: unknown): Record<string, unknown> | undefined {
+const asRecord = (value: unknown): Record<string, unknown> | undefined => {
     return value
         && typeof value === 'object'
         && !Array.isArray(value)

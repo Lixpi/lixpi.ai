@@ -38,6 +38,7 @@ afterEach(() => {
 const createPromptState = (plugin: ReturnType<typeof createAtPromptReferencePickerPlugin>): EditorState => {
     const paragraph = testSchema.nodes.paragraph.create()
     const prompt = testSchema.nodes.aiPromptInput.create(null, [paragraph])
+
     return EditorState.create({
         schema: testSchema,
         doc: testSchema.nodes.doc.create(null, [prompt]),
@@ -98,7 +99,10 @@ describe('promptReferencePickerPlugin', () => {
         mount.addEventListener('wheel', canvasWheelHandler)
         const view = new EditorView(mount, { state: createPromptState(plugin) })
         const listbox = mount.querySelector<HTMLElement>('[role="listbox"]')
-        if (!listbox) throw new Error('Expected prompt reference listbox')
+
+        if (!listbox)
+            throw new Error('Expected prompt reference listbox')
+
         const wheelEvent = new WheelEvent('wheel', {
             bubbles: true,
             cancelable: true,
@@ -131,27 +135,45 @@ describe('promptReferencePickerPlugin', () => {
         view.dispatch(
             view.state.tr
                 .insertText(trigger)
-                .setMeta(pluginKey, { type: 'open', triggerPos }),
+                .setMeta(pluginKey, {
+                    type: 'open',
+                    triggerPos,
+                }),
         )
         await vi.advanceTimersByTimeAsync(150)
 
         const listbox = mount.querySelector<HTMLElement>('[role="listbox"]')
-        if (!listbox) throw new Error(`Expected ${trigger} picker listbox`)
+
+        if (!listbox)
+            throw new Error(`Expected ${trigger} picker listbox`)
+
         expect(listbox.style.display).toBe('flex')
 
-        listbox.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }))
+        listbox.dispatchEvent(new MouseEvent('mousedown', {
+            bubbles: true,
+            cancelable: true,
+        }))
         expect(pluginKey.getState(view.state)?.active).toBe(true)
 
-        outside.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }))
+        outside.dispatchEvent(new MouseEvent('mousedown', {
+            bubbles: true,
+            cancelable: true,
+        }))
         expect(pluginKey.getState(view.state)?.active).toBe(false)
         expect(listbox.style.display).toBe('none')
 
-        view.dispatch(view.state.tr.setMeta(pluginKey, { type: 'open', triggerPos }))
+        view.dispatch(view.state.tr.setMeta(pluginKey, {
+            type: 'open',
+            triggerPos,
+        }))
         const dispatchSpy = vi.spyOn(view, 'dispatch')
         view.destroy()
         dispatchSpy.mockClear()
 
-        outside.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }))
+        outside.dispatchEvent(new MouseEvent('mousedown', {
+            bubbles: true,
+            cancelable: true,
+        }))
         expect(dispatchSpy).not.toHaveBeenCalled()
     })
 
@@ -212,7 +234,10 @@ describe('promptReferencePickerPlugin', () => {
         view.dispatch(
             view.state.tr
                 .insertText('@')
-                .setMeta(promptReferencePickerPluginKey, { type: 'open', triggerPos }),
+                .setMeta(promptReferencePickerPluginKey, {
+                    type: 'open',
+                    triggerPos,
+                }),
         )
         view.dispatch(view.state.tr.setMeta(promptReferencePickerPluginKey, {
             type: 'category',
@@ -244,9 +269,10 @@ describe('promptReferencePickerPlugin', () => {
         const asyncCatalog = {
             ...catalog,
             list: vi.fn((query: any) =>
-                new Promise<any>((resolve) => {
-                    pending.push({ query, resolve })
-                })
+                new Promise<any>((resolve) => void pending.push({
+                    query,
+                    resolve,
+                }))
             ),
         }
         const plugin = createSlashCapabilityModulePickerPlugin(asyncCatalog)
@@ -257,7 +283,10 @@ describe('promptReferencePickerPlugin', () => {
         view.dispatch(
             view.state.tr
                 .insertText('/')
-                .setMeta(capabilityModulePickerPluginKey, { type: 'open', triggerPos }),
+                .setMeta(capabilityModulePickerPluginKey, {
+                    type: 'open',
+                    triggerPos,
+                }),
         )
         await vi.advanceTimersByTimeAsync(150)
 
@@ -298,7 +327,10 @@ describe('promptReferencePickerPlugin', () => {
         expect(listbox?.textContent).not.toContain('Stale Module')
         expect(listbox?.querySelector<HTMLElement>('[role="option"]')?.ariaSelected).toBe('true')
 
-        const arrowDown = new KeyboardEvent('keydown', { key: 'ArrowDown', cancelable: true })
+        const arrowDown = new KeyboardEvent('keydown', {
+            key: 'ArrowDown',
+            cancelable: true,
+        })
         view.someProp('handleKeyDown', handler => handler(view, arrowDown))
         expect(pending).toHaveLength(3)
         expect(pending[2]!.query).toMatchObject({ cursor: 'next-page' })
@@ -318,10 +350,14 @@ describe('promptReferencePickerPlugin', () => {
         expect(listbox?.textContent).toContain('Style Extraction')
 
         listbox?.querySelector<HTMLElement>('[role="option"]')
-            ?.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }))
+            ?.dispatchEvent(new MouseEvent('mousedown', {
+                bubbles: true,
+                cancelable: true,
+            }))
         const atoms: Array<Record<string, unknown>> = []
         view.state.doc.descendants((node) => {
-            if (node.type.name === 'prompt_reference') atoms.push(node.attrs)
+            if (node.type.name === 'prompt_reference')
+                atoms.push(node.attrs)
         })
         expect(atoms).toEqual([expect.objectContaining({
             referenceType: 'capability-module',
@@ -338,9 +374,7 @@ describe('promptReferencePickerPlugin', () => {
         const asyncCatalog = {
             ...catalog,
             list: vi.fn(() =>
-                new Promise<PromptReferenceCatalogPage>((resolve) => {
-                    pending.push({ resolve })
-                })
+                new Promise<PromptReferenceCatalogPage>((resolve) => void pending.push({ resolve }))
             ),
         }
         const characterCreator: PromptReferenceCatalogItem = {
@@ -371,13 +405,24 @@ describe('promptReferencePickerPlugin', () => {
         view.dispatch(
             view.state.tr
                 .insertText('/')
-                .setMeta(capabilityModulePickerPluginKey, { type: 'open', triggerPos }),
+                .setMeta(capabilityModulePickerPluginKey, {
+                    type: 'open',
+                    triggerPos,
+                }),
         )
 
         const listbox = mount.querySelector<HTMLDivElement>('[role="listbox"]')
-        if (!listbox) throw new Error('Expected prompt reference listbox')
+
+        if (!listbox)
+            throw new Error('Expected prompt reference listbox')
+
         let menuHeight = 300
-        vi.spyOn(view, 'coordsAtPos').mockReturnValue({ left: 200, right: 210, top: 500, bottom: 520 })
+        vi.spyOn(view, 'coordsAtPos').mockReturnValue({
+            left: 200,
+            right: 210,
+            top: 500,
+            bottom: 520,
+        })
         vi.spyOn(listbox, 'getBoundingClientRect').mockImplementation(() => ({
             x: 0,
             y: 0,
@@ -404,7 +449,10 @@ describe('promptReferencePickerPlugin', () => {
         expect(listbox.style.top).toBe('194px')
         const initialBottom = Number.parseFloat(listbox.style.top) + menuHeight
 
-        const arrowDown = new KeyboardEvent('keydown', { key: 'ArrowDown', cancelable: true })
+        const arrowDown = new KeyboardEvent('keydown', {
+            key: 'ArrowDown',
+            cancelable: true,
+        })
         expect(view.someProp('handleKeyDown', handler => handler(view, arrowDown))).toBe(true)
         expect(listbox.querySelectorAll('[role="option"]')[0]).toBe(initialCharacterRow)
         expect(listbox.querySelectorAll('[role="option"]')[1]).toBe(initialStyleRow)
@@ -415,7 +463,10 @@ describe('promptReferencePickerPlugin', () => {
         expect(listbox.ariaBusy).toBe('true')
         expect(listbox.querySelectorAll('[role="option"]')[0]).toBe(initialCharacterRow)
 
-        const enter = new KeyboardEvent('keydown', { key: 'Enter', cancelable: true })
+        const enter = new KeyboardEvent('keydown', {
+            key: 'Enter',
+            cancelable: true,
+        })
         expect(view.someProp('handleKeyDown', handler => handler(view, enter))).toBe(true)
         expect(view.state.doc.textContent).toBe('/c')
 
@@ -451,7 +502,13 @@ describe('promptReferencePickerPlugin', () => {
                     scope: 'organization',
                     updatedAt: 1,
                 },
-                { referenceType: 'media', assetId: 'asset-1', nodeId: 'node-1', mediaKind: 'image', displayName: 'Portrait' },
+                {
+                    referenceType: 'media',
+                    assetId: 'asset-1',
+                    nodeId: 'node-1',
+                    mediaKind: 'image',
+                    displayName: 'Portrait',
+                },
             ],
             [
                 {
@@ -464,7 +521,11 @@ describe('promptReferencePickerPlugin', () => {
                     tags: [],
                     status: 'active',
                 },
-                { referenceType: 'capability-module', moduleId: 'character-creator', displayName: 'Character Creator' },
+                {
+                    referenceType: 'capability-module',
+                    moduleId: 'character-creator',
+                    displayName: 'Character Creator',
+                },
             ],
             [
                 {
@@ -485,10 +546,12 @@ describe('promptReferencePickerPlugin', () => {
                     status: 'active',
                     updatedAt: 1,
                 },
-                { referenceType: 'tool', capabilityId: 'tool-1', displayName: 'Style' },
+                {
+                    referenceType: 'tool',
+                    capabilityId: 'tool-1',
+                    displayName: 'Style',
+                },
             ],
         ] as const,
-    )('maps catalog rows to typed stable atom attributes', (item, expected) => {
-        expect(promptReferenceCatalogItemToAtomAttrs(item as any)).toEqual(expected)
-    })
+    )('maps catalog rows to typed stable atom attributes', (item, expected) => void expect(promptReferenceCatalogItemToAtomAttrs(item as any)).toEqual(expected))
 })

@@ -39,7 +39,11 @@ const state = (): MediaGenerationProgressState => ({
                 id: 'completed-root',
                 title: 'Completed root',
                 status: 'completed',
-                children: [{ id: 'completed-child', title: 'Completed child', status: 'completed' }],
+                children: [{
+                    id: 'completed-child',
+                    title: 'Completed child',
+                    status: 'completed',
+                }],
             },
             {
                 id: 'problem-root',
@@ -49,14 +53,22 @@ const state = (): MediaGenerationProgressState => ({
                     id: 'problem-child',
                     title: 'Problem child',
                     status: 'failed',
-                    children: [{ id: 'problem-leaf', title: 'Problem leaf', status: 'failed' }],
+                    children: [{
+                        id: 'problem-leaf',
+                        title: 'Problem leaf',
+                        status: 'failed',
+                    }],
                 }],
             },
             {
                 id: 'pending-root',
                 title: 'Pending root',
                 status: 'pending',
-                children: [{ id: 'pending-child', title: 'Pending child', status: 'pending' }],
+                children: [{
+                    id: 'pending-child',
+                    title: 'Pending child',
+                    status: 'pending',
+                }],
             },
         ],
     },
@@ -85,9 +97,14 @@ describe('media generation progress disclosure', () => {
                 disconnect = disconnect
             },
         )
+
         try {
             const onLayoutChange = vi.fn()
-            const progress = createMediaGenerationProgress({ id: 'disposed', state: state(), onLayoutChange })
+            const progress = createMediaGenerationProgress({
+                id: 'disposed',
+                state: state(),
+                onLayoutChange,
+            })
             progress.element.querySelector<HTMLButtonElement>('.workspace-media-generation-pipeline-disclosure')!.click()
             const lastFrame = frames.at(-1)!
             const frameId = frames.length
@@ -104,8 +121,14 @@ describe('media generation progress disclosure', () => {
     })
 
     it('keeps accessible timeline targets unique for two views of the same run', () => {
-        const first = createMediaGenerationProgress({ id: 'same-run', state: state() })
-        const second = createMediaGenerationProgress({ id: 'same-run', state: state() })
+        const first = createMediaGenerationProgress({
+            id: 'same-run',
+            state: state(),
+        })
+        const second = createMediaGenerationProgress({
+            id: 'same-run',
+            state: state(),
+        })
         const firstTarget = first.element.querySelector('[aria-controls]')!.getAttribute('aria-controls')
         const secondTarget = second.element.querySelector('[aria-controls]')!.getAttribute('aria-controls')
         expect(firstTarget).not.toBe(secondTarget)
@@ -169,8 +192,16 @@ describe('media generation progress disclosure', () => {
             progress: {
                 ...state().progress,
                 items: [
-                    { id: 'lineage:understand-request', title: 'Understand request', status: 'completed' as const },
-                    { id: 'provider', title: 'Prepare provider run', status: 'completed' as const },
+                    {
+                        id: 'lineage:understand-request',
+                        title: 'Understand request',
+                        status: 'completed' as const,
+                    },
+                    {
+                        id: 'provider',
+                        title: 'Prepare provider run',
+                        status: 'completed' as const,
+                    },
                 ],
             },
         }
@@ -179,7 +210,11 @@ describe('media generation progress disclosure', () => {
             status: 'failed' as const,
             progress: {
                 ...state().progress,
-                items: [{ id: 'generation', title: 'Generate media', status: 'failed' as const }],
+                items: [{
+                    id: 'generation',
+                    title: 'Generate media',
+                    status: 'failed' as const,
+                }],
             },
         }
 
@@ -191,7 +226,10 @@ describe('media generation progress disclosure', () => {
     })
 
     it('streams active canvas progress into the open sealed-history renderer', () => {
-        const projectedState = { ...state(), status: 'completed' as const }
+        const projectedState = {
+            ...state(),
+            status: 'completed' as const,
+        }
         const liveState = state()
 
         expect(resolveMediaGenerationHistoryProgress({
@@ -337,12 +375,24 @@ describe('media generation progress disclosure', () => {
             },
         ])).toEqual(['completed'])
         expect(isMediaGenerationOperationSupersededByOutput(
-            { outputNodeId: 'output-1', mediaRunId: 'run-1' },
-            { nodeId: 'output-1', mediaRunId: 'run-1' },
+            {
+                outputNodeId: 'output-1',
+                mediaRunId: 'run-1',
+            },
+            {
+                nodeId: 'output-1',
+                mediaRunId: 'run-1',
+            },
         )).toBe(true)
         expect(isMediaGenerationOperationSupersededByOutput(
-            { outputNodeId: 'output-2', mediaRunId: 'run-2' },
-            { nodeId: 'output-1', mediaRunId: 'run-1' },
+            {
+                outputNodeId: 'output-2',
+                mediaRunId: 'run-2',
+            },
+            {
+                nodeId: 'output-1',
+                mediaRunId: 'run-1',
+            },
         )).toBe(false)
     })
 
@@ -431,6 +481,7 @@ describe('media generation progress disclosure', () => {
                 const element = document.createElement('div')
                 element.className = 'rendered-trace'
                 element.textContent = (detail as { reasoning?: string }).reasoning ?? ''
+
                 return { element }
             },
             state: {
@@ -448,7 +499,10 @@ describe('media generation progress disclosure', () => {
                         title: 'Understand request',
                         status: 'completed',
                         summary: reasoning,
-                        trace: { traceVersion: 'execution-trace-v1', reasoning },
+                        trace: {
+                            traceVersion: 'execution-trace-v1',
+                            reasoning,
+                        },
                     }],
                 },
             },
@@ -467,9 +521,13 @@ describe('media generation progress disclosure', () => {
     it('keeps top-level steps visible, focuses problem details, and expands every nested level on demand', () => {
         vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
             callback(0)
+
             return 1
         })
-        const progress = createMediaGenerationProgress({ id: 'run-1', state: state() })
+        const progress = createMediaGenerationProgress({
+            id: 'run-1',
+            state: state(),
+        })
         const disclosure = progress.element.querySelector<HTMLButtonElement>(
             '.workspace-media-generation-pipeline-disclosure',
         )!
@@ -543,19 +601,42 @@ describe('media generation progress disclosure', () => {
 
     it('centers short progress beside the media outline and top-aligns taller progress', () => {
         const anchor = {
-            position: { x: 100, y: 200 },
-            dimensions: { width: 800, height: 600 },
+            position: {
+                x: 100,
+                y: 200,
+            },
+            dimensions: {
+                width: 800,
+                height: 600,
+            },
         }
 
-        expect(getMediaGenerationProgressPosition(anchor, 200)).toEqual({ x: 936, y: 400 })
-        expect(getMediaGenerationProgressPosition(anchor, 700)).toEqual({ x: 936, y: 200 })
+        expect(getMediaGenerationProgressPosition(anchor, 200)).toEqual({
+            x: 936,
+            y: 400,
+        })
+        expect(getMediaGenerationProgressPosition(anchor, 700)).toEqual({
+            x: 936,
+            y: 200,
+        })
     })
 
     it('reserves the full right-side progress timeline collision envelope', () => {
-        const mediaRect = { x: 100, y: 200, width: 800, height: 600 }
+        const mediaRect = {
+            x: 100,
+            y: 200,
+            width: 800,
+            height: 600,
+        }
         const anchor = {
-            position: { x: 100, y: 200 },
-            dimensions: { width: 800, height: 600 },
+            position: {
+                x: 100,
+                y: 200,
+            },
+            dimensions: {
+                width: 800,
+                height: 600,
+            },
         }
 
         expect(getMediaGenerationProgressCollisionRect(mediaRect, anchor, 900)).toEqual({
@@ -582,10 +663,17 @@ describe('media generation progress disclosure', () => {
         const initialState = state()
         initialState.progress.items = initialState.progress.items?.map(item => (
             item.id === 'problem-root'
-                ? { ...item, status: 'running', summary: 'Provider rendering is active: 2m elapsed.' }
+                ? {
+                    ...item,
+                    status: 'running',
+                    summary: 'Provider rendering is active: 2m elapsed.',
+                }
                 : item
         ))
-        const progress = createMediaGenerationProgress({ id: 'run-1', state: initialState })
+        const progress = createMediaGenerationProgress({
+            id: 'run-1',
+            state: initialState,
+        })
         const surface = progress.element
         const runningItem = surface.querySelector('[data-item-id="problem-root"]')
         const runningRail = runningItem?.querySelector('.progress-timeline-rail')
@@ -598,7 +686,11 @@ describe('media generation progress disclosure', () => {
         nextState.progress.message = nextState.message
         nextState.progress.items = nextState.progress.items?.map(item => (
             item.id === 'problem-root'
-                ? { ...item, status: 'running', summary: nextState.message }
+                ? {
+                    ...item,
+                    status: 'running',
+                    summary: nextState.message,
+                }
                 : item
         ))
 
@@ -619,6 +711,7 @@ describe('media generation progress disclosure', () => {
         const disconnect = vi.fn()
         const requestFrame = vi.fn((callback: FrameRequestCallback): number => {
             callback(0)
+
             return 1
         })
         class MockResizeObserver {

@@ -37,6 +37,7 @@ describe('describeMediaStill', () => {
             // The still is sent as one input_image block — never the MP4.
             const blocks = args.userMessages[0].content
             expect(blocks.some((b: any) => b.type === 'input_image' && b.image_url === baseArgs.imageUrl)).toBe(true)
+
             return {
                 parsed: {
                     summary: '  A red sports car on a wet street.  ',
@@ -48,7 +49,10 @@ describe('describeMediaStill', () => {
             }
         })
 
-        const result = await describeMediaStill({ ...baseArgs, callVlm })
+        const result = await describeMediaStill({
+            ...baseArgs,
+            callVlm,
+        })
 
         expect(callVlm).toHaveBeenCalledOnce()
         expect(result.summary).toBe('A red sports car on a wet street.')
@@ -57,9 +61,21 @@ describe('describeMediaStill', () => {
     })
 
     it('returns empty fields when the model yields nothing usable', async () => {
-        const callVlm = vi.fn(async () => ({ parsed: {} as any, rawText: '', modelName: 'gpt-4.1' }))
-        const result = await describeMediaStill({ ...baseArgs, callVlm })
-        expect(result).toEqual({ title: '', summary: '', entityTags: [], styleTags: [] })
+        const callVlm = vi.fn(async () => ({
+            parsed: {} as any,
+            rawText: '',
+            modelName: 'gpt-4.1',
+        }))
+        const result = await describeMediaStill({
+            ...baseArgs,
+            callVlm,
+        })
+        expect(result).toEqual({
+            title: '',
+            summary: '',
+            entityTags: [],
+            styleTags: [],
+        })
     })
 })
 
@@ -90,6 +106,7 @@ describe('describeTextContent', () => {
             const text = blocks.map((b: any) => b.text).join('')
             expect(text).toContain('Title: Roadmap')
             expect(text).toContain('Ship the relevance engine in Q3.')
+
             return {
                 parsed: {
                     summary: '  A product roadmap focused on the relevance engine.  ',
@@ -115,24 +132,47 @@ describe('describeTextContent', () => {
     })
 
     it('skips the model call and returns empty fields for blank text', async () => {
-        const callVlm = vi.fn(async () => ({ parsed: {} as any, rawText: '', modelName: 'gpt-4.1' }))
-        const result = await describeTextContent({ ...baseArgs, text: '   \n  ', callVlm })
+        const callVlm = vi.fn(async () => ({
+            parsed: {} as any,
+            rawText: '',
+            modelName: 'gpt-4.1',
+        }))
+        const result = await describeTextContent({
+            ...baseArgs,
+            text: '   \n  ',
+            callVlm,
+        })
         expect(callVlm).not.toHaveBeenCalled()
-        expect(result).toEqual({ title: '', summary: '', entityTags: [], styleTags: [] })
+        expect(result).toEqual({
+            title: '',
+            summary: '',
+            entityTags: [],
+            styleTags: [],
+        })
     })
 
     it('sends text beyond the former 20,000-character boundary without clipping', async () => {
         const text = `prefix-${'x'.repeat(25000)}-suffix`
         const callVlm = vi.fn(async (args: any) => {
             expect(args.userMessages[0].content.map((block: any) => block.text).join('')).toContain(text)
+
             return {
-                parsed: { title: 'Long Notes', summary: 'Complete notes.', entityTags: [], styleTags: [] },
+                parsed: {
+                    title: 'Long Notes',
+                    summary: 'Complete notes.',
+                    entityTags: [],
+                    styleTags: [],
+                },
                 rawText: '',
                 modelName: 'gpt-4.1',
             }
         })
 
-        await describeTextContent({ ...baseArgs, text, callVlm })
+        await describeTextContent({
+            ...baseArgs,
+            text,
+            callVlm,
+        })
 
         expect(callVlm).toHaveBeenCalledOnce()
     })
@@ -140,19 +180,41 @@ describe('describeTextContent', () => {
     it('rejects an oversized descriptor result instead of shortening it', async () => {
         const summary = 'x'.repeat(10000)
         const callVlm = vi.fn(async () => ({
-            parsed: { title: 'Long Notes', summary, entityTags: [], styleTags: [] },
+            parsed: {
+                title: 'Long Notes',
+                summary,
+                entityTags: [],
+                styleTags: [],
+            },
             rawText: '',
             modelName: 'gpt-4.1',
         }))
 
-        await expect(describeTextContent({ ...baseArgs, text: 'content', callVlm }))
+        await expect(describeTextContent({
+            ...baseArgs,
+            text: 'content',
+            callVlm,
+        }))
             .rejects.toThrow('MEDIA_DESCRIPTOR_SUMMARY_TOO_LONG')
         expect(summary).toHaveLength(10000)
     })
 
     it('returns empty fields when the model yields nothing usable', async () => {
-        const callVlm = vi.fn(async () => ({ parsed: {} as any, rawText: '', modelName: 'gpt-4.1' }))
-        const result = await describeTextContent({ ...baseArgs, text: 'some content', callVlm })
-        expect(result).toEqual({ title: '', summary: '', entityTags: [], styleTags: [] })
+        const callVlm = vi.fn(async () => ({
+            parsed: {} as any,
+            rawText: '',
+            modelName: 'gpt-4.1',
+        }))
+        const result = await describeTextContent({
+            ...baseArgs,
+            text: 'some content',
+            callVlm,
+        })
+        expect(result).toEqual({
+            title: '',
+            summary: '',
+            entityTags: [],
+            styleTags: [],
+        })
     })
 })

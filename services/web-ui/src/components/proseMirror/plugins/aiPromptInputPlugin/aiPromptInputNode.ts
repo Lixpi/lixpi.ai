@@ -383,6 +383,14 @@ const setNodeAttrs = (
     view.dispatch(tr)
 }
 
+const getNodeViewPos = (getPos: () => number | undefined): number | undefined => {
+    try {
+        return getPos()
+    } catch {
+        return undefined
+    }
+}
+
 const getNodeAttr = (
     view: EditorView,
     getPos: () => number | undefined,
@@ -402,14 +410,6 @@ const getNodeAttr = (
         return undefined
 
     return node.attrs?.[attrName]
-}
-
-function getNodeViewPos(getPos: () => number | undefined): number | undefined {
-    try {
-        return getPos()
-    } catch {
-        return undefined
-    }
 }
 
 const createModelMenuTrigger = (onClick: (event: MouseEvent) => void): HTMLButtonElement => {
@@ -625,6 +625,16 @@ export const createAiPromptInputNodeView = (options: AiPromptInputNodeViewOption
                     ...(firstVideoGroup?.values.duration ? { videoDuration: firstVideoGroup.values.duration } : {}),
                 },
             )
+        }
+
+        const updateModelDropdowns = (): void => {
+            mediaModeSwitch.setValue(
+                getMediaGenerationMode(),
+            )
+            updateModelMenuRows()
+            updateModelMenuControls()
+            updateModelMenuTriggerSummary()
+            scheduleModelMenuReposition()
         }
 
         const submitControls: SubmitControls = {
@@ -1017,15 +1027,6 @@ export const createAiPromptInputNodeView = (options: AiPromptInputNodeViewOption
             }
         }
 
-        function updateModelDropdowns(): void {
-            mediaModeSwitch.setValue(
-                getMediaGenerationMode(),
-            )
-            updateModelMenuRows()
-            updateModelMenuControls()
-            updateModelMenuTriggerSummary()
-            scheduleModelMenuReposition()
-        }
         modelMenuContent = createAiModelMenuContent([
             {
                 title: 'Reasoning model',

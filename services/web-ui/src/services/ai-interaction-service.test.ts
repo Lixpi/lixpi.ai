@@ -36,9 +36,7 @@ let consoleErrorSpy: { mockRestore: () => void } | null = null
 let consoleLogSpy: { mockRestore: () => void } | null = null
 let consoleWarnSpy: { mockRestore: () => void } | null = null
 
-const flushPromises = async (): Promise<void> => {
-    await new Promise(resolve => setTimeout(resolve, 0))
-}
+const flushPromises = async (): Promise<void> => void (await new Promise(resolve => setTimeout(resolve, 0)))
 
 vi.mock('uuid', () => ({ v4: uuidMock }))
 
@@ -358,7 +356,10 @@ describe('AiInteractionService', () => {
             capabilityRunId: 'timeline-run',
             chatModelProvider: 'Anthropic',
             chatModelId: 'Anthropic:claude-haiku-4-5',
-            input: { durationMs: 15000, precisionMs: 2000 },
+            input: {
+                durationMs: 15000,
+                precisionMs: 2000,
+            },
             outputAssetIds: ['timeline-asset'],
             steps: [],
         }
@@ -516,10 +517,18 @@ describe('AiInteractionService', () => {
         await service.sendChatMessage({
             aiReasoningModels: ['reasoner-a', 'reasoner-b'],
             useMultipleReasoningModels: true,
-            reasoningConfigGroups: [{ groupId: 'effort', modelIds: [], values: { reasoningEffort: 'high' } }],
+            reasoningConfigGroups: [{
+                groupId: 'effort',
+                modelIds: [],
+                values: { reasoningEffort: 'high' },
+            }],
             aiImageModels: ['image-a', 'image-b'],
             imageSize: '768x768',
-            imageConfigGroups: [{ groupId: 'size', modelIds: [], values: {} }],
+            imageConfigGroups: [{
+                groupId: 'size',
+                modelIds: [],
+                values: {},
+            }],
             useMultipleImageModels: true,
             aiVideoModels: ['video-a', 'video-b'],
             videoAspectRatio: '16:9',
@@ -527,7 +536,11 @@ describe('AiInteractionService', () => {
             videoDuration: '6',
             videoSourceForExtension: 's3://video-source',
             useMultipleVideoModels: true,
-            videoConfigGroups: [{ groupId: 'quality', modelIds: [], values: {} }],
+            videoConfigGroups: [{
+                groupId: 'quality',
+                modelIds: [],
+                values: {},
+            }],
             mediaBranchCandidateSnapshot: {
                 resolverVersion: 'image-branch-v1',
                 conversationAssetId,
@@ -544,7 +557,10 @@ describe('AiInteractionService', () => {
                 promptText: 'film',
                 nodes: [],
             },
-            canvasVisibleArea: { width: 5, height: 6 },
+            canvasVisibleArea: {
+                width: 5,
+                height: 6,
+            },
         })
 
         const payload = natsPublishMock.mock.calls.at(-1)?.[1] as Record<string, unknown>
@@ -553,7 +569,10 @@ describe('AiInteractionService', () => {
             aiImageModels: ['image-a', 'image-b'],
             aiVideoModels: ['video-a', 'video-b'],
             imageSize: '768x768',
-            mediaBranchCandidateSnapshot: { resolverVersion: 'image-branch-v1', conversationAssetId },
+            mediaBranchCandidateSnapshot: {
+                resolverVersion: 'image-branch-v1',
+                conversationAssetId,
+            },
             workspaceContextSnapshot: {
                 workspaceId,
                 nodes: [],
@@ -563,23 +582,38 @@ describe('AiInteractionService', () => {
                 generationRequestId: 'matrix-request-id',
                 reasoningModelIds: ['reasoner-a', 'reasoner-b'],
                 reasoningOptions: {
-                    configGroups: [{ groupId: 'effort', modelIds: [], values: { reasoningEffort: 'high' } }],
+                    configGroups: [{
+                        groupId: 'effort',
+                        modelIds: [],
+                        values: { reasoningEffort: 'high' },
+                    }],
                 },
                 imageModelIds: ['image-a', 'image-b'],
                 videoModelIds: ['video-a', 'video-b'],
                 imageOptions: {
                     imageSize: '768x768',
-                    configGroups: [{ groupId: 'size', modelIds: [], values: {} }],
+                    configGroups: [{
+                        groupId: 'size',
+                        modelIds: [],
+                        values: {},
+                    }],
                 },
                 videoOptions: {
                     aspectRatio: '16:9',
                     resolution: '720p',
                     duration: '6',
                     sourceForExtension: 's3://video-source',
-                    configGroups: [{ groupId: 'quality', modelIds: [], values: {} }],
+                    configGroups: [{
+                        groupId: 'quality',
+                        modelIds: [],
+                        values: {},
+                    }],
                 },
             },
-            canvasVisibleArea: { width: 5, height: 6 },
+            canvasVisibleArea: {
+                width: 5,
+                height: 6,
+            },
             organizationId,
         })
         expect(payload).not.toHaveProperty('capabilityReferences')
@@ -660,7 +694,11 @@ describe('AiInteractionService', () => {
 
     it('releases only its subscription when another view uses the same conversation', async () => {
         const first = natsSubscribeMock.mock.results[0].value
-        const other = new AiInteractionService({ workspaceId, conversationAssetId, organizationId })
+        const other = new AiInteractionService({
+            workspaceId,
+            conversationAssetId,
+            organizationId,
+        })
         await flushPromises()
         const second = natsSubscribeMock.mock.results[1].value
 
@@ -676,16 +714,17 @@ describe('AiInteractionService', () => {
     it('ignores queued live callbacks and replay responses after disconnect', async () => {
         let resolveReplay!: (value: unknown) => void
         natsRequestMock.mockImplementationOnce(() =>
-            new Promise(resolve => {
-                resolveReplay = resolve
-            })
+            new Promise(resolve => void (resolveReplay = resolve))
         )
         const replay = service.resumePipelineEventStream()
         await flushPromises()
         const callback = natsSubscribeMock.mock.calls[0][1]
         service.disconnect()
         callback({ error: 'queued live error' })
-        resolveReplay({ events: [{ payload: { error: 'late replay error' }, streamSequence: 1 }] })
+        resolveReplay({ events: [{
+            payload: { error: 'late replay error' },
+            streamSequence: 1,
+        }] })
         await replay
         expect(onErrorMock).not.toHaveBeenCalled()
         expect(receiveSegmentMock).not.toHaveBeenCalled()
@@ -694,9 +733,7 @@ describe('AiInteractionService', () => {
     it('does not start replay after disconnect while authorization is pending', async () => {
         let authorize!: (token: string) => void
         getTokenSilentlyMock.mockImplementationOnce(() =>
-            new Promise(resolve => {
-                authorize = resolve
-            })
+            new Promise(resolve => void (authorize = resolve))
         )
         natsRequestMock.mockClear()
         const replay = service.resumePipelineEventStream()
@@ -708,7 +745,10 @@ describe('AiInteractionService', () => {
     })
 
     it('rejects another workspace before forwarding a segment', () => {
-        service.onChatMessageResponse({ workspaceId: 'another-workspace', error: 'wrong workspace' })
+        service.onChatMessageResponse({
+            workspaceId: 'another-workspace',
+            error: 'wrong workspace',
+        })
         expect(onErrorMock).not.toHaveBeenCalled()
         expect(receiveSegmentMock).not.toHaveBeenCalled()
     })

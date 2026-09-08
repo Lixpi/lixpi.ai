@@ -26,8 +26,14 @@ const operation = (overrides: Partial<OperationStatusCanvasNode> = {}): Operatio
     title: 'Generating',
     message: 'Waiting',
     generationRequestId: 'request-1',
-    position: { x: 100, y: 100 },
-    dimensions: { width: 320, height: 100 },
+    position: {
+        x: 100,
+        y: 100,
+    },
+    dimensions: {
+        width: 320,
+        height: 100,
+    },
     createdAt: 1,
     updatedAt: 1,
     ...overrides,
@@ -37,35 +43,41 @@ const documentNode = (): DocumentCanvasNode => ({
     nodeId: 'document-1',
     type: 'document',
     referenceId: 'asset-document-1',
-    position: { x: 0, y: 0 },
-    dimensions: { width: 300, height: 300 },
+    position: {
+        x: 0,
+        y: 0,
+    },
+    dimensions: {
+        width: 300,
+        height: 300,
+    },
 })
 
 const image = (): ImageCanvasNode => ({
     nodeId: 'output-1',
     type: 'image',
     assetId: 'asset-image-1',
-    position: { x: 500, y: 0 },
-    dimensions: { width: 300, height: 300 },
+    position: {
+        x: 500,
+        y: 0,
+    },
+    dimensions: {
+        width: 300,
+        height: 300,
+    },
 })
 
-function setup(initialState: CanvasState, overrides: Partial<WorkspaceOperationStatusNodesPorts> = {}) {
+const setup = (initialState: CanvasState, overrides: Partial<WorkspaceOperationStatusNodesPorts> = {}) => {
     let state = initialState
     const ports: WorkspaceOperationStatusNodesPorts = {
         host: {} as WorkspaceCanvasHost,
         shells: {} as WorkspaceOperationStatusNodesPorts['shells'],
         getWorkspaceId: () => 'workspace-1',
         getState: () => state,
-        replaceState: vi.fn((nextState) => {
-            state = nextState
-        }),
+        replaceState: vi.fn((nextState) => void (state = nextState)),
         captureAdmission: () => () => true,
-        commit: vi.fn((nextState) => {
-            state = nextState
-        }),
-        commitTransient: vi.fn((nextState) => {
-            state = nextState
-        }),
+        commit: vi.fn((nextState) => void (state = nextState)),
+        commitTransient: vi.fn((nextState) => void (state = nextState)),
         removeSelection: vi.fn(),
         rebalance: nodes => nodes,
         removeNodes: vi.fn(),
@@ -83,7 +95,12 @@ function setup(initialState: CanvasState, overrides: Partial<WorkspaceOperationS
         getComposer: () => null,
         ...overrides,
     }
-    return { owner: new WorkspaceOperationStatusNodes(ports), ports, getState: () => state }
+
+    return {
+        owner: new WorkspaceOperationStatusNodes(ports),
+        ports,
+        getState: () => state,
+    }
 }
 
 describe('WorkspaceOperationStatusNodes', () => {
@@ -92,8 +109,16 @@ describe('WorkspaceOperationStatusNodes', () => {
         const doc = documentNode()
         const fixture = setup({
             nodes: [status, doc],
-            edges: [{ edgeId: 'edge-1', sourceNodeId: doc.nodeId, targetNodeId: status.nodeId }],
-            viewport: { x: 0, y: 0, zoom: 1 },
+            edges: [{
+                edgeId: 'edge-1',
+                sourceNodeId: doc.nodeId,
+                targetNodeId: status.nodeId,
+            }],
+            viewport: {
+                x: 0,
+                y: 0,
+                zoom: 1,
+            },
         })
 
         const state = fixture.owner.remove(status.nodeId, 'media-generation')
@@ -106,7 +131,15 @@ describe('WorkspaceOperationStatusNodes', () => {
 
     it('does not remove a node when the requested operation kind does not match', () => {
         const status = operation({ operation: 'upload' })
-        const state = { nodes: [status], edges: [], viewport: { x: 0, y: 0, zoom: 1 } } satisfies CanvasState
+        const state = {
+            nodes: [status],
+            edges: [],
+            viewport: {
+                x: 0,
+                y: 0,
+                zoom: 1,
+            },
+        } satisfies CanvasState
         const fixture = setup(state)
 
         expect(fixture.owner.remove(status.nodeId, 'media-generation')).toBeNull()
@@ -115,11 +148,27 @@ describe('WorkspaceOperationStatusNodes', () => {
     })
 
     it('applies progress-only recovery without rebuilding mounted node content', () => {
-        const initial = { nodes: [operation()], edges: [], viewport: { x: 0, y: 0, zoom: 1 } } satisfies CanvasState
-        const updated = { ...initial, nodes: [operation({ message: 'Rendering' })] }
+        const initial = {
+            nodes: [operation()],
+            edges: [],
+            viewport: {
+                x: 0,
+                y: 0,
+                zoom: 1,
+            },
+        } satisfies CanvasState
+        const updated = {
+            ...initial,
+            nodes: [operation({ message: 'Rendering' })],
+        }
         const fixture = setup(initial)
 
-        fixture.owner.applyProgress({ state: updated, changed: true, updatedNodeIds: ['operation-1'], removedNodeIds: [] })
+        fixture.owner.applyProgress({
+            state: updated,
+            changed: true,
+            updatedNodeIds: ['operation-1'],
+            removedNodeIds: [],
+        })
 
         expect(fixture.getState()).toBe(updated)
         expect(fixture.ports.replaceState).toHaveBeenCalledWith(updated)
@@ -132,13 +181,31 @@ describe('WorkspaceOperationStatusNodes', () => {
         const output = image()
         const initial = {
             nodes: [removed, output],
-            edges: [{ edgeId: 'edge-1', sourceNodeId: removed.nodeId, targetNodeId: output.nodeId }],
-            viewport: { x: 0, y: 0, zoom: 1 },
+            edges: [{
+                edgeId: 'edge-1',
+                sourceNodeId: removed.nodeId,
+                targetNodeId: output.nodeId,
+            }],
+            viewport: {
+                x: 0,
+                y: 0,
+                zoom: 1,
+            },
         } satisfies CanvasState
         const replacement = operation({ nodeId: output.nodeId })
-        const recovered = { nodes: [replacement], edges: [], viewport: initial.viewport } satisfies CanvasState
+        const recovered = {
+            nodes: [replacement],
+            edges: [],
+            viewport: initial.viewport,
+        } satisfies CanvasState
         const fixture = setup(initial, {
-            rebalance: nodes => nodes.map(node => node.nodeId === output.nodeId ? { ...node, position: { x: 600, y: 20 } } : node),
+            rebalance: nodes => nodes.map(node => node.nodeId === output.nodeId ? {
+                ...node,
+                position: {
+                    x: 600,
+                    y: 20,
+                },
+            } : node),
         })
 
         fixture.owner.applyRecovery({
@@ -154,7 +221,13 @@ describe('WorkspaceOperationStatusNodes', () => {
         expect(fixture.ports.removeSelection).toHaveBeenCalledWith(removed.nodeId)
         expect(fixture.ports.syncNode).toHaveBeenCalledWith(expect.objectContaining({ nodeId: output.nodeId }))
         expect(fixture.ports.syncGeometry).toHaveBeenCalledWith([
-            expect.objectContaining({ nodeId: output.nodeId, position: { x: 600, y: 20 } }),
+            expect.objectContaining({
+                nodeId: output.nodeId,
+                position: {
+                    x: 600,
+                    y: 20,
+                },
+            }),
         ])
         expect(fixture.ports.syncMedia).toHaveBeenCalledWith(fixture.getState())
         expect(fixture.ports.syncChrome).toHaveBeenCalledOnce()

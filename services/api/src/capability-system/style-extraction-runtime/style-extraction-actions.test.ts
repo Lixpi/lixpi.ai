@@ -29,16 +29,17 @@ import {
     type StyleExtractionRuntimeDependencies,
 } from './style-extraction-actions.ts'
 
-function schemaResource(resourceId: string, schema: unknown): {
+const schemaResource = (resourceId: string, schema: unknown): {
     ref: CapabilityResourceRef
     loaded: LoadedCapabilityResource
-} {
+} => {
     const ref: CapabilityResourceRef = {
         resourceId,
         blobHash: `${resourceId}-hash`,
         mediaType: 'application/schema+json',
         role: 'schema',
     }
+
     return {
         ref,
         loaded: {
@@ -49,16 +50,20 @@ function schemaResource(resourceId: string, schema: unknown): {
     }
 }
 
-function instructionSkill(
+const instructionSkill = (
     capabilityId: string,
     resourceId: string,
-): { manifest: CapabilityManifest; resource: LoadedCapabilityResource } {
+): {
+    manifest: CapabilityManifest
+    resource: LoadedCapabilityResource
+} => {
     const ref: CapabilityResourceRef = {
         resourceId,
         blobHash: `${resourceId}-hash`,
         mediaType: 'text/markdown',
         role: 'instructions',
     }
+
     return {
         manifest: {
             schemaVersion: 1,
@@ -77,13 +82,16 @@ function instructionSkill(
     }
 }
 
-function makePlan(): SealedResolvedCapabilityPlan {
+const makePlan = (): SealedResolvedCapabilityPlan => {
     const input = schemaResource('input', {
         type: 'object',
         required: ['prompt', 'sourceAssetIds', 'analysisModelId'],
         properties: {
             prompt: { type: 'string' },
-            sourceAssetIds: { type: 'array', items: { type: 'string' } },
+            sourceAssetIds: {
+                type: 'array',
+                items: { type: 'string' },
+            },
             analysisModelId: { type: 'string' },
         },
         additionalProperties: false,
@@ -101,7 +109,10 @@ function makePlan(): SealedResolvedCapabilityPlan {
     const router = instructionSkill(STYLE_EXTRACTION_CAPABILITY_IDS.routerSkill, 'style-router-instructions')
     const axes = instructionSkill(STYLE_EXTRACTION_CAPABILITY_IDS.axesSkill, 'style-axis-instructions')
     const synthesis = instructionSkill(STYLE_EXTRACTION_CAPABILITY_IDS.synthesisSkill, 'style-synthesis-instructions')
-    const tool = buildStyleExtractionManifest({ inputSchema: input.ref, outputSchema: output.ref })
+    const tool = buildStyleExtractionManifest({
+        inputSchema: input.ref,
+        outputSchema: output.ref,
+    })
     const manifests = [tool, router.manifest, axes.manifest, synthesis.manifest]
     const serializable: ResolvedCapabilityPlan = {
         rootCapabilityIds: [tool.capabilityId],
@@ -116,6 +127,7 @@ function makePlan(): SealedResolvedCapabilityPlan {
             manifestBlobHash: `${manifest.capabilityId}-hash`,
         })),
     }
+
     return new SealedResolvedCapabilityPlan(serializable, [
         input.loaded,
         output.loaded,
@@ -125,21 +137,19 @@ function makePlan(): SealedResolvedCapabilityPlan {
     ])
 }
 
-function persistence(): CapabilityRunPersistence & { events: CapabilityRunEvent[]; runs: CapabilityRun[] } {
+const persistence = (): CapabilityRunPersistence & {
+    events: CapabilityRunEvent[]
+    runs: CapabilityRun[]
+} => {
     const events: CapabilityRunEvent[] = []
     const runs: CapabilityRun[] = []
+
     return {
         events,
         runs,
-        createRun: async run => {
-            runs.push(structuredClone(run))
-        },
-        updateRun: async run => {
-            runs.push(structuredClone(run))
-        },
-        appendEvent: async event => {
-            events.push(structuredClone(event))
-        },
+        createRun: async run => void runs.push(structuredClone(run)),
+        updateRun: async run => void runs.push(structuredClone(run)),
+        appendEvent: async event => void events.push(structuredClone(event)),
     }
 }
 
@@ -159,13 +169,23 @@ const initializedInput = {
     messages: [{
         role: 'user',
         content: [
-            { type: 'input_text', text: 'extract this' },
-            { type: 'input_image', image_url: 'data:image/png;base64,AA==' },
+            {
+                type: 'input_text',
+                text: 'extract this',
+            },
+            {
+                type: 'input_image',
+                image_url: 'data:image/png;base64,AA==',
+            },
         ],
     }],
     sourceAssetIds: ['asset-1'],
     analysisProvider: 'OpenAI' as const,
-    analysisModel: { provider: 'OpenAI', model: 'gpt-5', modelVersion: 'gpt-5' },
+    analysisModel: {
+        provider: 'OpenAI',
+        model: 'gpt-5',
+        modelVersion: 'gpt-5',
+    },
 }
 
 const registerApiStyleExtractionActions = (
@@ -204,7 +224,10 @@ describe('Style Extraction actions', () => {
         }
         const resource = (resourceId: string, mediaType: string, value: string) => ({
             bytes: new TextEncoder().encode(value),
-            ref: { resourceId, mediaType },
+            ref: {
+                resourceId,
+                mediaType,
+            },
         })
         const input = {
             instructions: resource('instructions', 'text/markdown', 'Use fibrous paper.'),
@@ -222,7 +245,10 @@ describe('Style Extraction actions', () => {
                 '/api/capabilities/visual-style.test/resources/sample-0?manifestBlobHash=manifest-hash',
             ],
         })
-        expect(await action.authorize({ ...context, rootCapabilityId: 'global.style-extraction' }, input)).toBe(false)
+        expect(await action.authorize({
+            ...context,
+            rootCapabilityId: 'global.style-extraction',
+        }, input)).toBe(false)
     })
 
     it('preserves the fixed orchestrator behavior through the generic DAG', async () => {
@@ -236,11 +262,17 @@ describe('Style Extraction actions', () => {
             initializeInput: async () => initializedInput,
             runRouter: async state => {
                 stageOrder.push('router')
+
                 return {
                     sceneAssessment: {
                         references: [{
                             imageRef: 'input-0',
-                            subjects: [{ label: 'subject', bbox: [0, 0, 1, 1], salience: 1, description: 'subject' }],
+                            subjects: [{
+                                label: 'subject',
+                                bbox: [0, 0, 1, 1],
+                                salience: 1,
+                                description: 'subject',
+                            }],
                             regions: [],
                         }],
                         medium: 'digital-illustration',
@@ -256,9 +288,15 @@ describe('Style Extraction actions', () => {
                 await new Promise(resolve => setTimeout(resolve, 1))
                 active -= 1
                 stageOrder.push(`axis:${axis}`)
+
                 return {
                     axisExtractions: {
-                        [axis]: { axis, dominance: 1, fields: { value: axis }, rationale: axis },
+                        [axis]: {
+                            axis,
+                            dominance: 1,
+                            fields: { value: axis },
+                            rationale: axis,
+                        },
                     },
                     failedAxes: [],
                 }
@@ -269,6 +307,7 @@ describe('Style Extraction actions', () => {
                 await new Promise(resolve => setTimeout(resolve, 1))
                 active -= 1
                 stageOrder.push('crops')
+
                 return {
                     sourceCrops: [{
                         idx: 0,
@@ -283,6 +322,7 @@ describe('Style Extraction actions', () => {
                 stageOrder.push('synthesis')
                 expect(Object.keys(state.axisExtractions)).toHaveLength(STYLE_EXTRACTION_AXES.length)
                 expect(state.sourceCrops).toHaveLength(1)
+
                 return {
                     draft: {
                         category: 'illustration-style',
@@ -297,10 +337,12 @@ describe('Style Extraction actions', () => {
             },
             generateSamples: async () => {
                 stageOrder.push('samples')
+
                 return { samples: [] }
             },
             persistStyle: async () => {
                 stageOrder.push('persist')
+
                 return {
                     capabilityId: 'visual-style.1',
                     capability: {
@@ -351,7 +393,11 @@ describe('Style Extraction actions', () => {
     it('keeps one axis failure isolated and visible to synthesis', async () => {
         const registry = new CapabilityActionRegistry()
         const synthesis = vi.fn(async state => {
-            expect(state.failedAxes).toEqual([{ axis: 'mood', error: 'axis failed' }])
+            expect(state.failedAxes).toEqual([{
+                axis: 'mood',
+                error: 'axis failed',
+            }])
+
             return {
                 draft: {
                     category: 'style',
@@ -379,8 +425,17 @@ describe('Style Extraction actions', () => {
             }),
             runExtractorAxis: async (_state, axis) =>
                 axis === 'mood'
-                    ? { axisExtractions: {}, failedAxes: [{ axis, error: 'axis failed' }] }
-                    : { axisExtractions: {}, failedAxes: [] },
+                    ? {
+                        axisExtractions: {},
+                        failedAxes: [{
+                            axis,
+                            error: 'axis failed',
+                        }],
+                    }
+                    : {
+                        axisExtractions: {},
+                        failedAxes: [],
+                    },
             materializeSourceCrops: async () => ({ sourceCrops: [] }),
             synthesizeStyle: synthesis,
             generateSamples: async () => ({ samples: [] }),
@@ -388,7 +443,10 @@ describe('Style Extraction actions', () => {
         })
 
         const runPersistence = persistence()
-        await new CapabilityWorkflowRunner({ registry, persistence: runPersistence }).run({
+        await new CapabilityWorkflowRunner({
+            registry,
+            persistence: runPersistence,
+        }).run({
             plan: makePlan(),
             rootCapabilityId: STYLE_EXTRACTION_CAPABILITY_IDS.tool,
             input: {

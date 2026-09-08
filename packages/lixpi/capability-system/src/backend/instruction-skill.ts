@@ -61,12 +61,12 @@ export const createInstructionSkillPackage = (
     }
 }
 
-async function seedInstructionSkill(
+const seedInstructionSkill = async (
     definition: InstructionSkillDefinition,
     storage: InstructionSkillStorage,
     context: CapabilityPackageSeedContext,
     storageOwnerId = 'system',
-): Promise<void> {
+): Promise<void> => {
     const resource = await storage.storeResource({
         storageOwnerId,
         resourceId: definition.resourceId,
@@ -86,10 +86,10 @@ async function seedInstructionSkill(
     })
 }
 
-function buildInstructionSkillManifest(
+const buildInstructionSkillManifest = (
     definition: InstructionSkillDefinition,
     resource: CapabilityResourceRef,
-) {
+) => {
     return {
         schemaVersion: 1 as const,
         capabilityId: definition.capabilityId,

@@ -51,8 +51,14 @@ const marker = {
     type: 'branchLine',
     branchId: 'branch-1',
     generationRequestId: 'request-1',
-    position: { x: 0, y: 0 },
-    dimensions: { width: 120, height: 60 },
+    position: {
+        x: 0,
+        y: 0,
+    },
+    dimensions: {
+        width: 120,
+        height: 60,
+    },
     provenance: {},
 }
 
@@ -60,8 +66,14 @@ const mediaNode = {
     nodeId: 'media-1',
     type: 'image',
     assetId: 'asset-1',
-    position: { x: 200, y: 0 },
-    dimensions: { width: 320, height: 320 },
+    position: {
+        x: 200,
+        y: 0,
+    },
+    dimensions: {
+        width: 320,
+        height: 320,
+    },
     generatedBy: {
         branchId: 'branch-1',
         branchLineNodeId: 'branch-line-1',
@@ -71,7 +83,11 @@ const mediaNode = {
 }
 
 const canvasState = (): CanvasState => ({
-    viewport: { x: 0, y: 0, zoom: 1 },
+    viewport: {
+        x: 0,
+        y: 0,
+        zoom: 1,
+    },
     nodes: [marker, mediaNode] as any,
     edges: [{
         edgeId: 'edge-branch-line-1-media-1',
@@ -128,11 +144,18 @@ describe('GeneratedOutputReviewService', () => {
 
     it('supersedes one media candidate while preserving its API lineage marker for replay', async () => {
         const initialState = canvasState()
-        const removedState: CanvasState = { ...initialState, nodes: [marker] as any, edges: [] }
+        const removedState: CanvasState = {
+            ...initialState,
+            nodes: [marker] as any,
+            edges: [],
+        }
         workspaceMocks.getWorkspace
             .mockResolvedValueOnce(workspace(initialState))
             .mockResolvedValueOnce(workspace(initialState))
-            .mockResolvedValueOnce({ ...workspace(removedState), canvasStateUpdatedAt: 101 })
+            .mockResolvedValueOnce({
+                ...workspace(removedState),
+                canvasStateUpdatedAt: 101,
+            })
         projectionMocks.detachReviewedGeneratedOutputsFromCanvas.mockReturnValue({
             canvasState: initialState,
             affectedNodes: [mediaNode],
@@ -187,7 +210,10 @@ describe('GeneratedOutputReviewService', () => {
         const initialState = canvasState()
         const acceptedState: CanvasState = {
             ...initialState,
-            nodes: [{ ...mediaNode, generatedBy: { generationRequestId: 'request-1' } }] as any,
+            nodes: [{
+                ...mediaNode,
+                generatedBy: { generationRequestId: 'request-1' },
+            }] as any,
             edges: [],
         }
         workspaceMocks.getWorkspace.mockResolvedValue(workspace(initialState))
@@ -204,6 +230,7 @@ describe('GeneratedOutputReviewService', () => {
         })
         workspaceMocks.mutateCanvasState.mockImplementation(async ({ mutate }) => {
             const mutation = mutate(initialState)
+
             return {
                 changed: mutation.changed,
                 canvasState: mutation.canvasState,
@@ -243,7 +270,11 @@ describe('GeneratedOutputReviewService', () => {
 
     it('rejects a candidate, removes its orphan marker, and releases owned Asset references', async () => {
         const initialState = canvasState()
-        const removedState: CanvasState = { ...initialState, nodes: [], edges: [] }
+        const removedState: CanvasState = {
+            ...initialState,
+            nodes: [],
+            edges: [],
+        }
         const rejectedAsset = {
             ...readyAsset(),
             lineage: {
@@ -254,7 +285,10 @@ describe('GeneratedOutputReviewService', () => {
         workspaceMocks.getWorkspace
             .mockResolvedValueOnce(workspace(initialState))
             .mockResolvedValueOnce(workspace(initialState))
-            .mockResolvedValueOnce({ ...workspace(removedState), canvasStateUpdatedAt: 103 })
+            .mockResolvedValueOnce({
+                ...workspace(removedState),
+                canvasStateUpdatedAt: 103,
+            })
         assetModelMocks.updateGeneratedOutputReview.mockResolvedValue(rejectedAsset)
         projectionMocks.detachReviewedGeneratedOutputsFromCanvas.mockReturnValue({
             canvasState: initialState,
@@ -322,7 +356,11 @@ describe('GeneratedOutputReviewService', () => {
 
     it('cancels and deletes an unfinished candidate without requiring final media or sealed provenance', async () => {
         const initialState = canvasState()
-        const removedState: CanvasState = { ...initialState, nodes: [], edges: [] }
+        const removedState: CanvasState = {
+            ...initialState,
+            nodes: [],
+            edges: [],
+        }
         const unfinishedAsset = {
             ...readyAsset(),
             media: { renditions: { original: { status: 'pending' } } },
@@ -336,7 +374,10 @@ describe('GeneratedOutputReviewService', () => {
         workspaceMocks.getWorkspace
             .mockResolvedValueOnce(workspace(initialState))
             .mockResolvedValueOnce(workspace(initialState))
-            .mockResolvedValueOnce({ ...workspace(removedState), canvasStateUpdatedAt: 105 })
+            .mockResolvedValueOnce({
+                ...workspace(removedState),
+                canvasStateUpdatedAt: 105,
+            })
         assetModelMocks.get.mockResolvedValue(unfinishedAsset)
         assetModelMocks.updateGeneratedOutputReview.mockResolvedValue(unfinishedAsset)
         projectionMocks.detachReviewedGeneratedOutputsFromCanvas.mockReturnValue({
@@ -393,8 +434,16 @@ describe('GeneratedOutputReviewService', () => {
 
     it('deletes an orphan branch marker without requiring a generated output Asset', async () => {
         const initialState = canvasState()
-        const orphanState: CanvasState = { ...initialState, nodes: [marker] as any, edges: [] }
-        const removedState: CanvasState = { ...initialState, nodes: [], edges: [] }
+        const orphanState: CanvasState = {
+            ...initialState,
+            nodes: [marker] as any,
+            edges: [],
+        }
+        const removedState: CanvasState = {
+            ...initialState,
+            nodes: [],
+            edges: [],
+        }
         workspaceMocks.getWorkspace.mockResolvedValue(workspace(orphanState))
         projectionMocks.detachReviewedGeneratedOutputsFromCanvas.mockReturnValue({
             canvasState: orphanState,
@@ -411,6 +460,7 @@ describe('GeneratedOutputReviewService', () => {
         })
         workspaceMocks.mutateCanvasState.mockImplementation(async ({ mutate }) => {
             const mutation = mutate(orphanState)
+
             return {
                 changed: mutation.changed,
                 canvasState: mutation.canvasState,

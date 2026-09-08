@@ -11,7 +11,7 @@ import {
     type ViewportRenderPlanInput,
 } from './viewport-state.ts'
 
-function makeViewport(overrides: Partial<ViewportSnapshot> = {}): ViewportSnapshot {
+const makeViewport = (overrides: Partial<ViewportSnapshot> = {}): ViewportSnapshot => {
     return {
         x: 672.8041612129193,
         y: -733.7018286603416,
@@ -20,9 +20,12 @@ function makeViewport(overrides: Partial<ViewportSnapshot> = {}): ViewportSnapsh
     }
 }
 
-function makeInput(overrides: Partial<ViewportRenderPlanInput> = {}): ViewportRenderPlanInput {
+const makeInput = (overrides: Partial<ViewportRenderPlanInput> = {}): ViewportRenderPlanInput => {
     return {
-        incomingViewport: makeViewport({ x: 663.8041612129193, y: -425.70182866034156 }),
+        incomingViewport: makeViewport({
+            x: 663.8041612129193,
+            y: -425.70182866034156,
+        }),
         liveViewport: makeViewport(),
         sceneChanged: false,
         ...overrides,
@@ -98,7 +101,10 @@ describe('workspace viewport state plan — viewport equality tolerance', () => 
         })
 
         expect(viewportsMatch(incomingViewport, liveViewport)).toBe(true)
-        expect(shouldPreserveLiveViewportForScene(makeInput({ incomingViewport, liveViewport }))).toBe(false)
+        expect(shouldPreserveLiveViewportForScene(makeInput({
+            incomingViewport,
+            liveViewport,
+        }))).toBe(false)
     })
 
     it('treats visible pan or zoom deltas as different viewports', () => {
@@ -106,6 +112,9 @@ describe('workspace viewport state plan — viewport equality tolerance', () => 
         const incomingViewport = makeViewport({ y: liveViewport.y + 308 })
 
         expect(viewportsMatch(incomingViewport, liveViewport)).toBe(false)
-        expect(shouldPreserveLiveViewportForScene(makeInput({ incomingViewport, liveViewport }))).toBe(true)
+        expect(shouldPreserveLiveViewportForScene(makeInput({
+            incomingViewport,
+            liveViewport,
+        }))).toBe(true)
     })
 })

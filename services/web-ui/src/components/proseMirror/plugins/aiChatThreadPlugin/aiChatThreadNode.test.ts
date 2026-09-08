@@ -14,16 +14,7 @@ import { EditorView } from 'prosemirror-view'
 import { CanvasGenerationEvents } from '@lixpi/canvas-components-lixpi-specific/shared'
 
 import { applyStyle } from '@lixpi/ui-primitives/dom'
-import {
-    doc,
-    p,
-    reasoningSection,
-    thread,
-    userMsg,
-    response,
-    schema,
-    createEditorState,
-} from '$src/components/proseMirror/plugins/testUtils/prosemirrorTestUtils.ts'
+import { doc, p, reasoningSection, thread, userMsg, response, schema } from '$src/components/proseMirror/plugins/testUtils/prosemirrorTestUtils.ts'
 import {
     aiChatThreadNodeSpec,
     aiChatThreadNodeView,
@@ -76,7 +67,7 @@ afterEach(() => {
     consoleWarnSpy = null
 })
 
-function createImageGenerationTrace(overrides: Partial<ImageGenerationTrace> = {}): ImageGenerationTrace {
+const createImageGenerationTrace = (overrides: Partial<ImageGenerationTrace> = {}): ImageGenerationTrace => {
     return {
         traceVersion: 'image-generation-trace-v1',
         chatModelProvider: 'Anthropic',
@@ -131,15 +122,22 @@ function createImageGenerationTrace(overrides: Partial<ImageGenerationTrace> = {
 // Helper: instantiate aiChatThreadNodeView with minimal mocks
 // =============================================================================
 
-function createThreadNodeView(attrs: Record<string, unknown> = {}) {
+const createThreadNodeView = (attrs: Record<string, unknown> = {}) => {
     const node = schema.nodes.aiChatThread.create(
-        { threadId: 'thread-test-1', status: 'active', ...attrs },
+        {
+            threadId: 'thread-test-1',
+            status: 'active',
+            ...attrs,
+        },
     )
 
     const mockView = {
         state: {
             doc: doc(thread(p('hello'))),
-            tr: { setNodeMarkup: vi.fn().mockReturnThis(), setSelection: vi.fn().mockReturnThis() },
+            tr: {
+                setNodeMarkup: vi.fn().mockReturnThis(),
+                setSelection: vi.fn().mockReturnThis(),
+            },
         },
         dispatch: vi.fn(),
         focus: vi.fn(),
@@ -147,7 +145,13 @@ function createThreadNodeView(attrs: Record<string, unknown> = {}) {
     const getPos = vi.fn(() => 0)
 
     const nodeView = aiChatThreadNodeView(node, mockView, getPos)
-    return { nodeView, node, mockView, getPos }
+
+    return {
+        nodeView,
+        node,
+        mockView,
+        getPos,
+    }
 }
 
 // =============================================================================
@@ -171,6 +175,7 @@ describe('aiChatThreadNodeView — ignoreMutation', () => {
         const { nodeView } = createThreadNodeView()
 
         const cases = ['class', 'data-thread-id', 'data-status', 'id']
+
         for (const attributeName of cases) {
             const mutation = {
                 type: 'attributes',
@@ -222,7 +227,10 @@ describe('aiChatThreadNodeView — height survives update()', () => {
 
         // Simulate ProseMirror calling update() with updated attributes
         const updatedNode = schema.nodes.aiChatThread.create(
-            { threadId: 'thread-test-1', status: 'completed' },
+            {
+                threadId: 'thread-test-1',
+                status: 'completed',
+            },
         )
 
         const result = nodeView.update!(updatedNode, [])
@@ -240,9 +248,13 @@ describe('aiChatThreadNodeView — height survives update()', () => {
 
         // Simulate multiple updates during streaming
         const statuses = ['active', 'active', 'completed'] as const
+
         for (const status of statuses) {
             const updatedNode = schema.nodes.aiChatThread.create(
-                { threadId: 'thread-test-1', status },
+                {
+                    threadId: 'thread-test-1',
+                    status,
+                },
             )
             nodeView.update!(updatedNode, [])
         }
@@ -294,13 +306,14 @@ describe('aiChatThreadNodeView — DOM structure', () => {
 describe('aiChatThreadNodeView — content focus', () => {
     it('places the caret inside message text instead of on the block-only thread container', () => {
         const documentNode = doc(thread(userMsg(p('hello'))))
-        const state = EditorState.create({ doc: documentNode, schema })
+        const state = EditorState.create({
+            doc: documentNode,
+            schema,
+        })
         const mockView = {
             state,
             editable: true,
-            dispatch: vi.fn((transaction) => {
-                mockView.state = mockView.state.apply(transaction)
-            }),
+            dispatch: vi.fn((transaction) => void (mockView.state = mockView.state.apply(transaction))),
             focus: vi.fn(),
         }
         const threadNode = documentNode.firstChild!
@@ -325,7 +338,10 @@ describe('aiChatThreadNodeView — update()', () => {
         const dom = nodeView.dom as HTMLElement
 
         const updatedNode = schema.nodes.aiChatThread.create(
-            { threadId: 'new-thread', status: 'active' },
+            {
+                threadId: 'new-thread',
+                status: 'active',
+            },
         )
         nodeView.update!(updatedNode, [])
 
@@ -337,7 +353,10 @@ describe('aiChatThreadNodeView — update()', () => {
         const dom = nodeView.dom as HTMLElement
 
         const updatedNode = schema.nodes.aiChatThread.create(
-            { threadId: 'thread-test-1', status: 'completed' },
+            {
+                threadId: 'thread-test-1',
+                status: 'completed',
+            },
         )
         nodeView.update!(updatedNode, [])
 
@@ -357,7 +376,10 @@ describe('aiChatThreadNodeView — update()', () => {
         const { nodeView } = createThreadNodeView()
 
         const updatedNode = schema.nodes.aiChatThread.create(
-            { threadId: 'thread-test-1', status: 'active' },
+            {
+                threadId: 'thread-test-1',
+                status: 'active',
+            },
         )
         const result = nodeView.update!(updatedNode, [])
 
@@ -388,6 +410,7 @@ describe('aiChatThreadNodeSpec — schema', () => {
                     'data-image-generation-size': '1536x1024',
                     'data-previous-response-id': 'resp-prev',
                 }
+
                 return attrs[attr] ?? null
             },
             hasAttribute: (attr: string) =>
@@ -430,16 +453,19 @@ describe('aiChatThreadNodeSpec — schema', () => {
 // =============================================================================
 
 describe('aiChatThreadPlugin — onReceivingStateChange callback', () => {
-    function createPluginWithCallback(onReceivingStateChange: (threadId: string, receiving: boolean) => void) {
+    const createPluginWithCallback = (onReceivingStateChange: (threadId: string, receiving: boolean) => void) => {
         return createAiChatThreadPlugin({
             sendAiRequestHandler: vi.fn(),
             stopAiRequestHandler: vi.fn(),
-            placeholders: { titlePlaceholder: 'Title', paragraphPlaceholder: 'Type here…' },
+            placeholders: {
+                titlePlaceholder: 'Title',
+                paragraphPlaceholder: 'Type here…',
+            },
             onReceivingStateChange,
         })
     }
 
-    function createStateWithPlugin(plugin: ReturnType<typeof createPluginWithCallback>) {
+    const createStateWithPlugin = (plugin: ReturnType<typeof createPluginWithCallback>) => {
         return EditorState.create({
             doc: doc(thread({ threadId: 'thread-1' }, p('hello'))),
             schema,
@@ -452,7 +478,10 @@ describe('aiChatThreadPlugin — onReceivingStateChange callback', () => {
         const plugin = createPluginWithCallback(callback)
         const state = createStateWithPlugin(plugin)
 
-        const tr = state.tr.setMeta('setReceiving', { threadId: 'thread-1', receiving: true })
+        const tr = state.tr.setMeta('setReceiving', {
+            threadId: 'thread-1',
+            receiving: true,
+        })
         state.apply(tr)
 
         expect(callback).toHaveBeenCalledTimes(1)
@@ -465,11 +494,17 @@ describe('aiChatThreadPlugin — onReceivingStateChange callback', () => {
         const state = createStateWithPlugin(plugin)
 
         // First set receiving=true
-        const tr1 = state.tr.setMeta('setReceiving', { threadId: 'thread-1', receiving: true })
+        const tr1 = state.tr.setMeta('setReceiving', {
+            threadId: 'thread-1',
+            receiving: true,
+        })
         const state2 = state.apply(tr1)
 
         // Then set receiving=false
-        const tr2 = state2.tr.setMeta('setReceiving', { threadId: 'thread-1', receiving: false })
+        const tr2 = state2.tr.setMeta('setReceiving', {
+            threadId: 'thread-1',
+            receiving: false,
+        })
         state2.apply(tr2)
 
         expect(callback).toHaveBeenCalledTimes(2)
@@ -492,7 +527,10 @@ describe('aiChatThreadPlugin — onReceivingStateChange callback', () => {
         const plugin = createAiChatThreadPlugin({
             sendAiRequestHandler: vi.fn(),
             stopAiRequestHandler: vi.fn(),
-            placeholders: { titlePlaceholder: 'Title', paragraphPlaceholder: 'Type here…' },
+            placeholders: {
+                titlePlaceholder: 'Title',
+                paragraphPlaceholder: 'Type here…',
+            },
         })
         const state = EditorState.create({
             doc: doc(thread({ threadId: 'thread-1' }, p('hello'))),
@@ -500,7 +538,10 @@ describe('aiChatThreadPlugin — onReceivingStateChange callback', () => {
             plugins: [plugin],
         })
 
-        const tr = state.tr.setMeta('setReceiving', { threadId: 'thread-1', receiving: true })
+        const tr = state.tr.setMeta('setReceiving', {
+            threadId: 'thread-1',
+            receiving: true,
+        })
         expect(() => state.apply(tr)).not.toThrow()
     })
 
@@ -509,7 +550,10 @@ describe('aiChatThreadPlugin — onReceivingStateChange callback', () => {
         const plugin = createPluginWithCallback(callback)
         const state = createStateWithPlugin(plugin)
 
-        const tr = state.tr.setMeta('setReceiving', { threadId: 'thread-1', receiving: true })
+        const tr = state.tr.setMeta('setReceiving', {
+            threadId: 'thread-1',
+            receiving: true,
+        })
         const newState = state.apply(tr)
 
         const pluginState = AI_CHAT_THREAD_PLUGIN_KEY.getState(newState)
@@ -522,11 +566,14 @@ describe('aiChatThreadPlugin — onReceivingStateChange callback', () => {
 // =============================================================================
 
 describe('aiChatThreadPlugin — image generation trace', () => {
-    function createView(children: any[] = [p('Generating image')]) {
+    const createView = (children: any[] = [p('Generating image')]) => {
         const plugin = createAiChatThreadPlugin({
             sendAiRequestHandler: vi.fn(),
             stopAiRequestHandler: vi.fn(),
-            placeholders: { titlePlaceholder: 'Title', paragraphPlaceholder: 'Type here…' },
+            placeholders: {
+                titlePlaceholder: 'Title',
+                paragraphPlaceholder: 'Type here…',
+            },
         })
         const mount = document.createElement('div')
         document.body.appendChild(mount)
@@ -536,7 +583,11 @@ describe('aiChatThreadPlugin — image generation trace', () => {
                     thread(
                         { threadId: 'thread-1' },
                         response(
-                            { id: 'resp-1', isReceivingAnimation: true, aiProvider: 'Anthropic' },
+                            {
+                                id: 'resp-1',
+                                isReceivingAnimation: true,
+                                aiProvider: 'Anthropic',
+                            },
                             ...children,
                         ),
                     ),
@@ -546,19 +597,27 @@ describe('aiChatThreadPlugin — image generation trace', () => {
             }),
         })
 
-        return { view, mount }
+        return {
+            view,
+            mount,
+        }
     }
 
-    function getCollapsibleNodes(view: EditorView): any[] {
+    const getCollapsibleNodes = (view: EditorView): any[] => {
         const collapsibleNodes: any[] = []
         view.state.doc.descendants((node: any) => {
-            if (node.type.name === 'aiCollapsibleBlock') collapsibleNodes.push(node)
+            if (node.type.name === 'aiCollapsibleBlock')
+                collapsibleNodes.push(node)
         })
+
         return collapsibleNodes
     }
 
     it('inserts a persisted image-generation trace block into the active response', () => {
-        const { view, mount } = createView()
+        const {
+            view,
+            mount,
+        } = createView()
         const trace = createImageGenerationTrace()
 
         SegmentsReceiver.receiveSegment({
@@ -583,10 +642,17 @@ describe('aiChatThreadPlugin — image generation trace', () => {
 
     it('updates an existing prompt details block instead of inserting a duplicate', () => {
         const existingBlock = schema.nodes.aiCollapsibleBlock.create(
-            { title: 'Image generation prompt', isOpen: true, isStreaming: true },
+            {
+                title: 'Image generation prompt',
+                isOpen: true,
+                isStreaming: true,
+            },
             schema.nodes.paragraph.create(null, schema.text('Original tool prompt')),
         )
-        const { view, mount } = createView([p('Generating image'), existingBlock])
+        const {
+            view,
+            mount,
+        } = createView([p('Generating image'), existingBlock])
         const trace = createImageGenerationTrace({
             finalPrompt: 'Final trace prompt',
             promptWasChanged: true,
@@ -618,33 +684,40 @@ describe('aiChatThreadPlugin — image generation trace', () => {
 // =============================================================================
 
 describe('aiChatThreadPlugin — generated image completion', () => {
-    function getCollapsibleNodes(view: EditorView): any[] {
+    const getCollapsibleNodes = (view: EditorView): any[] => {
         const collapsibleNodes: any[] = []
         view.state.doc.descendants((node: any) => {
-            if (node.type.name === 'aiCollapsibleBlock') {
+            if (node.type.name === 'aiCollapsibleBlock')
                 collapsibleNodes.push(node)
-            }
         })
+
         return collapsibleNodes
     }
 
-    function createView(
+    const createView = (
         onImageCompleteToCanvas = vi.fn(),
         onImagePartialToCanvas = vi.fn(),
         additionalPlugins: any[] = [],
         onImageErrorToCanvas = vi.fn(),
         responseContent: any[] = [p('Generating image')],
         responseAttrs: Record<string, unknown> = {},
-    ) {
+    ) => {
         const events = new CanvasGenerationEvents(error => {
             throw error
         })
         generationEventsForTests.push(events)
-        events.subscribeImages({ onImageCompleteToCanvas, onImagePartialToCanvas, onImageErrorToCanvas })
+        events.subscribeImages({
+            onImageCompleteToCanvas,
+            onImagePartialToCanvas,
+            onImageErrorToCanvas,
+        })
         const plugin = createAiChatThreadPlugin({
             sendAiRequestHandler: vi.fn(),
             stopAiRequestHandler: vi.fn(),
-            placeholders: { titlePlaceholder: 'Title', paragraphPlaceholder: 'Type here…' },
+            placeholders: {
+                titlePlaceholder: 'Title',
+                paragraphPlaceholder: 'Type here…',
+            },
             onStreamEvent: (event, options) => events.route(event, options),
         })
 
@@ -657,7 +730,13 @@ describe('aiChatThreadPlugin — generated image completion', () => {
                     thread(
                         { threadId: 'thread-1' },
                         response(
-                            { id: 'resp-1', isReceivingAnimation: true, isInitialRenderAnimation: true, aiProvider: 'OpenAI', ...responseAttrs },
+                            {
+                                id: 'resp-1',
+                                isReceivingAnimation: true,
+                                isInitialRenderAnimation: true,
+                                aiProvider: 'OpenAI',
+                                ...responseAttrs,
+                            },
                             ...responseContent,
                         ),
                     ),
@@ -667,22 +746,31 @@ describe('aiChatThreadPlugin — generated image completion', () => {
             }),
         })
 
-        return { view, mount, onImageCompleteToCanvas, onImagePartialToCanvas, onImageErrorToCanvas }
+        return {
+            view,
+            mount,
+            onImageCompleteToCanvas,
+            onImagePartialToCanvas,
+            onImageErrorToCanvas,
+        }
     }
 
-    function getGeneratedImageNodes(view: EditorView): any[] {
+    const getGeneratedImageNodes = (view: EditorView): any[] => {
         const imageNodes: any[] = []
         view.state.doc.descendants((node: any) => {
-            if (node.type.name === 'aiGeneratedImage') {
+            if (node.type.name === 'aiGeneratedImage')
                 imageNodes.push(node)
-            }
         })
+
         return imageNodes
     }
 
     it('inserts a placeholder image reference into the active AI response on partial events', () => {
         const onImagePartialToCanvas = vi.fn()
-        const { view, mount } = createView(vi.fn(), onImagePartialToCanvas)
+        const {
+            view,
+            mount,
+        } = createView(vi.fn(), onImagePartialToCanvas)
 
         SegmentsReceiver.receiveSegment({
             type: 'image_partial',
@@ -717,7 +805,10 @@ describe('aiChatThreadPlugin — generated image completion', () => {
     })
 
     it('tracks progressive partial placeholders across image indices when run metadata is unavailable', () => {
-        const { view, mount } = createView()
+        const {
+            view,
+            mount,
+        } = createView()
 
         SegmentsReceiver.receiveSegment({
             type: 'image_partial',
@@ -762,7 +853,10 @@ describe('aiChatThreadPlugin — generated image completion', () => {
 
     it('persists image trace details after progressive previews complete', () => {
         const onPersist = vi.fn()
-        const { view, mount } = createView(vi.fn(), vi.fn(), [
+        const {
+            view,
+            mount,
+        } = createView(vi.fn(), vi.fn(), [
             statePlugin({}, onPersist, vi.fn()),
         ])
         const trace = createImageGenerationTrace()
@@ -828,7 +922,10 @@ describe('aiChatThreadPlugin — generated image completion', () => {
     })
 
     it('inserts a thumbnail image reference into the active AI response', () => {
-        const { view, mount } = createView()
+        const {
+            view,
+            mount,
+        } = createView()
 
         SegmentsReceiver.receiveSegment({
             type: 'image_complete',
@@ -860,7 +957,10 @@ describe('aiChatThreadPlugin — generated image completion', () => {
     })
 
     it('converts the existing partial placeholder into the final thumbnail on completion', () => {
-        const { view, mount } = createView()
+        const {
+            view,
+            mount,
+        } = createView()
 
         SegmentsReceiver.receiveSegment({
             type: 'image_partial',
@@ -916,7 +1016,10 @@ describe('aiChatThreadPlugin — generated image completion', () => {
         })
         const run0 = makeGenerationRun('reasoning-1:image:0', 0)
         const run1 = makeGenerationRun('reasoning-1:image:1', 1)
-        const { view, mount } = createView(
+        const {
+            view,
+            mount,
+        } = createView(
             vi.fn(),
             vi.fn(),
             [],
@@ -982,7 +1085,10 @@ describe('aiChatThreadPlugin — generated image completion', () => {
 
     it('passes the same response id to the canvas image callback', () => {
         const onImageCompleteToCanvas = vi.fn()
-        const { view, mount } = createView(onImageCompleteToCanvas)
+        const {
+            view,
+            mount,
+        } = createView(onImageCompleteToCanvas)
 
         SegmentsReceiver.receiveSegment({
             type: 'image_complete',

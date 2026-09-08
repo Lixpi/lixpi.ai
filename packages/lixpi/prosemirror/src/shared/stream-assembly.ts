@@ -55,11 +55,11 @@ export const buildStreamingSegmentSteps = (
     }
 }
 
-export function applyStreamingSegmentToTransaction(
+export const applyStreamingSegmentToTransaction = (
     tr: Transaction,
     segment: MarkdownParsedSegment,
     target: StreamingSegmentTarget,
-): void {
+): void => {
     const marks = createStreamingMarks(tr.doc.type.schema, segment.styles)
 
     if (segment.isBlockDefining) {
@@ -85,10 +85,10 @@ export function applyStreamingSegmentToTransaction(
     )
 }
 
-export function createStreamingMarks(
+export const createStreamingMarks = (
     schema: Schema,
     styles: readonly string[] | undefined,
-): Mark[] | null {
+): Mark[] | null => {
     if (
         !styles
         || styles.length === 0
@@ -104,7 +104,7 @@ export function createStreamingMarks(
     return marks.length > 0 ? marks : null
 }
 
-export function applyStreamingBlockContentToTransaction(
+export const applyStreamingBlockContentToTransaction = (
     tr: Transaction,
     type: string,
     content: string,
@@ -112,7 +112,7 @@ export function applyStreamingBlockContentToTransaction(
     marks: readonly Mark[] | null,
     endOfNodePos: number,
     childCount: number,
-): void {
+): void => {
     const insertPos = endOfNodePos - 1
     tr.doc.resolve(insertPos)
 
@@ -165,13 +165,13 @@ export function applyStreamingBlockContentToTransaction(
     }
 }
 
-export function applyStreamingInlineContentToTransaction(
+export const applyStreamingInlineContentToTransaction = (
     tr: Transaction,
     type: string,
     content: string,
     marks: readonly Mark[] | null,
     endOfNodePos: number,
-): void {
+): void => {
     const insertPos = endOfNodePos - 2
     tr.doc.resolve(insertPos)
 
@@ -197,10 +197,10 @@ export function applyStreamingInlineContentToTransaction(
     }
 }
 
-function createStreamingMark(
+const createStreamingMark = (
     schema: Schema,
     style: string,
-): Mark | null {
+): Mark | null => {
     switch (style) {
         case 'bold':
             return schema.marks.strong.create()

@@ -73,7 +73,7 @@ export const getPromptTextFromMessages = (messages: ChatMessageLike[]): string =
     return ''
 }
 
-function getTextFromContent(content: unknown): string {
+const getTextFromContent = (content: unknown): string => {
     if (typeof content === 'string')
         return content
 

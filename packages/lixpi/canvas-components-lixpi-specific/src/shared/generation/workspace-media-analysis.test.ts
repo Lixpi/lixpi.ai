@@ -16,21 +16,41 @@ import {
     type WorkspaceMediaAnalysisPorts,
 } from './workspace-media-analysis.ts'
 
-const node = (assetId = 'asset'): ImageCanvasNode => ({ type: 'image', nodeId: 'node', assetId, position: { x: 0, y: 0 }, dimensions: { width: 100, height: 100 } } as ImageCanvasNode)
-const asset = (sealed = true): Asset => ({ assetId: 'asset', states: { provenance: sealed ? 'sealed' : 'pending' } } as Asset)
+const node = (assetId = 'asset'): ImageCanvasNode => ({
+    type: 'image',
+    nodeId: 'node',
+    assetId,
+    position: {
+        x: 0,
+        y: 0,
+    },
+    dimensions: {
+        width: 100,
+        height: 100,
+    },
+} as ImageCanvasNode)
+const asset = (sealed = true): Asset => ({
+    assetId: 'asset',
+    states: { provenance: sealed ? 'sealed' : 'pending' },
+} as Asset)
 
-function setup(overrides: Partial<WorkspaceMediaAnalysisPorts> = {}) {
+const setup = (overrides: Partial<WorkspaceMediaAnalysisPorts> = {}) => {
     vi.useFakeTimers()
     let currentNode: ImageCanvasNode | VideoCanvasNode | undefined = node()
-    let scope = { workspaceId: 'workspace', sceneKey: 'scene' }
+    let scope = {
+        workspaceId: 'workspace',
+        sceneKey: 'scene',
+    }
     const descriptors: MediaDescriptor[] = []
     const ports: WorkspaceMediaAnalysisPorts = {
         readScope: () => scope,
         readNode: () => currentNode,
-        describe: vi.fn(async () => ({ summary: 'pixel description', title: 'title', entityTags: ['subject'] })),
-        patchDescriptor: vi.fn((_id, descriptor) => {
-            descriptors.push(descriptor)
-        }),
+        describe: vi.fn(async () => ({
+            summary: 'pixel description',
+            title: 'title',
+            entityTags: ['subject'],
+        })),
+        patchDescriptor: vi.fn((_id, descriptor) => void descriptors.push(descriptor)),
         refreshAsset: vi.fn(async () => asset()),
         loadWorkspaceAssets: vi.fn(async () => {}),
         refreshVideo: vi.fn(),
@@ -39,6 +59,7 @@ function setup(overrides: Partial<WorkspaceMediaAnalysisPorts> = {}) {
         refreshContext: vi.fn(),
         setTimer: (callback, delay) => {
             const timer = setTimeout(callback, delay)
+
             return () => clearTimeout(timer)
         },
         now: () => 123,
@@ -46,32 +67,41 @@ function setup(overrides: Partial<WorkspaceMediaAnalysisPorts> = {}) {
         ...overrides,
     }
     const owner = new WorkspaceMediaAnalysis(ports)
+
     return {
         owner,
         ports,
         descriptors,
-        setNode: (value: typeof currentNode) => {
-            currentNode = value
-        },
-        setScope: (value: typeof scope) => {
-            scope = value
-        },
+        setNode: (value: typeof currentNode) => void (currentNode = value),
+        setScope: (value: typeof scope) => void (scope = value),
     }
 }
 
-afterEach(() => {
-    vi.useRealTimers()
-})
+afterEach(() => void vi.useRealTimers())
 
 describe('workspace media analysis', () => {
     it('coalesces requests and publishes only the returned pixel description', async () => {
-        const { owner, ports, descriptors } = setup()
+        const {
+            owner,
+            ports,
+            descriptors,
+        } = setup()
         owner.queue('node', 'asset')
         owner.queue('node', 'asset')
         await vi.advanceTimersByTimeAsync(0)
         expect(ports.describe).toHaveBeenCalledOnce()
-        expect(ports.describe).toHaveBeenCalledWith({ workspaceId: 'workspace', assetId: 'asset' })
-        expect(descriptors).toEqual([expect.objectContaining({ status: 'ready', summary: 'pixel description', entityTags: ['subject'], styleTags: [], source: 'analysis', updatedAt: 123 })])
+        expect(ports.describe).toHaveBeenCalledWith({
+            workspaceId: 'workspace',
+            assetId: 'asset',
+        })
+        expect(descriptors).toEqual([expect.objectContaining({
+            status: 'ready',
+            summary: 'pixel description',
+            entityTags: ['subject'],
+            styleTags: [],
+            source: 'analysis',
+            updatedAt: 123,
+        })])
     })
 
     it('waits for node insertion without fetching before the node exists', async () => {
@@ -98,7 +128,11 @@ describe('workspace media analysis', () => {
     })
 
     it('retries failures on the existing schedule and finally marks the descriptor failed', async () => {
-        const { owner, ports, descriptors } = setup({ describe: vi.fn(async () => ({ error: 'unavailable' })) })
+        const {
+            owner,
+            ports,
+            descriptors,
+        } = setup({ describe: vi.fn(async () => ({ error: 'unavailable' })) })
         owner.queue('node', 'asset')
         await vi.advanceTimersByTimeAsync(0)
         expect(descriptors).toEqual([])
@@ -110,7 +144,10 @@ describe('workspace media analysis', () => {
         expect(ports.describe).toHaveBeenCalledTimes(3)
         await vi.advanceTimersByTimeAsync(8000)
         expect(ports.describe).toHaveBeenCalledTimes(4)
-        expect(descriptors).toEqual([expect.objectContaining({ status: 'failed', summary: '' })])
+        expect(descriptors).toEqual([expect.objectContaining({
+            status: 'failed',
+            summary: '',
+        })])
         expect(vi.getTimerCount()).toBe(0)
     })
 
@@ -118,15 +155,25 @@ describe('workspace media analysis', () => {
         let complete!: (value: { summary: string }) => void
         const fixture = setup({
             describe: () =>
-                new Promise(resolve => {
-                    complete = resolve
-                }),
+                new Promise(resolve => void (complete = resolve)),
         })
         fixture.owner.queue('node', 'asset')
-        if (change === 'scene') fixture.setScope({ workspaceId: 'workspace', sceneKey: 'replacement' })
-        if (change === 'asset') fixture.setNode(node('replacement'))
-        if (change === 'clear') fixture.owner.clear()
-        if (change === 'destroy') fixture.owner.destroy()
+
+        if (change === 'scene')
+            fixture.setScope({
+                workspaceId: 'workspace',
+                sceneKey: 'replacement',
+            })
+
+        if (change === 'asset')
+            fixture.setNode(node('replacement'))
+
+        if (change === 'clear')
+            fixture.owner.clear()
+
+        if (change === 'destroy')
+            fixture.owner.destroy()
+
         complete({ summary: 'late' })
         await vi.advanceTimersByTimeAsync(0)
         expect(fixture.ports.patchDescriptor).not.toHaveBeenCalled()
@@ -137,9 +184,7 @@ describe('workspace media analysis', () => {
         let completeOld!: (value: { summary: string }) => void
         const fixture = setup({
             describe: vi.fn().mockImplementationOnce(() =>
-                new Promise(resolve => {
-                    completeOld = resolve
-                })
+                new Promise(resolve => void (completeOld = resolve))
             ).mockResolvedValue({ summary: 'new' }),
         })
         fixture.owner.queue('node', 'asset')
@@ -152,7 +197,10 @@ describe('workspace media analysis', () => {
 
     it('refreshes a completed video once and waits for sealed provenance with bounded retries', async () => {
         const fixture = setup({ refreshAsset: vi.fn(async () => asset(false)) })
-        fixture.setNode({ ...node(), type: 'video' } as VideoCanvasNode)
+        fixture.setNode({
+            ...node(),
+            type: 'video',
+        } as VideoCanvasNode)
         await fixture.owner.refreshCompleted(fixture.ports.readNode('node')!)
         await vi.runAllTimersAsync()
         expect(fixture.ports.refreshAsset).toHaveBeenCalledTimes(6)
@@ -164,9 +212,7 @@ describe('workspace media analysis', () => {
         let complete!: (value: Asset) => void
         const fixture = setup({
             refreshAsset: () =>
-                new Promise(resolve => {
-                    complete = resolve
-                }),
+                new Promise(resolve => void (complete = resolve)),
         })
         const pending = fixture.owner.refreshCompleted(node())
         vi.mocked(fixture.ports.refreshChrome).mockClear()
@@ -182,13 +228,14 @@ describe('workspace media analysis', () => {
         let complete!: () => void
         const fixture = setup({
             loadWorkspaceAssets: vi.fn(() =>
-                new Promise(resolve => {
-                    complete = resolve
-                })
+                new Promise(resolve => void (complete = resolve))
             ),
         })
         const pending = fixture.owner.refreshWorkspaceDescriptors({ asset: {} as MediaDescriptor })
-        fixture.setScope({ workspaceId: 'other', sceneKey: 'other' })
+        fixture.setScope({
+            workspaceId: 'other',
+            sceneKey: 'other',
+        })
         complete()
         await pending
         expect(fixture.ports.loadWorkspaceAssets).toHaveBeenCalledWith('workspace')

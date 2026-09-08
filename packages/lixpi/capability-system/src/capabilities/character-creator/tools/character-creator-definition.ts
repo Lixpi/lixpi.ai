@@ -96,10 +96,10 @@ export const seedCharacterCreatorTool = async (
     })
 }
 
-export function buildCharacterCreatorManifest(resources: {
+export const buildCharacterCreatorManifest = (resources: {
     inputSchema: CapabilityResourceRef
     outputSchema: CapabilityResourceRef
-}): CapabilityManifest {
+}): CapabilityManifest => {
     return {
         schemaVersion: 1,
         capabilityId: CHARACTER_CREATOR_CAPABILITY_IDS.tool,
@@ -197,11 +197,11 @@ export function buildCharacterCreatorManifest(resources: {
     }
 }
 
-async function storeToolResource(
+const storeToolResource = async (
     storage: CharacterCreatorCapabilityStorage,
     storageOwnerId: string,
     source: ResourceSource,
-): Promise<CapabilityResourceRef> {
+): Promise<CapabilityResourceRef> => {
     const bytes = await readFile(
         new URL(`./resources/${source.fileName}`, import.meta.url),
     )

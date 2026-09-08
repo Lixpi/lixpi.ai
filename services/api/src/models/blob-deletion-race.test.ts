@@ -48,7 +48,11 @@ describe('Blob deletion and store race', () => {
         getItem.mockReset()
         transactWrite.mockReset()
         updateItem.mockReset()
-        ;(globalThis as any).dynamoDBService = { getItem, transactWrite, updateItem }
+        ;(globalThis as any).dynamoDBService = {
+            getItem,
+            transactWrite,
+            updateItem,
+        }
         mocks.putContentAddressedBlob.mockResolvedValue({
             blobHash: 'hash',
             bucketName: 'bucket',
@@ -106,7 +110,10 @@ describe('Blob deletion and store race', () => {
     })
 
     it('can take over a stale deletion claim after the worker timeout', async () => {
-        getItem.mockResolvedValue({ ...deletingBlob, deletionClaim: 'abandoned-claim' })
+        getItem.mockResolvedValue({
+            ...deletingBlob,
+            deletionClaim: 'abandoned-claim',
+        })
         updateItem.mockResolvedValue(undefined)
         transactWrite.mockResolvedValue(undefined)
         mocks.deleteContentAddressedBlob.mockResolvedValue(undefined)

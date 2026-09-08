@@ -7,19 +7,28 @@ import {
 } from 'vitest'
 
 const mocks = vi.hoisted(() => {
-    const handlers: Array<{ path: string; middleware: Array<(req: any, res: any, next: any) => unknown> }> = []
+    const handlers: Array<{
+        path: string
+        middleware: Array<(req: any, res: any, next: any) => unknown>
+    }> = []
     const getObject = vi.fn(async () => Buffer.from('partial-media'))
     const getWorkspace = vi.fn(async () => ({ organizationId: 'org-1' }))
     const verify = vi.fn(async () => ({ decoded: { sub: 'user-1' } }))
 
-    return { handlers, getObject, getWorkspace, verify }
+    return {
+        handlers,
+        getObject,
+        getWorkspace,
+        verify,
+    }
 })
 
 vi.mock('express', () => ({
     Router: () => ({
-        get: (path: string, ...middleware: Array<(req: any, res: any, next: any) => unknown>) => {
-            mocks.handlers.push({ path, middleware })
-        },
+        get: (path: string, ...middleware: Array<(req: any, res: any, next: any) => unknown>) => void mocks.handlers.push({
+            path,
+            middleware,
+        }),
     }),
 }))
 vi.mock('@lixpi/nats-service', () => ({
@@ -30,25 +39,32 @@ vi.mock('../models/workspace.ts', () => ({ default: { getWorkspace: mocks.getWor
 
 import './transient-media-routes.ts'
 
-function response() {
+const response = () => {
     const res = {
         status: vi.fn().mockReturnThis(),
         json: vi.fn(),
         setHeader: vi.fn(),
         end: vi.fn(),
     }
+
     return res
 }
 
-function routeHandler(): (req: any, res: any) => Promise<unknown> {
+const routeHandler = (): (req: any, res: any) => Promise<unknown> => {
     const handler = mocks.handlers[0]?.middleware.at(-1)
-    if (!handler) throw new Error('Transient media route handler was not registered')
+
+    if (!handler)
+        throw new Error('Transient media route handler was not registered')
+
     return handler as (req: any, res: any) => Promise<unknown>
 }
 
-function authMiddleware(): (req: any, res: any, next: any) => Promise<unknown> {
+const authMiddleware = (): (req: any, res: any, next: any) => Promise<unknown> => {
     const middleware = mocks.handlers[0]?.middleware[0]
-    if (!middleware) throw new Error('Transient media authentication middleware was not registered')
+
+    if (!middleware)
+        throw new Error('Transient media authentication middleware was not registered')
+
     return middleware as (req: any, res: any, next: any) => Promise<unknown>
 }
 
@@ -63,7 +79,10 @@ describe('transient media route', () => {
         const res = response()
         const next = vi.fn()
 
-        await authMiddleware()({ headers: {}, query: {} }, res, next)
+        await authMiddleware()({
+            headers: {},
+            query: {},
+        }, res, next)
 
         expect(res.status).toHaveBeenCalledWith(401)
         expect(res.json).toHaveBeenCalledWith({ error: 'No authorization token provided' })
@@ -76,11 +95,17 @@ describe('transient media route', () => {
 
         await routeHandler()({
             user: { userId: 'user-1' },
-            params: { workspaceId: 'workspace-1', objectKey },
+            params: {
+                workspaceId: 'workspace-1',
+                objectKey,
+            },
             headers: {},
         }, res)
 
-        expect(mocks.getWorkspace).toHaveBeenCalledWith({ userId: 'user-1', workspaceId: 'workspace-1' })
+        expect(mocks.getWorkspace).toHaveBeenCalledWith({
+            userId: 'user-1',
+            workspaceId: 'workspace-1',
+        })
         expect(mocks.getObject).toHaveBeenCalledWith('transient-media-org-1-files', objectKey)
         expect(res.setHeader).toHaveBeenCalledWith('Content-Type', 'image/png')
         expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
@@ -92,7 +117,10 @@ describe('transient media route', () => {
 
         await routeHandler()({
             user: { userId: 'user-1' },
-            params: { workspaceId: 'workspace-1', objectKey: '../image.png' },
+            params: {
+                workspaceId: 'workspace-1',
+                objectKey: '../image.png',
+            },
             headers: {},
         }, res)
 
@@ -108,7 +136,10 @@ describe('transient media route', () => {
 
         await routeHandler()({
             user: { userId: 'user-1' },
-            params: { workspaceId: 'workspace-1', objectKey },
+            params: {
+                workspaceId: 'workspace-1',
+                objectKey,
+            },
             headers: { range: 'bytes=2-5' },
         }, res)
 

@@ -6,9 +6,7 @@ import {
     vi,
 } from 'vitest'
 import { EditorState } from 'prosemirror-state'
-import {
-    type Node as ProseMirrorNode,
-} from 'prosemirror-model'
+
 import { testSchema as schema } from '$src/components/proseMirror/plugins/testUtils/testSchema.ts'
 import { aiModelsStore } from '$src/stores/aiModelsStore.ts'
 import {
@@ -23,9 +21,28 @@ vi.mock('$src/services/auth-service.ts', () => ({
     },
 }))
 
-beforeEach(() => {
-    vi.mocked(AuthService.getTokenSilently).mockReset().mockResolvedValue('token-1')
-})
+beforeEach(() => void vi.mocked(AuthService.getTokenSilently).mockReset().mockResolvedValue('token-1'))
+
+const createFakeNodeElement = (imageData: string, variantIndex: string): HTMLElement => {
+    const node = document.createElement('div')
+    node.className = 'ai-generated-image'
+    node.dataset.imageData = imageData
+    node.dataset.assetId = 'img-1'
+    node.dataset.revisedPrompt = 'A reference'
+    node.dataset.responseId = 'resp-1'
+    node.dataset.aiModel = 'Google:gemini'
+    node.dataset.isPartial = 'false'
+    node.dataset.partialIndex = '0'
+    node.dataset.generationRequestId = 'gen-1'
+    node.dataset.reasoningRunId = 'reason-run'
+    node.dataset.mediaRunId = 'media-run'
+    node.dataset.reasoningModelId = 'reason-model'
+    node.dataset.mediaModelId = 'media-model'
+    node.dataset.mediaType = 'image'
+    node.dataset.variantIndex = variantIndex
+
+    return node
+}
 
 const createImageNode = (overrides: Record<string, unknown> = {}) => {
     return schema.nodes.aiGeneratedImage.create({
@@ -53,7 +70,10 @@ const createImageNode = (overrides: Record<string, unknown> = {}) => {
 const createNodeView = (overrides: Record<string, unknown> = {}, getPos: () => number | undefined = () => 0) => {
     const node = createImageNode(overrides)
     const doc = schema.nodes.doc.create(null, [node])
-    const state = EditorState.create({ doc, schema })
+    const state = EditorState.create({
+        doc,
+        schema,
+    })
 
     const dispatch = vi.fn()
     const focus = vi.fn()
@@ -66,11 +86,21 @@ const createNodeView = (overrides: Record<string, unknown> = {}, getPos: () => n
     }
 
     const nodeView = aiGeneratedImageNodeView(node as any, view as any, getPos)
-    return { nodeView, node, dispatch, focus, state, doc, view: view as any }
+
+    return {
+        nodeView,
+        node,
+        dispatch,
+        focus,
+        state,
+        doc,
+        view: view as any,
+    }
 }
 
 const getImageSrc = (nodeView: { dom: HTMLElement }): string => {
     const image = nodeView.dom.querySelector('.ai-generated-image-content') as HTMLImageElement
+
     return image.getAttribute('src') ?? ''
 }
 
@@ -113,26 +143,6 @@ describe('aiGeneratedImageNodeSpec', () => {
         expect(parsedNode.variantIndex).toBeNull()
     })
 })
-
-function createFakeNodeElement(imageData: string, variantIndex: string): HTMLElement {
-    const node = document.createElement('div')
-    node.className = 'ai-generated-image'
-    node.dataset.imageData = imageData
-    node.dataset.assetId = 'img-1'
-    node.dataset.revisedPrompt = 'A reference'
-    node.dataset.responseId = 'resp-1'
-    node.dataset.aiModel = 'Google:gemini'
-    node.dataset.isPartial = 'false'
-    node.dataset.partialIndex = '0'
-    node.dataset.generationRequestId = 'gen-1'
-    node.dataset.reasoningRunId = 'reason-run'
-    node.dataset.mediaRunId = 'media-run'
-    node.dataset.reasoningModelId = 'reason-model'
-    node.dataset.mediaModelId = 'media-model'
-    node.dataset.mediaType = 'image'
-    node.dataset.variantIndex = variantIndex
-    return node
-}
 
 // =============================================================================
 // callback registry
@@ -300,16 +310,27 @@ describe('aiGeneratedImageNodeView', () => {
         const doc = schema.nodes.doc.create(null, [node])
         const dispatch = vi.fn()
         const focus = vi.fn()
-        const state = EditorState.create({ doc, schema })
+        const state = EditorState.create({
+            doc,
+            schema,
+        })
         const getPos = () => 0
-        const nodeView = aiGeneratedImageNodeView(node as any, { state, dispatch, focus, editable: true } as any, getPos)
+        const nodeView = aiGeneratedImageNodeView(node as any, {
+            state,
+            dispatch,
+            focus,
+            editable: true,
+        } as any, getPos)
 
         nodeView.dom.dispatchEvent(new MouseEvent('click'))
 
         expect(dispatch).toHaveBeenCalledTimes(1)
         expect(focus).toHaveBeenCalledTimes(1)
         const tr = dispatch.mock.calls[0]![0]
-        expect(tr.selection.toJSON()).toMatchObject({ type: 'node', anchor: 0 })
+        expect(tr.selection.toJSON()).toMatchObject({
+            type: 'node',
+            anchor: 0,
+        })
         const selection = tr.selection
         expect(selection.from).toBe(0)
     })
@@ -317,7 +338,10 @@ describe('aiGeneratedImageNodeView', () => {
     it('does not dispatch node selection when editor is not editable', () => {
         const node = createImageNode()
         const doc = schema.nodes.doc.create(null, [node])
-        const state = EditorState.create({ doc, schema })
+        const state = EditorState.create({
+            doc,
+            schema,
+        })
         const dispatch = vi.fn()
         const focus = vi.fn()
 

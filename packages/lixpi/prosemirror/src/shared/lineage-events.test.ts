@@ -38,7 +38,10 @@ describe('getAiLineageEventsForProjection', () => {
             reasoningIndex: 4,
         }, 'conversation')
 
-        expect(events).toEqual([{ kind: 'branch-fork', branchForkNodeId: 'fork-id' }])
+        expect(events).toEqual([{
+            kind: 'branch-fork',
+            branchForkNodeId: 'fork-id',
+        }])
     })
 
     it('emits branch-origin before branch-fork in conversation scope for the first section', () => {
@@ -49,8 +52,14 @@ describe('getAiLineageEventsForProjection', () => {
         }, 'conversation')
 
         expect(events).toEqual([
-            { kind: 'branch-origin', branchOriginNodeId: 'origin-id' },
-            { kind: 'branch-fork', branchForkNodeId: 'fork-id' },
+            {
+                kind: 'branch-origin',
+                branchOriginNodeId: 'origin-id',
+            },
+            {
+                kind: 'branch-fork',
+                branchForkNodeId: 'fork-id',
+            },
         ])
     })
 
@@ -64,8 +73,14 @@ describe('getAiLineageEventsForProjection', () => {
             reasoningIndex: 2,
         }, 'branch-origin')
 
-        expect(firstSection).toEqual([{ kind: 'branch-origin', branchOriginNodeId: 'origin-id' }])
-        expect(laterSection).toEqual([{ kind: 'branch-origin', branchOriginNodeId: 'origin-id' }])
+        expect(firstSection).toEqual([{
+            kind: 'branch-origin',
+            branchOriginNodeId: 'origin-id',
+        }])
+        expect(laterSection).toEqual([{
+            kind: 'branch-origin',
+            branchOriginNodeId: 'origin-id',
+        }])
     })
 
     it('scopes branch-line independently from fork flags', () => {
@@ -74,12 +89,13 @@ describe('getAiLineageEventsForProjection', () => {
             branchLineNodeId: 'line-id',
         }, 'media-run')
 
-        expect(events).toEqual([{ kind: 'branch-line', branchLineNodeId: 'line-id' }])
+        expect(events).toEqual([{
+            kind: 'branch-line',
+            branchLineNodeId: 'line-id',
+        }])
     })
 
-    it('defaults to empty list for null ids', () => {
-        expect(getAiLineageEventsForProjection({ reasoningIndex: 0 })).toEqual([])
-    })
+    it('defaults to empty list for null ids', () => void expect(getAiLineageEventsForProjection({ reasoningIndex: 0 })).toEqual([]))
 })
 
 describe('getReasoningSectionLineageEvents', () => {
@@ -88,7 +104,10 @@ describe('getReasoningSectionLineageEvents', () => {
             branchOriginNodeId: 'origin-id',
             branchForkNodeId: 'fork-id',
         }, 'media-run')).toEqual([
-            { kind: 'branch-fork', branchForkNodeId: 'fork-id' },
+            {
+                kind: 'branch-fork',
+                branchForkNodeId: 'fork-id',
+            },
         ])
     })
 })

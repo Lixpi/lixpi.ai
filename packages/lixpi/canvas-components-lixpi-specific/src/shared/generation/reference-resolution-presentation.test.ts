@@ -27,8 +27,14 @@ const operation = (overrides: Partial<OperationStatusCanvasNode> = {}): Operatio
     candidateAssetIds: ['asset-1', 'asset-2'],
     unresolvedBindingId: 'binding-1',
     requestRevision: 2,
-    position: { x: 0, y: 0 },
-    dimensions: { width: 320, height: 120 },
+    position: {
+        x: 0,
+        y: 0,
+    },
+    dimensions: {
+        width: 320,
+        height: 120,
+    },
     createdAt: 1,
     updatedAt: 2,
     ...overrides,
@@ -39,8 +45,14 @@ const branchOrigin = (overrides: Partial<BranchOriginCanvasNode> = {}): BranchOr
     type: 'branchOrigin',
     branchId: 'branch-1',
     generationRequestId: 'request-1',
-    position: { x: 0, y: 0 },
-    dimensions: { width: 320, height: 80 },
+    position: {
+        x: 0,
+        y: 0,
+    },
+    dimensions: {
+        width: 320,
+        height: 80,
+    },
     temporary: true,
     ...overrides,
 })
@@ -50,8 +62,14 @@ const branchFork = (overrides: Partial<BranchForkCanvasNode> = {}): BranchForkCa
     type: 'branchFork',
     branchId: 'branch-1',
     generationRequestId: 'request-1',
-    position: { x: 0, y: 0 },
-    dimensions: { width: 320, height: 80 },
+    position: {
+        x: 0,
+        y: 0,
+    },
+    dimensions: {
+        width: 320,
+        height: 80,
+    },
     temporary: true,
     ...overrides,
 })
@@ -60,7 +78,10 @@ describe('media generation reference-resolution presentation', () => {
     it('recognizes provider-neutral reference-resolution state', () => {
         expect(isMediaGenerationReferenceResolutionOperation(operation())).toBe(true)
         expect(isMediaGenerationReferenceResolutionOperation(operation({ unresolvedBindingId: undefined }))).toBe(false)
-        expect(isMediaGenerationReferenceResolutionOperation(operation({ verificationAssetId: 'asset-1', candidateAssetIds: undefined }))).toBe(false)
+        expect(isMediaGenerationReferenceResolutionOperation(operation({
+            verificationAssetId: 'asset-1',
+            candidateAssetIds: undefined,
+        }))).toBe(false)
     })
 
     it('attaches request-level ambiguity to the preflight submitted prompt marker', () => {

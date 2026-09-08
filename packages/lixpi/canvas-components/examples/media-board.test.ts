@@ -31,14 +31,22 @@ vi.mock('@lixpi/canvas-engine/frontend/runtime', async importOriginal => {
             controllers.push(this)
         }
     }
-    return { ...actual, CanvasController: Controller }
-})
-afterEach(() => {
-    controllers.length = 0
-})
 
-function options(): MediaBoardOptions {
-    return { imageUrl: 'https://example.test/image.jpg', videoUrl: 'https://example.test/video.mp4', color: '#445566', mountEditor: () => () => {}, onError: vi.fn() }
+    return {
+        ...actual,
+        CanvasController: Controller,
+    }
+})
+afterEach(() => void (controllers.length = 0))
+
+const options = (): MediaBoardOptions => {
+    return {
+        imageUrl: 'https://example.test/image.jpg',
+        videoUrl: 'https://example.test/video.mp4',
+        color: '#445566',
+        mountEditor: () => () => {},
+        onError: vi.fn(),
+    }
 }
 
 describe('public media board example', () => {
@@ -48,6 +56,7 @@ describe('public media board example', () => {
             ...options(),
             mountEditor: (_root, _text, change) => {
                 change('mounted draft')
+
                 return dispose
             },
         })
@@ -64,6 +73,7 @@ describe('public media board example', () => {
             ...options(),
             mountEditor: (_root, _text, change) => {
                 edits.push(change)
+
                 return disposals[edits.length - 1]
             },
         })

@@ -72,7 +72,7 @@ export const discardPendingCapabilityOutputsForState = async (state: ProviderSta
     )
 }
 
-function requireCapabilityOutputFinalizer(capabilityId: string): CapabilityOutputFinalizer {
+const requireCapabilityOutputFinalizer = (capabilityId: string): CapabilityOutputFinalizer => {
     const finalizer = capabilityOutputFinalizers.get(capabilityId)
 
     if (!finalizer)
@@ -81,10 +81,10 @@ function requireCapabilityOutputFinalizer(capabilityId: string): CapabilityOutpu
     return finalizer
 }
 
-function requireEventMetaString(
+const requireEventMetaString = (
     value: unknown,
     errorCode: string,
-): string {
+): string => {
     if (
         typeof value !== 'string'
         || !value

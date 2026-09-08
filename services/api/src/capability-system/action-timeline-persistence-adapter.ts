@@ -373,7 +373,7 @@ export const discardStagedActionTimelineArtifact = async (request: {
     })
 }
 
-async function attachArtifactToCanvas(args: {
+const attachArtifactToCanvas = async (args: {
     assetId: string
     generationRun: MediaGenerationRunMeta
     workspaceId: string
@@ -386,7 +386,7 @@ async function attachArtifactToCanvas(args: {
         width: number
         height: number
     }
-}): Promise<CanvasGeometryUpdate> {
+}): Promise<CanvasGeometryUpdate> => {
     let lastError: unknown
 
     for (let attempt = 0; attempt < MAX_CANVAS_ATTACH_ATTEMPTS; attempt += 1) {
@@ -450,11 +450,11 @@ async function attachArtifactToCanvas(args: {
     throw lastError ?? new Error(`ACTION_TIMELINE_CANVAS_ATTACH_EXHAUSTED:${args.assetId}`)
 }
 
-function buildProvenanceDocument(args: {
+const buildProvenanceDocument = (args: {
     request: ActionTimelinePersistRequest
     assetId: string
     generationRun: MediaGenerationRunMeta
-}): object {
+}): object => {
     const text = JSON.stringify({
         assetId: args.assetId,
         capabilityId: ACTION_TIMELINE_TOOL_ID,
@@ -488,14 +488,14 @@ function buildProvenanceDocument(args: {
     }
 }
 
-async function storeJsonBlob(args: {
+const storeJsonBlob = async (args: {
     organizationId: string
     value: object
     description: string
 }): Promise<{
     blobHash: string
     byteSize: number
-}> {
+}> => {
     const bytes = Buffer.from(
         JSON.stringify(args.value),
         'utf8',
@@ -513,13 +513,13 @@ async function storeJsonBlob(args: {
     }
 }
 
-function buildDocumentPointer(
+const buildDocumentPointer = (
     role: AssetDocumentPointer['role'],
     blobHash: string,
     byteSize: number,
     schemaVersion: string,
     updatedAt: number,
-): AssetDocumentPointer {
+): AssetDocumentPointer => {
     return {
         role,
         blobHash,
@@ -530,26 +530,26 @@ function buildDocumentPointer(
     }
 }
 
-function getWorkspaceCanvasRevision(workspace: Workspace): number {
+const getWorkspaceCanvasRevision = (workspace: Workspace): number => {
     const withCanvasRevision = workspace as Workspace & { canvasStateUpdatedAt?: number }
 
     return withCanvasRevision.canvasStateUpdatedAt ?? workspace.updatedAt
 }
 
-function requireString(
+const requireString = (
     value: string | undefined,
     error: string,
-): string {
+): string => {
     if (!value)
         throw new Error(error)
 
     return value
 }
 
-function requireCapabilityInputString(
+const requireCapabilityInputString = (
     value: CapabilityJsonValue | undefined,
     error: string,
-): string {
+): string => {
     if (
         typeof value !== 'string'
         || !value.trim()
@@ -559,10 +559,10 @@ function requireCapabilityInputString(
     return value.trim()
 }
 
-function requireCapabilityInputStringArray(
+const requireCapabilityInputStringArray = (
     value: CapabilityJsonValue | undefined,
     error: string,
-): string[] {
+): string[] => {
     if (
         !Array.isArray(value)
         || !value.every(item => typeof item === 'string')
@@ -572,9 +572,7 @@ function requireCapabilityInputStringArray(
     return value
 }
 
-function sameStringArray(
+const sameStringArray = (
     left: readonly string[],
     right: readonly string[],
-): boolean {
-    return left.length === right.length && left.every((value, index) => value === right[index])
-}
+): boolean => left.length === right.length && left.every((value, index) => value === right[index])

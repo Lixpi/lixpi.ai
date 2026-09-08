@@ -59,56 +59,132 @@ const ownedEvents: CanvasGenerationEvents[] = []
 const callbackErrors: unknown[] = []
 afterEach(async () => {
     await Promise.resolve()
+
     for (const owner of owners.splice(0)) owner.destroy()
+
     for (const events of ownedEvents.splice(0)) events.destroy()
+
     expect(callbackErrors.splice(0)).toEqual([])
 })
-function image(): ImageCanvasNode {
-    return { type: 'image', nodeId, assetId: 'asset', position: { x: 10, y: 20 }, dimensions: { width: 300, height: 200 }, mediaGenerationPhase: 'pending-before-first-frame', generatedBy: { ...assignment, conversationAssetId: 'thread', responseId: 'response', aiModel: 'provider:reasoning', revisedPrompt: 'prompt' } }
+const image = (): ImageCanvasNode => {
+    return {
+        type: 'image',
+        nodeId,
+        assetId: 'asset',
+        position: {
+            x: 10,
+            y: 20,
+        },
+        dimensions: {
+            width: 300,
+            height: 200,
+        },
+        mediaGenerationPhase: 'pending-before-first-frame',
+        generatedBy: {
+            ...assignment,
+            conversationAssetId: 'thread',
+            responseId: 'response',
+            aiModel: 'provider:reasoning',
+            revisedPrompt: 'prompt',
+        },
+    }
 }
-function event(type: string, overrides: Partial<CanvasMediaSegment> = {}): CanvasMediaSegment {
-    return { type, workspaceId: 'workspace', conversationAssetId: 'thread', generationRun: run, ...overrides }
+const event = (type: string, overrides: Partial<CanvasMediaSegment> = {}): CanvasMediaSegment => {
+    return {
+        type,
+        workspaceId: 'workspace',
+        conversationAssetId: 'thread',
+        generationRun: run,
+        ...overrides,
+    }
 }
-function setup(nodes: CanvasNode[] = [], sharedEvents?: CanvasGenerationEvents) {
+const setup = (nodes: CanvasNode[] = [], sharedEvents?: CanvasGenerationEvents) => {
     const events = sharedEvents ?? new CanvasGenerationEvents(error => callbackErrors.push(error))
-    if (!sharedEvents) ownedEvents.push(events)
-    let state: CanvasState = { nodes, edges: [], viewport: { x: 0, y: 0, zoom: 1 } }
-    let scope: { workspaceId: string; sceneKey: string } | null = { workspaceId: 'workspace', sceneKey: 'scene' }
+
+    if (!sharedEvents)
+        ownedEvents.push(events)
+
+    let state: CanvasState = {
+        nodes,
+        edges: [],
+        viewport: {
+            x: 0,
+            y: 0,
+            zoom: 1,
+        },
+    }
+    let scope: {
+        workspaceId: string
+        sceneKey: string
+    } | null = {
+        workspaceId: 'workspace',
+        sceneKey: 'scene',
+    }
     const order: string[] = []
     const finalizing = new Set<string>()
-    const placements = new WorkspaceGenerationPlacements({ readCanvasState: () => state, hasStartedMedia: () => false })
-    const trackers = new WorkspaceMediaTrackers({ readScope: () => scope, readCanvasState: () => state, placements, hasDecodedFrame: () => false, hasReadyOriginal: () => false, forgetDecodedFrame: () => {}, clearCompletion: () => {}, debug: () => {} })
+    const placements = new WorkspaceGenerationPlacements({
+        readCanvasState: () => state,
+        hasStartedMedia: () => false,
+    })
+    const trackers = new WorkspaceMediaTrackers({
+        readScope: () => scope,
+        readCanvasState: () => state,
+        placements,
+        hasDecodedFrame: () => false,
+        hasReadyOriginal: () => false,
+        forgetDecodedFrame: () => {},
+        clearCompletion: () => {},
+        debug: () => {},
+    })
     const ports: WorkspaceGenerationHandlersPorts = {
         readScope: () => scope,
         readCanvasState: () => state,
         readThreads: () => [{ threadId: 'thread' }],
         placements,
         trackers,
-        settlement: { applyMediaBranchLineagePlan: vi.fn(), settleMediaGenerationRun: vi.fn(), settleMediaGenerationRequest: vi.fn(), registerGeneratedMediaRun: vi.fn(), finishGeneratedMediaRun: vi.fn(), finishFailedGeneratedMediaRun: vi.fn() },
-        handoff: { removePendingBranchMarkerForRun: vi.fn(), clearPendingBranchMarkerStateForRun: vi.fn(), resolvePendingBranchMarkerWithLineagePlan: vi.fn() },
+        settlement: {
+            applyMediaBranchLineagePlan: vi.fn(),
+            settleMediaGenerationRun: vi.fn(),
+            settleMediaGenerationRequest: vi.fn(),
+            registerGeneratedMediaRun: vi.fn(),
+            finishGeneratedMediaRun: vi.fn(),
+            finishFailedGeneratedMediaRun: vi.fn(),
+        },
+        handoff: {
+            removePendingBranchMarkerForRun: vi.fn(),
+            clearPendingBranchMarkerStateForRun: vi.fn(),
+            resolvePendingBranchMarkerWithLineagePlan: vi.fn(),
+        },
         lineage: {
             getExistingMediaNodeIds: ids => [...ids].filter((id): id is string => Boolean(id && state.nodes.some(node => node.nodeId === id))),
             ensureBranchOriginForGeneratedMedia: () => undefined,
-            ensureBranchMarkerForGeneratedMedia: () => ({ branchForkNode: undefined, branchLineNode: undefined, markerNode: undefined }),
+            ensureBranchMarkerForGeneratedMedia: () => ({
+                branchForkNode: undefined,
+                branchLineNode: undefined,
+                markerNode: undefined,
+            }),
             getGeneratedMediaEdgeSourceNode: () => undefined,
-            getNextGeneratedMediaPosition: () => ({ x: 0, y: 0 }),
+            getNextGeneratedMediaPosition: () => ({
+                x: 0,
+                y: 0,
+            }),
             addBranchLineageMarkerNodesIfMissing: nodes => nodes,
             addBranchMarkerEdgeIfMissing: edges => edges,
-            createGeneratedImageEdge: (source, target) => ({ edgeId: 'edge', sourceNodeId: source.nodeId, targetNodeId: target }),
+            createGeneratedImageEdge: (source, target) => ({
+                edgeId: 'edge',
+                sourceNodeId: source.nodeId,
+                targetNodeId: target,
+            }),
         },
         geometry: { getGeneratedMediaInsertionSize: () => 300 },
         apiGeometry: {
-            applyApiCanvasGeometry: vi.fn(update => {
-                state = applyCanvasGeometryUpdateToState(state, update).state
-            }),
+            applyApiCanvasGeometry: vi.fn(update => void (state = applyCanvasGeometryUpdateToState(state, update).state)),
         },
         recovery: { revision: () => 1 },
         analysis: { refreshCompleted: vi.fn(async () => {}) },
         visuals: {
             isFinalizing: id => finalizing.has(id),
-            keepCompletion: vi.fn((_, __, node) => {
-                finalizing.add(node.nodeId)
-            }),
+            keepCompletion: vi.fn((_, __, node) => void finalizing.add(node.nodeId)),
         },
         refreshAsset: vi.fn(async () => {}),
         reloadWorkspace: vi.fn(async () => {}),
@@ -121,26 +197,14 @@ function setup(nodes: CanvasNode[] = [], sharedEvents?: CanvasGenerationEvents) 
         settleDetachedCanvasRun: vi.fn(),
         scheduleDetachedCanvasRunTeardown: vi.fn(),
         applyMediaOperationRecoveryResult: vi.fn(),
-        syncGeneratingMediaNodes: vi.fn(() => {
-            order.push('outlines')
-        }),
-        syncCanvasMediaLayer: vi.fn(() => {
-            order.push('media')
-        }),
-        syncCanvasNodeDomGeometry: vi.fn(() => {
-            order.push('geometry')
-        }),
-        setTransientImageSource: vi.fn(() => {
-            order.push('pixels')
-        }),
-        renderNow: vi.fn(() => {
-            order.push('render')
-        }),
+        syncGeneratingMediaNodes: vi.fn(() => void order.push('outlines')),
+        syncCanvasMediaLayer: vi.fn(() => void order.push('media')),
+        syncCanvasNodeDomGeometry: vi.fn(() => void order.push('geometry')),
+        setTransientImageSource: vi.fn(() => void order.push('pixels')),
+        renderNow: vi.fn(() => void order.push('render')),
         removeSelection: vi.fn(),
         rebalanceGeneratedMediaTrees: vi.fn(nodes => nodes),
-        commitTransientCanvasStatePreservingEditors: vi.fn(value => {
-            state = value
-        }),
+        commitTransientCanvasStatePreservingEditors: vi.fn(value => void (state = value)),
         appendCanvasNodeToDOM: vi.fn(),
         appendBranchMarkerNodeToDOM: vi.fn(),
         hasNodeElement: () => true,
@@ -150,6 +214,7 @@ function setup(nodes: CanvasNode[] = [], sharedEvents?: CanvasGenerationEvents) 
     }
     const owner = new WorkspaceGenerationHandlers(events, ports)
     owners.push(owner)
+
     return {
         owner,
         ports,
@@ -158,16 +223,22 @@ function setup(nodes: CanvasNode[] = [], sharedEvents?: CanvasGenerationEvents) 
         placements,
         order,
         read: () => state,
-        setScope: (value: typeof scope) => {
-            scope = value
-        },
+        setScope: (value: typeof scope) => void (scope = value),
     }
 }
 
 describe('workspace generation handlers', () => {
     it('rejects another workspace before applying geometry or creating trackers', () => {
         const view = setup()
-        view.events.route(event('image_partial', { workspaceId: 'other', imageUrl: 'frame', canvasGeometry: { layoutRevision: 1, nodes: [], nodeSnapshots: [image()] } }))
+        view.events.route(event('image_partial', {
+            workspaceId: 'other',
+            imageUrl: 'frame',
+            canvasGeometry: {
+                layoutRevision: 1,
+                nodes: [],
+                nodeSnapshots: [image()],
+            },
+        }))
         expect(view.ports.apiGeometry.applyApiCanvasGeometry).not.toHaveBeenCalled()
         expect(view.ports.settlement.registerGeneratedMediaRun).not.toHaveBeenCalled()
         expect(view.trackers.images.size).toBe(0)
@@ -181,8 +252,19 @@ describe('workspace generation handlers', () => {
 
     it('publishes first-frame outline state before pixels and then synchronizes geometry and rendering', () => {
         const view = setup()
-        view.events.route(event('image_partial', { imageUrl: 'frame', assetId: 'asset', canvasGeometry: { layoutRevision: 1, nodes: [], nodeSnapshots: [image()] } }))
-        expect(view.trackers.images.get('media')).toMatchObject({ nodeId, hasReceivedFrame: true })
+        view.events.route(event('image_partial', {
+            imageUrl: 'frame',
+            assetId: 'asset',
+            canvasGeometry: {
+                layoutRevision: 1,
+                nodes: [],
+                nodeSnapshots: [image()],
+            },
+        }))
+        expect(view.trackers.images.get('media')).toMatchObject({
+            nodeId,
+            hasReceivedFrame: true,
+        })
         expect(view.order).toEqual(['outlines', 'pixels', 'media', 'geometry', 'render'])
         expect(view.ports.clearGeneratingReferencesOnFirstPixels).toHaveBeenCalledWith('thread', run)
         expect(view.ports.rebalanceGeneratedMediaTrees).not.toHaveBeenCalled()
@@ -190,7 +272,10 @@ describe('workspace generation handlers', () => {
 
     it('refuses partial media without API geometry rather than inventing canvas topology', () => {
         const view = setup()
-        view.events.route(event('image_partial', { imageUrl: 'frame', assetId: 'asset' }))
+        view.events.route(event('image_partial', {
+            imageUrl: 'frame',
+            assetId: 'asset',
+        }))
         expect(view.trackers.images.size).toBe(0)
         expect(view.ports.commitTransientCanvasStatePreservingEditors).not.toHaveBeenCalled()
         expect(view.ports.log).toHaveBeenCalledWith('error', expect.stringContaining('missing image partial geometry'), expect.any(Object))
@@ -207,7 +292,17 @@ describe('workspace generation handlers', () => {
     it('keeps completion visuals through final texture handoff and refreshes the completed Asset', () => {
         const view = setup([image()])
         view.trackers.rememberPartialImageTrackerForNode('thread', run, image())
-        view.events.route(event('image_complete', { assetId: 'asset', canvasGeometry: { layoutRevision: 1, nodes: [], nodeSnapshots: [{ ...image(), mediaGenerationPhase: 'ready' }] } }))
+        view.events.route(event('image_complete', {
+            assetId: 'asset',
+            canvasGeometry: {
+                layoutRevision: 1,
+                nodes: [],
+                nodeSnapshots: [{
+                    ...image(),
+                    mediaGenerationPhase: 'ready',
+                }],
+            },
+        }))
         expect(view.ports.visuals.keepCompletion).toHaveBeenCalledOnce()
         expect(view.ports.setTransientImageSource).toHaveBeenCalledWith(nodeId, null)
         expect(view.ports.appendCanvasNodeToDOM).toHaveBeenCalledWith(view.read().nodes[0])
@@ -233,12 +328,30 @@ describe('workspace generation handlers', () => {
 
     it('waits for API geometry before installing a video tracker', () => {
         const view = setup()
-        const videoRun = { ...run, mediaType: 'video' as const, lineageAssignment: { ...assignment, mediaType: 'video' as const } }
+        const videoRun = {
+            ...run,
+            mediaType: 'video' as const,
+            lineageAssignment: {
+                ...assignment,
+                mediaType: 'video' as const,
+            },
+        }
         view.events.route(event('video_pending', { generationRun: videoRun }))
         expect(view.trackers.videos.size).toBe(0)
         const videoNodeId = getPendingGeneratedMediaNodeId(videoRun.lineageAssignment)
-        const video = { ...image(), nodeId: videoNodeId, type: 'video' } as CanvasNode
-        view.events.route(event('video_pending', { generationRun: videoRun, canvasGeometry: { layoutRevision: 1, nodes: [], nodeSnapshots: [video] } }))
+        const video = {
+            ...image(),
+            nodeId: videoNodeId,
+            type: 'video',
+        } as CanvasNode
+        view.events.route(event('video_pending', {
+            generationRun: videoRun,
+            canvasGeometry: {
+                layoutRevision: 1,
+                nodes: [],
+                nodeSnapshots: [video],
+            },
+        }))
         expect(view.trackers.videos.get('media')?.nodeId).toBe(videoNodeId)
         expect(view.ports.appendCanvasNodeToDOM).toHaveBeenCalledWith(video)
     })
@@ -246,10 +359,17 @@ describe('workspace generation handlers', () => {
     it('permits cancelled-request removal geometry while rejecting its late additions', () => {
         const view = setup([image()])
         view.placements.cancelledRequests.add('request')
-        const canvasGeometry = { layoutRevision: 1, generationRequestId: 'request', nodes: [] }
+        const canvasGeometry = {
+            layoutRevision: 1,
+            generationRequestId: 'request',
+            nodes: [],
+        }
         view.events.route(event('canvas_geometry_resolved', { canvasGeometry }))
         expect(view.ports.apiGeometry.applyApiCanvasGeometry).not.toHaveBeenCalled()
-        view.events.route(event('canvas_geometry_resolved', { canvasGeometry: { ...canvasGeometry, removedNodeIds: [nodeId] } }))
+        view.events.route(event('canvas_geometry_resolved', { canvasGeometry: {
+            ...canvasGeometry,
+            removedNodeIds: [nodeId],
+        } }))
         expect(view.read().nodes).toEqual([])
     })
 
@@ -264,16 +384,36 @@ describe('workspace generation handlers', () => {
 
     it('does not attach pixels after outline publication replaces the scene', () => {
         const view = setup()
-        vi.mocked(view.ports.syncGeneratingMediaNodes).mockImplementation(() => view.setScope({ workspaceId: 'workspace', sceneKey: 'replacement' }))
-        view.events.route(event('image_partial', { imageUrl: 'frame', canvasGeometry: { layoutRevision: 1, nodes: [], nodeSnapshots: [image()] } }))
+        vi.mocked(view.ports.syncGeneratingMediaNodes).mockImplementation(() => view.setScope({
+            workspaceId: 'workspace',
+            sceneKey: 'replacement',
+        }))
+        view.events.route(event('image_partial', {
+            imageUrl: 'frame',
+            canvasGeometry: {
+                layoutRevision: 1,
+                nodes: [],
+                nodeSnapshots: [image()],
+            },
+        }))
         expect(view.ports.setTransientImageSource).not.toHaveBeenCalled()
         expect(view.ports.renderNow).not.toHaveBeenCalled()
     })
 
     it('stops tracker and node mutation when API geometry changes the workspace', () => {
         const view = setup()
-        vi.mocked(view.ports.apiGeometry.applyApiCanvasGeometry).mockImplementation(() => view.setScope({ workspaceId: 'other', sceneKey: 'other' }))
-        view.events.route(event('image_partial', { imageUrl: 'frame', canvasGeometry: { layoutRevision: 1, nodes: [], nodeSnapshots: [image()] } }))
+        vi.mocked(view.ports.apiGeometry.applyApiCanvasGeometry).mockImplementation(() => view.setScope({
+            workspaceId: 'other',
+            sceneKey: 'other',
+        }))
+        view.events.route(event('image_partial', {
+            imageUrl: 'frame',
+            canvasGeometry: {
+                layoutRevision: 1,
+                nodes: [],
+                nodeSnapshots: [image()],
+            },
+        }))
         expect(view.trackers.images.size).toBe(0)
         expect(view.ports.appendCanvasNodeToDOM).not.toHaveBeenCalled()
     })

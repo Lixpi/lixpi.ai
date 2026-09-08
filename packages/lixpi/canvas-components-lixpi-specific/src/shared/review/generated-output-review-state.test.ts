@@ -23,8 +23,14 @@ const marker: BranchOriginCanvasNode = {
     branchId: 'branch-1',
     generationRequestId: 'request-1',
     conversationAssetId: 'conversation-1',
-    position: { x: 0, y: 0 },
-    dimensions: { width: 375, height: 98 },
+    position: {
+        x: 0,
+        y: 0,
+    },
+    dimensions: {
+        width: 375,
+        height: 98,
+    },
     temporary: true,
 }
 
@@ -33,8 +39,14 @@ const output: ImageCanvasNode = {
     type: 'image',
     assetId: 'asset-1',
     mediaGenerationPhase: 'ready',
-    position: { x: 500, y: 0 },
-    dimensions: { width: 600, height: 400 },
+    position: {
+        x: 500,
+        y: 0,
+    },
+    dimensions: {
+        width: 600,
+        height: 400,
+    },
     generatedBy: {
         conversationAssetId: 'conversation-1',
         responseId: '',
@@ -53,7 +65,7 @@ const edge: WorkspaceEdge = {
     targetNodeId: output.nodeId,
 }
 
-function makeAsset(reviewStatus: 'candidate' | 'accepted' | 'superseded'): Asset {
+const makeAsset = (reviewStatus: 'candidate' | 'accepted' | 'superseded'): Asset => {
     return {
         assetId: output.assetId,
         organizationId: 'organization-1',
@@ -93,12 +105,12 @@ function makeAsset(reviewStatus: 'candidate' | 'accepted' | 'superseded'): Asset
     }
 }
 
-function makeInput(asset: Asset | undefined): {
+const makeInput = (asset: Asset | undefined): {
     node: ImageCanvasNode
     asset: Asset | undefined
     nodes: CanvasNode[]
     edges: WorkspaceEdge[]
-} {
+} => {
     return {
         node: output,
         asset,

@@ -12,9 +12,7 @@ import { testSchema } from '$src/components/proseMirror/plugins/testUtils/testSc
 import { aiModelsStore } from '$src/stores/aiModelsStore.ts'
 
 describe('testSchema — shared node coverage', () => {
-    beforeEach(() => {
-        aiModelsStore.setAiModels([])
-    })
+    beforeEach(() => void aiModelsStore.setAiModels([]))
 
     it('registers chat, prompt, and generated-media nodes', () => {
         expect(testSchema.nodes.aiChatThread).toBeDefined()
@@ -28,6 +26,7 @@ describe('testSchema — shared node coverage', () => {
 
     it('reuses marks from the shared proseMirror schema', () => {
         const sharedMarkNames = Object.keys(marks)
+
         for (const markName of sharedMarkNames) {
             expect(testSchema.marks[markName]).toBeDefined()
         }

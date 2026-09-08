@@ -8,7 +8,10 @@ import {
 import { STREAM_STATUS } from '@lixpi/constants'
 
 const generatedAssetStorageMocks = vi.hoisted(() => ({
-    attachGeneratedAssetNode: vi.fn(async () => ({ layoutRevision: 1, nodes: [] })),
+    attachGeneratedAssetNode: vi.fn(async () => ({
+        layoutRevision: 1,
+        nodes: [],
+    })),
     settleGeneratedAssetOriginal: vi.fn(async (input: any) => ({
         assetId: input.generationRun.lineageAssignment.assetId,
         organizationId: 'org-1',
@@ -31,13 +34,17 @@ import {
     readImageIntrinsicSize,
 } from './image-publisher.ts'
 
-type Published = { subject: string; payload: any }
+type Published = {
+    subject: string
+    payload: any
+}
 
-function makeNats(published: Published[]): any {
+const makeNats = (published: Published[]): any => {
     return {
-        publish: (subject: string, payload: any) => {
-            published.push({ subject, payload })
-        },
+        publish: (subject: string, payload: any) => void published.push({
+            subject,
+            payload,
+        }),
         getObjectStore: vi.fn(async () => ({})),
         createObjectStore: vi.fn(async () => ({})),
         putObject: vi.fn(async () => undefined),
@@ -78,22 +85,32 @@ const makePublisher = (generationRun: any = baseGenerationRun, ...rest: any[]) =
     const published: Published[] = []
     const nats = makeNats(published)
     const publisher = new ImagePublisher(nats, 'org-1', 'ws-1', 'thread-1', 'Google', generationRun, ...rest)
-    return { publisher, published, nats }
+
+    return {
+        publisher,
+        published,
+        nats,
+    }
 }
 
 const makePublisherWithoutGenerationRun = () => {
     const published: Published[] = []
     const nats = makeNats(published)
     const publisher = new ImagePublisher(nats, 'org-1', 'ws-1', 'thread-1', 'Google')
-    return { publisher, published }
+
+    return {
+        publisher,
+        published,
+    }
 }
 
 const makeCaptureOnlyPublisher = () => {
     const published: Published[] = []
     const nats = {
-        publish: (subject: string, payload: any) => {
-            published.push({ subject, payload })
-        },
+        publish: (subject: string, payload: any) => void published.push({
+            subject,
+            payload,
+        }),
     } as any
     const publisher = new ImagePublisher(
         nats,
@@ -108,13 +125,20 @@ const makeCaptureOnlyPublisher = () => {
         undefined,
         true,
     )
-    return { publisher, published }
+
+    return {
+        publisher,
+        published,
+    }
 }
 
 describe('ImagePublisher', () => {
     beforeEach(() => {
         vi.clearAllMocks()
-        generatedAssetStorageMocks.attachGeneratedAssetNode.mockResolvedValue({ layoutRevision: 1, nodes: [] })
+        generatedAssetStorageMocks.attachGeneratedAssetNode.mockResolvedValue({
+            layoutRevision: 1,
+            nodes: [],
+        })
         generatedAssetStorageMocks.settleGeneratedAssetOriginal.mockImplementation(async (input: any) => ({
             assetId: input.generationRun.lineageAssignment.assetId,
             organizationId: 'org-1',
@@ -125,7 +149,10 @@ describe('ImagePublisher', () => {
     })
 
     it('publishes a placeholder for partial stream images with an empty base64 payload', async () => {
-        const { publisher, published } = makePublisher()
+        const {
+            publisher,
+            published,
+        } = makePublisher()
 
         await publisher.partial('', 2)
 
@@ -146,7 +173,11 @@ describe('ImagePublisher', () => {
     })
 
     it('publishes partial image metadata for non-empty base64 payloads', async () => {
-        const { publisher, published, nats } = makePublisher()
+        const {
+            publisher,
+            published,
+            nats,
+        } = makePublisher()
         const pngBase64 = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x00]).toString('base64')
 
         await publisher.partial(pngBase64, 1)
@@ -174,14 +205,20 @@ describe('ImagePublisher', () => {
     })
 
     it('throws when partial is called without a lineageAssignment assetId', async () => {
-        const generationRun = { ...baseGenerationRun, lineageAssignment: undefined } as any
+        const generationRun = {
+            ...baseGenerationRun,
+            lineageAssignment: undefined,
+        } as any
         const { publisher } = makePublisher(generationRun)
 
         await expect(publisher.partial('', 0)).rejects.toThrow('Image partial is missing Asset assignment')
     })
 
     it('silently skips partial publish failures', async () => {
-        const { publisher, published } = makePublisher()
+        const {
+            publisher,
+            published,
+        } = makePublisher()
         const nats = makeNats([])
         nats.putObject.mockRejectedValueOnce(new Error('object storage temporarily unavailable'))
         const publisher2 = new ImagePublisher(nats, 'org-1', 'ws-1', 'thread-1', 'Google', baseGenerationRun)
@@ -191,7 +228,11 @@ describe('ImagePublisher', () => {
     })
 
     it('replaces an earlier partial object when the next partial arrives', async () => {
-        const { publisher, published, nats } = makePublisher()
+        const {
+            publisher,
+            published,
+            nats,
+        } = makePublisher()
         const pngBase64 = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00]).toString('base64')
 
         await publisher.partial(pngBase64, 0)
@@ -204,7 +245,11 @@ describe('ImagePublisher', () => {
     })
 
     it('clears the active partial object after publishing the final image', async () => {
-        const { publisher, published, nats } = makePublisher()
+        const {
+            publisher,
+            published,
+            nats,
+        } = makePublisher()
         const pngBase64 = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00]).toString('base64')
 
         await publisher.partial(pngBase64, 0)
@@ -221,7 +266,10 @@ describe('ImagePublisher', () => {
     })
 
     it('rejects empty final image bytes', async () => {
-        const { publisher, published } = makePublisher()
+        const {
+            publisher,
+            published,
+        } = makePublisher()
 
         await expect(publisher.complete({
             imageBase64: '',
@@ -235,7 +283,10 @@ describe('ImagePublisher', () => {
     })
 
     it('rejects non-image final bytes', async () => {
-        const { publisher, published } = makePublisher()
+        const {
+            publisher,
+            published,
+        } = makePublisher()
 
         await expect(publisher.complete({
             imageBase64: Buffer.from('not an image').toString('base64'),
@@ -249,7 +300,10 @@ describe('ImagePublisher', () => {
     })
 
     it('rejects truncated PNG headers that are not full valid images', async () => {
-        const { publisher, published } = makePublisher()
+        const {
+            publisher,
+            published,
+        } = makePublisher()
         const shortPng = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d]).toString('base64')
 
         await expect(publisher.complete({
@@ -276,7 +330,10 @@ describe('ImagePublisher', () => {
     })
 
     it('captures valid provider bytes without publishing or persisting candidate media', async () => {
-        const { publisher, published } = makeCaptureOnlyPublisher()
+        const {
+            publisher,
+            published,
+        } = makeCaptureOnlyPublisher()
         const pngBase64 = Buffer.from([
             0x89,
             0x50,
@@ -306,7 +363,10 @@ describe('ImagePublisher', () => {
     })
 
     it('stores JPEG final bytes with the JPEG MIME type', async () => {
-        const { publisher, published } = makePublisher()
+        const {
+            publisher,
+            published,
+        } = makePublisher()
         const jpegBase64 = Buffer.from([0xff, 0xd8, 0xff, 0xd9]).toString('base64')
 
         await publisher.complete({
@@ -325,7 +385,10 @@ describe('ImagePublisher', () => {
 
     it('propagates storage errors from IMAGE_COMPLETE', async () => {
         generatedAssetStorageMocks.settleGeneratedAssetOriginal.mockRejectedValueOnce(new Error('temporary object store write failure'))
-        const { publisher, published } = makePublisher()
+        const {
+            publisher,
+            published,
+        } = makePublisher()
         const jpegBase64 = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00]).toString('base64')
 
         await expect(
@@ -341,7 +404,10 @@ describe('ImagePublisher', () => {
 
     it('passes generation-run metadata through partial and complete image events', async () => {
         const onProseMirrorContent = vi.fn()
-        const { publisher, published } = makePublisher(baseGenerationRun, onProseMirrorContent)
+        const {
+            publisher,
+            published,
+        } = makePublisher(baseGenerationRun, onProseMirrorContent)
 
         const pngBase64 = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x00]).toString('base64')
         await publisher.partial(pngBase64, 2)
@@ -375,7 +441,10 @@ describe('ImagePublisher', () => {
     })
 
     it('settles the generated Asset and attaches canvas geometry before publishing completion', async () => {
-        const { publisher, published } = makePublisher()
+        const {
+            publisher,
+            published,
+        } = makePublisher()
         const pngBase64 = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x00]).toString('base64')
 
         await publisher.complete({
@@ -435,7 +504,10 @@ describe('ImagePublisher', () => {
 
     it('enqueues a provenance rebuild when materialization fails', async () => {
         assetProvenanceMaterializerMocks.materializeAssetProvenance.mockRejectedValueOnce(new Error('provenance write failed'))
-        const { publisher, published } = makePublisher()
+        const {
+            publisher,
+            published,
+        } = makePublisher()
         const pngBase64 = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x00]).toString('base64')
 
         await publisher.complete({
@@ -494,7 +566,10 @@ describe('readImageIntrinsicSize', () => {
         png.write('IHDR', 12)
         png.writeUInt32BE(1600, 16)
         png.writeUInt32BE(900, 20)
-        expect(readImageIntrinsicSize(png)).toEqual({ width: 1600, height: 900 })
+        expect(readImageIntrinsicSize(png)).toEqual({
+            width: 1600,
+            height: 900,
+        })
     })
 
     it('reads JPEG dimensions from the SOF segment', () => {
@@ -506,7 +581,10 @@ describe('readImageIntrinsicSize', () => {
             Buffer.from([0xff, 0xc0, 0x00, 0x11, 0x08, 0x03, 0x20, 0x04, 0xb0]),
             Buffer.alloc(10),
         ])
-        expect(readImageIntrinsicSize(jpeg)).toEqual({ width: 1200, height: 800 })
+        expect(readImageIntrinsicSize(jpeg)).toEqual({
+            width: 1200,
+            height: 800,
+        })
     })
 
     it('returns null for unreadable bytes', () => {
@@ -528,10 +606,23 @@ describe('ImagePublisher canvas geometry', () => {
     it('threads the resolved canvasGeometry onto the IMAGE_COMPLETE event', async () => {
         const canvasGeometry = {
             layoutRevision: 99,
-            nodes: [{ nodeId: 'node-asset-1', position: { x: 1, y: 2 }, dimensions: { width: 3, height: 4 } }],
+            nodes: [{
+                nodeId: 'node-asset-1',
+                position: {
+                    x: 1,
+                    y: 2,
+                },
+                dimensions: {
+                    width: 3,
+                    height: 4,
+                },
+            }],
         }
         generatedAssetStorageMocks.attachGeneratedAssetNode.mockResolvedValueOnce(canvasGeometry as any)
-        const { publisher, published } = makePublisher()
+        const {
+            publisher,
+            published,
+        } = makePublisher()
 
         await publisher.complete({
             imageBase64: Buffer.from([0xff, 0xd8, 0xff, 0xd9]).toString('base64'),

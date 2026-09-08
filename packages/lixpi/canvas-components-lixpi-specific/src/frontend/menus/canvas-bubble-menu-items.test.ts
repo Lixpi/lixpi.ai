@@ -18,7 +18,7 @@ import {
 // HELPERS
 // =============================================================================
 
-function createCallbacks() {
+const createCallbacks = () => {
     return {
         onDeleteNode: vi.fn(),
         onDeleteEdge: vi.fn(),
@@ -35,11 +35,7 @@ function createCallbacks() {
 // CANVAS_IMAGE_CONTEXT
 // =============================================================================
 
-describe('CANVAS_IMAGE_CONTEXT', () => {
-    it('equals "canvasImage"', () => {
-        expect(CANVAS_IMAGE_CONTEXT).toBe('canvasImage')
-    })
-})
+describe('CANVAS_IMAGE_CONTEXT', () => void it('equals "canvasImage"', () => void expect(CANVAS_IMAGE_CONTEXT).toBe('canvasImage')))
 
 // =============================================================================
 // buildCanvasBubbleMenuItems — STRUCTURE
@@ -82,6 +78,7 @@ describe('buildCanvasBubbleMenuItems — structure', () => {
 
     it('first 5 items expose the canvasImage context', () => {
         const { items } = buildCanvasBubbleMenuItems(callbacks)
+
         for (let i = 0; i < 5; i++) {
             expect(items[i].context).toContain(CANVAS_IMAGE_CONTEXT)
         }
@@ -159,6 +156,7 @@ describe('buildCanvasBubbleMenuItems — structure', () => {
 
     it('items are HTMLButtonElement instances with bubble-menu-button class', () => {
         const { items } = buildCanvasBubbleMenuItems(callbacks)
+
         for (const item of items) {
             expect(item.element.tagName).toBe('BUTTON')
             expect(item.element.classList.contains('bubble-menu-button')).toBe(true)
@@ -181,13 +179,19 @@ describe('buildCanvasBubbleMenuItems — activeNodeId', () => {
     })
 
     it('setActiveNodeId updates the value', () => {
-        const { getActiveNodeId, setActiveNodeId } = buildCanvasBubbleMenuItems(callbacks)
+        const {
+            getActiveNodeId,
+            setActiveNodeId,
+        } = buildCanvasBubbleMenuItems(callbacks)
         setActiveNodeId('node-42')
         expect(getActiveNodeId()).toBe('node-42')
     })
 
     it('setActiveNodeId(null) clears the value', () => {
-        const { getActiveNodeId, setActiveNodeId } = buildCanvasBubbleMenuItems(callbacks)
+        const {
+            getActiveNodeId,
+            setActiveNodeId,
+        } = buildCanvasBubbleMenuItems(callbacks)
         setActiveNodeId('node-42')
         setActiveNodeId(null)
         expect(getActiveNodeId()).toBeNull()
@@ -201,7 +205,10 @@ describe('buildCanvasBubbleMenuItems — activeNodeId', () => {
 describe('buildCanvasBubbleMenuItems — click behavior', () => {
     it('Download fires onDownloadMedia + onHide with active node', () => {
         const callbacks = createCallbacks()
-        const { items, setActiveNodeId } = buildCanvasBubbleMenuItems(callbacks)
+        const {
+            items,
+            setActiveNodeId,
+        } = buildCanvasBubbleMenuItems(callbacks)
         setActiveNodeId('img-3')
 
         items[1].element.click()
@@ -223,7 +230,10 @@ describe('buildCanvasBubbleMenuItems — click behavior', () => {
 
     it('Replace fires onReplaceMedia + onHide with active node', () => {
         const callbacks = createCallbacks()
-        const { items, setActiveNodeId } = buildCanvasBubbleMenuItems(callbacks)
+        const {
+            items,
+            setActiveNodeId,
+        } = buildCanvasBubbleMenuItems(callbacks)
         setActiveNodeId('media-3')
 
         items[0].element.click()
@@ -244,7 +254,10 @@ describe('buildCanvasBubbleMenuItems — click behavior', () => {
 
     it('Connect fires onTriggerConnection + onHide on click with active node', () => {
         const callbacks = createCallbacks()
-        const { items, setActiveNodeId } = buildCanvasBubbleMenuItems(callbacks)
+        const {
+            items,
+            setActiveNodeId,
+        } = buildCanvasBubbleMenuItems(callbacks)
         setActiveNodeId('img-5')
 
         items[3].element.click()
@@ -260,7 +273,10 @@ describe('buildCanvasBubbleMenuItems — click behavior', () => {
         callbacks.onTriggerConnection = vi.fn(() => callOrder.push('triggerConnection'))
         callbacks.onHide = vi.fn(() => callOrder.push('hide'))
 
-        const { items, setActiveNodeId } = buildCanvasBubbleMenuItems(callbacks)
+        const {
+            items,
+            setActiveNodeId,
+        } = buildCanvasBubbleMenuItems(callbacks)
         setActiveNodeId('img-5')
 
         items[3].element.click()
@@ -280,7 +296,10 @@ describe('buildCanvasBubbleMenuItems — click behavior', () => {
 
     it('Delete fires onDeleteNode + onHide with active node', () => {
         const callbacks = createCallbacks()
-        const { items, setActiveNodeId } = buildCanvasBubbleMenuItems(callbacks)
+        const {
+            items,
+            setActiveNodeId,
+        } = buildCanvasBubbleMenuItems(callbacks)
         setActiveNodeId('img-2')
 
         items[4].element.click()
@@ -301,7 +320,10 @@ describe('buildCanvasBubbleMenuItems — click behavior', () => {
 
     it('Open Asset details fires its callback and hides with an active node', () => {
         const callbacks = createCallbacks()
-        const { items, setActiveNodeId } = buildCanvasBubbleMenuItems(callbacks)
+        const {
+            items,
+            setActiveNodeId,
+        } = buildCanvasBubbleMenuItems(callbacks)
         setActiveNodeId('img-library')
 
         items[2].element.click()
@@ -325,7 +347,10 @@ describe('buildCanvasBubbleMenuItems — edge callbacks', () => {
 
     it('setActiveEdgeId updates and clears the value', () => {
         const callbacks = createCallbacks()
-        const { getActiveEdgeId, setActiveEdgeId } = buildCanvasBubbleMenuItems(callbacks)
+        const {
+            getActiveEdgeId,
+            setActiveEdgeId,
+        } = buildCanvasBubbleMenuItems(callbacks)
 
         setActiveEdgeId('edge-1')
         expect(getActiveEdgeId()).toBe('edge-1')
@@ -336,7 +361,10 @@ describe('buildCanvasBubbleMenuItems — edge callbacks', () => {
 
     it('Change connector curve uses active edge id and hides menu', () => {
         const callbacks = createCallbacks()
-        const { items, setActiveEdgeId } = buildCanvasBubbleMenuItems(callbacks)
+        const {
+            items,
+            setActiveEdgeId,
+        } = buildCanvasBubbleMenuItems(callbacks)
 
         setActiveEdgeId('edge-curve')
         items[7].element.click()
@@ -348,7 +376,10 @@ describe('buildCanvasBubbleMenuItems — edge callbacks', () => {
 
     it('Delete edge uses active edge id and hides menu', () => {
         const callbacks = createCallbacks()
-        const { items, setActiveEdgeId } = buildCanvasBubbleMenuItems(callbacks)
+        const {
+            items,
+            setActiveEdgeId,
+        } = buildCanvasBubbleMenuItems(callbacks)
 
         setActiveEdgeId('edge-del')
         items[8].element.click()

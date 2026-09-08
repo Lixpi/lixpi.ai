@@ -28,38 +28,73 @@ const run: MediaGenerationRunMeta = {
     mediaRunId: 'media',
 }
 
-function marker(nodeId: string, generationRequestId = 'request', threadId = 'thread'): BranchMarkerNode {
+const marker = (nodeId: string, generationRequestId = 'request', threadId = 'thread'): BranchMarkerNode => {
     return {
         type: 'branchLine',
         nodeId,
         generationRequestId,
         conversationAssetId: threadId,
         branchId: 'branch',
-        position: { x: 10, y: 20 },
-        dimensions: { width: 100, height: 60 },
+        position: {
+            x: 10,
+            y: 20,
+        },
+        dimensions: {
+            width: 100,
+            height: 60,
+        },
         temporary: true,
-        pendingState: { phase: 'preflight', promptText: 'prompt', reasoningIndex: 0 },
+        pendingState: {
+            phase: 'preflight',
+            promptText: 'prompt',
+            reasoningIndex: 0,
+        },
     }
 }
 
-function setup(nodes: CanvasNode[] = []) {
-    let state: CanvasState = { nodes, edges: [], viewport: { x: 0, y: 0, zoom: 1 } }
-    let scope: { workspaceId: string; sceneKey: string } | null = { workspaceId: 'workspace', sceneKey: 'scene' }
-    const placements = new WorkspaceGenerationPlacements({ readCanvasState: () => state, hasStartedMedia: () => false })
+const setup = (nodes: CanvasNode[] = []) => {
+    let state: CanvasState = {
+        nodes,
+        edges: [],
+        viewport: {
+            x: 0,
+            y: 0,
+            zoom: 1,
+        },
+    }
+    let scope: {
+        workspaceId: string
+        sceneKey: string
+    } | null = {
+        workspaceId: 'workspace',
+        sceneKey: 'scene',
+    }
+    const placements = new WorkspaceGenerationPlacements({
+        readCanvasState: () => state,
+        hasStartedMedia: () => false,
+    })
     const ports: WorkspaceGenerationSettlementPorts = {
         readScope: () => scope,
         readCanvasState: () => state,
         placements,
         lineage: {
             getUniqueLineageAssignmentsForMarkers: plan => plan.runAssignments,
-            buildGenerationRunFromLineageAssignment: (plan, assignment) => ({ ...run, generationRequestId: plan.generationRequestId, mediaRunId: assignment.mediaRunId }),
+            buildGenerationRunFromLineageAssignment: (plan, assignment) => ({
+                ...run,
+                generationRequestId: plan.generationRequestId,
+                mediaRunId: assignment.mediaRunId,
+            }),
         },
         handoff: {
             resolvePendingBranchMarkerWithLineagePlan: vi.fn(),
             clearPendingBranchMarkerStateForRun: vi.fn(),
             forgetPendingBranchMarkerRecordForRun: vi.fn(),
             stripPendingBranchMarkerState: node => {
-                const { pendingState, ...settled } = node
+                const {
+                    pendingState,
+                    ...settled
+                } = node
+
                 return settled
             },
         },
@@ -76,35 +111,57 @@ function setup(nodes: CanvasNode[] = []) {
                 placements.phases.delete(id)
             }
         }),
-        commit: vi.fn(value => {
-            state = value
-        }),
+        commit: vi.fn(value => void (state = value)),
         syncMedia: vi.fn(),
-        liveGeometry: vi.fn(node => ({ ...node, position: { x: 30, y: 40 }, dimensions: { width: 240, height: 80 } })),
-        resizeMarker: vi.fn(node => ({ ...node, position: { x: 50, y: 60 }, dimensions: { width: 300, height: 90 } })),
+        liveGeometry: vi.fn(node => ({
+            ...node,
+            position: {
+                x: 30,
+                y: 40,
+            },
+            dimensions: {
+                width: 240,
+                height: 80,
+            },
+        })),
+        resizeMarker: vi.fn(node => ({
+            ...node,
+            position: {
+                x: 50,
+                y: 60,
+            },
+            dimensions: {
+                width: 300,
+                height: 90,
+            },
+        })),
         isManuallyPositioned: vi.fn(() => false),
         syncMarker: vi.fn(),
         log: vi.fn(),
     }
+
     return {
         owner: new WorkspaceGenerationSettlement(ports),
         ports,
         placements,
         read: () => state,
-        setScope: (value: typeof scope) => {
-            scope = value
-        },
-        setState: (value: CanvasState) => {
-            state = value
-        },
+        setScope: (value: typeof scope) => void (scope = value),
+        setState: (value: CanvasState) => void (state = value),
         seed: (keys = ['media']) => {
-            placements.placements.set('thread', { promptText: 'prompt', createdAt: 1 })
-            placements.placements.set('thread:request', { promptText: 'prompt', createdAt: 1, activeRunKeys: new Set(keys) })
+            placements.placements.set('thread', {
+                promptText: 'prompt',
+                createdAt: 1,
+            })
+            placements.placements.set('thread:request', {
+                promptText: 'prompt',
+                createdAt: 1,
+                activeRunKeys: new Set(keys),
+            })
         },
     }
 }
 
-function plan(): MediaBranchLineagePlan {
+const plan = (): MediaBranchLineagePlan => {
     return {
         planVersion: 'media-branch-lineage-v1',
         generationRequestId: 'request',
@@ -157,8 +214,19 @@ describe('workspace generation settlement', () => {
     it('removes late preflight nodes and incident edges when the last run completes', () => {
         const view = setup([marker('late', 'thread'), marker('other', 'other-request', 'other-thread')])
         view.seed()
-        view.setState({ ...view.read(), edges: [{ edgeId: 'edge', sourceNodeId: 'late', targetNodeId: 'other' }] })
-        view.placements.markers.set('thread:reasoning-index:0', { nodeId: 'late', placementKey: 'thread', threadId: 'thread' })
+        view.setState({
+            ...view.read(),
+            edges: [{
+                edgeId: 'edge',
+                sourceNodeId: 'late',
+                targetNodeId: 'other',
+            }],
+        })
+        view.placements.markers.set('thread:reasoning-index:0', {
+            nodeId: 'late',
+            placementKey: 'thread',
+            threadId: 'thread',
+        })
         view.owner.finishGeneratedMediaRun('thread', run)
         expect(view.read().nodes.map(node => node.nodeId)).toEqual(['other'])
         expect(view.read().edges).toEqual([])
@@ -173,7 +241,10 @@ describe('workspace generation settlement', () => {
 
     it('settles an unversioned failed run without retaining a hidden conversation editor', () => {
         const view = setup()
-        view.placements.placements.set('thread', { promptText: 'prompt', createdAt: 1 })
+        view.placements.placements.set('thread', {
+            promptText: 'prompt',
+            createdAt: 1,
+        })
         view.owner.finishFailedGeneratedMediaRun('thread')
         expect(view.placements.placements.size).toBe(0)
         expect(view.ports.settleConversation).toHaveBeenCalledOnce()
@@ -193,7 +264,16 @@ describe('workspace generation settlement', () => {
         const view = setup([marker('line'), marker('other', 'other-request')])
         view.placements.phases.set('line', 'planned-awaiting-media')
         view.owner.settleBranchMarkersForGenerationRequest('request', { preserveGeometry: true })
-        expect(view.read().nodes[0]).toMatchObject({ position: { x: 30, y: 40 }, dimensions: { width: 240, height: 80 } })
+        expect(view.read().nodes[0]).toMatchObject({
+            position: {
+                x: 30,
+                y: 40,
+            },
+            dimensions: {
+                width: 240,
+                height: 80,
+            },
+        })
         expect((view.read().nodes[0] as BranchMarkerNode).pendingState).toBeUndefined()
         expect((view.read().nodes[1] as BranchMarkerNode).pendingState).toBeDefined()
         expect(view.ports.resizeMarker).not.toHaveBeenCalled()
@@ -204,7 +284,16 @@ describe('workspace generation settlement', () => {
         const view = setup([marker('line')])
         vi.mocked(view.ports.isManuallyPositioned).mockReturnValue(true)
         view.owner.settleBranchMarkersForGenerationRequest('request')
-        expect(view.read().nodes[0]).toMatchObject({ position: { x: 30, y: 40 }, dimensions: { width: 300, height: 90 } })
+        expect(view.read().nodes[0]).toMatchObject({
+            position: {
+                x: 30,
+                y: 40,
+            },
+            dimensions: {
+                width: 300,
+                height: 90,
+            },
+        })
     })
 
     it('refreshes a settled marker that still has a tracked progress phase without committing geometry', () => {
@@ -220,7 +309,11 @@ describe('workspace generation settlement', () => {
 
     it('sweeps unrecorded preflight markers without removing tracked markers or another conversation', () => {
         const view = setup([marker('orphan'), marker('tracked'), marker('other', 'request', 'other-thread')])
-        view.placements.markers.set('thread', { nodeId: 'tracked', placementKey: 'thread', threadId: 'thread' })
+        view.placements.markers.set('thread', {
+            nodeId: 'tracked',
+            placementKey: 'thread',
+            threadId: 'thread',
+        })
         view.owner.cleanupOrphanPreflightMarkersForThread('thread')
         expect(view.read().nodes.map(node => node.nodeId)).toEqual(['tracked', 'other'])
         expect(view.ports.cleanup).toHaveBeenCalledWith(['orphan'])
@@ -239,7 +332,11 @@ describe('workspace generation settlement', () => {
     it('reuses the API regeneration parent without inserting a new preflight marker', () => {
         const view = setup()
         const lineage = plan()
-        lineage.regenerationTarget = { branchId: 'branch', lineageParentNodeId: 'line', lineageParentType: 'branchLine' }
+        lineage.regenerationTarget = {
+            branchId: 'branch',
+            lineageParentNodeId: 'line',
+            lineageParentType: 'branchLine',
+        }
         view.owner.applyMediaBranchLineagePlan('thread', lineage, run)
         expect(view.ports.preflight.insertPendingBranchMarkersFromLineagePlan).not.toHaveBeenCalled()
         expect(view.ports.handoff.resolvePendingBranchMarkerWithLineagePlan).toHaveBeenCalledWith('thread', run)
@@ -249,7 +346,11 @@ describe('workspace generation settlement', () => {
         const view = setup([marker('late', 'thread')])
         view.seed(['media', 'sibling'])
         const lineage = plan()
-        lineage.runAssignments.push({ ...lineage.runAssignments[0], mediaRunId: 'sibling', branchLineNodeId: 'sibling-marker' })
+        lineage.runAssignments.push({
+            ...lineage.runAssignments[0],
+            mediaRunId: 'sibling',
+            branchLineNodeId: 'sibling-marker',
+        })
         view.placements.placements.get('thread:request')!.lineagePlan = lineage
         view.owner.settleMediaGenerationRequest('thread', 'request', run, { preserveGeometry: true })
         expect(view.ports.handoff.clearPendingBranchMarkerStateForRun).toHaveBeenCalledWith('thread', expect.objectContaining({ mediaRunId: 'sibling' }), { preserveGeometry: true })
@@ -261,7 +362,10 @@ describe('workspace generation settlement', () => {
     it('stops publication when cleanup replaces the scene', () => {
         const view = setup([marker('late', 'thread')])
         view.seed()
-        vi.mocked(view.ports.cleanup).mockImplementation(() => view.setScope({ workspaceId: 'other', sceneKey: 'other' }))
+        vi.mocked(view.ports.cleanup).mockImplementation(() => view.setScope({
+            workspaceId: 'other',
+            sceneKey: 'other',
+        }))
         view.owner.finishGeneratedMediaRun('thread', run)
         expect(view.ports.commit).not.toHaveBeenCalled()
         expect(view.ports.syncMedia).not.toHaveBeenCalled()
@@ -271,7 +375,10 @@ describe('workspace generation settlement', () => {
     it('does not render prepared markers or settle an editor after a reentrant commit replaces the scene', () => {
         const view = setup([marker('line')])
         view.seed()
-        vi.mocked(view.ports.commit).mockImplementation(() => view.setScope({ workspaceId: 'workspace', sceneKey: 'replacement' }))
+        vi.mocked(view.ports.commit).mockImplementation(() => view.setScope({
+            workspaceId: 'workspace',
+            sceneKey: 'replacement',
+        }))
         view.owner.settleMediaGenerationRequest('thread', 'request', run)
         expect(view.ports.syncMarker).not.toHaveBeenCalled()
         expect(view.ports.syncMedia).not.toHaveBeenCalled()
@@ -295,7 +402,10 @@ describe('workspace generation settlement', () => {
         const second = setup([marker('line')])
         first.seed()
         second.seed()
-        first.placements.placements.set('thread-other:request', { promptText: 'other', createdAt: 1 })
+        first.placements.placements.set('thread-other:request', {
+            promptText: 'other',
+            createdAt: 1,
+        })
         first.owner.clearPendingGeneratedMediaPlacementsForThread('thread')
         expect([...first.placements.placements.keys()]).toEqual(['thread-other:request'])
         expect(second.placements.placements.size).toBe(2)

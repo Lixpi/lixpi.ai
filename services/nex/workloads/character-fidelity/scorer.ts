@@ -308,7 +308,7 @@ const summarizeDetections = (faces: readonly DetectedFace[]): Readonly<Record<st
     ),
 })
 
-export async function loadCharacterFidelityModels(): Promise<RuntimeModels> {
+export const loadCharacterFidelityModels = async (): Promise<RuntimeModels> => {
     modelsPromise ??= (async () => {
         const startedAt = Date.now()
         ort.env.wasm.numThreads = 1

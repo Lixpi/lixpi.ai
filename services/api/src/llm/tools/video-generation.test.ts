@@ -26,7 +26,10 @@ describe('extractVideoToolCall', () => {
                 type: 'function_call',
                 name: 'generate_video',
                 call_id: 'call-1',
-                arguments: JSON.stringify({ prompt: 'Animate it.', negativePrompt: 'no subtitles' }),
+                arguments: JSON.stringify({
+                    prompt: 'Animate it.',
+                    negativePrompt: 'no subtitles',
+                }),
             }],
         })).toEqual({
             prompt: 'Animate it.',
@@ -41,7 +44,10 @@ describe('extractVideoToolCall', () => {
                 type: 'tool_use',
                 name: 'generate_video',
                 id: 'tool-1',
-                input: { prompt: 'Animate it.', negativePrompt: 'no captions' },
+                input: {
+                    prompt: 'Animate it.',
+                    negativePrompt: 'no captions',
+                },
             }],
         })).toEqual({
             prompt: 'Animate it.',
@@ -57,7 +63,10 @@ describe('extractVideoToolCall', () => {
                     parts: [{
                         functionCall: {
                             name: 'generate_video',
-                            args: { prompt: 'Animate it.', negativePrompt: '' },
+                            args: {
+                                prompt: 'Animate it.',
+                                negativePrompt: '',
+                            },
                         },
                     }],
                 },

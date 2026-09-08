@@ -25,7 +25,7 @@ it('restores body styles after overlapping panel drags are disposed out of order
     expect(document.body.style.userSelect).toBe('')
 })
 
-function buildConfig(overrides: Partial<SidePanelConfig> = {}): SidePanelConfig {
+const buildConfig = (overrides: Partial<SidePanelConfig> = {}): SidePanelConfig => {
     return {
         side: 'right',
         offset: 4,
@@ -38,11 +38,11 @@ function buildConfig(overrides: Partial<SidePanelConfig> = {}): SidePanelConfig 
     }
 }
 
-function dispatchPointer(target: EventTarget, type: string, clientX = 0, options: {
+const dispatchPointer = (target: EventTarget, type: string, clientX = 0, options: {
     button?: number
     pointerId?: number
     pointerType?: string
-} = {}): void {
+} = {}): void => {
     const event = new MouseEvent(type, {
         clientX,
         button: options.button ?? 0,
@@ -56,29 +56,28 @@ function dispatchPointer(target: EventTarget, type: string, clientX = 0, options
     target.dispatchEvent(event)
 }
 
-function pointerdown(target: EventTarget, clientX: number, options: {
+const pointerdown = (target: EventTarget, clientX: number, options: {
     button?: number
     pointerId?: number
     pointerType?: string
-} = {}): void {
-    dispatchPointer(target, 'pointerdown', clientX, options)
-}
+} = {}): void => void dispatchPointer(target, 'pointerdown', clientX, options)
 
-function move(clientX: number, pointerId = 1): void {
-    dispatchPointer(document, 'pointermove', clientX, { pointerId })
-}
+const move = (clientX: number, pointerId = 1): void => void dispatchPointer(document, 'pointermove', clientX, { pointerId })
 
-function pointerup(pointerId = 1): void {
-    dispatchPointer(document, 'pointerup', 0, { pointerId })
-}
+const pointerup = (pointerId = 1): void => void dispatchPointer(document, 'pointerup', 0, { pointerId })
 
-function emitTransitionEnd(element: HTMLElement, propertyName = 'transform'): void {
+const emitTransitionEnd = (element: HTMLElement, propertyName = 'transform'): void => {
     const event = new Event('transitionend', { bubbles: true })
     Object.defineProperty(event, 'propertyName', { value: propertyName })
     element.dispatchEvent(event)
 }
 
-function stubRect(element: HTMLElement, rect: { left: number; top: number; right: number; bottom: number }): void {
+const stubRect = (element: HTMLElement, rect: {
+    left: number
+    top: number
+    right: number
+    bottom: number
+}): void => {
     Object.defineProperty(element, 'getBoundingClientRect', {
         configurable: true,
         value: () => ({
@@ -89,11 +88,11 @@ function stubRect(element: HTMLElement, rect: { left: number; top: number; right
     })
 }
 
-function overlayPointerDown(clientX: number, clientY: number, options: {
+const overlayPointerDown = (clientX: number, clientY: number, options: {
     button?: number
     isPrimary?: boolean
     target?: HTMLElement
-} = {}): void {
+} = {}): void => {
     const event = new PointerEvent('pointerdown', {
         clientX,
         clientY,
@@ -107,7 +106,10 @@ function overlayPointerDown(clientX: number, clientY: number, options: {
     ;(options.target ?? document).dispatchEvent(event)
 }
 
-function overlayClick(clientX: number, clientY: number, options: { button?: number; target?: HTMLElement } = {}): void {
+const overlayClick = (clientX: number, clientY: number, options: {
+    button?: number
+    target?: HTMLElement
+} = {}): void => {
     const event = new MouseEvent('click', {
         clientX,
         clientY,
@@ -120,18 +122,18 @@ function overlayClick(clientX: number, clientY: number, options: { button?: numb
 
 const RIGHT_CLOSED_TOGGLE_TRANSFORM = 'translate3d(var(--side-panel-toggle-closed-travel, var(--side-panel-backdrop-width, 0px)), 0, 0)'
 
-function stubAnimationFrames(): () => void {
+const stubAnimationFrames = (): () => void => {
     const originalRequestAnimationFrame = window.requestAnimationFrame
     window.requestAnimationFrame = ((callback: FrameRequestCallback): number => {
         callback(0)
+
         return 1
     }) as typeof window.requestAnimationFrame
-    return () => {
-        window.requestAnimationFrame = originalRequestAnimationFrame
-    }
+
+    return () => void (window.requestAnimationFrame = originalRequestAnimationFrame)
 }
 
-async function flushSlideFrames(): Promise<void> {
+const flushSlideFrames = async (): Promise<void> => {
     await Promise.resolve()
     await Promise.resolve()
     await Promise.resolve()
@@ -148,7 +150,10 @@ afterEach(() => {
 
 describe('SidePanel', () => {
     it('renders a positioned resize handle with the side and extra class', () => {
-        const sidePanel = createSidePanel(buildConfig({ side: 'right', className: 'extra-handle' }))
+        const sidePanel = createSidePanel(buildConfig({
+            side: 'right',
+            className: 'extra-handle',
+        }))
 
         expect(sidePanel.element.classList.contains('side-panel-resize-handle')).toBe(true)
         expect(sidePanel.element.classList.contains('side-panel-resize-handle-right')).toBe(true)
@@ -172,7 +177,11 @@ describe('SidePanel', () => {
         const onResize = vi.fn()
         const onResizeStart = vi.fn()
         const onResizeEnd = vi.fn()
-        const sidePanel = createSidePanel(buildConfig({ onResize, onResizeStart, onResizeEnd }))
+        const sidePanel = createSidePanel(buildConfig({
+            onResize,
+            onResizeStart,
+            onResizeEnd,
+        }))
 
         pointerdown(sidePanel.element, 500)
         expect(onResizeStart).toHaveBeenCalledTimes(1)
@@ -191,7 +200,10 @@ describe('SidePanel', () => {
 
     it('grows a left-side panel as the pointer drags right', () => {
         const onResize = vi.fn()
-        const sidePanel = createSidePanel(buildConfig({ side: 'left', onResize }))
+        const sidePanel = createSidePanel(buildConfig({
+            side: 'left',
+            onResize,
+        }))
 
         pointerdown(sidePanel.element, 500)
         move(560)
@@ -206,7 +218,10 @@ describe('SidePanel', () => {
         const onResize = vi.fn()
         const sidePanel = createSidePanel(buildConfig({ onResize }))
 
-        pointerdown(sidePanel.element, 500, { pointerId: 7, pointerType: 'touch' })
+        pointerdown(sidePanel.element, 500, {
+            pointerId: 7,
+            pointerType: 'touch',
+        })
         move(430, 8)
         expect(onResize).not.toHaveBeenCalled()
 
@@ -270,7 +285,10 @@ describe('SidePanel', () => {
     })
 
     it('owns the width state, clamped to min/max', () => {
-        const sidePanel = createSidePanel(buildConfig({ minWidth: 320, getMaxWidth: () => 600 }))
+        const sidePanel = createSidePanel(buildConfig({
+            minWidth: 320,
+            getMaxWidth: () => 600,
+        }))
 
         // Never resized → resolved default, raw stays null.
         expect(sidePanel.getWidth()).toBe(380)
@@ -339,7 +357,10 @@ describe('SidePanel', () => {
     it('re-clamps the stored width through applyConstraints when max shrinks', () => {
         let max = 900
         const onResize = vi.fn()
-        const sidePanel = createSidePanel(buildConfig({ onResize, getMaxWidth: () => max }))
+        const sidePanel = createSidePanel(buildConfig({
+            onResize,
+            getMaxWidth: () => max,
+        }))
 
         sidePanel.setWidth(800)
         onResize.mockClear()
@@ -432,6 +453,7 @@ describe('SidePanel', () => {
 
         const movingSurfaces = [panel, sidePanel.backdropElement, sidePanel.toggleElement]
             .filter((surface): surface is HTMLElement => surface !== null)
+
         for (const surface of movingSurfaces) {
             expect(surface.style.getPropertyValue('--side-panel-slide-duration')).toBe('345ms')
             expect(surface.style.getPropertyValue('--side-panel-slide-easing')).toBe('linear(0, 1)')
@@ -456,7 +478,10 @@ describe('SidePanel', () => {
 
     it('lets a generic animation.easing override both open and close directions', () => {
         const sidePanel = createSidePanel(buildConfig({
-            animation: { durationMs: 200, easing: 'ease-in-out' },
+            animation: {
+                durationMs: 200,
+                easing: 'ease-in-out',
+            },
         }))
         const panel = document.createElement('div')
 
@@ -491,6 +516,7 @@ describe('SidePanel', () => {
 
     it('keeps a fixed-motion toggle stationary and out of the slide target list', async () => {
         const restoreAnimationFrames = stubAnimationFrames()
+
         try {
             const sidePanel = createSidePanel(buildConfig({
                 toggle: {
@@ -532,6 +558,7 @@ describe('SidePanel', () => {
 
     it('slides the toggle with the panel and waits for every moving surface to finish', async () => {
         const restoreAnimationFrames = stubAnimationFrames()
+
         try {
             const sidePanel = createSidePanel(buildConfig({
                 toggle: {
@@ -578,11 +605,11 @@ describe('SidePanel', () => {
     })
 
     it('uses the configured animation duration for the transitionend fallback', async () => {
-        async function closeWithCapturedFallback(durationMs: number): Promise<{
+        const closeWithCapturedFallback = async (durationMs: number): Promise<{
             resolvedBeforeFallback: boolean
             resolvedAfterFallback: boolean
             scheduledDelay: number
-        }> {
+        }> => {
             let fallbackCallback: (() => void) | null = null
             let scheduledDelay = 0
             const setTimeoutSpy = vi.spyOn(window, 'setTimeout').mockImplementation(
@@ -593,10 +620,9 @@ describe('SidePanel', () => {
                 ): number => {
                     scheduledDelay = Number(timeout)
                     fallbackCallback = typeof handler === 'function'
-                        ? () => {
-                            handler(...args)
-                        }
+                        ? () => void handler(...args)
                         : () => undefined
+
                     return 1
                 }) as typeof window.setTimeout,
             )
@@ -689,7 +715,12 @@ describe('SidePanel', () => {
             },
             onOpenChange,
         }))
-        stubRect(sidePanel.overlayElement as HTMLElement, { left: 0, top: 0, right: 400, bottom: 800 })
+        stubRect(sidePanel.overlayElement as HTMLElement, {
+            left: 0,
+            top: 0,
+            right: 400,
+            bottom: 800,
+        })
 
         // Closed: a stray click inside the overlay bounds must not fire onOpenChange.
         overlayPointerDown(200, 200)
@@ -710,7 +741,12 @@ describe('SidePanel', () => {
             },
             onOpenChange,
         }))
-        stubRect(disabledOverlayPanel.overlayElement as HTMLElement, { left: 0, top: 0, right: 400, bottom: 800 })
+        stubRect(disabledOverlayPanel.overlayElement as HTMLElement, {
+            left: 0,
+            top: 0,
+            right: 400,
+            bottom: 800,
+        })
 
         onOpenChange.mockClear()
         disabledOverlayPanel.setOpen(true)
@@ -727,7 +763,12 @@ describe('SidePanel', () => {
             overlay: { enabled: true },
             onOpenChange,
         }))
-        stubRect(sidePanel.overlayElement as HTMLElement, { left: 0, top: 0, right: 400, bottom: 800 })
+        stubRect(sidePanel.overlayElement as HTMLElement, {
+            left: 0,
+            top: 0,
+            right: 400,
+            bottom: 800,
+        })
         sidePanel.setOpen(true)
 
         overlayPointerDown(900, 900)
@@ -749,7 +790,12 @@ describe('SidePanel', () => {
             },
             onOpenChange,
         }))
-        stubRect(sidePanel.overlayElement as HTMLElement, { left: 0, top: 0, right: 400, bottom: 800 })
+        stubRect(sidePanel.overlayElement as HTMLElement, {
+            left: 0,
+            top: 0,
+            right: 400,
+            bottom: 800,
+        })
         const panel = document.createElement('div')
         document.body.appendChild(panel)
         sidePanel.mountOpen(panel)
@@ -776,7 +822,12 @@ describe('SidePanel', () => {
             overlay: { enabled: true },
             onOpenChange,
         }))
-        stubRect(sidePanel.overlayElement as HTMLElement, { left: 0, top: 0, right: 400, bottom: 800 })
+        stubRect(sidePanel.overlayElement as HTMLElement, {
+            left: 0,
+            top: 0,
+            right: 400,
+            bottom: 800,
+        })
         sidePanel.setOpen(true)
 
         overlayPointerDown(200, 200)
@@ -792,7 +843,12 @@ describe('SidePanel', () => {
             overlay: { enabled: true },
             onOpenChange,
         }))
-        stubRect(sidePanel.overlayElement as HTMLElement, { left: 0, top: 0, right: 400, bottom: 800 })
+        stubRect(sidePanel.overlayElement as HTMLElement, {
+            left: 0,
+            top: 0,
+            right: 400,
+            bottom: 800,
+        })
         sidePanel.setOpen(true)
 
         // Pointer starts inside the overlay but the click lands far enough away
@@ -828,7 +884,14 @@ describe('SidePanel', () => {
         }))
         const panel = document.createElement('div')
         Object.defineProperty(panel, 'getBoundingClientRect', {
-            value: () => ({ width: 400, height: 800, left: 0, top: 0, right: 400, bottom: 800 }),
+            value: () => ({
+                width: 400,
+                height: 800,
+                left: 0,
+                top: 0,
+                right: 400,
+                bottom: 800,
+            }),
         })
 
         sidePanel.mountOpen(panel)
@@ -865,7 +928,14 @@ describe('SidePanel', () => {
         }))
         const panel = document.createElement('div')
         Object.defineProperty(panel, 'getBoundingClientRect', {
-            value: () => ({ width: 400, height: 800, left: 0, top: 0, right: 400, bottom: 800 }),
+            value: () => ({
+                width: 400,
+                height: 800,
+                left: 0,
+                top: 0,
+                right: 400,
+                bottom: 800,
+            }),
         })
 
         sidePanel.mountOpen(panel)
@@ -952,7 +1022,10 @@ describe('SidePanel', () => {
     it('removes document-level outside-close listeners on destroy even without an overlay element', () => {
         const onOpenChange = vi.fn()
         const sidePanel = createSidePanel(buildConfig({
-            overlay: { enabled: false, closeOnPointerDown: true },
+            overlay: {
+                enabled: false,
+                closeOnPointerDown: true,
+            },
             onOpenChange,
         }))
         sidePanel.setOpen(true)
@@ -980,7 +1053,14 @@ describe('SidePanel', () => {
         optedOut.dataset.sidePanelNoDrag = 'true'
         panel.append(button, optedOut)
         Object.defineProperty(panel, 'getBoundingClientRect', {
-            value: () => ({ width: 400, height: 800, left: 0, top: 0, right: 400, bottom: 800 }),
+            value: () => ({
+                width: 400,
+                height: 800,
+                left: 0,
+                top: 0,
+                right: 400,
+                bottom: 800,
+            }),
         })
 
         sidePanel.mountOpen(panel)

@@ -17,12 +17,13 @@ const webUiSourceDirectory = resolve(import.meta.dirname, '..')
 
 const packageStylesheetImporter: FileImporter<'async'> = {
     findFileUrl(url) {
-        if (url.startsWith('$src/')) {
+        if (url.startsWith('$src/'))
             return pathToFileURL(resolve(webUiSourceDirectory, url.slice(5)))
-        }
 
         const packageImport = url.match(/^@lixpi\/([^/]+)\/(.+)$/)
-        if (!packageImport) return null
+
+        if (!packageImport)
+            return null
 
         const [, packageName, subpath] = packageImport
         const packageDirectory = resolve(import.meta.dirname, '../../packages/lixpi', packageName)

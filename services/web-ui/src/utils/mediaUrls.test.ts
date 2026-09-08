@@ -28,9 +28,7 @@ describe('mediaUrls path builders', () => {
         )
     })
 
-    it('builds an encoded asset upload path', () => {
-        expect(buildAssetUploadPath('my workspace')).toBe('/api/assets/workspaces/my%20workspace')
-    })
+    it('builds an encoded asset upload path', () => void expect(buildAssetUploadPath('my workspace')).toBe('/api/assets/workspaces/my%20workspace'))
 })
 
 // =============================================================================
@@ -80,9 +78,7 @@ describe('mediaUrls token helpers', () => {
         )
     })
 
-    it('returns the URL unchanged when the token is empty', () => {
-        expect(setAuthTokenOnUrl('/api/assets/a1', '')).toBe('/api/assets/a1')
-    })
+    it('returns the URL unchanged when the token is empty', () => void expect(setAuthTokenOnUrl('/api/assets/a1', '')).toBe('/api/assets/a1'))
 })
 
 // =============================================================================
@@ -105,7 +101,10 @@ describe('mediaUrls resolveMediaUrl', () => {
         expect(resolveMediaUrl('/api/assets/a1', { apiBaseUrl: 'https://api.example.test/' })).toBe(
             'https://api.example.test/api/assets/a1',
         )
-        expect(resolveMediaUrl('/api/assets/a1', { apiBaseUrl: 'https://api.example.test', token: 'fresh' })).toBe(
+        expect(resolveMediaUrl('/api/assets/a1', {
+            apiBaseUrl: 'https://api.example.test',
+            token: 'fresh',
+        })).toBe(
             'https://api.example.test/api/assets/a1?token=fresh',
         )
     })
@@ -131,9 +130,7 @@ describe('mediaUrls resolveMediaUrl', () => {
         )
     })
 
-    it('returns raw non-URL strings unchanged when no base64 MIME type is given', () => {
-        expect(resolveMediaUrl('rawbase64payload')).toBe('rawbase64payload')
-    })
+    it('returns raw non-URL strings unchanged when no base64 MIME type is given', () => void expect(resolveMediaUrl('rawbase64payload')).toBe('rawbase64payload'))
 })
 
 // =============================================================================
@@ -141,13 +138,9 @@ describe('mediaUrls resolveMediaUrl', () => {
 // =============================================================================
 
 describe('mediaUrls resolveAuthenticatedMediaUrl', () => {
-    beforeEach(() => {
-        vi.useRealTimers()
-    })
+    beforeEach(() => void vi.useRealTimers())
 
-    afterEach(() => {
-        vi.restoreAllMocks()
-    })
+    afterEach(() => void vi.restoreAllMocks())
 
     it('returns data and blob URLs unchanged without calling getAuthToken', async () => {
         const getAuthToken = vi.fn().mockResolvedValue('fresh-token')
@@ -190,9 +183,7 @@ describe('mediaUrls resolveAuthenticatedMediaUrl', () => {
         expect(result).toBe('http://localhost:3005/api/assets/a1?token=provided')
     })
 
-    it('returns the empty fallback when the URL is empty', async () => {
-        expect(await resolveAuthenticatedMediaUrl('', { emptyFallback: 'empty' })).toBe('empty')
-    })
+    it('returns the empty fallback when the URL is empty', async () => void expect(await resolveAuthenticatedMediaUrl('', { emptyFallback: 'empty' })).toBe('empty'))
 
     it('propagates token retrieval failures', async () => {
         const error = new Error('token failed')

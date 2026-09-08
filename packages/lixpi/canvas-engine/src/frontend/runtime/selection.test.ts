@@ -8,7 +8,10 @@ import { CanvasSelection } from './selection.ts'
 describe('CanvasSelection', () => {
     it('retains immutable prior membership and tracks marquee origin across removals', () => {
         const selection = new CanvasSelection()
-        const input = new Set(['a', 'b'])
+        const input = new Set([
+            'a',
+            'b',
+        ])
         selection.replace(input, true)
         input.clear()
         const previous = selection.nodeIds

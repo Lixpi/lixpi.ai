@@ -33,7 +33,11 @@ describe('Lixpi canvas presets', () => {
     })
 
     it('applies supplied canvas colors without requiring or retaining the application palette', () => {
-        const palette = { steelBlue: '#102030', offWhite: '#fefefe', nightBlue: '#304050' }
+        const palette = {
+            steelBlue: '#102030',
+            offWhite: '#fefefe',
+            nightBlue: '#304050',
+        }
         const settings = createLixpiCanvasSettings(palette)
         expect(settings.connector.styles.lineDefaultColor).toBe(palette.steelBlue)
         expect(settings.mediaBranchLineage.branchOrigin.styles).toMatchObject({

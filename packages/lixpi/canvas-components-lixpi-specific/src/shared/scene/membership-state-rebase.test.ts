@@ -13,7 +13,7 @@ import {
 
 import { rebaseCanvasMembershipState } from './membership-state-rebase.ts'
 
-function makeImage(nodeId: string): ImageCanvasNode {
+const makeImage = (nodeId: string): ImageCanvasNode => {
     return {
         nodeId,
         type: 'image',
@@ -21,24 +21,36 @@ function makeImage(nodeId: string): ImageCanvasNode {
         workspaceId: 'workspace-1',
         src: `/api/images/workspace-1/file-${nodeId}`,
         aspectRatio: 1,
-        position: { x: 0, y: 0 },
-        dimensions: { width: 120, height: 120 },
+        position: {
+            x: 0,
+            y: 0,
+        },
+        dimensions: {
+            width: 120,
+            height: 120,
+        },
     }
 }
 
-function makeBranchLine(nodeId: string): BranchLineCanvasNode {
+const makeBranchLine = (nodeId: string): BranchLineCanvasNode => {
     return {
         nodeId,
         type: 'branchLine',
         branchId: 'branch-1',
         generationRequestId: 'request-1',
-        position: { x: 0, y: 0 },
-        dimensions: { width: 240, height: 72 },
+        position: {
+            x: 0,
+            y: 0,
+        },
+        dimensions: {
+            width: 240,
+            height: 72,
+        },
         temporary: true,
     }
 }
 
-function makeEdge(sourceNodeId: string, targetNodeId: string): WorkspaceEdge {
+const makeEdge = (sourceNodeId: string, targetNodeId: string): WorkspaceEdge => {
     return {
         edgeId: `edge-${sourceNodeId}-${targetNodeId}`,
         sourceNodeId,
@@ -46,9 +58,13 @@ function makeEdge(sourceNodeId: string, targetNodeId: string): WorkspaceEdge {
     }
 }
 
-function makeCanvasState(nodes: CanvasNode[], edges: WorkspaceEdge[] = []): CanvasState {
+const makeCanvasState = (nodes: CanvasNode[], edges: WorkspaceEdge[] = []): CanvasState => {
     return {
-        viewport: { x: 0, y: 0, zoom: 1 },
+        viewport: {
+            x: 0,
+            y: 0,
+            zoom: 1,
+        },
         nodes,
         edges,
     }

@@ -42,7 +42,12 @@ describe('Character Creator structured VLM ports', () => {
                     requestAuthority: 'assigned',
                     visibility: 'observed',
                     sourceAssetId: 'asset-1',
-                    sourceRegion: { x: 10, y: 20, width: 30, height: 40 },
+                    sourceRegion: {
+                        x: 10,
+                        y: 20,
+                        width: 30,
+                        height: 40,
+                    },
                     targetAngles: ['front'],
                     confidence: 0.9,
                     conflictGroupId: null,
@@ -51,7 +56,11 @@ describe('Character Creator structured VLM ports', () => {
                 costumeNotes: [],
                 materialNotes: [],
                 distinguishingDetailNotes: [],
-                sourceCoverage: [{ sourceAssetId: 'asset-1', angles: ['front'], regions: ['face'] }],
+                sourceCoverage: [{
+                    sourceAssetId: 'asset-1',
+                    angles: ['front'],
+                    regions: ['face'],
+                }],
             },
             rawText: '{}',
             modelName: 'reasoning-model-v1',
@@ -89,8 +98,14 @@ describe('Character Creator structured VLM ports', () => {
                 height: 100,
             }],
             referenceAliases: [
-                { assetId: 'asset-1', alias: 'REFERENCE_1' },
-                { assetId: 'sheet-1', alias: 'REFERENCE_2' },
+                {
+                    assetId: 'asset-1',
+                    alias: 'REFERENCE_1',
+                },
+                {
+                    assetId: 'sheet-1',
+                    alias: 'REFERENCE_2',
+                },
             ],
             panels,
             userPrompt: 'Apply the requested transformation using the assigned original reference.',
@@ -108,9 +123,18 @@ describe('Character Creator structured VLM ports', () => {
             schema: expect.objectContaining({ name: 'character_evidence' }),
             userMessages: [expect.objectContaining({
                 content: expect.arrayContaining([
-                    expect.objectContaining({ type: 'input_text', text: expect.stringContaining('Original reference REFERENCE_1') }),
-                    expect.objectContaining({ type: 'input_text', text: expect.stringContaining('Editable prior panel REFERENCE_2') }),
-                    expect.objectContaining({ type: 'input_image', image_url: expect.stringMatching(/^data:image\/png;base64,/u) }),
+                    expect.objectContaining({
+                        type: 'input_text',
+                        text: expect.stringContaining('Original reference REFERENCE_1'),
+                    }),
+                    expect.objectContaining({
+                        type: 'input_text',
+                        text: expect.stringContaining('Editable prior panel REFERENCE_2'),
+                    }),
+                    expect.objectContaining({
+                        type: 'input_image',
+                        image_url: expect.stringMatching(/^data:image\/png;base64,/u),
+                    }),
                 ]),
             })],
         }))

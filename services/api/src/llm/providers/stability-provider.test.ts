@@ -75,7 +75,10 @@ const createOversizedJpegDataUrl = async (background: string): Promise<string> =
             background,
         },
     })
-        .jpeg({ quality: 92, mozjpeg: true })
+        .jpeg({
+            quality: 92,
+            mozjpeg: true,
+        })
         .toBuffer()
 
     return `data:image/jpeg;base64,${bytes.toString('base64')}`
@@ -83,13 +86,19 @@ const createOversizedJpegDataUrl = async (background: string): Promise<string> =
 
 const getFormData = (request: CapturedRequest): FormData => {
     const body = request.init.body
-    if (!(body instanceof FormData)) throw new Error('Expected Stability request body to be FormData')
+
+    if (!(body instanceof FormData))
+        throw new Error('Expected Stability request body to be FormData')
+
     return body
 }
 
 const getUploadedBlob = (formData: FormData, fieldName: string): Blob => {
     const value = formData.get(fieldName)
-    if (!(value instanceof Blob)) throw new Error(`Expected ${fieldName} to be a Blob`)
+
+    if (!(value instanceof Blob))
+        throw new Error(`Expected ${fieldName} to be a Blob`)
+
     return value
 }
 
@@ -124,10 +133,20 @@ const makeDeps = (): BaseProviderDeps => ({
 const processWithMessages = async (overrides: Record<string, any> = {}): Promise<CapturedRequest> => {
     let capturedRequest: CapturedRequest | undefined
     const fetchMock = vi.fn(async (url: string | URL | Request, init?: RequestInit) => {
-        capturedRequest = { url: String(url), init: init ?? {} }
+        capturedRequest = {
+            url: String(url),
+            init: init ?? {},
+        }
+
         return new Response(
-            JSON.stringify({ image: TINY_PNG_BASE64, finish_reason: 'SUCCESS' }),
-            { status: 200, headers: { 'content-type': 'application/json' } },
+            JSON.stringify({
+                image: TINY_PNG_BASE64,
+                finish_reason: 'SUCCESS',
+            }),
+            {
+                status: 200,
+                headers: { 'content-type': 'application/json' },
+            },
         )
     })
     vi.stubGlobal('fetch', fetchMock)
@@ -137,7 +156,10 @@ const processWithMessages = async (overrides: Record<string, any> = {}): Promise
         workspaceId: 'ws-1',
         aiChatThreadId: 'thread-1',
         organizationId: 'org-1',
-        eventMeta: { userId: 'user-1', organizationId: 'org-1' },
+        eventMeta: {
+            userId: 'user-1',
+            organizationId: 'org-1',
+        },
         enableImageGeneration: true,
         preflightResolved: true,
         imageSize: '1:1',
@@ -147,7 +169,10 @@ const processWithMessages = async (overrides: Record<string, any> = {}): Promise
             modelVersion: 'sd3.5-large',
             imageReferenceCapabilities: IMAGE_REFERENCE_CAPABILITIES,
         },
-        messages: [{ role: 'user', content: 'Paint a red cat in a field.' }],
+        messages: [{
+            role: 'user',
+            content: 'Paint a red cat in a field.',
+        }],
         generationRun: {
             generationRequestId: 'request-1',
             reasoningRunId: 'reasoning-1',
@@ -163,13 +188,19 @@ const processWithMessages = async (overrides: Record<string, any> = {}): Promise
 
     expect(result.error).toBeUndefined()
     expect(fetchMock).toHaveBeenCalledTimes(1)
-    if (!capturedRequest) throw new Error('Expected Stability fetch request to be captured')
+
+    if (!capturedRequest)
+        throw new Error('Expected Stability fetch request to be captured')
+
     return capturedRequest
 }
 
 const processWithReferences = async (references: string[]): Promise<CapturedRequest> => {
     return processWithMessages({
-        messages: [{ role: 'user', content: 'Use the provided reference image as the primary visual source and paint it in oils.' }],
+        messages: [{
+            role: 'user',
+            content: 'Use the provided reference image as the primary visual source and paint it in oils.',
+        }],
         imageGenerationReferences: references.map((url, index) => ({
             url,
             role: 'source-reference',
@@ -181,15 +212,16 @@ const processWithReferences = async (references: string[]): Promise<CapturedRequ
 describe('StabilityProvider text-to-image routing', () => {
     const previousApiKey = process.env.STABLE_DIFFUSION_API_KEY
 
-    beforeEach(() => {
-        process.env.STABLE_DIFFUSION_API_KEY = 'test-key'
-    })
+    beforeEach(() => void (process.env.STABLE_DIFFUSION_API_KEY = 'test-key'))
 
     afterEach(() => {
         vi.unstubAllGlobals()
         vi.restoreAllMocks()
-        if (previousApiKey === undefined) delete process.env.STABLE_DIFFUSION_API_KEY
-        else process.env.STABLE_DIFFUSION_API_KEY = previousApiKey
+
+        if (previousApiKey === undefined)
+            delete process.env.STABLE_DIFFUSION_API_KEY
+        else
+            process.env.STABLE_DIFFUSION_API_KEY = previousApiKey
     })
 
     it('uses SD3 endpoint and model id when no reference images are provided', async () => {
@@ -200,7 +232,10 @@ describe('StabilityProvider text-to-image routing', () => {
                 model: 'sd3.5-large',
                 modelVersion: 'sd3.5-large',
             },
-            messages: [{ role: 'user', content: 'Paint a red cat in a field.' }],
+            messages: [{
+                role: 'user',
+                content: 'Paint a red cat in a field.',
+            }],
         })
         const formData = getFormData(request)
 
@@ -219,7 +254,10 @@ describe('StabilityProvider text-to-image routing', () => {
                 modelVersion: 'stability-ultra',
             },
             imageSize: '4:5',
-            messages: [{ role: 'user', content: 'Paint a red cat in a field.' }],
+            messages: [{
+                role: 'user',
+                content: 'Paint a red cat in a field.',
+            }],
         })
         const formData = getFormData(request)
 
@@ -232,15 +270,16 @@ describe('StabilityProvider text-to-image routing', () => {
 describe('StabilityProvider reference image ingestion', () => {
     const previousApiKey = process.env.STABLE_DIFFUSION_API_KEY
 
-    beforeEach(() => {
-        process.env.STABLE_DIFFUSION_API_KEY = 'test-key'
-    })
+    beforeEach(() => void (process.env.STABLE_DIFFUSION_API_KEY = 'test-key'))
 
     afterEach(() => {
         vi.unstubAllGlobals()
         vi.restoreAllMocks()
-        if (previousApiKey === undefined) delete process.env.STABLE_DIFFUSION_API_KEY
-        else process.env.STABLE_DIFFUSION_API_KEY = previousApiKey
+
+        if (previousApiKey === undefined)
+            delete process.env.STABLE_DIFFUSION_API_KEY
+        else
+            process.env.STABLE_DIFFUSION_API_KEY = previousApiKey
     })
 
     it('uses the style endpoint and includes fidelity for a single oversized reference image', async () => {
@@ -258,7 +297,10 @@ describe('StabilityProvider reference image ingestion', () => {
         const largeJpegDataUrl = await createOversizedJpegDataUrl('#d8d8d8')
 
         const request = await processWithMessages({
-            messages: [{ role: 'user', content: 'Blend the source and style images.' }],
+            messages: [{
+                role: 'user',
+                content: 'Blend the source and style images.',
+            }],
             imageGenerationReferences: [
                 {
                     url: largeJpegDataUrl,
@@ -288,7 +330,10 @@ describe('StabilityProvider reference image ingestion', () => {
     it('uses an explicit structure reference as structural control', async () => {
         const largeLayoutExample = await createOversizedJpegDataUrl('#d8d8d8')
         const request = await processWithMessages({
-            messages: [{ role: 'user', content: 'Use this image only for composition structure.' }],
+            messages: [{
+                role: 'user',
+                content: 'Use this image only for composition structure.',
+            }],
             imageGenerationReferences: [{
                 url: largeLayoutExample,
                 role: 'structure-reference',
@@ -327,15 +372,16 @@ describe('StabilityProvider reference image ingestion', () => {
 describe('StabilityProvider stream validation', () => {
     const previousApiKey = process.env.STABLE_DIFFUSION_API_KEY
 
-    beforeEach(() => {
-        process.env.STABLE_DIFFUSION_API_KEY = 'test-key'
-    })
+    beforeEach(() => void (process.env.STABLE_DIFFUSION_API_KEY = 'test-key'))
 
     afterEach(() => {
         vi.unstubAllGlobals()
         vi.restoreAllMocks()
-        if (previousApiKey === undefined) delete process.env.STABLE_DIFFUSION_API_KEY
-        else process.env.STABLE_DIFFUSION_API_KEY = previousApiKey
+
+        if (previousApiKey === undefined)
+            delete process.env.STABLE_DIFFUSION_API_KEY
+        else
+            process.env.STABLE_DIFFUSION_API_KEY = previousApiKey
     })
 
     it('reports a provider-configuration error when the API key is missing', async () => {
@@ -349,18 +395,27 @@ describe('StabilityProvider stream validation', () => {
                 workspaceId: 'ws-1',
                 aiChatThreadId: 'thread-1',
                 organizationId: 'org-1',
-                eventMeta: { userId: 'user-1', organizationId: 'org-1' },
+                eventMeta: {
+                    userId: 'user-1',
+                    organizationId: 'org-1',
+                },
                 enableImageGeneration: true,
-                aiModelMetaInfo: { provider: 'Stability', model: 'sd3.5-large', modelVersion: 'sd3.5-large' },
-                messages: [{ role: 'user', content: 'Paint a red cat in a field.' }],
+                aiModelMetaInfo: {
+                    provider: 'Stability',
+                    model: 'sd3.5-large',
+                    modelVersion: 'sd3.5-large',
+                },
+                messages: [{
+                    role: 'user',
+                    content: 'Paint a red cat in a field.',
+                }],
             })
             expect(result.error).toBe('STABLE_DIFFUSION_API_KEY is not configured')
         } finally {
-            if (previousApiKey === undefined) {
+            if (previousApiKey === undefined)
                 delete process.env.STABLE_DIFFUSION_API_KEY
-            } else {
+             else
                 process.env.STABLE_DIFFUSION_API_KEY = previousApiKey
-            }
         }
     })
 
@@ -373,10 +428,20 @@ describe('StabilityProvider stream validation', () => {
             workspaceId: 'ws-1',
             aiChatThreadId: 'thread-1',
             organizationId: 'org-1',
-            eventMeta: { userId: 'user-1', organizationId: 'org-1' },
+            eventMeta: {
+                userId: 'user-1',
+                organizationId: 'org-1',
+            },
             enableImageGeneration: true,
-            aiModelMetaInfo: { provider: 'Stability', model: 'unsupported', modelVersion: 'unsupported' },
-            messages: [{ role: 'user', content: 'Paint a red cat in a field.' }],
+            aiModelMetaInfo: {
+                provider: 'Stability',
+                model: 'unsupported',
+                modelVersion: 'unsupported',
+            },
+            messages: [{
+                role: 'user',
+                content: 'Paint a red cat in a field.',
+            }],
             generationRun: {
                 generationRequestId: 'request-1',
                 reasoningRunId: 'reasoning-1',
@@ -400,10 +465,23 @@ describe('StabilityProvider stream validation', () => {
             workspaceId: 'ws-1',
             aiChatThreadId: 'thread-1',
             organizationId: 'org-1',
-            eventMeta: { userId: 'user-1', organizationId: 'org-1' },
+            eventMeta: {
+                userId: 'user-1',
+                organizationId: 'org-1',
+            },
             enableImageGeneration: true,
-            aiModelMetaInfo: { provider: 'Stability', model: 'stability-ultra', modelVersion: 'stability-ultra' },
-            messages: [{ role: 'assistant', content: [{ type: 'text', text: 'I can help' }] }],
+            aiModelMetaInfo: {
+                provider: 'Stability',
+                model: 'stability-ultra',
+                modelVersion: 'stability-ultra',
+            },
+            messages: [{
+                role: 'assistant',
+                content: [{
+                    type: 'text',
+                    text: 'I can help',
+                }],
+            }],
         })
 
         expect(result.error).toBe('No prompt found in messages')
@@ -416,8 +494,14 @@ describe('StabilityProvider stream validation', () => {
             'fetch',
             vi.fn(async () =>
                 new Response(
-                    JSON.stringify({ name: 'invalid_request', errors: ['Missing prompt field'] }),
-                    { status: 400, headers: { 'content-type': 'application/json' } },
+                    JSON.stringify({
+                        name: 'invalid_request',
+                        errors: ['Missing prompt field'],
+                    }),
+                    {
+                        status: 400,
+                        headers: { 'content-type': 'application/json' },
+                    },
                 )
             ),
         )
@@ -426,10 +510,20 @@ describe('StabilityProvider stream validation', () => {
             workspaceId: 'ws-1',
             aiChatThreadId: 'thread-1',
             organizationId: 'org-1',
-            eventMeta: { userId: 'user-1', organizationId: 'org-1' },
+            eventMeta: {
+                userId: 'user-1',
+                organizationId: 'org-1',
+            },
             enableImageGeneration: true,
-            aiModelMetaInfo: { provider: 'Stability', model: 'sd3.5-large', modelVersion: 'sd3.5-large' },
-            messages: [{ role: 'user', content: 'Paint a red cat in a field.' }],
+            aiModelMetaInfo: {
+                provider: 'Stability',
+                model: 'sd3.5-large',
+                modelVersion: 'sd3.5-large',
+            },
+            messages: [{
+                role: 'user',
+                content: 'Paint a red cat in a field.',
+            }],
             generationRun: {
                 generationRequestId: 'request-1',
                 reasoningRunId: 'reasoning-1',
@@ -452,8 +546,14 @@ describe('StabilityProvider stream validation', () => {
             'fetch',
             vi.fn(async () =>
                 new Response(
-                    JSON.stringify({ image: TINY_PNG_BASE64, finish_reason: 'CONTENT_FILTERED' }),
-                    { status: 200, headers: { 'content-type': 'application/json' } },
+                    JSON.stringify({
+                        image: TINY_PNG_BASE64,
+                        finish_reason: 'CONTENT_FILTERED',
+                    }),
+                    {
+                        status: 200,
+                        headers: { 'content-type': 'application/json' },
+                    },
                 )
             ),
         )
@@ -462,11 +562,21 @@ describe('StabilityProvider stream validation', () => {
             workspaceId: 'ws-1',
             aiChatThreadId: 'thread-1',
             organizationId: 'org-1',
-            eventMeta: { userId: 'user-1', organizationId: 'org-1' },
+            eventMeta: {
+                userId: 'user-1',
+                organizationId: 'org-1',
+            },
             enableImageGeneration: true,
             preflightResolved: true,
-            aiModelMetaInfo: { provider: 'Stability', model: 'sd3.5-large', modelVersion: 'sd3.5-large' },
-            messages: [{ role: 'user', content: 'Paint a red cat in a field.' }],
+            aiModelMetaInfo: {
+                provider: 'Stability',
+                model: 'sd3.5-large',
+                modelVersion: 'sd3.5-large',
+            },
+            messages: [{
+                role: 'user',
+                content: 'Paint a red cat in a field.',
+            }],
             generationRun: {
                 generationRequestId: 'request-1',
                 reasoningRunId: 'reasoning-1',
@@ -491,8 +601,14 @@ describe('StabilityProvider stream validation', () => {
             'fetch',
             vi.fn(async () =>
                 new Response(
-                    JSON.stringify({ image: '', finish_reason: 'SUCCESS' }),
-                    { status: 200, headers: { 'content-type': 'application/json' } },
+                    JSON.stringify({
+                        image: '',
+                        finish_reason: 'SUCCESS',
+                    }),
+                    {
+                        status: 200,
+                        headers: { 'content-type': 'application/json' },
+                    },
                 )
             ),
         )
@@ -501,11 +617,21 @@ describe('StabilityProvider stream validation', () => {
             workspaceId: 'ws-1',
             aiChatThreadId: 'thread-1',
             organizationId: 'org-1',
-            eventMeta: { userId: 'user-1', organizationId: 'org-1' },
+            eventMeta: {
+                userId: 'user-1',
+                organizationId: 'org-1',
+            },
             enableImageGeneration: true,
             preflightResolved: true,
-            aiModelMetaInfo: { provider: 'Stability', model: 'sd3.5-large', modelVersion: 'sd3.5-large' },
-            messages: [{ role: 'user', content: 'Paint a red cat in a field.' }],
+            aiModelMetaInfo: {
+                provider: 'Stability',
+                model: 'sd3.5-large',
+                modelVersion: 'sd3.5-large',
+            },
+            messages: [{
+                role: 'user',
+                content: 'Paint a red cat in a field.',
+            }],
             generationRun: {
                 generationRequestId: 'request-1',
                 reasoningRunId: 'reasoning-1',

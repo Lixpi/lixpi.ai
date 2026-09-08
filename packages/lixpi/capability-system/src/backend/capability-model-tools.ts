@@ -139,7 +139,7 @@ export const getAttachedCapabilityModelTools = (plan: SealedResolvedCapabilityPl
     })
 }
 
-export function directCapabilityToolName(capabilityId: string): string {
+export const directCapabilityToolName = (capabilityId: string): string => {
     const safeId = capabilityId
         .toLowerCase()
         .replace(/[^a-z0-9_-]/g, '_')
@@ -215,7 +215,7 @@ const projectOpenAISchemaMap = (value: unknown): unknown => {
     )
 }
 
-function projectOpenAIInputSchema(value: unknown): unknown {
+const projectOpenAIInputSchema = (value: unknown): unknown => {
     if (Array.isArray(value))
         return value.map(child => projectOpenAIInputSchema(child))
 

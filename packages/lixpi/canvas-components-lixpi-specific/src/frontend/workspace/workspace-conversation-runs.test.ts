@@ -7,7 +7,7 @@ import {
 } from 'vitest'
 import { WorkspaceConversationRuns } from './workspace-conversation-runs.ts'
 
-function setup() {
+const setup = () => {
     const timers: Array<() => void> = []
     const receiving = vi.fn()
     const owner = new WorkspaceConversationRuns<{ id: string }>({
@@ -15,6 +15,7 @@ function setup() {
         setReceiving: receiving,
         setTimer: callback => {
             timers.push(callback)
+
             return timers.length
         },
         clearTimer: vi.fn(),
@@ -22,14 +23,25 @@ function setup() {
     const mount = (id: string, destroy = vi.fn()) =>
         owner.mount(id, scope => {
             scope.own(destroy)
+
             return { id }
         })
-    return { owner, receiving, timers, mount }
+
+    return {
+        owner,
+        receiving,
+        timers,
+        mount,
+    }
 }
 
 describe('workspace conversation runs', () => {
     it('separates active and settled runs while keeping settled editors until teardown', () => {
-        const { owner, receiving, mount } = setup()
+        const {
+            owner,
+            receiving,
+            mount,
+        } = setup()
         owner.activate('one')
         mount('one')
         owner.settle('one')
@@ -47,7 +59,11 @@ describe('workspace conversation runs', () => {
     })
 
     it('clears pending activation and every editor when changing scenes', () => {
-        const { owner, receiving, mount } = setup()
+        const {
+            owner,
+            receiving,
+            mount,
+        } = setup()
         const dispose = vi.fn()
         owner.activate('pending')
         owner.activate('mounted')
@@ -67,7 +83,11 @@ describe('workspace conversation runs', () => {
     })
 
     it('does not let an old deferred teardown remove a replacement editor', () => {
-        const { owner, timers, mount } = setup()
+        const {
+            owner,
+            timers,
+            mount,
+        } = setup()
         owner.activate('conversation')
         mount('conversation')
         owner.defer('conversation', 1500)
@@ -79,7 +99,11 @@ describe('workspace conversation runs', () => {
     })
 
     it('releases every editor and receiving flag even if cleanup fails', () => {
-        const { owner, receiving, mount } = setup()
+        const {
+            owner,
+            receiving,
+            mount,
+        } = setup()
         const second = vi.fn()
         owner.activate('one')
         owner.activate('two')
@@ -88,7 +112,8 @@ describe('workspace conversation runs', () => {
         })
         mount('two', second)
         receiving.mockImplementation(id => {
-            if (id === 'one') throw new Error('receiver failed')
+            if (id === 'one')
+                throw new Error('receiver failed')
         })
         expect(() => owner.clear()).toThrow('Workspace conversation cleanup failed')
         expect(second).toHaveBeenCalledTimes(1)
@@ -99,7 +124,11 @@ describe('workspace conversation runs', () => {
     })
 
     it('clears receiving state even when a single editor teardown fails', () => {
-        const { owner, receiving, mount } = setup()
+        const {
+            owner,
+            receiving,
+            mount,
+        } = setup()
         owner.activate('one')
         mount('one', () => {
             throw new Error('failed')
@@ -111,7 +140,10 @@ describe('workspace conversation runs', () => {
     })
 
     it('is terminal and idempotent after destruction', () => {
-        const { owner, mount } = setup()
+        const {
+            owner,
+            mount,
+        } = setup()
         const dispose = vi.fn()
         mount('one', dispose)
         owner.destroy()

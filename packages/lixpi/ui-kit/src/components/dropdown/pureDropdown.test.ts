@@ -14,8 +14,14 @@ import { createPureDropdown } from './index.ts'
 import { withoutLayout } from '@lixpi/test-utils'
 
 const defaultOptions = [
-    { title: 'Model A', value: 'a' },
-    { title: 'Model B', value: 'b' },
+    {
+        title: 'Model A',
+        value: 'a',
+    },
+    {
+        title: 'Model B',
+        value: 'b',
+    },
 ]
 
 const dropdownMixinsSource = readFileSync(
@@ -23,14 +29,14 @@ const dropdownMixinsSource = readFileSync(
     'utf8',
 )
 
-function expectSourceToContain(source: string, snippet: string, label: string): void {
+const expectSourceToContain = (source: string, snippet: string, label: string): void => {
     expect(
         withoutLayout(source).includes(withoutLayout(snippet)),
         `${label} should contain:\n${snippet}`,
     ).toBe(true)
 }
 
-function createTestDropdown() {
+const createTestDropdown = () => {
     const onSelect = vi.fn()
     const dropdown = createPureDropdown({
         id: 'test-dropdown',
@@ -50,12 +56,24 @@ function createTestDropdown() {
     }
 }
 
-function createModalityDropdown() {
+const createModalityDropdown = () => {
     const onSelect = vi.fn()
     const options = [
-        { title: 'Vision', value: 'vision', tags: ['image', 'vision'] },
-        { title: 'Text Only', value: 'text', tags: ['text'] },
-        { title: 'Multimodal', value: 'multi', tags: ['text', 'image'] },
+        {
+            title: 'Vision',
+            value: 'vision',
+            tags: ['image', 'vision'],
+        },
+        {
+            title: 'Text Only',
+            value: 'text',
+            tags: ['text'],
+        },
+        {
+            title: 'Multimodal',
+            value: 'multi',
+            tags: ['text', 'image'],
+        },
     ]
 
     const dropdown = createPureDropdown({
@@ -67,12 +85,19 @@ function createModalityDropdown() {
         onSelect,
     })
 
-    return { dropdown, onSelect, options }
+    return {
+        dropdown,
+        onSelect,
+        options,
+    }
 }
 
 describe('pureDropdown — trigger alignment', () => {
     it('uses component-owned trigger alignment classes', () => {
-        const { dropdown, button } = createTestDropdown()
+        const {
+            dropdown,
+            button,
+        } = createTestDropdown()
         const selectedIcon = dropdown.dom.querySelector('.selected-option-icon')!
         const stateIndicator = dropdown.dom.querySelector('.state-indicator')!
 
@@ -104,13 +129,9 @@ describe('pureDropdown — trigger alignment', () => {
 })
 
 describe('pureDropdown — portaled popovers', () => {
-    beforeEach(() => {
-        document.body.innerHTML = ''
-    })
+    beforeEach(() => void (document.body.innerHTML = ''))
 
-    afterEach(() => {
-        document.body.innerHTML = ''
-    })
+    afterEach(() => void (document.body.innerHTML = ''))
 
     it('mounts a caller-classified popover on the document body with viewport positioning enabled', () => {
         const dropdown = createPureDropdown({
@@ -152,7 +173,10 @@ describe('pureDropdown — outside click behavior', () => {
     })
 
     it('closes on document mousedown outside the dropdown', () => {
-        const { dropdown, button } = createTestDropdown()
+        const {
+            dropdown,
+            button,
+        } = createTestDropdown()
         document.body.appendChild(dropdown.dom)
 
         button.dispatchEvent(new MouseEvent('click', { bubbles: true }))
@@ -166,7 +190,11 @@ describe('pureDropdown — outside click behavior', () => {
     })
 
     it('does not close when mousedown target is inside the dropdown', () => {
-        const { dropdown, button, firstOption } = createTestDropdown()
+        const {
+            dropdown,
+            button,
+            firstOption,
+        } = createTestDropdown()
         document.body.appendChild(dropdown.dom)
 
         button.dispatchEvent(new MouseEvent('click', { bubbles: true }))
@@ -201,7 +229,10 @@ describe('pureDropdown — outside click behavior', () => {
 
 describe('pureDropdown — selection and API updates', () => {
     it('updates selected option, closes dropdown, and notifies parent callback on click', () => {
-        const { dropdown, onSelect } = createTestDropdown()
+        const {
+            dropdown,
+            onSelect,
+        } = createTestDropdown()
         document.body.appendChild(dropdown.dom)
 
         const trigger = dropdown.dom.querySelector('button') as HTMLButtonElement
@@ -235,9 +266,21 @@ describe('pureDropdown — selection and API updates', () => {
         try {
             const { dropdown } = createModalityDropdown()
             const replacementOptions = [
-                { title: 'Text 2', value: 'text-2', tags: ['text'] },
-                { title: 'Image 2', value: 'image-2', tags: ['image'] },
-                { title: 'Video 2', value: 'video-2', tags: ['video'] },
+                {
+                    title: 'Text 2',
+                    value: 'text-2',
+                    tags: ['text'],
+                },
+                {
+                    title: 'Image 2',
+                    value: 'image-2',
+                    tags: ['image'],
+                },
+                {
+                    title: 'Video 2',
+                    value: 'video-2',
+                    tags: ['video'],
+                },
             ]
 
             dropdown.setOptions({
@@ -293,7 +336,10 @@ describe('pureDropdown — modality filter behavior', () => {
     })
 
     it('renders modality filter controls when enabled', () => {
-        const { dropdown, options } = createModalityDropdown()
+        const {
+            dropdown,
+            options,
+        } = createModalityDropdown()
         document.body.appendChild(dropdown.dom)
 
         expect(dropdown.dom.querySelector('.tag-filter')).not.toBeNull()
@@ -304,7 +350,10 @@ describe('pureDropdown — modality filter behavior', () => {
     })
 
     it('filters options when tags are toggled', () => {
-        const { dropdown, options } = createModalityDropdown()
+        const {
+            dropdown,
+            options,
+        } = createModalityDropdown()
         document.body.appendChild(dropdown.dom)
 
         const imageTag = dropdown.dom.querySelector<HTMLElement>('.tag-filter-item[data-tag="image"]')!
@@ -352,39 +401,66 @@ describe('pureDropdown — wheel behavior', () => {
         dropdownDom = dropdown.dom
         list = dropdownDom.querySelector('.submenu') as HTMLUListElement
         document.body.appendChild(dropdownDom)
-        Object.defineProperty(list, 'clientHeight', { configurable: true, value: 200 })
-        Object.defineProperty(list, 'scrollHeight', { configurable: true, value: 200 })
-        Object.defineProperty(list, 'scrollTop', { configurable: true, value: 0, writable: true })
+        Object.defineProperty(list, 'clientHeight', {
+            configurable: true,
+            value: 200,
+        })
+        Object.defineProperty(list, 'scrollHeight', {
+            configurable: true,
+            value: 200,
+        })
+        Object.defineProperty(list, 'scrollTop', {
+            configurable: true,
+            value: 0,
+            writable: true,
+        })
     })
 
-    afterEach(() => {
-        document.body.innerHTML = ''
-    })
+    afterEach(() => void (document.body.innerHTML = ''))
 
     it('stops propagation only when dropdown can actually scroll in that direction', () => {
-        const wheelDownEvent = new WheelEvent('wheel', { bubbles: true, deltaY: 120 })
+        const wheelDownEvent = new WheelEvent('wheel', {
+            bubbles: true,
+            deltaY: 120,
+        })
         const stopSpy = vi.spyOn(wheelDownEvent, 'stopPropagation')
 
         list.dispatchEvent(wheelDownEvent)
         expect(stopSpy).not.toHaveBeenCalled()
 
-        Object.defineProperty(list, 'scrollHeight', { configurable: true, value: 400 })
+        Object.defineProperty(list, 'scrollHeight', {
+            configurable: true,
+            value: 400,
+        })
 
-        const wheelToScrollEvent = new WheelEvent('wheel', { bubbles: true, deltaY: 120 })
+        const wheelToScrollEvent = new WheelEvent('wheel', {
+            bubbles: true,
+            deltaY: 120,
+        })
         const canScrollStopSpy = vi.spyOn(wheelToScrollEvent, 'stopPropagation')
         list.dispatchEvent(wheelToScrollEvent)
         expect(canScrollStopSpy).toHaveBeenCalled()
 
         list.scrollTop = 400
-        const wheelAtBottomEvent = new WheelEvent('wheel', { bubbles: true, deltaY: 120 })
+        const wheelAtBottomEvent = new WheelEvent('wheel', {
+            bubbles: true,
+            deltaY: 120,
+        })
         const atBottomStopSpy = vi.spyOn(wheelAtBottomEvent, 'stopPropagation')
         list.dispatchEvent(wheelAtBottomEvent)
         expect(atBottomStopSpy).not.toHaveBeenCalled()
     })
 
     it('prevents default on ctrl-wheel zoom events', () => {
-        const wheelEvent = new WheelEvent('wheel', { bubbles: true, cancelable: true, deltaY: 120 })
-        Object.defineProperty(wheelEvent, 'ctrlKey', { configurable: true, value: true })
+        const wheelEvent = new WheelEvent('wheel', {
+            bubbles: true,
+            cancelable: true,
+            deltaY: 120,
+        })
+        Object.defineProperty(wheelEvent, 'ctrlKey', {
+            configurable: true,
+            value: true,
+        })
         const preventSpy = vi.spyOn(wheelEvent, 'preventDefault')
 
         list.dispatchEvent(wheelEvent)
@@ -414,7 +490,11 @@ describe('pureDropdown — error state', () => {
         const { dropdown } = createTestDropdown()
         const title = dropdown.dom.querySelector('.title') as HTMLElement
 
-        dropdown.setErrorState({ enabled: true, title: 'Custom error', textColor: 'rgb(1, 2, 3)' })
+        dropdown.setErrorState({
+            enabled: true,
+            title: 'Custom error',
+            textColor: 'rgb(1, 2, 3)',
+        })
 
         expect(title.textContent).toBe('Custom error')
         expect(title.style.color).toBe('rgb(1, 2, 3)')
@@ -424,7 +504,10 @@ describe('pureDropdown — error state', () => {
         const { dropdown } = createTestDropdown()
         const title = dropdown.dom.querySelector('.title') as HTMLElement
 
-        dropdown.setErrorState({ enabled: false, title: 'Should not show' })
+        dropdown.setErrorState({
+            enabled: false,
+            title: 'Should not show',
+        })
 
         expect(dropdown.dom.classList.contains('dropdown-error-state')).toBe(false)
         expect(title.textContent).toBe('Model A')
@@ -433,8 +516,18 @@ describe('pureDropdown — error state', () => {
 
 describe('pureDropdown — icon rendering', () => {
     const iconOptions = [
-        { title: 'Red', value: 'red', icon: '<svg></svg>', color: 'red' },
-        { title: 'Blue', value: 'blue', icon: '<svg></svg>', color: 'blue' },
+        {
+            title: 'Red',
+            value: 'red',
+            icon: '<svg></svg>',
+            color: 'red',
+        },
+        {
+            title: 'Blue',
+            value: 'blue',
+            icon: '<svg></svg>',
+            color: 'blue',
+        },
     ]
 
     it('injects the option color into selected and list icons by default', () => {
@@ -506,7 +599,10 @@ describe('pureDropdown — rerender', () => {
     it('re-renders options list and selected display on demand', () => {
         const { dropdown } = createTestDropdown()
 
-        dropdown.setOptions({ options: [{ title: 'Only', value: 'only' }] })
+        dropdown.setOptions({ options: [{
+            title: 'Only',
+            value: 'only',
+        }] })
         expect(dropdown.dom.querySelectorAll('.submenu li')).toHaveLength(1)
 
         dropdown.rerender()
@@ -517,13 +613,9 @@ describe('pureDropdown — rerender', () => {
 })
 
 describe('pureDropdown — mount behavior', () => {
-    beforeEach(() => {
-        document.body.innerHTML = ''
-    })
+    beforeEach(() => void (document.body.innerHTML = ''))
 
-    afterEach(() => {
-        document.body.innerHTML = ''
-    })
+    afterEach(() => void (document.body.innerHTML = ''))
 
     it('applies configured popover box shadow via dropdown settings', () => {
         const { dropdown } = createTestDropdown()

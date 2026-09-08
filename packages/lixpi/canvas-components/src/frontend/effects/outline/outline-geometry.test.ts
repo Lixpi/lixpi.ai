@@ -11,25 +11,33 @@ import {
 } from './outline-geometry.ts'
 
 describe('outline geometry', () => {
-    it('calculates a rounded outline perimeter for the traveling segment', () => {
-        expect(getRoundedOutlinePerimeter(200, 100, 10)).toBeCloseTo(2 * (200 + 100 - 40) + 20 * Math.PI)
-    })
+    it('calculates a rounded outline perimeter for the traveling segment', () => void expect(getRoundedOutlinePerimeter(200, 100, 10)).toBeCloseTo(2 * (200 + 100 - 40) + 20 * Math.PI))
 
-    it('clamps perimeter math when radius exceeds half the bounds', () => {
-        expect(getRoundedOutlinePerimeter(10, 20, 99)).toBeCloseTo(2 * (10 + 20 - 4 * 5) + 2 * Math.PI * 5)
-    })
+    it('clamps perimeter math when radius exceeds half the bounds', () => void expect(getRoundedOutlinePerimeter(10, 20, 99)).toBeCloseTo(2 * (10 + 20 - 4 * 5) + 2 * Math.PI * 5))
 
     it('samples points clockwise around straight and rounded perimeter sections', () => {
-        expect(getRoundedOutlinePoint(200, 100, 10, 0)).toEqual({ x: 10, y: 0 })
-        expect(getRoundedOutlinePoint(200, 100, 10, 180)).toEqual({ x: 190, y: 0 })
+        expect(getRoundedOutlinePoint(200, 100, 10, 0)).toEqual({
+            x: 10,
+            y: 0,
+        })
+        expect(getRoundedOutlinePoint(200, 100, 10, 180)).toEqual({
+            x: 190,
+            y: 0,
+        })
         const afterTopRightCorner = getRoundedOutlinePoint(200, 100, 10, 180 + 5 * Math.PI)
         expect(afterTopRightCorner.x).toBeCloseTo(200)
         expect(afterTopRightCorner.y).toBeCloseTo(10)
     })
 
     it('tracks rasterized outline points even with oversized radius inputs', () => {
-        expect(getRoundedOutlinePoint(20, 10, 99, 0)).toEqual({ x: 5, y: 0 })
-        expect(getRoundedOutlinePoint(20, 10, 99, 5)).toEqual({ x: 10, y: 0 })
+        expect(getRoundedOutlinePoint(20, 10, 99, 0)).toEqual({
+            x: 5,
+            y: 0,
+        })
+        expect(getRoundedOutlinePoint(20, 10, 99, 5)).toEqual({
+            x: 10,
+            y: 0,
+        })
     })
 
     it('supports zero values for duration/perimeter without arithmetic errors', () => {

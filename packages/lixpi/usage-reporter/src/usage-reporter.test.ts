@@ -26,7 +26,14 @@ const veoMeta = {
     inferenceProviders: {
         google: {
             isCalledByThePlatform: true,
-            pricing: { currency: 'USD', video: { measuringUnit: 'seconds', pricePer: '1', price: '0.40' } },
+            pricing: {
+                currency: 'USD',
+                video: {
+                    measuringUnit: 'seconds',
+                    pricePer: '1',
+                    price: '0.40',
+                },
+            },
         },
     },
 } as unknown as MeteredAiModel
@@ -39,7 +46,14 @@ const seedanceMeta = {
     inferenceProviders: {
         byteplus: {
             isCalledByThePlatform: true,
-            pricing: { currency: 'USD', video: { measuringUnit: 'tokens', pricePer: '1000000', price: '4.30' } },
+            pricing: {
+                currency: 'USD',
+                video: {
+                    measuringUnit: 'tokens',
+                    pricePer: '1000000',
+                    price: '4.30',
+                },
+            },
         },
     },
 } as unknown as MeteredAiModel

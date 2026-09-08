@@ -25,11 +25,19 @@ import {
     type WorkspaceOutputDetailsPorts,
 } from './workspace-output-details.ts'
 
-const mocks = vi.hoisted(() => ({ progress: [] as MediaGenerationProgressInstance[], details: [] as { destroy: ReturnType<typeof vi.fn> }[] }))
+const mocks = vi.hoisted(() => ({
+    progress: [] as MediaGenerationProgressInstance[],
+    details: [] as { destroy: ReturnType<typeof vi.fn> }[],
+}))
 vi.mock('../progress/index.ts', () => ({
     createMediaGenerationProgress: () => {
-        const progress = { element: document.createElement('div'), update: vi.fn(), destroy: vi.fn() }
+        const progress = {
+            element: document.createElement('div'),
+            update: vi.fn(),
+            destroy: vi.fn(),
+        }
         mocks.progress.push(progress)
+
         return progress
     },
 }))
@@ -48,19 +56,40 @@ const media = (generated = true): ImageCanvasNode => ({
     nodeId: 'image',
     type: 'image',
     assetId: 'asset',
-    position: { x: 0, y: 0 },
-    dimensions: { width: 400, height: 240 },
+    position: {
+        x: 0,
+        y: 0,
+    },
+    dimensions: {
+        width: 400,
+        height: 240,
+    },
     ...(generated ? { generatedBy: { conversationAssetId: 'conversation' } } : {}),
 } as ImageCanvasNode)
-const marker = { nodeId: 'marker', type: 'branchFork', position: { x: 0, y: 0 }, dimensions: { width: 400, height: 56 } } as BranchMarkerNode
+const marker = {
+    nodeId: 'marker',
+    type: 'branchFork',
+    position: {
+        x: 0,
+        y: 0,
+    },
+    dimensions: {
+        width: 400,
+        height: 56,
+    },
+} as BranchMarkerNode
 
-function fixture() {
+const fixture = () => {
     const body = document.createElement('div')
     document.body.appendChild(body)
     const editor = { destroy: vi.fn() }
     const history = { destroy: vi.fn() }
     const info = { destroy: vi.fn() }
-    const asset = { assetId: 'asset', title: 'Title', revision: 1 } as Asset
+    const asset = {
+        assetId: 'asset',
+        title: 'Title',
+        revision: 1,
+    } as Asset
     const ports: WorkspaceOutputDetailsPorts = {
         assets: {
             document,
@@ -91,9 +120,18 @@ function fixture() {
     const mount = (node: ImageCanvasNode | CapabilityArtifactCanvasNode | BranchMarkerNode = media()) => {
         const owner = new WorkspaceOutputDetails(body, node, ports)
         owners.push(owner)
+
         return owner
     }
-    return { body, ports, editor, history, info, mount }
+
+    return {
+        body,
+        ports,
+        editor,
+        history,
+        info,
+        mount,
+    }
 }
 
 beforeEach(() => {
@@ -102,6 +140,7 @@ beforeEach(() => {
 })
 afterEach(() => {
     for (const owner of owners.splice(0)) owner.destroy()
+
     document.body.replaceChildren()
     vi.restoreAllMocks()
 })
@@ -109,9 +148,14 @@ afterEach(() => {
 describe('WorkspaceOutputDetails', () => {
     it('owns metadata and the selected media history without creating a duplicate progress timeline', () => {
         const f = fixture()
-        const progress = { element: document.createElement('div'), update: vi.fn(), destroy: vi.fn() }
+        const progress = {
+            element: document.createElement('div'),
+            update: vi.fn(),
+            destroy: vi.fn(),
+        }
         f.ports.mountMediaHistory = vi.fn(request => {
             request.onProgress(progress)
+
             return f.history
         })
         const owner = f.mount()
@@ -137,10 +181,17 @@ describe('WorkspaceOutputDetails', () => {
 
     it('falls back from a branch media projection to its canonical marker history', () => {
         const f = fixture()
-        f.ports.getBranchMediaTarget = () => ({ node: media(), lineageProjectionScope: 'branch-fork', limitProjectionToSelectedMedia: false })
+        f.ports.getBranchMediaTarget = () => ({
+            node: media(),
+            lineageProjectionScope: 'branch-fork',
+            limitProjectionToSelectedMedia: false,
+        })
         f.ports.mountMediaHistory = vi.fn(() => null)
         f.mount(marker)
-        expect(f.ports.mountBranchHistory).toHaveBeenCalledWith(expect.objectContaining({ target: { marker, lineageProjectionScope: 'branch-fork' } }))
+        expect(f.ports.mountBranchHistory).toHaveBeenCalledWith(expect.objectContaining({ target: {
+            marker,
+            lineageProjectionScope: 'branch-fork',
+        } }))
         expect(f.ports.assets.mountEditor).not.toHaveBeenCalled()
     })
 
@@ -154,9 +205,15 @@ describe('WorkspaceOutputDetails', () => {
 
     it('projects a linked marker for media whose generatedBy record is absent', () => {
         const f = fixture()
-        f.ports.getMediaBranchTarget = () => ({ marker, lineageProjectionScope: 'branch-fork' })
+        f.ports.getMediaBranchTarget = () => ({
+            marker,
+            lineageProjectionScope: 'branch-fork',
+        })
         f.mount(media(false))
-        expect(f.ports.mountBranchHistory).toHaveBeenCalledWith(expect.objectContaining({ target: { marker, lineageProjectionScope: 'branch-fork' } }))
+        expect(f.ports.mountBranchHistory).toHaveBeenCalledWith(expect.objectContaining({ target: {
+            marker,
+            lineageProjectionScope: 'branch-fork',
+        } }))
         expect(f.ports.mountMediaHistory).not.toHaveBeenCalled()
     })
 
@@ -166,7 +223,10 @@ describe('WorkspaceOutputDetails', () => {
         f.ports.getProgress = () => ({ status: 'running' } as MediaGenerationProgressState)
         const owner = f.mount()
         expect(mocks.progress).toHaveLength(1)
-        owner.sync({ nodes: [{ ...media(), nodeId: 'different' }] } as CanvasState)
+        owner.sync({ nodes: [{
+            ...media(),
+            nodeId: 'different',
+        }] } as CanvasState)
         expect(mocks.progress[0].update).not.toHaveBeenCalled()
         owner.sync({ nodes: [media()] } as CanvasState)
         expect(mocks.progress[0].update).toHaveBeenCalledOnce()
@@ -176,7 +236,11 @@ describe('WorkspaceOutputDetails', () => {
 
     it('disposes registered Artifact info views along with their history and editors', () => {
         const f = fixture()
-        const owner = f.mount({ ...media(), type: 'capabilityArtifact', artifactTypeId: 'registered-type' } as CapabilityArtifactCanvasNode)
+        const owner = f.mount({
+            ...media(),
+            type: 'capabilityArtifact',
+            artifactTypeId: 'registered-type',
+        } as CapabilityArtifactCanvasNode)
         expect(f.ports.mountArtifactHistory).toHaveBeenCalledOnce()
         expect(f.body.querySelector('.canvas-capability-artifact-details')).not.toBeNull()
         owner.destroy()
@@ -190,7 +254,11 @@ describe('WorkspaceOutputDetails', () => {
         f.ports.mountArtifactHistory = () => {
             throw new Error('history failed')
         }
-        expect(() => f.mount({ ...media(), type: 'capabilityArtifact', artifactTypeId: 'registered-type' } as CapabilityArtifactCanvasNode)).toThrow('history failed')
+        expect(() => f.mount({
+            ...media(),
+            type: 'capabilityArtifact',
+            artifactTypeId: 'registered-type',
+        } as CapabilityArtifactCanvasNode)).toThrow('history failed')
         expect(f.info.destroy).toHaveBeenCalledOnce()
         expect(f.editor.destroy).toHaveBeenCalledOnce()
         expect(mocks.details[0].destroy).toHaveBeenCalledOnce()
@@ -199,11 +267,20 @@ describe('WorkspaceOutputDetails', () => {
 
     it('renders analysis states and tags while leaving the editable summary in metadata', () => {
         const f = fixture()
-        f.ports.getDescriptor = () => ({ source: 'analysis', status: 'analyzing' } as ReturnType<WorkspaceOutputDetailsPorts['getDescriptor']>)
+        f.ports.getDescriptor = () => ({
+            source: 'analysis',
+            status: 'analyzing',
+        } as ReturnType<WorkspaceOutputDetailsPorts['getDescriptor']>)
         const first = f.mount(media(false))
         expect(f.body.querySelector<HTMLElement>('.canvas-media-descriptor-spinner')?.style.animationDelay).toBe('-434ms')
         first.destroy()
-        f.ports.getDescriptor = () => ({ source: 'analysis', status: 'ready', summary: 'Editable summary', entityTags: ['Person'], styleTags: ['Illustration'] } as ReturnType<WorkspaceOutputDetailsPorts['getDescriptor']>)
+        f.ports.getDescriptor = () => ({
+            source: 'analysis',
+            status: 'ready',
+            summary: 'Editable summary',
+            entityTags: ['Person'],
+            styleTags: ['Illustration'],
+        } as ReturnType<WorkspaceOutputDetailsPorts['getDescriptor']>)
         f.mount(media(false))
         expect([...f.body.querySelectorAll('.canvas-media-descriptor-tag')].map(tag => tag.textContent)).toEqual(['Person', 'Illustration'])
         expect(f.body.querySelector('.canvas-media-descriptor-summary')).toBeNull()

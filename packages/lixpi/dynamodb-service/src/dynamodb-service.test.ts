@@ -48,13 +48,9 @@ describe('DynamoDBService', () => {
         vi.mocked(debugInfo).mockReset()
     })
 
-    afterEach(() => {
-        vi.restoreAllMocks()
-    })
+    afterEach(() => void vi.restoreAllMocks())
 
-    it('throws when region is missing', () => {
-        expect(() => new DynamoDBService({ region: '' })).toThrow('AWS region must be provided.')
-    })
+    it('throws when region is missing', () => void expect(() => new DynamoDBService({ region: '' })).toThrow('AWS region must be provided.'))
 
     // =============================================================================
     // prepareAttributes
@@ -126,7 +122,11 @@ describe('DynamoDBService', () => {
             const sendMock = vi.fn()
             setDocumentClientSend(service, sendMock)
 
-            const result = await service.getItem({ tableName: '', key: {}, origin: 'getItem()' })
+            const result = await service.getItem({
+                tableName: '',
+                key: {},
+                origin: 'getItem()',
+            })
 
             expect(result).toBeUndefined()
             expect(sendMock).not.toHaveBeenCalled()
@@ -138,7 +138,10 @@ describe('DynamoDBService', () => {
         it('returns item and logs consumed capacity on success', async () => {
             const service = new DynamoDBService({ region: 'us-east-1' })
             const sendMock = vi.fn().mockResolvedValue({
-                Item: { userId: 'u1', status: 'ready' },
+                Item: {
+                    userId: 'u1',
+                    status: 'ready',
+                },
                 ConsumedCapacity: { CapacityUnits: 1 },
             })
             setDocumentClientSend(service, sendMock)
@@ -149,7 +152,10 @@ describe('DynamoDBService', () => {
                 origin: 'unit',
             })
 
-            expect(result).toEqual({ userId: 'u1', status: 'ready' })
+            expect(result).toEqual({
+                userId: 'u1',
+                status: 'ready',
+            })
             expect(sendMock).toHaveBeenCalledTimes(1)
             expect((sendMock.mock.calls[0][0] as { input: Record<string, unknown> }).input).toEqual({
                 TableName: 'users',
@@ -167,7 +173,10 @@ describe('DynamoDBService', () => {
             const sendMock = vi.fn().mockRejectedValue(new Error('fail'))
             setDocumentClientSend(service, sendMock)
 
-            const result = await service.getItem({ tableName: 'users', key: { userId: 'u1' } })
+            const result = await service.getItem({
+                tableName: 'users',
+                key: { userId: 'u1' },
+            })
 
             expect(result).toBeUndefined()
             expect(debugError).toHaveBeenCalledWith(
@@ -187,7 +196,10 @@ describe('DynamoDBService', () => {
             const sendMock = vi.fn()
             setDocumentClientSend(service, sendMock)
 
-            const result = await service.queryItems({ tableName: 'users', keyConditions: {} })
+            const result = await service.queryItems({
+                tableName: 'users',
+                keyConditions: {},
+            })
 
             expect(result).toBeUndefined()
             expect(sendMock).not.toHaveBeenCalled()
@@ -303,7 +315,10 @@ describe('DynamoDBService', () => {
             const sendMock = vi.fn()
             setDocumentClientSend(service, sendMock)
 
-            const result = await service.scanItems({ tableName: '', origin: 'scan1' })
+            const result = await service.scanItems({
+                tableName: '',
+                origin: 'scan1',
+            })
 
             expect(result).toBeUndefined()
             expect(sendMock).not.toHaveBeenCalled()
@@ -319,7 +334,11 @@ describe('DynamoDBService', () => {
             })
             setDocumentClientSend(service, sendMock)
 
-            const result = await service.scanItems({ tableName: 'users', origin: 'scan2', limit: 2 })
+            const result = await service.scanItems({
+                tableName: 'users',
+                origin: 'scan2',
+                limit: 2,
+            })
 
             expect(result).toEqual({
                 items: [{ id: 'a' }, { id: 'b' }],
@@ -380,7 +399,10 @@ describe('DynamoDBService', () => {
             setDocumentClientSend(service, sendMock)
 
             const result = await service.batchReadItems({
-                queries: [{ tableName: 'tableA', keys: [{ id: '1' }] }],
+                queries: [{
+                    tableName: 'tableA',
+                    keys: [{ id: '1' }],
+                }],
                 readBatchSize: 1,
                 fetchAllItems: true,
             })
@@ -418,7 +440,10 @@ describe('DynamoDBService', () => {
             setDocumentClientSend(service, sendMock)
 
             const result = await service.batchReadItems({
-                queries: [{ tableName: 'tableA', keys: [{ id: '1' }, { id: '2' }] }],
+                queries: [{
+                    tableName: 'tableA',
+                    keys: [{ id: '1' }, { id: '2' }],
+                }],
                 readBatchSize: 2,
                 fetchAllItems: false,
             })
@@ -455,7 +480,10 @@ describe('DynamoDBService', () => {
 
             const keys = Array.from({ length: 120 }).map((_, index) => ({ id: `item-${index}` }))
             const result = await service.batchReadItems({
-                queries: [{ tableName: 'tableB', keys }],
+                queries: [{
+                    tableName: 'tableB',
+                    keys,
+                }],
                 readBatchSize: 100,
                 fetchAllItems: true,
                 scanIndexForward: false,
@@ -480,8 +508,14 @@ describe('DynamoDBService', () => {
             const sendMock = vi.fn()
             setDocumentClientSend(service, sendMock)
 
-            const missingItemsResult = await service.batchWriteItems({ tableName: '', items: [] })
-            const missingTableResult = await service.batchWriteItems({ tableName: '', items: [{ id: 'x' }] })
+            const missingItemsResult = await service.batchWriteItems({
+                tableName: '',
+                items: [],
+            })
+            const missingTableResult = await service.batchWriteItems({
+                tableName: '',
+                items: [{ id: 'x' }],
+            })
 
             expect(missingItemsResult).toBeUndefined()
             expect(missingTableResult).toBeUndefined()
@@ -568,7 +602,11 @@ describe('DynamoDBService', () => {
             })
             setDocumentClientSend(service, sendMock)
 
-            const result = await service.putItem({ tableName: 'users', item: { id: 'u1' }, origin: 'put' })
+            const result = await service.putItem({
+                tableName: 'users',
+                item: { id: 'u1' },
+                origin: 'put',
+            })
 
             expect(result).toEqual({
                 ConsumedCapacity: { CapacityUnits: 2 },
@@ -585,7 +623,10 @@ describe('DynamoDBService', () => {
             const sendMock = vi.fn().mockRejectedValue(error)
             setDocumentClientSend(service, sendMock)
 
-            const result = await service.putItem({ tableName: 'users', item: { id: 'u1' } })
+            const result = await service.putItem({
+                tableName: 'users',
+                item: { id: 'u1' },
+            })
 
             expect(result).toBeUndefined()
             expect(debugError).toHaveBeenCalledWith('Error inserting record to DynamoDB users table:', error)
@@ -750,8 +791,14 @@ describe('DynamoDBService', () => {
 
             await service.updateItem({
                 tableName: 'capability-runs',
-                key: { runId: 'run-1', workspaceId: 'workspace-1' },
-                updates: { status: 'running', updatedAt: 2 },
+                key: {
+                    runId: 'run-1',
+                    workspaceId: 'workspace-1',
+                },
+                updates: {
+                    status: 'running',
+                    updatedAt: 2,
+                },
                 conditionExpression: '#status IN (:expectedStatus0)',
                 expressionAttributeNames: { '#status': 'status' },
                 expressionAttributeValues: { ':expectedStatus0': 'pending' },
@@ -760,7 +807,10 @@ describe('DynamoDBService', () => {
             expect((sendMock.mock.calls[0][0] as { input: Record<string, unknown> }).input).toMatchObject({
                 UpdateExpression: 'SET #status = :status, #updatedAt = :updatedAt',
                 ConditionExpression: '#status IN (:expectedStatus0)',
-                ExpressionAttributeNames: { '#status': 'status', '#updatedAt': 'updatedAt' },
+                ExpressionAttributeNames: {
+                    '#status': 'status',
+                    '#updatedAt': 'updatedAt',
+                },
                 ExpressionAttributeValues: {
                     ':status': 'running',
                     ':updatedAt': 2,
@@ -781,7 +831,10 @@ describe('DynamoDBService', () => {
             setDocumentClientSend(service, sendMock)
 
             await expect(
-                service.transactWrite({ operations: [], origin: 'trans' }),
+                service.transactWrite({
+                    operations: [],
+                    origin: 'trans',
+                }),
             ).rejects.toThrow('at least one operation must be provided')
             expect(sendMock).not.toHaveBeenCalled()
         })
@@ -796,16 +849,32 @@ describe('DynamoDBService', () => {
 
             await service.transactWrite({
                 operations: [
-                    { type: 'put', tableName: 'users', item: { id: 'u1' } },
-                    { type: 'update', tableName: 'users-meta', key: { id: 'u1' }, updates: { status: 'ready' } },
-                    { type: 'delete', tableName: 'users-access', key: { id: 'u1' } },
+                    {
+                        type: 'put',
+                        tableName: 'users',
+                        item: { id: 'u1' },
+                    },
+                    {
+                        type: 'update',
+                        tableName: 'users-meta',
+                        key: { id: 'u1' },
+                        updates: { status: 'ready' },
+                    },
+                    {
+                        type: 'delete',
+                        tableName: 'users-access',
+                        key: { id: 'u1' },
+                    },
                 ],
                 origin: 'trans2',
             })
 
             const input = (sendMock.mock.calls[0][0] as { input: Record<string, any> }).input
             expect(input.TransactItems).toEqual([
-                { Put: { TableName: 'users', Item: { id: 'u1' } } },
+                { Put: {
+                    TableName: 'users',
+                    Item: { id: 'u1' },
+                } },
                 {
                     Update: {
                         TableName: 'users-meta',
@@ -815,7 +884,10 @@ describe('DynamoDBService', () => {
                         ExpressionAttributeValues: { ':status': 'ready' },
                     },
                 },
-                { Delete: { TableName: 'users-access', Key: { id: 'u1' } } },
+                { Delete: {
+                    TableName: 'users-access',
+                    Key: { id: 'u1' },
+                } },
             ])
             expect(debugInfo).toHaveBeenCalledWith(
                 expect.stringContaining('DynamoDB -> transactWrite users,users-meta,users-access, capacityUnits: 6,'),
@@ -839,7 +911,10 @@ describe('DynamoDBService', () => {
                         updateExpression: 'SET #updatedAt = :updatedAt',
                         conditionExpression: '#updatedAt = :expected',
                         expressionAttributeNames: { '#updatedAt': 'updatedAt' },
-                        expressionAttributeValues: { ':updatedAt': 2, ':expected': 1 },
+                        expressionAttributeValues: {
+                            ':updatedAt': 2,
+                            ':expected': 1,
+                        },
                     },
                 ],
                 origin: 'trans3',
@@ -860,7 +935,11 @@ describe('DynamoDBService', () => {
 
             await expect(
                 service.transactWrite({
-                    operations: [{ type: 'put', tableName: 'users', item: { id: 'u1' } }],
+                    operations: [{
+                        type: 'put',
+                        tableName: 'users',
+                        item: { id: 'u1' },
+                    }],
                 }),
             ).rejects.toThrow('transact fail')
             expect(debugError).toHaveBeenCalledWith('Error completing DynamoDB transaction:', error)
@@ -877,7 +956,11 @@ describe('DynamoDBService', () => {
 
             await expect(
                 service.transactWrite({
-                    operations: [{ type: 'put', tableName: 'users', item: { id: 'u1' } }],
+                    operations: [{
+                        type: 'put',
+                        tableName: 'users',
+                        item: { id: 'u1' },
+                    }],
                     logConditionalCheckFailures: false,
                 }),
             ).rejects.toThrow('cancelled')
@@ -897,7 +980,10 @@ describe('DynamoDBService', () => {
             const sendMock = vi.fn()
             setDocumentClientSend(service, sendMock)
 
-            const result = await service.deleteItems({ tableName: 'users', key: {} })
+            const result = await service.deleteItems({
+                tableName: 'users',
+                key: {},
+            })
 
             expect(result).toBeUndefined()
             expect(sendMock).not.toHaveBeenCalled()
@@ -941,13 +1027,19 @@ describe('DynamoDBService', () => {
 
             const result = await service.deleteItems({
                 tableName: 'users',
-                key: { tenantId: 't1', sortKey: 's1' },
+                key: {
+                    tenantId: 't1',
+                    sortKey: 's1',
+                },
                 deleteRange: true,
             })
 
             expect(querySpy).toHaveBeenCalledWith({
                 tableName: 'users',
-                keyConditions: { tenantId: 't1', sortKey: 's1' },
+                keyConditions: {
+                    tenantId: 't1',
+                    sortKey: 's1',
+                },
                 limit: 25,
                 fetchAllItems: true,
                 origin: 'deleteItems() :: deleteRange operation',
@@ -971,7 +1063,10 @@ describe('DynamoDBService', () => {
 
             const result = await service.deleteItems({
                 tableName: 'users',
-                key: { tenantId: 't1', sortKey: 's1' },
+                key: {
+                    tenantId: 't1',
+                    sortKey: 's1',
+                },
                 deleteRange: true,
             })
 

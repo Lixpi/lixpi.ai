@@ -21,49 +21,89 @@ import {
     getStashedViewportStorageKey,
 } from './workspace-viewport-stash.ts'
 
-function setup(workspaceId = 'one') {
-    let canvas: CanvasState = { viewport: { x: 0, y: 0, zoom: 1 }, nodes: [], edges: [] }
-    const save = vi.fn<CanvasPersistencePorts['save']>().mockResolvedValue({ status: 'saved', workspaceId, version: { canvasStateUpdatedAt: 2 } })
+const setup = (workspaceId = 'one') => {
+    let canvas: CanvasState = {
+        viewport: {
+            x: 0,
+            y: 0,
+            zoom: 1,
+        },
+        nodes: [],
+        edges: [],
+    }
+    const save = vi.fn<CanvasPersistencePorts['save']>().mockResolvedValue({
+        status: 'saved',
+        workspaceId,
+        version: { canvasStateUpdatedAt: 2 },
+    })
     const persistencePorts: CanvasPersistencePorts = {
-        read: () => ({ canvasState: canvas, version: { canvasStateUpdatedAt: 1 } }),
+        read: () => ({
+            canvasState: canvas,
+            version: { canvasStateUpdatedAt: 1 },
+        }),
         save,
-        fetch: async () => ({ canvasState: canvas, version: { canvasStateUpdatedAt: 2 } }),
+        fetch: async () => ({
+            canvasState: canvas,
+            version: { canvasStateUpdatedAt: 2 },
+        }),
         publish: publication => {
-            if (publication.canvasState) canvas = publication.canvasState
+            if (publication.canvasState)
+                canvas = publication.canvasState
         },
         reportError: vi.fn(),
     }
     const session = new WorkspaceCanvasSession(workspaceId, persistencePorts)
     const storage = new Map<string, string>()
-    const timers: Array<{ callback: () => void; cancel: ReturnType<typeof vi.fn> }> = []
+    const timers: Array<{
+        callback: () => void
+        cancel: ReturnType<typeof vi.fn>
+    }> = []
     const ports: WorkspaceViewportPersistencePorts = {
         readCanvasState: () => canvas,
         restoreViewport: vi.fn(),
         storage: {
             get: key => storage.get(key) ?? null,
-            set: (key, value) => {
-                storage.set(key, value)
-            },
-            remove: key => {
-                storage.delete(key)
-            },
+            set: (key, value) => void storage.set(key, value),
+            remove: key => void storage.delete(key),
         },
         setTimer: (callback, delay) => {
             expect(delay).toBe(1000)
-            const timer = { callback, cancel: vi.fn() }
+            const timer = {
+                callback,
+                cancel: vi.fn(),
+            }
             timers.push(timer)
+
             return timer.cancel
         },
     }
     const viewport = new WorkspaceViewportPersistence(session, ports)
-    return { viewport, session, ports, persistencePorts, save, storage, timers }
+
+    return {
+        viewport,
+        session,
+        ports,
+        persistencePorts,
+        save,
+        storage,
+        timers,
+    }
 }
 
-const moved = (x: number) => ({ x, y: 20, zoom: 0.5 })
+const moved = (x: number) => ({
+    x,
+    y: 20,
+    zoom: 0.5,
+})
 
 describe('WorkspaceViewportPersistence', () => {
     it('submits the leading viewport and only the latest trailing viewport', async () => {
-        const { viewport, session, save, timers } = setup()
+        const {
+            viewport,
+            session,
+            save,
+            timers,
+        } = setup()
         viewport.change(moved(1))
         await session.drain()
         viewport.change(moved(2))
@@ -75,12 +115,21 @@ describe('WorkspaceViewportPersistence', () => {
         timers[2].callback()
         await session.drain()
         expect(save).toHaveBeenCalledTimes(2)
-        expect(save.mock.calls[1][0]).toMatchObject({ persistViewport: true, canvasState: { viewport: moved(3) } })
+        expect(save.mock.calls[1][0]).toMatchObject({
+            persistViewport: true,
+            canvasState: { viewport: moved(3) },
+        })
         viewport.destroy()
     })
 
     it('flushes pending work and releases the view without closing its session', async () => {
-        const { viewport, session, save, ports, timers } = setup()
+        const {
+            viewport,
+            session,
+            save,
+            ports,
+            timers,
+        } = setup()
         viewport.change(moved(1))
         await session.drain()
         viewport.change(moved(2))
@@ -97,7 +146,11 @@ describe('WorkspaceViewportPersistence', () => {
     })
 
     it('lets the session flush pending viewport work before it closes', async () => {
-        const { viewport, session, save } = setup()
+        const {
+            viewport,
+            session,
+            save,
+        } = setup()
         viewport.change(moved(1))
         await session.drain()
         viewport.change(moved(2))
@@ -108,23 +161,46 @@ describe('WorkspaceViewportPersistence', () => {
     })
 
     it('stashes a submitted viewport while its first network write is still pending', async () => {
-        const { viewport, session, save, storage } = setup()
+        const {
+            viewport,
+            session,
+            save,
+            storage,
+        } = setup()
         const result = Promise.withResolvers<CanvasWriteResult>()
         save.mockReturnValueOnce(result.promise)
         viewport.change(moved(1))
         viewport.stashForUnload()
         expect(storage.get(getStashedViewportStorageKey('one'))).toBe(encodeStashedViewport(moved(1)))
-        result.resolve({ status: 'saved', workspaceId: 'one', version: { canvasStateUpdatedAt: 2 } })
+        result.resolve({
+            status: 'saved',
+            workspaceId: 'one',
+            version: { canvasStateUpdatedAt: 2 },
+        })
         await session.drain()
         viewport.destroy()
     })
 
     it('restores once and persists the restored viewport without replaying obsolete stored state', async () => {
-        const { viewport, session, storage, ports, save } = setup()
+        const {
+            viewport,
+            session,
+            storage,
+            ports,
+            save,
+        } = setup()
         const key = getStashedViewportStorageKey('one')
         storage.set(key, encodeStashedViewport(moved(10)))
-        viewport.restore({ x: 0, y: 0, zoom: 1 })
-        viewport.restore({ x: 0, y: 0, zoom: 1 })
+        viewport.restore({
+            x: 0,
+            y: 0,
+            zoom: 1,
+        })
+        viewport.restore({
+            x: 0,
+            y: 0,
+            zoom: 1,
+        })
         await session.drain()
         expect(ports.restoreViewport).toHaveBeenCalledExactlyOnceWith(moved(10))
         expect(save).toHaveBeenCalledTimes(1)
@@ -133,7 +209,12 @@ describe('WorkspaceViewportPersistence', () => {
     })
 
     it('still flushes when local storage is unavailable', async () => {
-        const { viewport, session, ports, save } = setup()
+        const {
+            viewport,
+            session,
+            ports,
+            save,
+        } = setup()
         viewport.change(moved(1))
         await session.drain()
         viewport.change(moved(2))
@@ -147,7 +228,13 @@ describe('WorkspaceViewportPersistence', () => {
     })
 
     it('does not install a timer if publishing the leading write destroys the view', async () => {
-        const { viewport, session, persistencePorts, timers, save } = setup()
+        const {
+            viewport,
+            session,
+            persistencePorts,
+            timers,
+            save,
+        } = setup()
         persistencePorts.publish = () => viewport.destroy()
         viewport.change(moved(1))
         await session.drain()
@@ -166,12 +253,19 @@ describe('WorkspaceViewportPersistence', () => {
         await two.session.drain()
         expect(two.session.viewCount).toBe(1)
         expect(two.timers[0].cancel).not.toHaveBeenCalled()
-        expect(two.save.mock.calls[0][0]).toMatchObject({ workspaceId: 'two', canvasState: { viewport: moved(2) } })
+        expect(two.save.mock.calls[0][0]).toMatchObject({
+            workspaceId: 'two',
+            canvasState: { viewport: moved(2) },
+        })
         two.viewport.destroy()
     })
 
     it('rejects non-finite viewports without scheduling or publishing', () => {
-        const { viewport, timers, save } = setup()
+        const {
+            viewport,
+            timers,
+            save,
+        } = setup()
         viewport.change(moved(NaN))
         expect(timers).toHaveLength(0)
         expect(save).not.toHaveBeenCalled()

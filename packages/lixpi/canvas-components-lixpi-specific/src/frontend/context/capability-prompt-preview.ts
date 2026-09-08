@@ -228,10 +228,10 @@ export const createCapabilityPromptReferencePreview = (
     )
 }
 
-export function renderCapabilityDescriptionCard(
+export const renderCapabilityDescriptionCard = (
     meta: CapabilityModuleMeta,
     document: Document,
-): HTMLElement {
+): HTMLElement => {
     const html = createDocumentHtml(document)
     const inputsId = `capability-inputs-${crypto.randomUUID()}`
     const sheet = meta.descriptionSheet

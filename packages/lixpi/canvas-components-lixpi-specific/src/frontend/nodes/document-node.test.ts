@@ -19,18 +19,48 @@ import {
 const owners: Array<{ destroy: () => void }> = []
 afterEach(() => {
     for (const owner of owners.splice(0)) owner.destroy()
+
     document.body.replaceChildren()
 })
-const node: DocumentCanvasNode = { nodeId: 'placement-a', type: 'document', assetId: 'asset', position: { x: 0, y: 0 }, dimensions: { width: 300, height: 200 } }
-const loaded = { documentId: 'asset', organizationId: 'organization', title: 'Document', content: { type: 'doc', content: [{ type: 'paragraph' }] } } as WorkspaceDocument
+const node: DocumentCanvasNode = {
+    nodeId: 'placement-a',
+    type: 'document',
+    assetId: 'asset',
+    position: {
+        x: 0,
+        y: 0,
+    },
+    dimensions: {
+        width: 300,
+        height: 200,
+    },
+}
+const loaded = {
+    documentId: 'asset',
+    organizationId: 'organization',
+    title: 'Document',
+    content: {
+        type: 'doc',
+        content: [{ type: 'paragraph' }],
+    },
+} as WorkspaceDocument
 
-function createFixture() {
+const createFixture = () => {
     const shells = new WorkspaceNodeShells({
         document,
-        getBounds: node => ({ ...node.position, ...node.dimensions }),
+        getBounds: node => ({
+            ...node.position,
+            ...node.dimensions,
+        }),
         getLayer: () => 1,
         getZoom: () => 1,
-        getResizeSettings: () => ({ useZoomCompensatedScaling: false, size: 10, offset: 0, minSize: 5, zoomScaling: { minZoom: 0.4 } }),
+        getResizeSettings: () => ({
+            useZoomCompensatedScaling: false,
+            size: 10,
+            offset: 0,
+            minSize: 5,
+            zoomScaling: { minZoom: 0.4 },
+        }),
         consumeSuppressedClick: () => false,
         select: vi.fn(),
         toggleSelection: vi.fn(),
@@ -44,12 +74,23 @@ function createFixture() {
         options.container.textContent = options.document.title
         const editor = { destroy: vi.fn() }
         editors.push(editor)
+
         return editor
     })
     const onError = vi.fn()
-    const nodes = new WorkspaceDocumentNodes(shells, { mountEditor, onError })
+    const nodes = new WorkspaceDocumentNodes(shells, {
+        mountEditor,
+        onError,
+    })
     owners.push(nodes, shells)
-    return { nodes, shells, mountEditor, onError, editors }
+
+    return {
+        nodes,
+        shells,
+        mountEditor,
+        onError,
+        editors,
+    }
 }
 
 describe('WorkspaceDocumentNodes', () => {
@@ -61,7 +102,10 @@ describe('WorkspaceDocumentNodes', () => {
         expect(fixture.mountEditor).not.toHaveBeenCalled()
         fixture.nodes.syncDocuments([loaded])
         expect(element.querySelector('[role="status"]')).toBeNull()
-        fixture.nodes.syncDocuments([{ ...loaded, title: 'Authority handles this update' }])
+        fixture.nodes.syncDocuments([{
+            ...loaded,
+            title: 'Authority handles this update',
+        }])
         expect(fixture.mountEditor).toHaveBeenCalledOnce()
         expect(element.isConnected).toBe(true)
     })
@@ -69,7 +113,10 @@ describe('WorkspaceDocumentNodes', () => {
     it('owns two editors independently when the same Asset has two placements', () => {
         const fixture = createFixture()
         fixture.nodes.create(node, loaded)
-        fixture.nodes.create({ ...node, nodeId: 'placement-b' }, loaded)
+        fixture.nodes.create({
+            ...node,
+            nodeId: 'placement-b',
+        }, loaded)
         expect(fixture.mountEditor).toHaveBeenCalledTimes(2)
         fixture.shells.remove(node.nodeId)
         expect(fixture.editors[0]!.destroy).toHaveBeenCalledOnce()
@@ -84,7 +131,10 @@ describe('WorkspaceDocumentNodes', () => {
         const fixture = createFixture()
         const old = fixture.nodes.create(node, loaded)
         const first = fixture.mountEditor.mock.calls[0]![0]
-        first.onLeaseStateChange({ readOnly: true, holderWorkspaceId: 'another-workspace' })
+        first.onLeaseStateChange({
+            readOnly: true,
+            holderWorkspaceId: 'another-workspace',
+        })
         expect(old.classList.contains('is-asset-lease-read-only')).toBe(true)
         const replacement = fixture.nodes.create(node, loaded)
         expect(first.signal.aborted).toBe(true)

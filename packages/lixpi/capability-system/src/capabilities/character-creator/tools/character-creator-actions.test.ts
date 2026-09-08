@@ -13,7 +13,7 @@ import { registerCharacterCreatorActions } from './character-creator-actions.ts'
 
 // The workflow runner gives every step a live recorder, so a directly invoked
 // action gets a real one here rather than a stub that hides trace mistakes.
-function executionContext(trace = createCapabilityTraceRecorder()) {
+const executionContext = (trace = createCapabilityTraceRecorder()) => {
     return {
         userId: 'user-1',
         workspaceId: 'workspace-1',
@@ -25,7 +25,10 @@ function executionContext(trace = createCapabilityTraceRecorder()) {
         attempt: 1,
         signal: new AbortController().signal,
         plan: {} as never,
-        variant: { axis: 'request' as const, variantKey: 'request' as const },
+        variant: {
+            axis: 'request' as const,
+            variantKey: 'request' as const,
+        },
         getResource: () => undefined,
         getRunEvents: () => [],
         trace,

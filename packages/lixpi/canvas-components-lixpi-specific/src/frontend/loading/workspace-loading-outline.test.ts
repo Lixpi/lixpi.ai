@@ -16,12 +16,19 @@ vi.mock('@lixpi/canvas-components/loading', () => ({ LoadingOverlay: class {} })
 vi.mock('@lixpi/canvas-components/effects/glass', () => ({
     TravelingSnakeGlassMaterial: class {
         bake() {
-            return { kind: 'pixels', size: { width: 1, height: 1 }, rgba: new Uint8Array(4) }
+            return {
+                kind: 'pixels',
+                size: {
+                    width: 1,
+                    height: 1,
+                },
+                rgba: new Uint8Array(4),
+            }
         }
     },
 }))
 
-function settings(): WorkspaceLoadingSettings {
+const settings = (): WorkspaceLoadingSettings => {
     return {
         mediaBranchLineage: { generatedMediaSize: 300 },
         workspaceLoadingOutline: { diameterScale: 2 },
@@ -39,7 +46,11 @@ function settings(): WorkspaceLoadingSettings {
                 animationDurationMs: 1000,
                 preFrameCircleScale: 1 / 3,
                 zoomScaling: { minZoom: 0.1 },
-                styles: { snakeColors: ['#ffffff'], snakeTailAlpha: 0.1, glassMaterial: { edgeFeatherFraction: 0.5 } as GlassMaterialStyle },
+                styles: {
+                    snakeColors: ['#ffffff'],
+                    snakeTailAlpha: 0.1,
+                    glassMaterial: { edgeFeatherFraction: 0.5 } as GlassMaterialStyle,
+                },
             },
         },
     }

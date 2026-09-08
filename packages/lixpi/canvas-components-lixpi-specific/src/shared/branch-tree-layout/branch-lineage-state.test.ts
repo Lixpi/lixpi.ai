@@ -21,16 +21,28 @@ const marker: BranchLineCanvasNode = {
     reasoningRunId: 'reasoning-1',
     reasoningModelId: 'OpenAI:gpt-5-mini',
     reasoningIndex: 0,
-    position: { x: 100, y: 0 },
-    dimensions: { width: 100, height: 40 },
+    position: {
+        x: 100,
+        y: 0,
+    },
+    dimensions: {
+        width: 100,
+        height: 40,
+    },
 }
 
 const generatedMedia: ImageCanvasNode = {
     nodeId: 'output-1',
     type: 'image',
     assetId: 'asset-1',
-    position: { x: 240, y: 0 },
-    dimensions: { width: 200, height: 200 },
+    position: {
+        x: 240,
+        y: 0,
+    },
+    dimensions: {
+        width: 200,
+        height: 200,
+    },
     generatedBy: {
         conversationAssetId: 'thread-1',
         responseId: 'response-1',

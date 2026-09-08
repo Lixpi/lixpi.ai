@@ -27,14 +27,14 @@ export const validateJsonSchemaValue = (
     }
 }
 
-function validateNode(
+const validateNode = (
     schemaValue: unknown,
     value: unknown,
     path: string,
     errors: string[],
     depth: number,
     rootSchema: unknown,
-): void {
+): void => {
     if (depth > 64) {
         errors.push(`${path}: schema nesting exceeds 64 levels`)
 
@@ -191,12 +191,12 @@ function validateNode(
         )
 }
 
-function validateString(
+const validateString = (
     schema: JsonSchema,
     value: string,
     path: string,
     errors: string[],
-): void {
+): void => {
     if (
         typeof schema.minLength === 'number'
         && value.length < schema.minLength
@@ -219,12 +219,12 @@ function validateString(
     }
 }
 
-function validateNumber(
+const validateNumber = (
     schema: JsonSchema,
     value: number,
     path: string,
     errors: string[],
-): void {
+): void => {
     if (!Number.isFinite(value)) {
         errors.push(`${path}: number must be finite`)
 
@@ -256,14 +256,14 @@ function validateNumber(
         errors.push(`${path}: number is not below exclusiveMaximum`)
 }
 
-function validateArray(
+const validateArray = (
     schema: JsonSchema,
     value: unknown[],
     path: string,
     errors: string[],
     depth: number,
     rootSchema: unknown,
-): void {
+): void => {
     if (
         typeof schema.minItems === 'number'
         && value.length < schema.minItems
@@ -297,14 +297,14 @@ function validateArray(
         )
 }
 
-function validateObject(
+const validateObject = (
     schema: JsonSchema,
     value: Record<string, unknown>,
     path: string,
     errors: string[],
     depth: number,
     rootSchema: unknown,
-): void {
+): void => {
     const properties = isRecord(schema.properties) ? schema.properties : {}
     const required = Array.isArray(schema.required)
         ? schema.required.filter(key => typeof key === 'string') as string[]
@@ -348,12 +348,12 @@ function validateObject(
     }
 }
 
-function validateBranch(
+const validateBranch = (
     schema: unknown,
     value: unknown,
     depth: number,
     rootSchema: unknown,
-): boolean {
+): boolean => {
     const errors: string[] = []
     validateNode(
         schema,
@@ -367,10 +367,10 @@ function validateBranch(
     return errors.length === 0
 }
 
-function resolveLocalReference(
+const resolveLocalReference = (
     rootSchema: unknown,
     reference: string,
-): unknown {
+): unknown => {
     if (reference === '#')
         return rootSchema
 
@@ -395,10 +395,10 @@ function resolveLocalReference(
     return cursor
 }
 
-function matchesType(
+const matchesType = (
     type: string,
     value: unknown,
-): boolean {
+): boolean => {
     if (type === 'null')
         return value === null
 
@@ -417,22 +417,16 @@ function matchesType(
     return typeof value === type
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-    return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
-}
+const isRecord = (value: unknown): value is Record<string, unknown> => Boolean(value) && typeof value === 'object' && !Array.isArray(value)
 
-function isSafeProperty(key: string): boolean {
-    return key !== '__proto__' && key !== 'prototype' && key !== 'constructor'
-}
+const isSafeProperty = (key: string): boolean => key !== '__proto__' && key !== 'prototype' && key !== 'constructor'
 
-function deepEqual(
+const deepEqual = (
     left: unknown,
     right: unknown,
-): boolean {
-    return stableStringify(left) === stableStringify(right)
-}
+): boolean => stableStringify(left) === stableStringify(right)
 
-function stableStringify(value: unknown): string {
+const stableStringify = (value: unknown): string => {
     if (Array.isArray(value))
         return `[${value.map(stableStringify).join(',')}]`
 

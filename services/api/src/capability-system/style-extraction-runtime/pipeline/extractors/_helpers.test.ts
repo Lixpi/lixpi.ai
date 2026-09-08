@@ -28,7 +28,7 @@ import {
     type StyleExtractionState,
 } from '../types.ts'
 
-function makeScene(overrides: Partial<SceneAssessment> = {}): SceneAssessment {
+const makeScene = (overrides: Partial<SceneAssessment> = {}): SceneAssessment => {
     return {
         references: [],
         medium: 'digital-illustration',
@@ -39,12 +39,17 @@ function makeScene(overrides: Partial<SceneAssessment> = {}): SceneAssessment {
     }
 }
 
-function makeState(overrides: Partial<StyleExtractionState> = {}): StyleExtractionState {
+const makeState = (overrides: Partial<StyleExtractionState> = {}): StyleExtractionState => {
     return {
         input: {
             intent: 'gritty texture',
             analysisProvider: 'OpenAI',
-            analysisModel: { provider: 'OpenAI', model: 'gpt-5', modelVersion: 'gpt-5', maxCompletionSize: 4096 },
+            analysisModel: {
+                provider: 'OpenAI',
+                model: 'gpt-5',
+                modelVersion: 'gpt-5',
+                maxCompletionSize: 4096,
+            },
         },
         references: [{ url: 'nats-obj://bucket/object-1' }, { url: 'nats-obj://bucket/object-2' }],
         ...overrides,
@@ -65,13 +70,22 @@ describe('buildExtractorMessages', () => {
         expect((content[0] as { text: string }).text).toContain('User intent: gritty texture')
         expect((content[0] as { text: string }).text).toContain(JSON.stringify(scene, null, 2))
         expect(content.slice(1)).toEqual([
-            { type: 'input_image', image_url: 'nats-obj://bucket/object-1' },
-            { type: 'input_image', image_url: 'nats-obj://bucket/object-2' },
+            {
+                type: 'input_image',
+                image_url: 'nats-obj://bucket/object-1',
+            },
+            {
+                type: 'input_image',
+                image_url: 'nats-obj://bucket/object-2',
+            },
         ])
     })
 
     it('substitutes a placeholder when no user intent was provided', () => {
-        const state = makeState({ input: { ...makeState().input, intent: undefined } })
+        const state = makeState({ input: {
+            ...makeState().input,
+            intent: undefined,
+        } })
 
         const messages = buildExtractorMessages(state, makeScene())
 
@@ -90,7 +104,10 @@ describe('buildExtractorMessages', () => {
 
 describe('wrapAxisSchema', () => {
     it('names the schema from the sanitized axis and requires fields + rationale', () => {
-        const schema = wrapAxisSchema('mood/tone', 'Mood and tone axis', { type: 'object', properties: {} })
+        const schema = wrapAxisSchema('mood/tone', 'Mood and tone axis', {
+            type: 'object',
+            properties: {},
+        })
 
         expect(schema.name).toBe('extract_mood_tone')
         expect(schema.schema).toMatchObject({
@@ -98,7 +115,10 @@ describe('wrapAxisSchema', () => {
             required: ['fields', 'rationale'],
             additionalProperties: false,
         })
-        expect((schema.schema.properties as any).fields).toEqual({ type: 'object', properties: {} })
+        expect((schema.schema.properties as any).fields).toEqual({
+            type: 'object',
+            properties: {},
+        })
     })
 
     it('strips every non-alphanumeric character from the axis name', () => {
@@ -111,7 +131,10 @@ describe('runAxisVlm', () => {
     beforeEach(() => {
         vi.clearAllMocks()
         mocks.callStructuredVlm.mockResolvedValue({
-            parsed: { fields: { grain: 'coarse' }, rationale: 'visible fibrous texture' },
+            parsed: {
+                fields: { grain: 'coarse' },
+                rationale: 'visible fibrous texture',
+            },
         })
     })
 
@@ -120,11 +143,17 @@ describe('runAxisVlm', () => {
         const scene = makeScene({ axisDominance: { 'surface-texture': 0.6 } as SceneAssessment['axisDominance'] })
 
         const result = await runAxisVlm({
-            extractor: { axis: 'surface-texture', description: 'Surface texture axis' } as any,
+            extractor: {
+                axis: 'surface-texture',
+                description: 'Surface texture axis',
+            } as any,
             state,
             scene,
             systemPrompt: 'You extract surface texture.',
-            fieldsSchema: { type: 'object', properties: {} },
+            fieldsSchema: {
+                type: 'object',
+                properties: {},
+            },
             logger: {} as any,
         })
 
@@ -145,7 +174,10 @@ describe('runAxisVlm', () => {
 
     it('defaults dominance to 0 when the axis is absent from scene.axisDominance', async () => {
         const result = await runAxisVlm({
-            extractor: { axis: 'missing-axis', description: 'desc' } as any,
+            extractor: {
+                axis: 'missing-axis',
+                description: 'desc',
+            } as any,
             state: makeState(),
             scene: makeScene({ axisDominance: {} as SceneAssessment['axisDominance'] }),
             systemPrompt: 'prompt',
@@ -160,7 +192,10 @@ describe('runAxisVlm', () => {
         mocks.callStructuredVlm.mockResolvedValue({ parsed: undefined })
 
         const result = await runAxisVlm({
-            extractor: { axis: 'mood', description: 'desc' } as any,
+            extractor: {
+                axis: 'mood',
+                description: 'desc',
+            } as any,
             state: makeState(),
             scene: makeScene(),
             systemPrompt: 'prompt',
@@ -176,12 +211,19 @@ describe('runAxisVlm', () => {
         const state = makeState({
             input: {
                 ...makeState().input,
-                analysisModel: { provider: 'OpenAI', model: 'gpt-5', modelVersion: 'gpt-5' },
+                analysisModel: {
+                    provider: 'OpenAI',
+                    model: 'gpt-5',
+                    modelVersion: 'gpt-5',
+                },
             },
         } as any)
 
         await runAxisVlm({
-            extractor: { axis: 'mood', description: 'desc' } as any,
+            extractor: {
+                axis: 'mood',
+                description: 'desc',
+            } as any,
             state,
             scene: makeScene(),
             systemPrompt: 'prompt',

@@ -17,9 +17,11 @@ import {
 // Keep transition behavior synchronous in happy-dom.
 const makeChain = (): any => {
     const chain: any = {}
+
     for (const method of ['duration', 'ease', 'attr', 'style', 'tween', 'select']) {
         chain[method] = () => chain
     }
+
     return chain
 }
 ;(selection.prototype as any).transition = () => makeChain()
@@ -29,17 +31,26 @@ const SVG_NS = 'http://www.w3.org/2000/svg'
 type Tab = 'list' | 'grid' | 'timeline'
 
 const tabs = [
-    { label: 'List', value: 'list' as Tab },
-    { label: 'Grid', value: 'grid' as Tab },
-    { label: 'Timeline', value: 'timeline' as Tab },
+    {
+        label: 'List',
+        value: 'list' as Tab,
+    },
+    {
+        label: 'Grid',
+        value: 'grid' as Tab,
+    },
+    {
+        label: 'Timeline',
+        value: 'timeline' as Tab,
+    },
 ]
 
-function mount(
+const mount = (
     selectedValue: Tab = 'list',
     onChange = vi.fn(),
     onClose = vi.fn(),
     config: Partial<SlidingTabsSwitchConfig<Tab>> = {},
-) {
+) => {
     const svg = document.createElementNS(SVG_NS, 'svg') as unknown as SVGSVGElement
     document.body.appendChild(svg)
     const tabsSwitch = createSlidingTabsSwitch<Tab>(select(svg), {
@@ -48,22 +59,29 @@ function mount(
         y: 0,
         width: 300,
         minTabWidth: 100,
-        tabs: tabs.map((tab) => ({ ...tab, closable: true })),
+        tabs: tabs.map((tab) => ({
+            ...tab,
+            closable: true,
+        })),
         selectedValue,
         onChange,
         onClose,
         ...config,
     })
-    return { svg, tabsSwitch, onChange, onClose }
+
+    return {
+        svg,
+        tabsSwitch,
+        onChange,
+        onClose,
+    }
 }
 
 const tabGroups = (svg: SVGSVGElement) => Array.from(svg.querySelectorAll('.tag-pill-group'))
 const closeIcons = (svg: SVGSVGElement) => Array.from(svg.querySelectorAll('.tag-pill-close'))
 
 describe('createSlidingTabsSwitch', () => {
-    beforeEach(() => {
-        document.body.innerHTML = ''
-    })
+    beforeEach(() => void (document.body.innerHTML = ''))
 
     it('renders tab pills through tag pills and configures accessibility roles', () => {
         const { svg } = mount()
@@ -77,7 +95,11 @@ describe('createSlidingTabsSwitch', () => {
     })
 
     it('changes the selected tab from click and fires onChange', () => {
-        const { svg, tabsSwitch, onChange } = mount()
+        const {
+            svg,
+            tabsSwitch,
+            onChange,
+        } = mount()
 
         tabGroups(svg)[2]!.dispatchEvent(new MouseEvent('click', { bubbles: true }))
 
@@ -86,20 +108,30 @@ describe('createSlidingTabsSwitch', () => {
     })
 
     it('forwards close actions from the pill to onClose without changing the selection', () => {
-        const { svg, tabsSwitch, onClose } = mount('list')
+        const {
+            svg,
+            tabsSwitch,
+            onClose,
+        } = mount('list')
         tabGroups(svg)[1]!.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true }))
         closeIcons(svg)[1]!.dispatchEvent(new MouseEvent('click', { bubbles: true }))
 
         expect(onClose).toHaveBeenCalledExactlyOnceWith(
             'grid',
             'chat-tabs',
-            expect.objectContaining({ value: 'grid', label: 'Grid' }),
+            expect.objectContaining({
+                value: 'grid',
+                label: 'Grid',
+            }),
         )
         expect(tabsSwitch.getValue()).toBe('list')
     })
 
     it('respects minimum tab width and allows programmatic value updates', () => {
-        const { tabsSwitch, onChange } = mount()
+        const {
+            tabsSwitch,
+            onChange,
+        } = mount()
 
         expect(tabsSwitch.getContentWidth()).toBe(304)
         expect(tabsSwitch.getOuterHeight()).toBe(26)
@@ -113,7 +145,10 @@ describe('createSlidingTabsSwitch', () => {
     })
 
     it('forwards styling class and render/resize methods to underlying switch', () => {
-        const { svg, tabsSwitch } = mount('list', vi.fn(), vi.fn(), { className: 'chat-tabs-strip' })
+        const {
+            svg,
+            tabsSwitch,
+        } = mount('list', vi.fn(), vi.fn(), { className: 'chat-tabs-strip' })
 
         expect(svg.querySelector('.sliding-switch-group')?.getAttribute('class')).toContain('chat-tabs-strip')
 
@@ -125,7 +160,10 @@ describe('createSlidingTabsSwitch', () => {
     })
 
     it('keeps the shared flat indicator appearance', () => {
-        const { svg, tabsSwitch } = mount()
+        const {
+            svg,
+            tabsSwitch,
+        } = mount()
 
         expect(svg.querySelector('.sliding-switch-indicator')?.getAttribute('fill')).toBe('rgba(255, 255, 255, 0.72)')
         expect(svg.querySelector('.sliding-switch-indicator-inset-shadow')?.getAttribute('fill')).toBe('transparent')
@@ -145,7 +183,10 @@ describe('createSlidingTabsSwitch', () => {
     })
 
     it('destroys the underlying sliding switch', () => {
-        const { svg, tabsSwitch } = mount()
+        const {
+            svg,
+            tabsSwitch,
+        } = mount()
 
         tabsSwitch.destroy()
         expect(svg.querySelector('.sliding-switch-group')).toBeNull()

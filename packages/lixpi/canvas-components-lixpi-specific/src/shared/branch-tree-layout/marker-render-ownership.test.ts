@@ -17,7 +17,7 @@ import {
 
 type BranchMarkerNode = BranchOriginCanvasNode | BranchForkCanvasNode | BranchLineCanvasNode
 
-function makePreflight(nodeId: string, threadId: string, reasoningIndex = 0): BranchLineCanvasNode {
+const makePreflight = (nodeId: string, threadId: string, reasoningIndex = 0): BranchLineCanvasNode => {
     return {
         nodeId,
         type: 'branchLine',
@@ -34,26 +34,38 @@ function makePreflight(nodeId: string, threadId: string, reasoningIndex = 0): Br
             imageModelIds: ['Stability:sd3.5-large'],
             videoModelIds: [],
         },
-        position: { x: 0, y: 0 },
-        dimensions: { width: 100, height: 30 },
+        position: {
+            x: 0,
+            y: 0,
+        },
+        dimensions: {
+            width: 100,
+            height: 30,
+        },
         temporary: true,
     }
 }
 
-function makePlannedOrigin(nodeId: string, threadId: string): BranchOriginCanvasNode {
+const makePlannedOrigin = (nodeId: string, threadId: string): BranchOriginCanvasNode => {
     return {
         nodeId,
         type: 'branchOrigin',
         branchId: 'branch-1',
         generationRequestId: 'request-1',
         conversationAssetId: threadId,
-        position: { x: 200, y: 0 },
-        dimensions: { width: 100, height: 30 },
+        position: {
+            x: 200,
+            y: 0,
+        },
+        dimensions: {
+            width: 100,
+            height: 30,
+        },
         temporary: true,
     }
 }
 
-function makePlannedFork(nodeId: string, threadId: string, reasoningIndex: number): BranchForkCanvasNode {
+const makePlannedFork = (nodeId: string, threadId: string, reasoningIndex: number): BranchForkCanvasNode => {
     return {
         nodeId,
         type: 'branchFork',
@@ -65,13 +77,19 @@ function makePlannedFork(nodeId: string, threadId: string, reasoningIndex: numbe
         reasoningModelId: reasoningIndex === 0
             ? 'Anthropic:claude-haiku-4-5-20251001'
             : 'OpenAI:gpt-5-mini',
-        position: { x: 200, y: reasoningIndex * 100 },
-        dimensions: { width: 100, height: 30 },
+        position: {
+            x: 200,
+            y: reasoningIndex * 100,
+        },
+        dimensions: {
+            width: 100,
+            height: 30,
+        },
         temporary: true,
     }
 }
 
-function makeLineagePlan(): MediaBranchLineagePlan {
+const makeLineagePlan = (): MediaBranchLineagePlan => {
     return {
         planVersion: 'media-branch-lineage-v1',
         generationRequestId: 'request-1',

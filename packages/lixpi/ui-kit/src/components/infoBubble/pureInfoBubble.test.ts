@@ -23,7 +23,7 @@ type Rect = {
     y: number
 }
 
-function createRect(values: Partial<Rect> = {}): DOMRect {
+const createRect = (values: Partial<Rect> = {}): DOMRect => {
     const rect: Rect = {
         left: 0,
         right: 80,
@@ -42,7 +42,7 @@ function createRect(values: Partial<Rect> = {}): DOMRect {
     } as DOMRect
 }
 
-function createBubble(id = 'bubble') {
+const createBubble = (id = 'bubble') => {
     const anchor = document.createElement('button')
     anchor.textContent = 'open'
 
@@ -76,7 +76,10 @@ function createBubble(id = 'bubble') {
         })
     )
 
-    return { anchor, infoBubble }
+    return {
+        anchor,
+        infoBubble,
+    }
 }
 
 describe('createInfoBubble', () => {
@@ -120,13 +123,22 @@ describe('createInfoBubble', () => {
     })
 
     it('toggles open state from anchor click', () => {
-        const { anchor, infoBubble } = createBubble('toggle-bubble')
+        const {
+            anchor,
+            infoBubble,
+        } = createBubble('toggle-bubble')
         expect(infoBubble.isOpen()).toBe(false)
 
-        anchor.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }))
+        anchor.dispatchEvent(new MouseEvent('click', {
+            bubbles: true,
+            cancelable: true,
+        }))
         expect(infoBubble.isOpen()).toBe(true)
 
-        anchor.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }))
+        anchor.dispatchEvent(new MouseEvent('click', {
+            bubbles: true,
+            cancelable: true,
+        }))
         expect(infoBubble.isOpen()).toBe(false)
     })
 
@@ -149,8 +161,18 @@ describe('createInfoBubble', () => {
         anchor.getBoundingClientRect = vi.fn(() => createRect())
         const bubbleWrapper = infoBubble.dom.querySelector('.bubble-wrapper') as HTMLElement
         const bubbleContainer = infoBubble.dom.querySelector('.bubble-container') as HTMLElement
-        bubbleWrapper.getBoundingClientRect = vi.fn(() => createRect({ width: 180, height: 90, right: 180, bottom: 90 }))
-        bubbleContainer.getBoundingClientRect = vi.fn(() => createRect({ width: 180, height: 90, right: 180, bottom: 90 }))
+        bubbleWrapper.getBoundingClientRect = vi.fn(() => createRect({
+            width: 180,
+            height: 90,
+            right: 180,
+            bottom: 90,
+        }))
+        bubbleContainer.getBoundingClientRect = vi.fn(() => createRect({
+            width: 180,
+            height: 90,
+            right: 180,
+            bottom: 90,
+        }))
 
         infoBubble.open()
         expect(infoBubble.isOpen()).toBe(true)
@@ -165,7 +187,10 @@ describe('createInfoBubble', () => {
 
     it('places a static bubble above its anchor when the visible space below is insufficient', () => {
         const originalInnerHeight = window.innerHeight
-        Object.defineProperty(window, 'innerHeight', { configurable: true, value: 500 })
+        Object.defineProperty(window, 'innerHeight', {
+            configurable: true,
+            value: 500,
+        })
 
         try {
             const anchor = document.createElement('button')
@@ -201,12 +226,18 @@ describe('createInfoBubble', () => {
             expect(infoBubble.dom.style.getPropertyValue('--static-bubble-max-height')).toBe('377px')
             infoBubble.destroy()
         } finally {
-            Object.defineProperty(window, 'innerHeight', { configurable: true, value: originalInnerHeight })
+            Object.defineProperty(window, 'innerHeight', {
+                configurable: true,
+                value: originalInnerHeight,
+            })
         }
     })
 
     it('closes when document receives outside click and ignores self/anchor clicks', () => {
-        const { anchor, infoBubble } = createBubble('outside-click')
+        const {
+            anchor,
+            infoBubble,
+        } = createBubble('outside-click')
         const bubbleRoot = infoBubble.dom
 
         anchor.getBoundingClientRect = vi.fn(() => createRect())

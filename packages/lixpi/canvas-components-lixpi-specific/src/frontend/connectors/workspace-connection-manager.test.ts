@@ -20,10 +20,7 @@ import {
     scaleCanvasChromeWorldSizeForZoom,
 } from '@lixpi/canvas-engine/shared'
 import { createWorkspaceConnectorSettings } from './workspace-connector-settings.ts'
-import {
-    getEdgeAnchorPositions,
-    type SpreadResult,
-} from '@lixpi/canvas-engine/frontend/connectors'
+import { getEdgeAnchorPositions } from '@lixpi/canvas-engine/frontend/connectors'
 import { flattenSvgPath } from '@lixpi/ui-primitives/svg'
 
 const settings = { connector: createWorkspaceConnectorSettings({ lineDefaultColor: '#5d656d' }) }
@@ -32,10 +29,19 @@ const settings = { connector: createWorkspaceConnectorSettings({ lineDefaultColo
 // HELPERS
 // =============================================================================
 
-function makeNode(overrides: Partial<CanvasNode> & { nodeId: string; type: CanvasNode['type'] }): CanvasNode {
+const makeNode = (overrides: Partial<CanvasNode> & {
+    nodeId: string
+    type: CanvasNode['type']
+}): CanvasNode => {
     const base = {
-        position: { x: 0, y: 0 },
-        dimensions: { width: 200, height: 100 },
+        position: {
+            x: 0,
+            y: 0,
+        },
+        dimensions: {
+            width: 200,
+            height: 100,
+        },
     }
 
     if (overrides.type === 'image') {
@@ -56,7 +62,11 @@ function makeNode(overrides: Partial<CanvasNode> & { nodeId: string; type: Canva
     } as CanvasNode
 }
 
-function makeEdge(overrides: Partial<WorkspaceEdge> & { edgeId: string; sourceNodeId: string; targetNodeId: string }): WorkspaceEdge {
+const makeEdge = (overrides: Partial<WorkspaceEdge> & {
+    edgeId: string
+    sourceNodeId: string
+    targetNodeId: string
+}): WorkspaceEdge => {
     return {
         sourceHandle: 'right',
         targetHandle: 'left',
@@ -66,7 +76,7 @@ function makeEdge(overrides: Partial<WorkspaceEdge> & { edgeId: string; sourceNo
     }
 }
 
-function createMockConfig() {
+const createMockConfig = () => {
     const paneEl = document.createElement('div')
     const viewportEl = document.createElement('div')
 
@@ -82,11 +92,14 @@ function createMockConfig() {
     }
 }
 
-function createManager(config = createMockConfig()) {
-    return { manager: new WorkspaceConnectionManager(config), config }
+const createManager = (config = createMockConfig()) => {
+    return {
+        manager: new WorkspaceConnectionManager(config),
+        config,
+    }
 }
 
-function mockPaneBounds(paneEl: HTMLDivElement) {
+const mockPaneBounds = (paneEl: HTMLDivElement) => {
     vi.spyOn(paneEl, 'getBoundingClientRect').mockReturnValue({
         top: 0,
         left: 0,
@@ -100,8 +113,14 @@ function mockPaneBounds(paneEl: HTMLDivElement) {
     })
 }
 
-function getRenderedPixiEdgeStart(onConnectorGeometry: ReturnType<typeof vi.fn>, edgeId: string): { x: number; y: number } {
-    const pixiEdges = onConnectorGeometry.mock.calls.at(-1)?.[0] as Array<{ id: string; svgPath: string }> | undefined
+const getRenderedPixiEdgeStart = (onConnectorGeometry: ReturnType<typeof vi.fn>, edgeId: string): {
+    x: number
+    y: number
+} => {
+    const pixiEdges = onConnectorGeometry.mock.calls.at(-1)?.[0] as Array<{
+        id: string
+        svgPath: string
+    }> | undefined
     const edge = pixiEdges?.find((candidate) => candidate.id === edgeId)
     expect(edge).toBeDefined()
 
@@ -128,14 +147,26 @@ describe('WorkspaceConnectionManager — menu connections', () => {
         const imageNode = makeNode({
             nodeId: 'img-1',
             type: 'image',
-            position: { x: 100, y: 100 },
-            dimensions: { width: 200, height: 120 },
+            position: {
+                x: 100,
+                y: 100,
+            },
+            dimensions: {
+                width: 200,
+                height: 120,
+            },
         })
         const chatNode = makeNode({
             nodeId: 'doc-1',
             type: 'document',
-            position: { x: 500, y: 100 },
-            dimensions: { width: 260, height: 120 },
+            position: {
+                x: 500,
+                y: 100,
+            },
+            dimensions: {
+                width: 260,
+                height: 120,
+            },
         })
 
         manager.syncNodes([imageNode, chatNode])
@@ -187,9 +218,35 @@ describe('WorkspaceConnectionManager — edge anchors', () => {
             onConnectorGeometry,
         }
         const manager = new WorkspaceConnectionManager(config)
-        const sourceNode = makeNode({ nodeId: 'source-1', type: 'image', position: { x: 0, y: 0 }, dimensions: { width: 120, height: 120 } })
-        const targetNode = makeNode({ nodeId: 'target-1', type: 'image', position: { x: 500, y: 0 }, dimensions: { width: 120, height: 120 } })
-        const edge = makeEdge({ edgeId: 'edge-pixi-only', sourceNodeId: sourceNode.nodeId, targetNodeId: targetNode.nodeId })
+        const sourceNode = makeNode({
+            nodeId: 'source-1',
+            type: 'image',
+            position: {
+                x: 0,
+                y: 0,
+            },
+            dimensions: {
+                width: 120,
+                height: 120,
+            },
+        })
+        const targetNode = makeNode({
+            nodeId: 'target-1',
+            type: 'image',
+            position: {
+                x: 500,
+                y: 0,
+            },
+            dimensions: {
+                width: 120,
+                height: 120,
+            },
+        })
+        const edge = makeEdge({
+            edgeId: 'edge-pixi-only',
+            sourceNodeId: sourceNode.nodeId,
+            targetNodeId: targetNode.nodeId,
+        })
 
         manager.syncNodes([sourceNode, targetNode])
         manager.syncEdges([edge])
@@ -202,7 +259,10 @@ describe('WorkspaceConnectionManager — edge anchors', () => {
                 id: string
                 baseScreenStrokeWidth: number
                 strokeWidth: number
-                arrowEnd: { baseScreenSize: number; size: number } | null
+                arrowEnd: {
+                    baseScreenSize: number
+                    size: number
+                } | null
                 svgPath: string
             }>
             expect(pixiEdges).toHaveLength(1)
@@ -223,9 +283,35 @@ describe('WorkspaceConnectionManager — edge anchors', () => {
             onConnectorGeometry,
         }
         const manager = new WorkspaceConnectionManager(config)
-        const sourceNode = makeNode({ nodeId: 'source-adaptive', type: 'image', position: { x: 0, y: 0 }, dimensions: { width: 120, height: 120 } })
-        const targetNode = makeNode({ nodeId: 'target-adaptive', type: 'image', position: { x: 500, y: 0 }, dimensions: { width: 120, height: 120 } })
-        const edge = makeEdge({ edgeId: 'edge-adaptive', sourceNodeId: sourceNode.nodeId, targetNodeId: targetNode.nodeId })
+        const sourceNode = makeNode({
+            nodeId: 'source-adaptive',
+            type: 'image',
+            position: {
+                x: 0,
+                y: 0,
+            },
+            dimensions: {
+                width: 120,
+                height: 120,
+            },
+        })
+        const targetNode = makeNode({
+            nodeId: 'target-adaptive',
+            type: 'image',
+            position: {
+                x: 500,
+                y: 0,
+            },
+            dimensions: {
+                width: 120,
+                height: 120,
+            },
+        })
+        const edge = makeEdge({
+            edgeId: 'edge-adaptive',
+            sourceNodeId: sourceNode.nodeId,
+            targetNodeId: targetNode.nodeId,
+        })
 
         manager.syncNodes([sourceNode, targetNode])
         manager.syncEdges([edge])
@@ -234,7 +320,10 @@ describe('WorkspaceConnectionManager — edge anchors', () => {
         const pixiEdges = onConnectorGeometry.mock.calls.at(-1)?.[0] as Array<{
             baseScreenStrokeWidth: number
             strokeWidth: number
-            arrowEnd: { baseScreenSize: number; size: number } | null
+            arrowEnd: {
+                baseScreenSize: number
+                size: number
+            } | null
         }>
         const start = getRenderedPixiEdgeStart(onConnectorGeometry, edge.edgeId)
         const expectedSourceOffsetWorld = scaleCanvasChromeWorldSizeForZoom(
@@ -258,7 +347,10 @@ describe('WorkspaceConnectionManager — edge anchors', () => {
                 ...settings.connector.scaling,
                 strokeWidth: 5,
                 markerSize: 22,
-                markerOffset: { source: 8, target: 21 },
+                markerOffset: {
+                    source: 8,
+                    target: 21,
+                },
                 clickAreaWidth: 32,
                 zoomScaling: { minZoom: 0.5 },
             }
@@ -269,9 +361,35 @@ describe('WorkspaceConnectionManager — edge anchors', () => {
                 onConnectorGeometry,
             }
             const manager = new WorkspaceConnectionManager(config)
-            const sourceNode = makeNode({ nodeId: 'source-configured', type: 'image', position: { x: 0, y: 0 }, dimensions: { width: 120, height: 120 } })
-            const targetNode = makeNode({ nodeId: 'target-configured', type: 'image', position: { x: 500, y: 0 }, dimensions: { width: 120, height: 120 } })
-            const edge = makeEdge({ edgeId: 'edge-configured', sourceNodeId: sourceNode.nodeId, targetNodeId: targetNode.nodeId })
+            const sourceNode = makeNode({
+                nodeId: 'source-configured',
+                type: 'image',
+                position: {
+                    x: 0,
+                    y: 0,
+                },
+                dimensions: {
+                    width: 120,
+                    height: 120,
+                },
+            })
+            const targetNode = makeNode({
+                nodeId: 'target-configured',
+                type: 'image',
+                position: {
+                    x: 500,
+                    y: 0,
+                },
+                dimensions: {
+                    width: 120,
+                    height: 120,
+                },
+            })
+            const edge = makeEdge({
+                edgeId: 'edge-configured',
+                sourceNodeId: sourceNode.nodeId,
+                targetNodeId: targetNode.nodeId,
+            })
 
             manager.syncNodes([sourceNode, targetNode])
             manager.syncEdges([edge])
@@ -280,7 +398,10 @@ describe('WorkspaceConnectionManager — edge anchors', () => {
             let pixiEdges = onConnectorGeometry.mock.calls.at(-1)?.[0] as Array<{
                 baseScreenStrokeWidth: number
                 strokeWidth: number
-                arrowEnd: { baseScreenSize: number; size: number } | null
+                arrowEnd: {
+                    baseScreenSize: number
+                    size: number
+                } | null
             }>
             expect(pixiEdges[0].baseScreenStrokeWidth).toBe(5)
             expect(pixiEdges[0].arrowEnd?.baseScreenSize).toBe(22)
@@ -291,7 +412,10 @@ describe('WorkspaceConnectionManager — edge anchors', () => {
             pixiEdges = onConnectorGeometry.mock.calls.at(-1)?.[0] as Array<{
                 baseScreenStrokeWidth: number
                 strokeWidth: number
-                arrowEnd: { baseScreenSize: number; size: number } | null
+                arrowEnd: {
+                    baseScreenSize: number
+                    size: number
+                } | null
             }>
             expect(pixiEdges[0].baseScreenStrokeWidth).toBe(5)
             expect(pixiEdges[0].arrowEnd?.baseScreenSize).toBe(22)
@@ -310,14 +434,26 @@ describe('WorkspaceConnectionManager — edge anchors', () => {
         const chatNode = makeNode({
             nodeId: 'chat-1',
             type: 'aiChatThread',
-            position: { x: 100, y: 80 },
-            dimensions: { width: 400, height: 260 },
+            position: {
+                x: 100,
+                y: 80,
+            },
+            dimensions: {
+                width: 400,
+                height: 260,
+            },
         })
         const imageNode = makeNode({
             nodeId: 'img-1',
             type: 'image',
-            position: { x: 780, y: 120 },
-            dimensions: { width: 260, height: 260 },
+            position: {
+                x: 780,
+                y: 120,
+            },
+            dimensions: {
+                width: 260,
+                height: 260,
+            },
         })
         const edge = makeEdge({
             edgeId: 'e-1',
@@ -343,7 +479,10 @@ describe('WorkspaceConnectionManager — edge anchors', () => {
 
         const resizedChatNode = {
             ...chatNode,
-            dimensions: { width: 620, height: 360 },
+            dimensions: {
+                width: 620,
+                height: 360,
+            },
         }
         manager.syncNodes([resizedChatNode, imageNode])
         manager.render()
@@ -362,24 +501,49 @@ describe('WorkspaceConnectionManager — edge anchors', () => {
 
 describe('getEdgeAnchorPositions', () => {
     it('returns right/left for default edge handles', () => {
-        const edge = makeEdge({ edgeId: 'e-1', sourceNodeId: 's', targetNodeId: 't', sourceHandle: 'right', targetHandle: 'left' })
-        const { source, target } = getEdgeAnchorPositions(edge)
+        const edge = makeEdge({
+            edgeId: 'e-1',
+            sourceNodeId: 's',
+            targetNodeId: 't',
+            sourceHandle: 'right',
+            targetHandle: 'left',
+        })
+        const {
+            source,
+            target,
+        } = getEdgeAnchorPositions(edge)
 
         expect(source).toBe('right')
         expect(target).toBe('left')
     })
 
     it('returns left for sourceHandle=left', () => {
-        const edge = makeEdge({ edgeId: 'e-1', sourceNodeId: 's', targetNodeId: 't', sourceHandle: 'left', targetHandle: 'right' })
-        const { source, target } = getEdgeAnchorPositions(edge)
+        const edge = makeEdge({
+            edgeId: 'e-1',
+            sourceNodeId: 's',
+            targetNodeId: 't',
+            sourceHandle: 'left',
+            targetHandle: 'right',
+        })
+        const {
+            source,
+            target,
+        } = getEdgeAnchorPositions(edge)
 
         expect(source).toBe('left')
         expect(target).toBe('right')
     })
 
     it('defaults to right when sourceHandle is undefined', () => {
-        const edge: WorkspaceEdge = { edgeId: 'e-1', sourceNodeId: 's', targetNodeId: 't' }
-        const { source, target } = getEdgeAnchorPositions(edge)
+        const edge: WorkspaceEdge = {
+            edgeId: 'e-1',
+            sourceNodeId: 's',
+            targetNodeId: 't',
+        }
+        const {
+            source,
+            target,
+        } = getEdgeAnchorPositions(edge)
 
         expect(source).toBe('right')
         expect(target).toBe('right')
@@ -394,10 +558,36 @@ describe('computeSpreadTValues — targetT auto-alignment', () => {
     it('aligns targetT to straight line when source center hits target vertically', () => {
         // Source center at y=50 (0 + 100/2), target at y=0..100
         // idealT = (50 - 0) / 100 = 0.5 → straight line through center
-        const source = makeNode({ nodeId: 'src', type: 'aiChatThread', position: { x: 0, y: 0 }, dimensions: { width: 200, height: 100 } })
-        const target = makeNode({ nodeId: 'tgt', type: 'document', position: { x: 300, y: 0 }, dimensions: { width: 200, height: 100 } })
+        const source = makeNode({
+            nodeId: 'src',
+            type: 'aiChatThread',
+            position: {
+                x: 0,
+                y: 0,
+            },
+            dimensions: {
+                width: 200,
+                height: 100,
+            },
+        })
+        const target = makeNode({
+            nodeId: 'tgt',
+            type: 'document',
+            position: {
+                x: 300,
+                y: 0,
+            },
+            dimensions: {
+                width: 200,
+                height: 100,
+            },
+        })
 
-        const edge = makeEdge({ edgeId: 'e-1', sourceNodeId: 'src', targetNodeId: 'tgt' })
+        const edge = makeEdge({
+            edgeId: 'e-1',
+            sourceNodeId: 'src',
+            targetNodeId: 'tgt',
+        })
         const result = computeSpreadTValues([edge], [source, target], settings.connector)
 
         const spread = result.get('e-1')!
@@ -407,10 +597,36 @@ describe('computeSpreadTValues — targetT auto-alignment', () => {
     it('snaps targetT to top when source is above target', () => {
         // Source center at y=50, target at y=200..400
         // idealT = (50 - 200) / 200 = -0.75 → clamp to 0.065
-        const source = makeNode({ nodeId: 'src', type: 'aiChatThread', position: { x: 0, y: 0 }, dimensions: { width: 200, height: 100 } })
-        const target = makeNode({ nodeId: 'tgt', type: 'document', position: { x: 300, y: 200 }, dimensions: { width: 200, height: 200 } })
+        const source = makeNode({
+            nodeId: 'src',
+            type: 'aiChatThread',
+            position: {
+                x: 0,
+                y: 0,
+            },
+            dimensions: {
+                width: 200,
+                height: 100,
+            },
+        })
+        const target = makeNode({
+            nodeId: 'tgt',
+            type: 'document',
+            position: {
+                x: 300,
+                y: 200,
+            },
+            dimensions: {
+                width: 200,
+                height: 200,
+            },
+        })
 
-        const edge = makeEdge({ edgeId: 'e-1', sourceNodeId: 'src', targetNodeId: 'tgt' })
+        const edge = makeEdge({
+            edgeId: 'e-1',
+            sourceNodeId: 'src',
+            targetNodeId: 'tgt',
+        })
         const result = computeSpreadTValues([edge], [source, target], settings.connector)
 
         const spread = result.get('e-1')!
@@ -420,10 +636,36 @@ describe('computeSpreadTValues — targetT auto-alignment', () => {
     it('snaps targetT to bottom when source is below target', () => {
         // Source center at y=550, target at y=0..200
         // idealT = (550 - 0) / 200 = 2.75 → clamp to 0.935
-        const source = makeNode({ nodeId: 'src', type: 'aiChatThread', position: { x: 0, y: 500 }, dimensions: { width: 200, height: 100 } })
-        const target = makeNode({ nodeId: 'tgt', type: 'document', position: { x: 300, y: 0 }, dimensions: { width: 200, height: 200 } })
+        const source = makeNode({
+            nodeId: 'src',
+            type: 'aiChatThread',
+            position: {
+                x: 0,
+                y: 500,
+            },
+            dimensions: {
+                width: 200,
+                height: 100,
+            },
+        })
+        const target = makeNode({
+            nodeId: 'tgt',
+            type: 'document',
+            position: {
+                x: 300,
+                y: 0,
+            },
+            dimensions: {
+                width: 200,
+                height: 200,
+            },
+        })
 
-        const edge = makeEdge({ edgeId: 'e-1', sourceNodeId: 'src', targetNodeId: 'tgt' })
+        const edge = makeEdge({
+            edgeId: 'e-1',
+            sourceNodeId: 'src',
+            targetNodeId: 'tgt',
+        })
         const result = computeSpreadTValues([edge], [source, target], settings.connector)
 
         const spread = result.get('e-1')!
@@ -433,10 +675,36 @@ describe('computeSpreadTValues — targetT auto-alignment', () => {
     it('calculates partial alignment when source is slightly above target center', () => {
         // Source center at y=150 (100 + 100/2), target at y=200..400 (height=200)
         // idealT = (150 - 200) / 200 = -0.25 → clamp to 0.065
-        const source = makeNode({ nodeId: 'src', type: 'aiChatThread', position: { x: 0, y: 100 }, dimensions: { width: 200, height: 100 } })
-        const target = makeNode({ nodeId: 'tgt', type: 'document', position: { x: 300, y: 200 }, dimensions: { width: 200, height: 200 } })
+        const source = makeNode({
+            nodeId: 'src',
+            type: 'aiChatThread',
+            position: {
+                x: 0,
+                y: 100,
+            },
+            dimensions: {
+                width: 200,
+                height: 100,
+            },
+        })
+        const target = makeNode({
+            nodeId: 'tgt',
+            type: 'document',
+            position: {
+                x: 300,
+                y: 200,
+            },
+            dimensions: {
+                width: 200,
+                height: 200,
+            },
+        })
 
-        const edge = makeEdge({ edgeId: 'e-1', sourceNodeId: 'src', targetNodeId: 'tgt' })
+        const edge = makeEdge({
+            edgeId: 'e-1',
+            sourceNodeId: 'src',
+            targetNodeId: 'tgt',
+        })
         const result = computeSpreadTValues([edge], [source, target], settings.connector)
 
         const spread = result.get('e-1')!
@@ -444,7 +712,12 @@ describe('computeSpreadTValues — targetT auto-alignment', () => {
     })
 
     it('uses stored targetT when nodes are missing from the lookup', () => {
-        const edge = makeEdge({ edgeId: 'e-1', sourceNodeId: 'missing-src', targetNodeId: 'missing-tgt', targetT: 0.75 })
+        const edge = makeEdge({
+            edgeId: 'e-1',
+            sourceNodeId: 'missing-src',
+            targetNodeId: 'missing-tgt',
+            targetT: 0.75,
+        })
         const result = computeSpreadTValues([edge], [], settings.connector)
 
         const spread = result.get('e-1')!
@@ -459,17 +732,58 @@ describe('computeSpreadTValues — targetT auto-alignment', () => {
 
         try {
             // Source far above target → should clamp to 0.1 (not 0.025)
-            const source = makeNode({ nodeId: 'src', type: 'aiChatThread', position: { x: 0, y: 0 }, dimensions: { width: 200, height: 100 } })
-            const target = makeNode({ nodeId: 'tgt', type: 'document', position: { x: 300, y: 500 }, dimensions: { width: 200, height: 200 } })
-            const edge = makeEdge({ edgeId: 'e-1', sourceNodeId: 'src', targetNodeId: 'tgt' })
+            const source = makeNode({
+                nodeId: 'src',
+                type: 'aiChatThread',
+                position: {
+                    x: 0,
+                    y: 0,
+                },
+                dimensions: {
+                    width: 200,
+                    height: 100,
+                },
+            })
+            const target = makeNode({
+                nodeId: 'tgt',
+                type: 'document',
+                position: {
+                    x: 300,
+                    y: 500,
+                },
+                dimensions: {
+                    width: 200,
+                    height: 200,
+                },
+            })
+            const edge = makeEdge({
+                edgeId: 'e-1',
+                sourceNodeId: 'src',
+                targetNodeId: 'tgt',
+            })
             const result = computeSpreadTValues([edge], [source, target], settings.connector)
 
             const spread = result.get('e-1')!
             expect(spread.targetT).toBe(0.1)
 
             // Source far below target → should clamp to 0.9 (1 - 0.1)
-            const source2 = makeNode({ nodeId: 'src2', type: 'aiChatThread', position: { x: 0, y: 900 }, dimensions: { width: 200, height: 100 } })
-            const edge2 = makeEdge({ edgeId: 'e-2', sourceNodeId: 'src2', targetNodeId: 'tgt' })
+            const source2 = makeNode({
+                nodeId: 'src2',
+                type: 'aiChatThread',
+                position: {
+                    x: 0,
+                    y: 900,
+                },
+                dimensions: {
+                    width: 200,
+                    height: 100,
+                },
+            })
+            const edge2 = makeEdge({
+                edgeId: 'e-2',
+                sourceNodeId: 'src2',
+                targetNodeId: 'tgt',
+            })
             const result2 = computeSpreadTValues([edge2], [source2, target], settings.connector)
 
             const spread2 = result2.get('e-2')!
@@ -485,9 +799,35 @@ describe('computeSpreadTValues — targetT auto-alignment', () => {
 
         try {
             // Target height (100) is below threshold (200) → snap to center
-            const source = makeNode({ nodeId: 'src', type: 'aiChatThread', position: { x: 0, y: 0 }, dimensions: { width: 200, height: 100 } })
-            const target = makeNode({ nodeId: 'tgt', type: 'document', position: { x: 300, y: 0 }, dimensions: { width: 200, height: 100 } })
-            const edge = makeEdge({ edgeId: 'e-1', sourceNodeId: 'src', targetNodeId: 'tgt' })
+            const source = makeNode({
+                nodeId: 'src',
+                type: 'aiChatThread',
+                position: {
+                    x: 0,
+                    y: 0,
+                },
+                dimensions: {
+                    width: 200,
+                    height: 100,
+                },
+            })
+            const target = makeNode({
+                nodeId: 'tgt',
+                type: 'document',
+                position: {
+                    x: 300,
+                    y: 0,
+                },
+                dimensions: {
+                    width: 200,
+                    height: 100,
+                },
+            })
+            const edge = makeEdge({
+                edgeId: 'e-1',
+                sourceNodeId: 'src',
+                targetNodeId: 'tgt',
+            })
             const result = computeSpreadTValues([edge], [source, target], settings.connector)
 
             expect(result.get('e-1')!.targetT).toBe(0.5)
@@ -502,9 +842,35 @@ describe('computeSpreadTValues — targetT auto-alignment', () => {
 
         try {
             // Target height (300) exceeds threshold (200) → slide freely
-            const source = makeNode({ nodeId: 'src', type: 'aiChatThread', position: { x: 0, y: 0 }, dimensions: { width: 200, height: 100 } })
-            const target = makeNode({ nodeId: 'tgt', type: 'document', position: { x: 300, y: 0 }, dimensions: { width: 200, height: 300 } })
-            const edge = makeEdge({ edgeId: 'e-1', sourceNodeId: 'src', targetNodeId: 'tgt' })
+            const source = makeNode({
+                nodeId: 'src',
+                type: 'aiChatThread',
+                position: {
+                    x: 0,
+                    y: 0,
+                },
+                dimensions: {
+                    width: 200,
+                    height: 100,
+                },
+            })
+            const target = makeNode({
+                nodeId: 'tgt',
+                type: 'document',
+                position: {
+                    x: 300,
+                    y: 0,
+                },
+                dimensions: {
+                    width: 200,
+                    height: 300,
+                },
+            })
+            const edge = makeEdge({
+                edgeId: 'e-1',
+                sourceNodeId: 'src',
+                targetNodeId: 'tgt',
+            })
             const result = computeSpreadTValues([edge], [source, target], settings.connector)
 
             // Source center at y=50, target 0..300 → idealT ≈ 0.167
@@ -518,10 +884,37 @@ describe('computeSpreadTValues — targetT auto-alignment', () => {
     })
 
     it('keeps targetT at 0.5 when the target is an image node', () => {
-        const source = makeNode({ nodeId: 'src', type: 'aiChatThread', position: { x: 0, y: 500 }, dimensions: { width: 200, height: 100 } })
-        const target = makeNode({ nodeId: 'tgt', type: 'image', position: { x: 300, y: 0 }, dimensions: { width: 200, height: 300 } })
+        const source = makeNode({
+            nodeId: 'src',
+            type: 'aiChatThread',
+            position: {
+                x: 0,
+                y: 500,
+            },
+            dimensions: {
+                width: 200,
+                height: 100,
+            },
+        })
+        const target = makeNode({
+            nodeId: 'tgt',
+            type: 'image',
+            position: {
+                x: 300,
+                y: 0,
+            },
+            dimensions: {
+                width: 200,
+                height: 300,
+            },
+        })
 
-        const edge = makeEdge({ edgeId: 'e-1', sourceNodeId: 'src', targetNodeId: 'tgt', targetT: 0.9 })
+        const edge = makeEdge({
+            edgeId: 'e-1',
+            sourceNodeId: 'src',
+            targetNodeId: 'tgt',
+            targetT: 0.9,
+        })
         const result = computeSpreadTValues([edge], [source, target], settings.connector)
 
         expect(result.get('e-1')!.targetT).toBe(0.5)
@@ -534,22 +927,89 @@ describe('computeSpreadTValues — targetT auto-alignment', () => {
 
 describe('computeSpreadTValues — sourceT spreading', () => {
     it('keeps sourceT at 0.5 for a single edge', () => {
-        const source = makeNode({ nodeId: 'src', type: 'aiChatThread', position: { x: 0, y: 0 }, dimensions: { width: 200, height: 100 } })
-        const target = makeNode({ nodeId: 'tgt', type: 'image', position: { x: 300, y: 0 }, dimensions: { width: 200, height: 100 } })
+        const source = makeNode({
+            nodeId: 'src',
+            type: 'aiChatThread',
+            position: {
+                x: 0,
+                y: 0,
+            },
+            dimensions: {
+                width: 200,
+                height: 100,
+            },
+        })
+        const target = makeNode({
+            nodeId: 'tgt',
+            type: 'image',
+            position: {
+                x: 300,
+                y: 0,
+            },
+            dimensions: {
+                width: 200,
+                height: 100,
+            },
+        })
 
-        const edge = makeEdge({ edgeId: 'e-1', sourceNodeId: 'src', targetNodeId: 'tgt' })
+        const edge = makeEdge({
+            edgeId: 'e-1',
+            sourceNodeId: 'src',
+            targetNodeId: 'tgt',
+        })
         const result = computeSpreadTValues([edge], [source, target], settings.connector)
 
         expect(result.get('e-1')!.sourceT).toBe(0.5)
     })
 
     it('spreads sourceT values for two edges sharing the same source', () => {
-        const source = makeNode({ nodeId: 'src', type: 'aiChatThread', position: { x: 0, y: 0 }, dimensions: { width: 200, height: 600 } })
-        const target1 = makeNode({ nodeId: 'tgt-1', type: 'image', position: { x: 300, y: 0 }, dimensions: { width: 200, height: 100 } })
-        const target2 = makeNode({ nodeId: 'tgt-2', type: 'image', position: { x: 300, y: 200 }, dimensions: { width: 200, height: 100 } })
+        const source = makeNode({
+            nodeId: 'src',
+            type: 'aiChatThread',
+            position: {
+                x: 0,
+                y: 0,
+            },
+            dimensions: {
+                width: 200,
+                height: 600,
+            },
+        })
+        const target1 = makeNode({
+            nodeId: 'tgt-1',
+            type: 'image',
+            position: {
+                x: 300,
+                y: 0,
+            },
+            dimensions: {
+                width: 200,
+                height: 100,
+            },
+        })
+        const target2 = makeNode({
+            nodeId: 'tgt-2',
+            type: 'image',
+            position: {
+                x: 300,
+                y: 200,
+            },
+            dimensions: {
+                width: 200,
+                height: 100,
+            },
+        })
 
-        const edge1 = makeEdge({ edgeId: 'e-1', sourceNodeId: 'src', targetNodeId: 'tgt-1' })
-        const edge2 = makeEdge({ edgeId: 'e-2', sourceNodeId: 'src', targetNodeId: 'tgt-2' })
+        const edge1 = makeEdge({
+            edgeId: 'e-1',
+            sourceNodeId: 'src',
+            targetNodeId: 'tgt-1',
+        })
+        const edge2 = makeEdge({
+            edgeId: 'e-2',
+            sourceNodeId: 'src',
+            targetNodeId: 'tgt-2',
+        })
         const result = computeSpreadTValues([edge1, edge2], [source, target1, target2], settings.connector)
 
         const t1 = result.get('e-1')!.sourceT
@@ -565,12 +1025,55 @@ describe('computeSpreadTValues — sourceT spreading', () => {
     })
 
     it('keeps sourceT at 0.5 when the source is an image node', () => {
-        const source = makeNode({ nodeId: 'src', type: 'image', position: { x: 0, y: 0 }, dimensions: { width: 200, height: 600 } })
-        const target1 = makeNode({ nodeId: 'tgt-1', type: 'aiChatThread', position: { x: 300, y: 0 }, dimensions: { width: 200, height: 100 } })
-        const target2 = makeNode({ nodeId: 'tgt-2', type: 'aiChatThread', position: { x: 300, y: 200 }, dimensions: { width: 200, height: 100 } })
+        const source = makeNode({
+            nodeId: 'src',
+            type: 'image',
+            position: {
+                x: 0,
+                y: 0,
+            },
+            dimensions: {
+                width: 200,
+                height: 600,
+            },
+        })
+        const target1 = makeNode({
+            nodeId: 'tgt-1',
+            type: 'aiChatThread',
+            position: {
+                x: 300,
+                y: 0,
+            },
+            dimensions: {
+                width: 200,
+                height: 100,
+            },
+        })
+        const target2 = makeNode({
+            nodeId: 'tgt-2',
+            type: 'aiChatThread',
+            position: {
+                x: 300,
+                y: 200,
+            },
+            dimensions: {
+                width: 200,
+                height: 100,
+            },
+        })
 
-        const edge1 = makeEdge({ edgeId: 'e-1', sourceNodeId: 'src', targetNodeId: 'tgt-1', sourceT: 0.2 })
-        const edge2 = makeEdge({ edgeId: 'e-2', sourceNodeId: 'src', targetNodeId: 'tgt-2', sourceT: 0.8 })
+        const edge1 = makeEdge({
+            edgeId: 'e-1',
+            sourceNodeId: 'src',
+            targetNodeId: 'tgt-1',
+            sourceT: 0.2,
+        })
+        const edge2 = makeEdge({
+            edgeId: 'e-2',
+            sourceNodeId: 'src',
+            targetNodeId: 'tgt-2',
+            sourceT: 0.8,
+        })
         const result = computeSpreadTValues([edge1, edge2], [source, target1, target2], settings.connector)
 
         expect(result.get('e-1')!.sourceT).toBe(0.5)
@@ -584,10 +1087,36 @@ describe('computeSpreadTValues — sourceT spreading', () => {
 
 describe('computeSpreadTValues — lane assignment', () => {
     it('assigns laneIndex 0 and laneCount 1 for a single edge', () => {
-        const source = makeNode({ nodeId: 'src', type: 'aiChatThread', position: { x: 0, y: 0 }, dimensions: { width: 200, height: 100 } })
-        const target = makeNode({ nodeId: 'tgt', type: 'image', position: { x: 300, y: 0 }, dimensions: { width: 200, height: 100 } })
+        const source = makeNode({
+            nodeId: 'src',
+            type: 'aiChatThread',
+            position: {
+                x: 0,
+                y: 0,
+            },
+            dimensions: {
+                width: 200,
+                height: 100,
+            },
+        })
+        const target = makeNode({
+            nodeId: 'tgt',
+            type: 'image',
+            position: {
+                x: 300,
+                y: 0,
+            },
+            dimensions: {
+                width: 200,
+                height: 100,
+            },
+        })
 
-        const edge = makeEdge({ edgeId: 'e-1', sourceNodeId: 'src', targetNodeId: 'tgt' })
+        const edge = makeEdge({
+            edgeId: 'e-1',
+            sourceNodeId: 'src',
+            targetNodeId: 'tgt',
+        })
         const result = computeSpreadTValues([edge], [source, target], settings.connector)
 
         expect(result.get('e-1')!.laneIndex).toBe(0)
@@ -595,12 +1124,53 @@ describe('computeSpreadTValues — lane assignment', () => {
     })
 
     it('assigns increasing laneIndex for edges sharing the same target', () => {
-        const src1 = makeNode({ nodeId: 'src-1', type: 'aiChatThread', position: { x: 0, y: 0 }, dimensions: { width: 200, height: 100 } })
-        const src2 = makeNode({ nodeId: 'src-2', type: 'document', position: { x: 0, y: 200 }, dimensions: { width: 200, height: 100 } })
-        const target = makeNode({ nodeId: 'tgt', type: 'image', position: { x: 300, y: 100 }, dimensions: { width: 200, height: 100 } })
+        const src1 = makeNode({
+            nodeId: 'src-1',
+            type: 'aiChatThread',
+            position: {
+                x: 0,
+                y: 0,
+            },
+            dimensions: {
+                width: 200,
+                height: 100,
+            },
+        })
+        const src2 = makeNode({
+            nodeId: 'src-2',
+            type: 'document',
+            position: {
+                x: 0,
+                y: 200,
+            },
+            dimensions: {
+                width: 200,
+                height: 100,
+            },
+        })
+        const target = makeNode({
+            nodeId: 'tgt',
+            type: 'image',
+            position: {
+                x: 300,
+                y: 100,
+            },
+            dimensions: {
+                width: 200,
+                height: 100,
+            },
+        })
 
-        const edge1 = makeEdge({ edgeId: 'e-1', sourceNodeId: 'src-1', targetNodeId: 'tgt' })
-        const edge2 = makeEdge({ edgeId: 'e-2', sourceNodeId: 'src-2', targetNodeId: 'tgt' })
+        const edge1 = makeEdge({
+            edgeId: 'e-1',
+            sourceNodeId: 'src-1',
+            targetNodeId: 'tgt',
+        })
+        const edge2 = makeEdge({
+            edgeId: 'e-2',
+            sourceNodeId: 'src-2',
+            targetNodeId: 'tgt',
+        })
         const result = computeSpreadTValues([edge1, edge2], [src1, src2, target], settings.connector)
 
         // Both should have laneCount = 2
@@ -632,8 +1202,30 @@ describe('WorkspaceConnectionManager — computeMessageSourceT', () => {
         // If the node element is not registered, sourceMessageId has no effect and
         // the default sourceT from computeSpreadTValues is used.
 
-        const chatNode = makeNode({ nodeId: 'chat-1', type: 'aiChatThread', position: { x: 0, y: 0 }, dimensions: { width: 300, height: 600 } })
-        const imgNode = makeNode({ nodeId: 'img-1', type: 'image', position: { x: 400, y: 0 }, dimensions: { width: 400, height: 400 } })
+        const chatNode = makeNode({
+            nodeId: 'chat-1',
+            type: 'aiChatThread',
+            position: {
+                x: 0,
+                y: 0,
+            },
+            dimensions: {
+                width: 300,
+                height: 600,
+            },
+        })
+        const imgNode = makeNode({
+            nodeId: 'img-1',
+            type: 'image',
+            position: {
+                x: 400,
+                y: 0,
+            },
+            dimensions: {
+                width: 400,
+                height: 400,
+            },
+        })
 
         const edge = makeEdge({
             edgeId: 'e-1',
@@ -650,8 +1242,30 @@ describe('WorkspaceConnectionManager — computeMessageSourceT', () => {
     })
 
     it('finds data-message-id in registered node element and adjusts source anchor', () => {
-        const chatNode = makeNode({ nodeId: 'chat-1', type: 'aiChatThread', position: { x: 0, y: 0 }, dimensions: { width: 300, height: 600 } })
-        const imgNode = makeNode({ nodeId: 'img-1', type: 'image', position: { x: 400, y: 0 }, dimensions: { width: 400, height: 400 } })
+        const chatNode = makeNode({
+            nodeId: 'chat-1',
+            type: 'aiChatThread',
+            position: {
+                x: 0,
+                y: 0,
+            },
+            dimensions: {
+                width: 300,
+                height: 600,
+            },
+        })
+        const imgNode = makeNode({
+            nodeId: 'img-1',
+            type: 'image',
+            position: {
+                x: 400,
+                y: 0,
+            },
+            dimensions: {
+                width: 400,
+                height: 400,
+            },
+        })
 
         // Create a mock DOM element with a data-message-id child
         const nodeEl = document.createElement('div')
@@ -700,10 +1314,35 @@ describe('WorkspaceConnectionManager — computeMessageSourceT', () => {
 
     it('keeps image target midpoint when sourceMessageId adjusts source anchor', () => {
         const onConnectorGeometry = vi.fn()
-        const messageConfig = { ...createMockConfig(), onConnectorGeometry }
+        const messageConfig = {
+            ...createMockConfig(),
+            onConnectorGeometry,
+        }
         const messageManager = new WorkspaceConnectionManager(messageConfig)
-        const chatNode = makeNode({ nodeId: 'chat-1', type: 'aiChatThread', position: { x: 0, y: 0 }, dimensions: { width: 300, height: 600 } })
-        const imgNode = makeNode({ nodeId: 'img-1', type: 'image', position: { x: 400, y: 0 }, dimensions: { width: 400, height: 400 } })
+        const chatNode = makeNode({
+            nodeId: 'chat-1',
+            type: 'aiChatThread',
+            position: {
+                x: 0,
+                y: 0,
+            },
+            dimensions: {
+                width: 300,
+                height: 600,
+            },
+        })
+        const imgNode = makeNode({
+            nodeId: 'img-1',
+            type: 'image',
+            position: {
+                x: 400,
+                y: 0,
+            },
+            dimensions: {
+                width: 400,
+                height: 400,
+            },
+        })
 
         const nodeEl = document.createElement('div')
         const messageEl = document.createElement('div')
@@ -743,7 +1382,10 @@ describe('WorkspaceConnectionManager — computeMessageSourceT', () => {
         messageManager.registerNodeElement('chat-1', nodeEl as HTMLDivElement)
         messageManager.render()
 
-        const pixiEdges = onConnectorGeometry.mock.calls.at(-1)?.[0] as Array<{ id: string; arrowEnd: { y: number } | null }>
+        const pixiEdges = onConnectorGeometry.mock.calls.at(-1)?.[0] as Array<{
+            id: string
+            arrowEnd: { y: number } | null
+        }>
         const renderedEdge = pixiEdges.find((edge) => edge.id === 'e-1')
 
         expect(renderedEdge?.arrowEnd?.y).toBeCloseTo(imgNode.position.y + imgNode.dimensions.height / 2, 5)
@@ -752,9 +1394,34 @@ describe('WorkspaceConnectionManager — computeMessageSourceT', () => {
     it('ignores message elements whose viewport rect is outside the registered node rect', () => {
         const onConnectorGeometry = vi.fn()
         manager.destroy()
-        manager = new WorkspaceConnectionManager({ ...config, onConnectorGeometry })
-        const chatNode = makeNode({ nodeId: 'chat-1', type: 'aiChatThread', position: { x: 0, y: 0 }, dimensions: { width: 300, height: 600 } })
-        const imgNode = makeNode({ nodeId: 'img-1', type: 'image', position: { x: 400, y: 0 }, dimensions: { width: 400, height: 400 } })
+        manager = new WorkspaceConnectionManager({
+            ...config,
+            onConnectorGeometry,
+        })
+        const chatNode = makeNode({
+            nodeId: 'chat-1',
+            type: 'aiChatThread',
+            position: {
+                x: 0,
+                y: 0,
+            },
+            dimensions: {
+                width: 300,
+                height: 600,
+            },
+        })
+        const imgNode = makeNode({
+            nodeId: 'img-1',
+            type: 'image',
+            position: {
+                x: 400,
+                y: 0,
+            },
+            dimensions: {
+                width: 400,
+                height: 400,
+            },
+        })
 
         const nodeEl = document.createElement('div')
         const messageEl = document.createElement('div')
@@ -799,8 +1466,30 @@ describe('WorkspaceConnectionManager — computeMessageSourceT', () => {
     })
 
     it('does not find message element when data-message-id does not match', () => {
-        const chatNode = makeNode({ nodeId: 'chat-1', type: 'aiChatThread', position: { x: 0, y: 0 }, dimensions: { width: 300, height: 600 } })
-        const imgNode = makeNode({ nodeId: 'img-1', type: 'image', position: { x: 400, y: 0 }, dimensions: { width: 400, height: 400 } })
+        const chatNode = makeNode({
+            nodeId: 'chat-1',
+            type: 'aiChatThread',
+            position: {
+                x: 0,
+                y: 0,
+            },
+            dimensions: {
+                width: 300,
+                height: 600,
+            },
+        })
+        const imgNode = makeNode({
+            nodeId: 'img-1',
+            type: 'image',
+            position: {
+                x: 400,
+                y: 0,
+            },
+            dimensions: {
+                width: 400,
+                height: 400,
+            },
+        })
 
         const nodeEl = document.createElement('div')
         const messageEl = document.createElement('div')
@@ -827,7 +1516,7 @@ describe('WorkspaceConnectionManager — computeMessageSourceT', () => {
 // =============================================================================
 
 describe('WorkspaceConnectionManager — media node edge anchoring', () => {
-    function renderArrowEndY(targetType: CanvasNode['type'], targetHeight: number): number {
+    const renderArrowEndY = (targetType: CanvasNode['type'], targetHeight: number): number => {
         const onConnectorGeometry = vi.fn()
         const config = {
             ...createMockConfig(),
@@ -837,17 +1526,50 @@ describe('WorkspaceConnectionManager — media node edge anchoring', () => {
         const manager = new WorkspaceConnectionManager(config)
         // Source sits far ABOVE the target, so a node that auto-aligns its anchor
         // would pull the connector toward the top of the target's side.
-        const source = makeNode({ nodeId: 'src', type: 'image', position: { x: 0, y: 0 }, dimensions: { width: 200, height: 100 } })
-        const target = makeNode({ nodeId: 'tgt', type: targetType, position: { x: 800, y: 600 }, dimensions: { width: 320, height: targetHeight } })
-        const edge = makeEdge({ edgeId: 'e-anchor', sourceNodeId: 'src', targetNodeId: 'tgt' })
+        const source = makeNode({
+            nodeId: 'src',
+            type: 'image',
+            position: {
+                x: 0,
+                y: 0,
+            },
+            dimensions: {
+                width: 200,
+                height: 100,
+            },
+        })
+        const target = makeNode({
+            nodeId: 'tgt',
+            type: targetType,
+            position: {
+                x: 800,
+                y: 600,
+            },
+            dimensions: {
+                width: 320,
+                height: targetHeight,
+            },
+        })
+        const edge = makeEdge({
+            edgeId: 'e-anchor',
+            sourceNodeId: 'src',
+            targetNodeId: 'tgt',
+        })
 
         manager.syncNodes([source, target])
         manager.syncEdges([edge])
         manager.render()
 
-        const pixiEdges = onConnectorGeometry.mock.calls.at(-1)?.[0] as Array<{ id: string; arrowEnd: { x: number; y: number } | null }> | undefined
+        const pixiEdges = onConnectorGeometry.mock.calls.at(-1)?.[0] as Array<{
+            id: string
+            arrowEnd: {
+                x: number
+                y: number
+            } | null
+        }> | undefined
         const rendered = pixiEdges?.find((candidate) => candidate.id === 'e-anchor')
         expect(rendered?.arrowEnd).toBeDefined()
+
         return rendered!.arrowEnd!.y
     }
 

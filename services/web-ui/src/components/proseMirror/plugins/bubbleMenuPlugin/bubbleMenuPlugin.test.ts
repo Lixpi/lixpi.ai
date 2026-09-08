@@ -5,7 +5,7 @@ import {
     beforeEach,
     vi,
 } from 'vitest'
-import { NodeSelection } from 'prosemirror-state'
+
 import {
     doc,
     p,
@@ -18,12 +18,12 @@ import {
 } from '$src/components/proseMirror/plugins/testUtils/testHelpers.ts'
 import { BubbleMenuView } from '$src/components/proseMirror/plugins/bubbleMenuPlugin/bubbleMenuPlugin.ts'
 
-function findNodeSelectionPos(document: any, nodeType: string): number {
+const findNodeSelectionPos = (document: any, nodeType: string): number => {
     for (let position = 0; position < document.content.size; position += 1) {
         const candidate = document.resolve(position).nodeAfter
-        if (candidate?.type.name === nodeType) {
+
+        if (candidate?.type.name === nodeType)
             return position
-        }
     }
 
     throw new Error(`No node of type ${nodeType} found`)
@@ -58,7 +58,7 @@ const {
         const updateMenuItemMock = vi.fn()
         const getSelectionContextMock = vi.fn(() => 'none' as const)
         const updateImageButtonStatesMock = vi.fn()
-        const createBubbleMenuMock = vi.fn(function(opts: any) {
+        const createBubbleMenuMock = vi.fn((opts: any) => {
             const bubbleMenu = {
                 element: document.createElement('div'),
                 isVisible: false,
@@ -66,9 +66,9 @@ const {
                 show: vi.fn(),
                 hide: vi.fn(() => {
                     bubbleMenu.isVisible = false
-                    if (opts.onHide) {
+
+                    if (opts.onHide)
                         opts.onHide()
-                    }
                 }),
                 reposition: vi.fn(),
                 updateContext: vi.fn(),

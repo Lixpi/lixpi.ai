@@ -88,7 +88,13 @@ const makeAsset = ({
 
 const textPrompt = (text: string): ProseMirrorJsonNode => ({
     type: 'doc',
-    content: [{ type: 'paragraph', content: [{ type: 'text', text }] }],
+    content: [{
+        type: 'paragraph',
+        content: [{
+            type: 'text',
+            text,
+        }],
+    }],
 })
 
 describe('media reference matching and compilation', () => {
@@ -109,7 +115,10 @@ describe('media reference matching and compilation', () => {
     )
 
     it('collapses duplicate Asset placements and assigns stable positional aliases', () => {
-        const asset = makeAsset({ assetId: 'asset-1', title: 'Shelby' })
+        const asset = makeAsset({
+            assetId: 'asset-1',
+            title: 'Shelby',
+        })
         const bindings = createMediaReferenceBindings({
             assets: [asset, asset],
             selectedNodeIds: { 'asset-1': 'node-17' },
@@ -127,14 +136,21 @@ describe('media reference matching and compilation', () => {
 
     it('replaces explicit reference atoms and matching free-form text without leaking display metadata', () => {
         const bindings = createMediaReferenceBindings({
-            assets: [makeAsset({ assetId: 'asset-1', title: 'Shelby', originalName: 'Shelby source.png' })],
+            assets: [makeAsset({
+                assetId: 'asset-1',
+                title: 'Shelby',
+                originalName: 'Shelby source.png',
+            })],
         })
         const prompt: ProseMirrorJsonNode = {
             type: 'doc',
             content: [{
                 type: 'paragraph',
                 content: [
-                    { type: 'text', text: 'Animate ' },
+                    {
+                        type: 'text',
+                        text: 'Animate ',
+                    },
                     {
                         type: 'prompt_reference',
                         attrs: {
@@ -144,12 +160,18 @@ describe('media reference matching and compilation', () => {
                             displayName: 'Shelby',
                         },
                     },
-                    { type: 'text', text: "; keep shelby's scarf." },
+                    {
+                        type: 'text',
+                        text: "; keep shelby's scarf.",
+                    },
                 ],
             }],
         }
 
-        const compiled = compileMediaReferenceIntent({ prompt, bindings })
+        const compiled = compileMediaReferenceIntent({
+            prompt,
+            bindings,
+        })
 
         expect(segmentMediaPrompt(prompt).some(segment => segment.kind === 'reference')).toBe(true)
         expect(compiled.unresolvedBindings).toEqual([])
@@ -161,8 +183,14 @@ describe('media reference matching and compilation', () => {
     it('does not fuzzy-match a typed Capability Artifact label as a media reference', () => {
         const bindings = createMediaReferenceBindings({
             assets: [
-                makeAsset({ assetId: 'first-frame', title: 'Night encounter first frame' }),
-                makeAsset({ assetId: 'last-frame', title: 'Night encounter last frame' }),
+                makeAsset({
+                    assetId: 'first-frame',
+                    title: 'Night encounter first frame',
+                }),
+                makeAsset({
+                    assetId: 'last-frame',
+                    title: 'Night encounter last frame',
+                }),
             ],
         })
         const prompt: ProseMirrorJsonNode = {
@@ -170,7 +198,10 @@ describe('media reference matching and compilation', () => {
             content: [{
                 type: 'paragraph',
                 content: [
-                    { type: 'text', text: 'Generate a video for ' },
+                    {
+                        type: 'text',
+                        text: 'Generate a video for ',
+                    },
                     {
                         type: 'prompt_reference',
                         attrs: {
@@ -185,7 +216,10 @@ describe('media reference matching and compilation', () => {
             }],
         }
 
-        const compiled = compileMediaReferenceIntent({ prompt, bindings })
+        const compiled = compileMediaReferenceIntent({
+            prompt,
+            bindings,
+        })
 
         expect(segmentMediaPrompt(prompt)).toContainEqual({
             kind: 'non-media-reference',
@@ -223,14 +257,23 @@ describe('media reference matching and compilation', () => {
     it('persists close candidates instead of selecting one', () => {
         const bindings = createMediaReferenceBindings({
             assets: [
-                makeAsset({ assetId: 'asset-1', title: 'Alex portrait' }),
-                makeAsset({ assetId: 'asset-2', title: 'Alex sketch' }),
+                makeAsset({
+                    assetId: 'asset-1',
+                    title: 'Alex portrait',
+                }),
+                makeAsset({
+                    assetId: 'asset-2',
+                    title: 'Alex sketch',
+                }),
             ],
         })
         const result = matchMediaReferencePhrase({
             phrase: 'Alex',
             bindings,
-            promptRange: { from: 4, to: 8 },
+            promptRange: {
+                from: 4,
+                to: 8,
+            },
         })
 
         expect(result.kind).toBe('ambiguous')
@@ -263,7 +306,10 @@ describe('media reference matching and compilation', () => {
             'Use Character Creator to create an improved variant of this character.',
         ].join(' '))
 
-        const compiled = compileMediaReferenceIntent({ prompt, bindings })
+        const compiled = compileMediaReferenceIntent({
+            prompt,
+            bindings,
+        })
 
         expect(compiled.unresolvedBindings).toEqual([])
         expect(compiled.intent.safePrompt).toContain('in the last shot')
@@ -274,8 +320,16 @@ describe('media reference matching and compilation', () => {
     it('does not ask which Asset owns a descriptive trait shared by attached references', () => {
         const bindings = createMediaReferenceBindings({
             assets: [
-                makeAsset({ assetId: 'asset-1', title: 'Source Drawing', entityTags: ['red scarf'] }),
-                makeAsset({ assetId: 'asset-2', title: 'Character Sheet', entityTags: ['red scarf'] }),
+                makeAsset({
+                    assetId: 'asset-1',
+                    title: 'Source Drawing',
+                    entityTags: ['red scarf'],
+                }),
+                makeAsset({
+                    assetId: 'asset-2',
+                    title: 'Character Sheet',
+                    entityTags: ['red scarf'],
+                }),
             ],
         })
 
@@ -291,14 +345,23 @@ describe('media reference matching and compilation', () => {
     it('uses a persisted user resolution to compile the same request deterministically', () => {
         const bindings = createMediaReferenceBindings({
             assets: [
-                makeAsset({ assetId: 'asset-1', title: 'Alex portrait' }),
-                makeAsset({ assetId: 'asset-2', title: 'Alex sketch' }),
+                makeAsset({
+                    assetId: 'asset-1',
+                    title: 'Alex portrait',
+                }),
+                makeAsset({
+                    assetId: 'asset-2',
+                    title: 'Alex sketch',
+                }),
             ],
         })
         const compiled = compileMediaReferenceIntent({
             prompt: textPrompt('Use Alex'),
             bindings,
-            resolvedReferences: [{ originalText: 'Alex', assetId: 'asset-2' }],
+            resolvedReferences: [{
+                originalText: 'Alex',
+                assetId: 'asset-2',
+            }],
         })
 
         expect(compiled.unresolvedBindings).toEqual([])
@@ -307,16 +370,31 @@ describe('media reference matching and compilation', () => {
 
     it('ignores legacy persisted resolutions that do not identify an Asset by its current identity variants', () => {
         const bindings = createMediaReferenceBindings({
-            assets: [makeAsset({ assetId: 'asset-1', title: 'Character Sheet' })],
+            assets: [makeAsset({
+                assetId: 'asset-1',
+                title: 'Character Sheet',
+            })],
         })
         const compiled = compileMediaReferenceIntent({
             prompt: textPrompt('Write Lixpi (in red) and fix the coat with the attached reference'),
             bindings,
             resolvedReferences: [
-                { originalText: 'the', assetId: 'asset-1' },
-                { originalText: 'with', assetId: 'asset-1' },
-                { originalText: 'coat', assetId: 'asset-1' },
-                { originalText: 'in red', assetId: 'asset-1' },
+                {
+                    originalText: 'the',
+                    assetId: 'asset-1',
+                },
+                {
+                    originalText: 'with',
+                    assetId: 'asset-1',
+                },
+                {
+                    originalText: 'coat',
+                    assetId: 'asset-1',
+                },
+                {
+                    originalText: 'in red',
+                    assetId: 'asset-1',
+                },
             ],
         })
 
@@ -326,7 +404,10 @@ describe('media reference matching and compilation', () => {
 
     it('rejects nested reasoning/provider payload leaks and sanitizes known display text', () => {
         const bindings = createMediaReferenceBindings({
-            assets: [makeAsset({ assetId: 'asset-1', title: 'Shelby' })],
+            assets: [makeAsset({
+                assetId: 'asset-1',
+                title: 'Shelby',
+            })],
         })
 
         expect(() =>
@@ -373,7 +454,10 @@ describe('media reference matching and compilation', () => {
 
     it('fails closed when the maximum request-scoped binding count is exceeded', () => {
         const binding = createMediaReferenceBindings({
-            assets: [makeAsset({ assetId: 'asset-template', title: 'Template' })],
+            assets: [makeAsset({
+                assetId: 'asset-template',
+                title: 'Template',
+            })],
         })[0]!
         const tooMany = Array.from({ length: MEDIA_REFERENCE_MAX_BINDINGS + 1 }, (_, index) => ({
             ...binding,
@@ -385,7 +469,10 @@ describe('media reference matching and compilation', () => {
             matchMediaReferencePhrase({
                 phrase: 'Template',
                 bindings: tooMany,
-                promptRange: { from: 0, to: 8 },
+                promptRange: {
+                    from: 0,
+                    to: 8,
+                },
             })
         ).toThrow('MEDIA_REFERENCE_BINDING_LIMIT_EXCEEDED')
     })

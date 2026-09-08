@@ -37,23 +37,32 @@ import {
 import { validateImagePrompt } from '../tools/image-generation.ts'
 import { MediaGenerationRequestService } from '../../services/media-generation-request-service.ts'
 
-type Published = { subject: string; payload: any }
+type Published = {
+    subject: string
+    payload: any
+}
 
 const makeFakeNats = () => {
     const published: Published[] = []
     let nextStreamSeq = 0
     const fake = {
-        publish: (subject: string, payload: any) => {
-            published.push({ subject, payload })
-        },
+        publish: (subject: string, payload: any) => void published.push({
+            subject,
+            payload,
+        }),
         ensureJetStreamStream: vi.fn(async () => undefined),
         publishJetStream: vi.fn(async () => {
             nextStreamSeq += 1
+
             return { seq: nextStreamSeq }
         }),
         purgeJetStreamSubject: vi.fn(async () => undefined),
     } as any
-    return { fake, published }
+
+    return {
+        fake,
+        published,
+    }
 }
 
 const flushPipelinePublishes = async (): Promise<void> => {
@@ -98,8 +107,15 @@ const createFanoutState = (overrides: Partial<ProviderState> = {}): ProviderStat
     aiChatThreadId: 'thread-1',
     instanceKey: 'ws-1:thread-1',
     provider: 'Anthropic',
-    messages: [{ role: 'user', content: 'Create something with reference images.' }],
-    aiModelMetaInfo: { provider: 'Anthropic', model: 'claude-sonnet-4-6', modelVersion: 'claude-sonnet-4-6' },
+    messages: [{
+        role: 'user',
+        content: 'Create something with reference images.',
+    }],
+    aiModelMetaInfo: {
+        provider: 'Anthropic',
+        model: 'claude-sonnet-4-6',
+        modelVersion: 'claude-sonnet-4-6',
+    },
     eventMeta: {},
     modelVersion: 'claude-sonnet-4-6',
     temperature: 0.7,
@@ -117,12 +133,28 @@ const createFanoutState = (overrides: Partial<ProviderState> = {}): ProviderStat
     mediaFanoutPlan: {
         generationRequestId: 'request-1',
         imageModels: [
-            { provider: 'Google', model: 'gemini-2.5-flash-image', modelVersion: 'gemini-2.5-flash-image' },
-            { provider: 'Google', model: 'imagen-4.0-generate-001', modelVersion: 'imagen-4.0-generate-001' },
+            {
+                provider: 'Google',
+                model: 'gemini-2.5-flash-image',
+                modelVersion: 'gemini-2.5-flash-image',
+            },
+            {
+                provider: 'Google',
+                model: 'imagen-4.0-generate-001',
+                modelVersion: 'imagen-4.0-generate-001',
+            },
         ],
         videoModels: [
-            { provider: 'Google', model: 'veo-3.1-generate-preview', modelVersion: 'veo-3.1-generate-preview' },
-            { provider: 'Google', model: 'seedance-1', modelVersion: 'seedance-1' },
+            {
+                provider: 'Google',
+                model: 'veo-3.1-generate-preview',
+                modelVersion: 'veo-3.1-generate-preview',
+            },
+            {
+                provider: 'Google',
+                model: 'seedance-1',
+                modelVersion: 'seedance-1',
+            },
         ],
         imageSize: 'auto',
     },
@@ -144,6 +176,7 @@ class TestProvider extends BaseProvider {
             this.providerName,
             state.generationRun,
         )
+
         return this.executeImageGeneration(state)
     }
 
@@ -155,6 +188,7 @@ class TestProvider extends BaseProvider {
             this.providerName,
             state.generationRun,
         )
+
         return this.executeVideoGeneration(state)
     }
 }
@@ -259,9 +293,9 @@ describe('BaseProvider image fanout errors', () => {
     it('publishes IMAGE_ERROR for the failed media child while returning successful siblings', async () => {
         const nats = makeFakeNats()
         const runImageRouter = vi.fn(async (state: ProviderState): Promise<Partial<ProviderState>> => {
-            if (state.generationRun?.mediaIndex === 0) {
+            if (state.generationRun?.mediaIndex === 0)
                 return { error: 'Google image model returned no inline image data.' }
-            }
+
             return { generatedImages: ['final-image-base64'] }
         })
         const deps = {
@@ -286,7 +320,10 @@ describe('BaseProvider image fanout errors', () => {
             provider: 'Anthropic',
             modelVersion: 'claude-sonnet-4-6',
             aiModelMetaInfo: makeImageModel('claude-sonnet-4-6'),
-            messages: [{ role: 'user', content: 'Make an image.' }],
+            messages: [{
+                role: 'user',
+                content: 'Make an image.',
+            }],
             generatedImagePrompt: 'Make an image.',
             imageSize: 'auto',
             generationRun,
@@ -355,7 +392,11 @@ describe('BaseProvider request validation', () => {
             organizationId: 'organization-1',
             workspaceId: 'ws-1',
             aiChatThreadId: 'thread-1',
-            aiModelMetaInfo: { provider: 'Anthropic', model: 'claude', modelVersion: 'claude' },
+            aiModelMetaInfo: {
+                provider: 'Anthropic',
+                model: 'claude',
+                modelVersion: 'claude',
+            },
             messages: [],
         })
 
@@ -395,7 +436,10 @@ describe('BaseProvider request validation', () => {
                     supportedAspectRatios: ['1:1', '3:2', '2:3'],
                 },
             },
-            messages: [{ role: 'user', content: 'Create a character sheet.' }],
+            messages: [{
+                role: 'user',
+                content: 'Create a character sheet.',
+            }],
             enableImageGeneration: true,
             imageGenerationReferences: [{
                 url: 'data:image/png;base64,c291cmNl',
@@ -426,15 +470,25 @@ describe('BaseProvider request validation', () => {
         } as BaseProviderDeps)
         const invoke = vi.fn(async (initialState: ProviderState) => initialState)
         ;(provider as any).app = { invoke }
-        const plan = { kind: 'character-sheet', capabilityRunId: 'character-run-1' } as any
+        const plan = {
+            kind: 'character-sheet',
+            capabilityRunId: 'character-run-1',
+        } as any
 
         await provider.process({
             organizationId: 'organization-1',
             workspaceId: 'ws-1',
             aiChatThreadId: 'thread-1',
-            aiModelMetaInfo: { provider: 'Anthropic', model: 'claude', modelVersion: 'claude' },
+            aiModelMetaInfo: {
+                provider: 'Anthropic',
+                model: 'claude',
+                modelVersion: 'claude',
+            },
             imageModelMetaInfo: makeImageModel('gemini-2.5-flash-image'),
-            messages: [{ role: 'user', content: 'Create a character sheet.' }],
+            messages: [{
+                role: 'user',
+                content: 'Create a character sheet.',
+            }],
             generatedImagePrompt: 'Create a character sheet.',
             capabilityMediaExecutionPlan: plan,
         })
@@ -463,16 +517,29 @@ describe('BaseProvider request validation', () => {
             organizationId: 'organization-1',
             workspaceId: 'ws-1',
             aiChatThreadId: 'thread-1',
-            aiModelMetaInfo: { provider: 'BytePlus', model: 'seedance', modelVersion: 'seedance' },
-            messages: [{ role: 'user', content: 'Animate the subject.' }],
+            aiModelMetaInfo: {
+                provider: 'BytePlus',
+                model: 'seedance',
+                modelVersion: 'seedance',
+            },
+            messages: [{
+                role: 'user',
+                content: 'Animate the subject.',
+            }],
             enableVideoGeneration: true,
-            videoGenerationConfig: { generateAudio: 'false', outputFormat: 'mov' },
+            videoGenerationConfig: {
+                generateAudio: 'false',
+                outputFormat: 'mov',
+            },
             generatedVideoNegativePrompt: 'no subtitles',
         })
 
         expect(invoke).toHaveBeenCalledWith(
             expect.objectContaining({
-                videoGenerationConfig: { generateAudio: 'false', outputFormat: 'mov' },
+                videoGenerationConfig: {
+                    generateAudio: 'false',
+                    outputFormat: 'mov',
+                },
                 generatedVideoNegativePrompt: 'no subtitles',
             }),
             expect.anything(),
@@ -481,13 +548,19 @@ describe('BaseProvider request validation', () => {
 
     it('denies a run whose spend cannot be authorized before resolving or persisting media lineage', async () => {
         const nats = makeFakeNats()
-        const authorizeSpend = vi.fn().mockResolvedValue({ approved: false, reason: 'metrics_unreachable' })
+        const authorizeSpend = vi.fn().mockResolvedValue({
+            approved: false,
+            reason: 'metrics_unreachable',
+        })
         const provider = new TestProvider('ws-1:thread-1', {
             natsService: nats.fake,
             usageReporter: {} as any,
             runImageRouter: vi.fn(),
             runVideoRouter: vi.fn(),
-            usageMetering: { enabled: true, authorizeSpend },
+            usageMetering: {
+                enabled: true,
+                authorizeSpend,
+            },
         } as BaseProviderDeps)
         const planMediaBranchLineage = vi.spyOn(provider as any, 'planMediaBranchLineage')
         const streamTokens = vi.spyOn(provider as any, 'streamTokens')
@@ -495,10 +568,20 @@ describe('BaseProvider request validation', () => {
         const result = await provider.process({
             workspaceId: 'ws-1',
             aiChatThreadId: 'thread-1',
-            aiModelMetaInfo: { provider: 'Anthropic', model: 'claude', modelVersion: 'claude' },
-            messages: [{ role: 'user', content: 'make a picture' }],
+            aiModelMetaInfo: {
+                provider: 'Anthropic',
+                model: 'claude',
+                modelVersion: 'claude',
+            },
+            messages: [{
+                role: 'user',
+                content: 'make a picture',
+            }],
             enableImageGeneration: true,
-            eventMeta: { userId: 'user-1', organizationId: 'organization-1' },
+            eventMeta: {
+                userId: 'user-1',
+                organizationId: 'organization-1',
+            },
         })
 
         expect(authorizeSpend).toHaveBeenCalledOnce()
@@ -523,7 +606,10 @@ describe('BaseProvider request validation', () => {
 
         const provider = new TestProvider('ws-1:thread-1', deps)
         const baseState = {
-            messages: [{ role: 'user', content: 'make it blue' }],
+            messages: [{
+                role: 'user',
+                content: 'make it blue',
+            }],
             aiModelMetaInfo: {},
             eventMeta: {},
             workspaceId: '',
@@ -563,8 +649,15 @@ describe('BaseProvider request validation', () => {
             organizationId: 'organization-1',
             workspaceId: 'ws-1',
             aiChatThreadId: '',
-            aiModelMetaInfo: { provider: 'Anthropic', model: 'Claude', modelVersion: 'claude' },
-            messages: [{ role: 'user', content: 'make it green' }],
+            aiModelMetaInfo: {
+                provider: 'Anthropic',
+                model: 'Claude',
+                modelVersion: 'claude',
+            },
+            messages: [{
+                role: 'user',
+                content: 'make it green',
+            }],
         })
 
         expect(result.error).toBe('aiChatThreadId is required')
@@ -583,7 +676,10 @@ describe('BaseProvider routing', () => {
             runVideoRouter: vi.fn(),
         })
 
-        expect((provider as any).routeAfterStream({ generatedImagePrompt: 'paint', generatedVideoPrompt: 'animate' } as any))
+        expect((provider as any).routeAfterStream({
+            generatedImagePrompt: 'paint',
+            generatedVideoPrompt: 'animate',
+        } as any))
             .toBe('generate_video')
         expect((provider as any).routeAfterStream({ generatedImagePrompt: 'paint' } as any)).toBe('generate_image')
         expect((provider as any).routeAfterStream({} as any)).toBe('skip')
@@ -679,7 +775,10 @@ describe('BaseProvider routing', () => {
             instanceKey: 'ws-1:thread-1',
             provider: 'Anthropic',
             modelVersion: 'claude-haiku-4-5',
-            messages: [{ role: 'user', content: 'Create the timeline' }],
+            messages: [{
+                role: 'user',
+                content: 'Create the timeline',
+            }],
             aiModelMetaInfo: { model: 'claude-haiku-4-5' },
             eventMeta: {},
             resolvedCapabilityPlan: {
@@ -723,29 +822,28 @@ describe('BaseProvider routing', () => {
         const order: string[] = []
         capabilityOutputFinalizerMocks.finalize.mockImplementation(async () => {
             order.push('finalize')
+
             return [{
-                canvasGeometry: { layoutRevision: 2, nodes: [] },
+                canvasGeometry: {
+                    layoutRevision: 2,
+                    nodes: [],
+                },
                 generationRun: { generationRequestId: 'request-1' },
             }]
         })
         ;(provider as any).streamPublisher = {
-            drainPendingWrites: vi.fn(async () => {
-                order.push('drain')
-            }),
-            finishProseMirrorConversation: vi.fn(async () => {
-                order.push('finish-conversation')
-            }),
-            canvasGeometryResolved: vi.fn(() => {
-                order.push('publish')
-            }),
-            end: vi.fn(() => {
-                order.push('end')
-            }),
+            drainPendingWrites: vi.fn(async () => void order.push('drain')),
+            finishProseMirrorConversation: vi.fn(async () => void order.push('finish-conversation')),
+            canvasGeometryResolved: vi.fn(() => void order.push('publish')),
+            end: vi.fn(() => void order.push('end')),
         }
         const state = {
             workspaceId: 'ws-1',
             aiChatThreadId: 'thread-1',
-            eventMeta: { userId: 'user-1', organizationId: 'organization-1' },
+            eventMeta: {
+                userId: 'user-1',
+                organizationId: 'organization-1',
+            },
             pendingCapabilityOutputFinalizations: [{
                 capabilityId: 'action-timeline',
                 capabilityRunId: 'run-1',
@@ -962,9 +1060,9 @@ describe('BaseProvider fanout', () => {
     it('returns successful image fanout results while emitting an image error event for failures', async () => {
         const nats = makeFakeNats()
         const runImageRouter = vi.fn(async (state: ProviderState): Promise<Partial<ProviderState>> => {
-            if (state.generationRun?.mediaIndex === 0) {
+            if (state.generationRun?.mediaIndex === 0)
                 return { error: 'Google image model returned no inline image data.' }
-            }
+
             return { generatedImages: ['final-image-base64'] }
         })
         const deps = {
@@ -1003,9 +1101,9 @@ describe('BaseProvider fanout', () => {
     it('keeps successful fanout results when a sibling model throws and does not emit top-level error', async () => {
         const nats = makeFakeNats()
         const runImageRouter = vi.fn(async (state: ProviderState): Promise<Partial<ProviderState>> => {
-            if (state.generationRun?.mediaIndex === 0) {
+            if (state.generationRun?.mediaIndex === 0)
                 throw new Error('image provider crashed')
-            }
+
             return { generatedImages: ['final-image-base64'] }
         })
 
@@ -1031,9 +1129,9 @@ describe('BaseProvider fanout', () => {
     it('returns successful video fanout results while emitting a video error event for failures', async () => {
         const nats = makeFakeNats()
         const runVideoRouter = vi.fn(async (state: ProviderState): Promise<Partial<ProviderState>> => {
-            if (state.generationRun?.mediaIndex === 0) {
+            if (state.generationRun?.mediaIndex === 0)
                 return { error: 'Google video provider timed out.' }
-            }
+
             return { generatedVideos: ['final-video-url'] }
         })
         const deps = {
@@ -1230,10 +1328,17 @@ describe('BaseProvider streamTokens failure path', () => {
             instanceKey: 'ws1:thread1',
             provider: 'Anthropic',
             modelVersion: 'claude-sonnet-4-6',
-            messages: [{ role: 'user', content: 'make fire' }],
+            messages: [{
+                role: 'user',
+                content: 'make fire',
+            }],
             streamActive: false,
             aiRequestReceivedAt: 1,
-            aiModelMetaInfo: { provider: 'Anthropic', model: 'claude', modelVersion: 'claude' },
+            aiModelMetaInfo: {
+                provider: 'Anthropic',
+                model: 'claude',
+                modelVersion: 'claude',
+            },
             eventMeta: {},
             temperature: 0.7,
             imageSize: 'auto',
@@ -1267,15 +1372,12 @@ describe('BaseProvider process failure path', () => {
                 runVideoRouter: vi.fn(),
             } as BaseProviderDeps)
             let markInvocationStarted!: () => void
-            const invocationStarted = new Promise<void>((resolve) => {
-                markInvocationStarted = resolve
-            })
+            const invocationStarted = new Promise<void>((resolve) => void (markInvocationStarted = resolve))
             ;(provider as any).app = {
                 invoke: vi.fn(async (_state: ProviderState, options: { signal: AbortSignal }) => {
                     markInvocationStarted()
-                    return await new Promise<ProviderState>((_resolve, reject) => {
-                        options.signal.addEventListener('abort', () => reject(options.signal.reason), { once: true })
-                    })
+
+                    return await new Promise<ProviderState>((_resolve, reject) => void options.signal.addEventListener('abort', () => reject(options.signal.reason), { once: true }))
                 }),
             }
 
@@ -1283,7 +1385,11 @@ describe('BaseProvider process failure path', () => {
                 organizationId: 'organization-1',
                 workspaceId: 'ws1',
                 aiChatThreadId: 'thread1',
-                aiModelMetaInfo: { provider: 'Anthropic', model: 'claude', modelVersion: 'claude' },
+                aiModelMetaInfo: {
+                    provider: 'Anthropic',
+                    model: 'claude',
+                    modelVersion: 'claude',
+                },
                 messages: [],
                 durableGenerationRequestId: 'request-1',
                 generationRun: {
@@ -1329,15 +1435,12 @@ describe('BaseProvider process failure path', () => {
             } as BaseProviderDeps)
             const parentAbortController = new AbortController()
             let markInvocationStarted!: () => void
-            const invocationStarted = new Promise<void>((resolve) => {
-                markInvocationStarted = resolve
-            })
+            const invocationStarted = new Promise<void>((resolve) => void (markInvocationStarted = resolve))
             ;(provider as any).app = {
                 invoke: vi.fn(async (_state: ProviderState, options: { signal: AbortSignal }) => {
                     markInvocationStarted()
-                    return await new Promise<ProviderState>((_resolve, reject) => {
-                        options.signal.addEventListener('abort', () => reject(new Error('Abort')), { once: true })
-                    })
+
+                    return await new Promise<ProviderState>((_resolve, reject) => void options.signal.addEventListener('abort', () => reject(new Error('Abort')), { once: true }))
                 }),
             }
 
@@ -1345,7 +1448,11 @@ describe('BaseProvider process failure path', () => {
                 organizationId: 'organization-1',
                 workspaceId: 'ws1',
                 aiChatThreadId: 'thread1',
-                aiModelMetaInfo: { provider: 'Anthropic', model: 'claude', modelVersion: 'claude' },
+                aiModelMetaInfo: {
+                    provider: 'Anthropic',
+                    model: 'claude',
+                    modelVersion: 'claude',
+                },
                 messages: [],
                 abortSignal: parentAbortController.signal,
                 durableGenerationRequestId: 'request-1',
@@ -1401,8 +1508,14 @@ describe('BaseProvider process failure path', () => {
                 organizationId: 'organization-1',
                 workspaceId: 'ws1',
                 aiChatThreadId: 'thread1',
-                aiModelMetaInfo: { provider: 'Anthropic', model: 'claude' },
-                messages: [{ role: 'user', content: 'make it fail' }],
+                aiModelMetaInfo: {
+                    provider: 'Anthropic',
+                    model: 'claude',
+                },
+                messages: [{
+                    role: 'user',
+                    content: 'make it fail',
+                }],
             } as any)
 
             expect(completeKnownMediaGenerationRequests).toHaveBeenCalledOnce()
@@ -1448,7 +1561,10 @@ describe('BaseProvider usage lifecycle', () => {
             instanceKey: 'ws1:thread1',
             provider: 'Anthropic',
             modelVersion: 'claude-sonnet-4-6',
-            aiModelMetaInfo: { provider: 'Anthropic', model: 'claude-sonnet-4-6' },
+            aiModelMetaInfo: {
+                provider: 'Anthropic',
+                model: 'claude-sonnet-4-6',
+            },
             temperature: 0.7,
             streamActive: false,
             aiRequestReceivedAt: 10,
@@ -1485,13 +1601,28 @@ describe('BaseProvider usage lifecycle', () => {
             instanceKey: 'ws1:thread1',
             provider: 'Anthropic',
             modelVersion: 'claude-sonnet-4.6',
-            aiModelMetaInfo: { provider: 'Anthropic', model: 'claude-sonnet-4.6', modelVersion: 'claude-sonnet-4.6' },
-            videoModelMetaInfo: { provider: 'Google', model: 'veo-3.1-generate-preview', modelVersion: 'veo-3.1-generate-preview' },
+            aiModelMetaInfo: {
+                provider: 'Anthropic',
+                model: 'claude-sonnet-4.6',
+                modelVersion: 'claude-sonnet-4.6',
+            },
+            videoModelMetaInfo: {
+                provider: 'Google',
+                model: 'veo-3.1-generate-preview',
+                modelVersion: 'veo-3.1-generate-preview',
+            },
             temperature: 0.7,
             streamActive: false,
             aiRequestReceivedAt: 10,
-            usage: { promptTokens: 12, completionTokens: 8, totalTokens: 20 },
-            imageUsage: { size: '1024x1024', quality: 'high' },
+            usage: {
+                promptTokens: 12,
+                completionTokens: 8,
+                totalTokens: 20,
+            },
+            imageUsage: {
+                size: '1024x1024',
+                quality: 'high',
+            },
             videoUsage: {
                 durationSeconds: 8,
                 resolution: '720p',

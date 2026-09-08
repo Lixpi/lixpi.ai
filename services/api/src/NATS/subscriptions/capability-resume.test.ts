@@ -28,11 +28,14 @@ import { capabilitySubjects } from './capability-subjects.ts'
 
 const { RUN } = NATS_SUBJECTS.CAPABILITY_SUBJECTS
 
-function makeRun(status: CapabilityRunStatus) {
+const makeRun = (status: CapabilityRunStatus) => {
     return {
         runId: `run-${status}`,
         rootCapabilityId: 'tool-1',
-        resolvedManifests: [{ capabilityId: 'tool-1', manifestBlobHash: 'a'.repeat(64) }],
+        resolvedManifests: [{
+            capabilityId: 'tool-1',
+            manifestBlobHash: 'a'.repeat(64),
+        }],
         workspaceId: 'workspace-1',
         origin: 'panel' as const,
         status,

@@ -13,19 +13,36 @@ import {
     type ProviderState,
 } from '../graph/state.ts'
 
-function createState(overrides: Partial<ProviderState> = {}): ProviderState {
+const createState = (overrides: Partial<ProviderState> = {}): ProviderState => {
     return {
         messages: [
             {
                 role: 'user',
                 content: [
-                    { type: 'input_image', image_url: 'data:image/png;base64,branch-inline', detail: 'high' },
-                    { type: 'input_image', image_url: 'data:image/png;base64,feature-inline', detail: 'high' },
-                    { type: 'input_image', image_url: '/api/images/workspace-1/message-file', detail: 'high' },
+                    {
+                        type: 'input_image',
+                        image_url: 'data:image/png;base64,branch-inline',
+                        detail: 'high',
+                    },
+                    {
+                        type: 'input_image',
+                        image_url: 'data:image/png;base64,feature-inline',
+                        detail: 'high',
+                    },
+                    {
+                        type: 'input_image',
+                        image_url: '/api/images/workspace-1/message-file',
+                        detail: 'high',
+                    },
                 ],
             },
         ],
-        aiModelMetaInfo: { provider: 'Anthropic', model: 'Claude', modelVersion: 'claude-sonnet-4-6', maxCompletionSize: 4096 },
+        aiModelMetaInfo: {
+            provider: 'Anthropic',
+            model: 'Claude',
+            modelVersion: 'claude-sonnet-4-6',
+            maxCompletionSize: 4096,
+        },
         eventMeta: {},
         workspaceId: 'workspace-1',
         aiChatThreadId: 'thread-1',
@@ -37,7 +54,11 @@ function createState(overrides: Partial<ProviderState> = {}): ProviderState {
         aiRequestReceivedAt: 1,
         enableImageGeneration: true,
         imageSize: '1024x1024',
-        imageModelMetaInfo: { provider: 'Google', model: 'Gemini Image', modelVersion: 'gemini-2.5-flash-image' },
+        imageModelMetaInfo: {
+            provider: 'Google',
+            model: 'Gemini Image',
+            modelVersion: 'gemini-2.5-flash-image',
+        },
         imageModelVersion: 'gemini-2.5-flash-image',
         imageProviderName: 'Google',
         imagePromptRetryCount: 0,
@@ -104,8 +125,16 @@ function createState(overrides: Partial<ProviderState> = {}): ProviderState {
             confidence: 0.95,
             rationale: 'Continue the generated portrait branch and exclude the goat branch.',
             decisions: [
-                { candidateId: 'person-generated', role: 'target', reason: 'selected generated portrait branch' },
-                { candidateId: 'goat-generated', role: 'excluded', reason: 'different subject and branch' },
+                {
+                    candidateId: 'person-generated',
+                    role: 'target',
+                    reason: 'selected generated portrait branch',
+                },
+                {
+                    candidateId: 'goat-generated',
+                    role: 'excluded',
+                    reason: 'different subject and branch',
+                },
             ],
         },
         ...overrides,

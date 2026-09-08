@@ -7,7 +7,7 @@ import { readFileSync } from 'fs'
 import { resolve } from 'path'
 import { withoutLayout } from '@lixpi/test-utils'
 
-function expectSourceToContain(source: string, snippet: string): void {
+const expectSourceToContain = (source: string, snippet: string): void => {
     expect(
         withoutLayout(source).includes(withoutLayout(snippet)),
         `dropdown mixins should contain:\n${snippet}`,

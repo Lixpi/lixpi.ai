@@ -15,7 +15,14 @@ import {
 
 const defaults = createDefaultVideoControlsSettings()
 const glyph = '<svg viewBox="0 0 10 10"><path d="M0 0 H10 V10 Z"/></svg>'
-const icons = { play: glyph, pause: glyph, volumeHigh: glyph, volumeMuted: glyph, fullscreenEnter: glyph, fullscreenExit: glyph }
+const icons = {
+    play: glyph,
+    pause: glyph,
+    volumeHigh: glyph,
+    volumeMuted: glyph,
+    fullscreenEnter: glyph,
+    fullscreenExit: glyph,
+}
 import {
     applyVideoControlsHostStyleProperties,
     createVideoControls,
@@ -28,13 +35,13 @@ type MockVideo = HTMLVideoElement & {
     _currentTimeWrites: number[]
 }
 
-function createMockVideo(overrides: {
+const createMockVideo = (overrides: {
     duration?: number
     currentTime?: number
     volume?: number
     playbackRate?: number
     paused?: boolean
-} = {}): MockVideo {
+} = {}): MockVideo => {
     const video = document.createElement('video') as MockVideo
     let currentTime = overrides.currentTime ?? 0
     let duration = overrides.duration ?? 120
@@ -47,16 +54,17 @@ function createMockVideo(overrides: {
         get: () => currentTime,
         set: (value: number) => {
             currentTime = value
-            if (video._currentTimeWrites) video._currentTimeWrites.push(value)
+
+            if (video._currentTimeWrites)
+                video._currentTimeWrites.push(value)
+
             video.dispatchEvent(new Event('seeked'))
         },
         configurable: true,
     })
     Object.defineProperty(video, 'duration', {
         get: () => duration,
-        set: (value: number) => {
-            duration = value
-        },
+        set: (value: number) => void (duration = value),
         configurable: true,
     })
     Object.defineProperty(video, 'paused', {
@@ -65,23 +73,17 @@ function createMockVideo(overrides: {
     })
     Object.defineProperty(video, 'volume', {
         get: () => volume,
-        set: (value: number) => {
-            volume = value
-        },
+        set: (value: number) => void (volume = value),
         configurable: true,
     })
     Object.defineProperty(video, 'muted', {
         get: () => muted,
-        set: (value: boolean) => {
-            muted = value
-        },
+        set: (value: boolean) => void (muted = value),
         configurable: true,
     })
     Object.defineProperty(video, 'playbackRate', {
         get: () => playbackRate,
-        set: (value: number) => {
-            playbackRate = value
-        },
+        set: (value: number) => void (playbackRate = value),
         configurable: true,
     })
     Object.defineProperty(video, 'buffered', {
@@ -104,14 +106,12 @@ function createMockVideo(overrides: {
     video.requestFullscreen = vi.fn(async () => {})
 
     video._currentTimeWrites = []
-    video._setCurrentTime = (value: number) => {
-        currentTime = value
-    }
+    video._setCurrentTime = (value: number) => void (currentTime = value)
 
     return video
 }
 
-function mount(width = 520, video = createMockVideo(), settings?: VideoControlsSettings) {
+const mount = (width = 520, video = createMockVideo(), settings?: VideoControlsSettings) => {
     const svg = document.createElementNS(SVG_NS, 'svg') as unknown as SVGSVGElement
     document.body.appendChild(svg)
     const controls = createVideoControls(select(svg), {
@@ -124,26 +124,44 @@ function mount(width = 520, video = createMockVideo(), settings?: VideoControlsS
         videoEl: video,
     })
 
-    return { svg, video, controls }
+    return {
+        svg,
+        video,
+        controls,
+    }
 }
 
-function click(element: Element): void {
-    element.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }))
+const click = (element: Element): void => {
+    element.dispatchEvent(new MouseEvent('click', {
+        bubbles: true,
+        cancelable: true,
+    }))
 }
 
-function pointerDown(element: Element, clientX: number): void {
-    element.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true, clientX }))
+const pointerDown = (element: Element, clientX: number): void => {
+    element.dispatchEvent(new PointerEvent('pointerdown', {
+        bubbles: true,
+        cancelable: true,
+        clientX,
+    }))
 }
 
-function pointerMove(clientX: number): void {
-    window.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, cancelable: true, clientX }))
+const pointerMove = (clientX: number): void => {
+    window.dispatchEvent(new PointerEvent('pointermove', {
+        bubbles: true,
+        cancelable: true,
+        clientX,
+    }))
 }
 
-function pointerUp(): void {
-    window.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, cancelable: true }))
+const pointerUp = (): void => {
+    window.dispatchEvent(new PointerEvent('pointerup', {
+        bubbles: true,
+        cancelable: true,
+    }))
 }
 
-function mockRect(element: Element, width: number): void {
+const mockRect = (element: Element, width: number): void => {
     element.getBoundingClientRect = () => ({
         x: 0,
         y: 0,
@@ -164,8 +182,14 @@ describe('createVideoControls', () => {
         const first = mount(520, createMockVideo(), settings)
         settings.speed.minRate = 0.9
         const second = mount()
-        first.svg.querySelector('.video-controls-speed')!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Home', bubbles: true }))
-        second.svg.querySelector('.video-controls-speed')!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Home', bubbles: true }))
+        first.svg.querySelector('.video-controls-speed')!.dispatchEvent(new KeyboardEvent('keydown', {
+            key: 'Home',
+            bubbles: true,
+        }))
+        second.svg.querySelector('.video-controls-speed')!.dispatchEvent(new KeyboardEvent('keydown', {
+            key: 'Home',
+            bubbles: true,
+        }))
         expect(first.video.playbackRate).toBe(0.75)
         expect(second.video.playbackRate).toBe(0.5)
         expect(first.svg.querySelector('filter')!.id).not.toBe(second.svg.querySelector('filter')!.id)
@@ -198,7 +222,10 @@ describe('createVideoControls', () => {
     })
 
     it('toggles play and pause through the supplied video element', async () => {
-        const { svg, video } = mount()
+        const {
+            svg,
+            video,
+        } = mount()
         const playHit = svg.querySelector('.video-controls-play-hit')!
 
         click(playHit)
@@ -215,16 +242,28 @@ describe('createVideoControls', () => {
     })
 
     it('toggles playback rate with keyboard and resets speed on double click', async () => {
-        const { svg, video } = mount()
+        const {
+            svg,
+            video,
+        } = mount()
         const speed = svg.querySelector('.video-controls-speed')!
 
-        speed.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }))
+        speed.dispatchEvent(new KeyboardEvent('keydown', {
+            key: 'ArrowRight',
+            bubbles: true,
+        }))
         expect(video.playbackRate).toBeCloseTo(1.05, 2)
 
-        speed.dispatchEvent(new KeyboardEvent('keydown', { key: 'Home', bubbles: true }))
+        speed.dispatchEvent(new KeyboardEvent('keydown', {
+            key: 'Home',
+            bubbles: true,
+        }))
         expect(video.playbackRate).toBe(defaults.speed.minRate)
 
-        speed.dispatchEvent(new KeyboardEvent('keydown', { key: 'End', bubbles: true }))
+        speed.dispatchEvent(new KeyboardEvent('keydown', {
+            key: 'End',
+            bubbles: true,
+        }))
         expect(video.playbackRate).toBe(defaults.speed.maxRate)
 
         speed.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }))
@@ -232,7 +271,10 @@ describe('createVideoControls', () => {
     })
 
     it('seeks by dragging on the seek rail', () => {
-        const { svg, video } = mount()
+        const {
+            svg,
+            video,
+        } = mount()
         const seekHit = svg.querySelector('.video-controls-seek-hit')!
         mockRect(seekHit, 100)
 
@@ -244,7 +286,10 @@ describe('createVideoControls', () => {
     })
 
     it('pauses while dragging and resumes playback only if video was playing before drag', async () => {
-        const { svg, video } = mount()
+        const {
+            svg,
+            video,
+        } = mount()
         const seekHit = svg.querySelector('.video-controls-seek-hit')!
         mockRect(seekHit, 100)
 
@@ -295,7 +340,10 @@ describe('createVideoControls', () => {
     })
 
     it('updates volume from slider drag and toggles mute via button', () => {
-        const { svg, video } = mount()
+        const {
+            svg,
+            video,
+        } = mount()
         const volumeHit = svg.querySelector('.video-controls-volume-hit')!
         const volumeButtonHit = svg.querySelector('.video-controls-volume-button-hit')!
 
@@ -348,17 +396,17 @@ describe('createVideoControls', () => {
         click(fullscreenHit)
         expect(document.exitFullscreen).toHaveBeenCalledTimes(1)
 
-        if (originalFullscreenElement) {
+        if (originalFullscreenElement)
             Object.defineProperty(document, 'fullscreenElement', originalFullscreenElement)
-        } else {
+         else {
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             // @ts-expect-error
             delete (document as any).fullscreenElement
         }
 
-        if (originalExitFullscreen) {
+        if (originalExitFullscreen)
             Object.defineProperty(document, 'exitFullscreen', originalExitFullscreen)
-        } else {
+         else {
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             // @ts-expect-error
             Object.defineProperty(document, 'exitFullscreen', {

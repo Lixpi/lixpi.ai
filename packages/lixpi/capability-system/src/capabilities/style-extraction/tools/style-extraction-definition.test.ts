@@ -30,7 +30,10 @@ const outputSchema: CapabilityResourceRef = {
 
 describe('Style Extraction built-in definition', () => {
     it('defines a valid allowlisted workflow with every registered specialist axis', () => {
-        const manifest = buildStyleExtractionManifest({ inputSchema, outputSchema })
+        const manifest = buildStyleExtractionManifest({
+            inputSchema,
+            outputSchema,
+        })
         const actions = new Set([
             'style.initialize',
             'style.route',
@@ -63,7 +66,10 @@ describe('Style Extraction built-in definition', () => {
     })
 
     it('keeps axis extraction and crop materialization in the same parallel ready set', () => {
-        const steps = buildStyleExtractionManifest({ inputSchema, outputSchema }).tool!.workflow.steps
+        const steps = buildStyleExtractionManifest({
+            inputSchema,
+            outputSchema,
+        }).tool!.workflow.steps
         const axisSteps = steps.filter(step => step.action === 'style.extract-axis')
         const crops = steps.find(step => step.action === 'style.materialize-crops')!
         const merge = steps.find(step => step.action === 'style.merge-analysis')!

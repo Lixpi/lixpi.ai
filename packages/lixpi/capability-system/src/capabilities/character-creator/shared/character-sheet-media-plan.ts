@@ -341,7 +341,7 @@ export const buildCharacterSheetRenderPlan = (args: {
     return plan
 }
 
-export function assertValidCharacterSheetRenderPlan(value: unknown): asserts value is CharacterSheetRenderPlan {
+export const assertValidCharacterSheetRenderPlan = (value: unknown): asserts value is CharacterSheetRenderPlan => {
     if (
         !value
         || typeof value !== 'object'
@@ -485,10 +485,10 @@ export function assertValidCharacterSheetRenderPlan(value: unknown): asserts val
         throw new Error('CHARACTER_SHEET_PLAN_OPERATION_BOUND_EXCEEDED')
 }
 
-function assertGeneratedReferenceSet(
+const assertGeneratedReferenceSet = (
     panel: CharacterPanelSpec,
     expectedBindings: readonly CharacterPanelOutputBinding[],
-): void {
+): void => {
     const expectedDependencies = [...new Set(
         expectedBindings.map(binding => binding.sourceNodeId),
     )]
@@ -514,7 +514,7 @@ function assertGeneratedReferenceSet(
     }
 }
 
-function assertAcyclicPanels(panels: CharacterPanelSpec[]): void {
+const assertAcyclicPanels = (panels: CharacterPanelSpec[]): void => {
     const panelsById = new Map(
         panels.map(panel => [panel.panelId, panel]),
     )

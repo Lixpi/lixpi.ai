@@ -52,7 +52,11 @@ import {
 } from './asset-canvas-projection.ts'
 
 const emptyCanvasState = (): CanvasState => ({
-    viewport: { x: 0, y: 0, zoom: 1 },
+    viewport: {
+        x: 0,
+        y: 0,
+        zoom: 1,
+    },
     nodes: [],
     edges: [],
 })
@@ -87,8 +91,14 @@ const assignmentFor = (mediaIndex: number): MediaRunLineageAssignment => ({
 })
 
 const twoImageModelAssignments = (): MediaRunLineageAssignment[] => [
-    { ...assignmentFor(0), mediaModelId: 'Stability:sd3.5-large' },
-    { ...assignmentFor(1), mediaModelId: 'Google:gemini-2.5-flash-image' },
+    {
+        ...assignmentFor(0),
+        mediaModelId: 'Stability:sd3.5-large',
+    },
+    {
+        ...assignmentFor(1),
+        mediaModelId: 'Google:gemini-2.5-flash-image',
+    },
 ]
 
 const lineagePlan = (): MediaBranchLineagePlan => ({
@@ -103,7 +113,14 @@ const lineagePlan = (): MediaBranchLineagePlan => ({
         nodeId: 'origin-1',
         generationRequestId: 'request-1',
         branchId: 'branch-1',
-        provenance: { kind: 'branch-root-fork-decision', promptText: 'draw a goat', referenceNodeIds: [], sourceContextNodeIds: [], forked: true, forkCount: 1 },
+        provenance: {
+            kind: 'branch-root-fork-decision',
+            promptText: 'draw a goat',
+            referenceNodeIds: [],
+            sourceContextNodeIds: [],
+            forked: true,
+            forkCount: 1,
+        },
     },
     branchForks: [{
         nodeId: 'fork-1',
@@ -113,7 +130,15 @@ const lineagePlan = (): MediaBranchLineagePlan => ({
         reasoningRunId: 'reasoning-1',
         reasoningModelId: 'Anthropic:claude-sonnet-4-6',
         reasoningIndex: 0,
-        provenance: { kind: 'reasoning-run', promptText: 'draw a goat', referenceNodeIds: [], sourceContextNodeIds: [], reasoningRunId: 'reasoning-1', reasoningModelId: 'Anthropic:claude-sonnet-4-6', reasoningIndex: 0 },
+        provenance: {
+            kind: 'reasoning-run',
+            promptText: 'draw a goat',
+            referenceNodeIds: [],
+            sourceContextNodeIds: [],
+            reasoningRunId: 'reasoning-1',
+            reasoningModelId: 'Anthropic:claude-sonnet-4-6',
+            reasoningIndex: 0,
+        },
     }],
     branchLines: [],
     runAssignments: [assignment],
@@ -132,6 +157,7 @@ const selectedMediaFanoutPlan = (): MediaBranchLineagePlan => {
         sourceContextNodeIds: ['selected-media'],
         operationKind: 'edit_existing' as const,
     }))
+
     return {
         planVersion: 'media-branch-lineage-v1',
         generationRequestId: 'request-1',
@@ -182,6 +208,7 @@ const generationRun = (): MediaGenerationRunMeta => ({
 
 const generationRunFor = (mediaIndex: number): MediaGenerationRunMeta => {
     const lineageAssignment = assignmentFor(mediaIndex)
+
     return {
         ...generationRun(),
         mediaRunId: lineageAssignment.mediaRunId,
@@ -199,6 +226,7 @@ const videoGenerationRun = (): MediaGenerationRunMeta => {
         mediaModelId: 'Google:veo-3',
         mediaType: 'video',
     }
+
     return {
         ...generationRun(),
         mediaRunId: lineageAssignment.mediaRunId,
@@ -252,7 +280,10 @@ const canonicalGenerationTree = (canvasState: CanvasState): unknown[] =>
             type: node.type,
             position: node.position,
             dimensions: node.dimensions,
-            ...((node.type === 'image' || node.type === 'video')
+            ...((
+                node.type === 'image'
+                || node.type === 'video'
+            )
                 ? { mediaGenerationPhase: node.mediaGenerationPhase }
                 : {}),
         }))
@@ -267,7 +298,13 @@ const completedThreadContent = (responseText: string): unknown => ({
         content: [
             {
                 type: 'aiUserMessage',
-                content: [{ type: 'paragraph', content: [{ type: 'text', text: 'make it happy' }] }],
+                content: [{
+                    type: 'paragraph',
+                    content: [{
+                        type: 'text',
+                        text: 'make it happy',
+                    }],
+                }],
             },
             {
                 type: 'aiResponseMessage',
@@ -279,7 +316,13 @@ const completedThreadContent = (responseText: string): unknown => ({
                         reasoningRunId: 'reasoning-1',
                         branchLineNodeId: 'line-1',
                     },
-                    content: [{ type: 'paragraph', content: [{ type: 'text', text: responseText }] }],
+                    content: [{
+                        type: 'paragraph',
+                        content: [{
+                            type: 'text',
+                            text: responseText,
+                        }],
+                    }],
                 }],
             },
         ],
@@ -296,11 +339,17 @@ describe('asset canvas projection', () => {
         revision = 100
         mocks.mutateCanvasState.mockImplementation(async ({ mutate }) => {
             const result = mutate(storedState)
+
             if (result.changed) {
                 storedState = result.canvasState
                 revision += 1
             }
-            return { ...result, canvasState: storedState, canvasStateUpdatedAt: revision }
+
+            return {
+                ...result,
+                canvasState: storedState,
+                canvasStateUpdatedAt: revision,
+            }
         })
         mocks.getAssetRecord.mockResolvedValue({
             assetId: 'asset-1',
@@ -315,6 +364,7 @@ describe('asset canvas projection', () => {
         mocks.detachWorkspaceReference.mockImplementation(async ({ workspaceMutation }) => {
             storedState = workspaceMutation.canvasState
             revision = workspaceMutation.canvasStateUpdatedAt
+
             return { success: true }
         })
     })
@@ -330,8 +380,14 @@ describe('asset canvas projection', () => {
                 title: 'Generation failed',
                 message: 'Abort',
                 generationRequestId: 'request-1',
-                position: { x: 100, y: 100 },
-                dimensions: { width: 360, height: 104 },
+                position: {
+                    x: 100,
+                    y: 100,
+                },
+                dimensions: {
+                    width: 360,
+                    height: 104,
+                },
                 createdAt: 1,
                 updatedAt: 2,
             }],
@@ -364,12 +420,21 @@ describe('asset canvas projection', () => {
             origin: 'upsertAssetMediaLineagePlanToCanvas',
         }))
         expect(storedState.nodes).toEqual([
-            expect.objectContaining({ nodeId: 'origin-1', type: 'branchOrigin' }),
-            expect.objectContaining({ nodeId: 'fork-1', type: 'branchFork' }),
+            expect.objectContaining({
+                nodeId: 'origin-1',
+                type: 'branchOrigin',
+            }),
+            expect.objectContaining({
+                nodeId: 'fork-1',
+                type: 'branchFork',
+            }),
         ])
         expect(storedState.nodes.some(node => node.type === 'image' || node.type === 'video')).toBe(false)
         expect(storedState.edges).toEqual([
-            expect.objectContaining({ sourceNodeId: 'origin-1', targetNodeId: 'fork-1' }),
+            expect.objectContaining({
+                sourceNodeId: 'origin-1',
+                targetNodeId: 'fork-1',
+            }),
         ])
         expect(geometry).toMatchObject({
             generationRequestId: 'request-1',
@@ -385,15 +450,25 @@ describe('asset canvas projection', () => {
         const plan = lineagePlan()
         plan.runAssignments = twoImageModelAssignments()
         storedState = {
-            viewport: { x: -500, y: -300, zoom: 0.5 },
+            viewport: {
+                x: -500,
+                y: -300,
+                zoom: 0.5,
+            },
             nodes: [
                 {
                     nodeId: 'visible-obstacle',
                     type: 'image' as const,
                     assetId: 'visible-obstacle-asset',
                     mediaGenerationPhase: 'ready' as const,
-                    position: { x: 1100, y: 900 },
-                    dimensions: { width: 800, height: 800 },
+                    position: {
+                        x: 1100,
+                        y: 900,
+                    },
+                    dimensions: {
+                        width: 800,
+                        height: 800,
+                    },
                 },
                 ...plan.runAssignments.map((entry, index) => ({
                     nodeId: getPendingGeneratedMediaNodeId(entry),
@@ -411,8 +486,14 @@ describe('asset canvas projection', () => {
                         mediaRunId: entry.mediaRunId,
                         updatedAt: 1,
                     },
-                    position: { x: 0, y: index * 1200 },
-                    dimensions: { width: 800, height: 800 },
+                    position: {
+                        x: 0,
+                        y: index * 1200,
+                    },
+                    dimensions: {
+                        width: 800,
+                        height: 800,
+                    },
                 })),
                 ...plan.runAssignments.map((entry, index) => ({
                     nodeId: `operation-${index}`,
@@ -422,8 +503,14 @@ describe('asset canvas projection', () => {
                     title: 'Generating',
                     message: 'Working',
                     generationRequestId: entry.generationRequestId,
-                    position: { x: 1000, y: 800 + index * 120 },
-                    dimensions: { width: 360, height: 104 },
+                    position: {
+                        x: 1000,
+                        y: 800 + index * 120,
+                    },
+                    dimensions: {
+                        width: 360,
+                        height: 104,
+                    },
                     createdAt: 1,
                     updatedAt: 1,
                 })),
@@ -435,7 +522,10 @@ describe('asset canvas projection', () => {
             workspaceId: 'workspace-1',
             conversationAssetId: 'thread-1',
             lineagePlan: plan,
-            canvasVisibleArea: { width: 1200, height: 800 },
+            canvasVisibleArea: {
+                width: 1200,
+                height: 800,
+            },
         })
 
         const origin = storedState.nodes.find(node => node.nodeId === 'origin-1')!
@@ -443,7 +533,12 @@ describe('asset canvas projection', () => {
         const outputs = plan.runAssignments.map(entry => (
             storedState.nodes.find(node => node.nodeId === getPendingGeneratedMediaNodeId(entry))!
         ))
-        const visibleWorld = { left: 1000, top: 600, right: 3400, bottom: 2200 }
+        const visibleWorld = {
+            left: 1000,
+            top: 600,
+            right: 3400,
+            bottom: 2200,
+        }
         expect(origin.position.x).toBeGreaterThanOrEqual(visibleWorld.left)
         expect(origin.position.y).toBeGreaterThanOrEqual(visibleWorld.top)
         expect(origin.position.x + origin.dimensions.width).toBeLessThanOrEqual(visibleWorld.right)
@@ -470,8 +565,14 @@ describe('asset canvas projection', () => {
                 type: 'image',
                 assetId: 'selected-asset',
                 mediaGenerationPhase: 'ready',
-                position: { x: 100, y: 200 },
-                dimensions: { width: 800, height: 800 },
+                position: {
+                    x: 100,
+                    y: 200,
+                },
+                dimensions: {
+                    width: 800,
+                    height: 800,
+                },
                 generatedBy: {
                     conversationAssetId: 'previous-thread',
                     responseId: '',
@@ -496,13 +597,19 @@ describe('asset canvas projection', () => {
 
         const forks = storedState.nodes.filter(node => node.type === 'branchFork' && node.generationRequestId === 'request-1')
         expect(forks).toHaveLength(1)
-        expect(forks[0]).toMatchObject({ nodeId: 'selected-media-fork', parentBranchNodeId: 'selected-media' })
+        expect(forks[0]).toMatchObject({
+            nodeId: 'selected-media-fork',
+            parentBranchNodeId: 'selected-media',
+        })
         expect(storedState.nodes.some(node => node.type === 'image' || node.type === 'video')).toBe(true)
         // The lineage upsert projects no media assets of its own — only the fork marker.
         expect(storedState.nodes.filter(node => node.type === 'image' && node.nodeId !== 'selected-media')).toHaveLength(0)
         expect(storedState.nodes.some(node => node.type === 'branchOrigin' && node.generationRequestId === 'request-1')).toBe(false)
         expect(storedState.edges).toEqual(expect.arrayContaining([
-            expect.objectContaining({ sourceNodeId: 'selected-media', targetNodeId: 'selected-media-fork' }),
+            expect.objectContaining({
+                sourceNodeId: 'selected-media',
+                targetNodeId: 'selected-media-fork',
+            }),
         ]))
         expect(geometry?.nodeSnapshots).toEqual(expect.arrayContaining([
             expect.objectContaining({ nodeId: 'selected-media-fork' }),
@@ -517,14 +624,28 @@ describe('asset canvas projection', () => {
                 type: 'image',
                 assetId: 'selected-asset',
                 mediaGenerationPhase: 'ready',
-                position: { x: 100, y: 200 },
-                dimensions: { width: 800, height: 800 },
+                position: {
+                    x: 100,
+                    y: 200,
+                },
+                dimensions: {
+                    width: 800,
+                    height: 800,
+                },
             }],
         } as CanvasState
         const plan = selectedMediaFanoutPlan()
 
-        await upsertMediaLineagePlanToCanvas({ workspaceId: 'workspace-1', conversationAssetId: 'thread-1', lineagePlan: plan })
-        await upsertMediaLineagePlanToCanvas({ workspaceId: 'workspace-1', conversationAssetId: 'thread-1', lineagePlan: plan })
+        await upsertMediaLineagePlanToCanvas({
+            workspaceId: 'workspace-1',
+            conversationAssetId: 'thread-1',
+            lineagePlan: plan,
+        })
+        await upsertMediaLineagePlanToCanvas({
+            workspaceId: 'workspace-1',
+            conversationAssetId: 'thread-1',
+            lineagePlan: plan,
+        })
 
         expect(storedState.nodes.filter(node => node.nodeId === 'selected-media-fork')).toHaveLength(1)
         expect(new Set(storedState.edges.map(edge => edge.edgeId)).size).toBe(storedState.edges.length)
@@ -547,16 +668,28 @@ describe('asset canvas projection', () => {
                         progress: createDefaultMediaGenerationRunProgress('completed', 'Character sheet complete.'),
                         updatedAt: 1,
                     },
-                    position: { x: 0, y: 0 },
-                    dimensions: { width: 800, height: 800 },
+                    position: {
+                        x: 0,
+                        y: 0,
+                    },
+                    dimensions: {
+                        width: 800,
+                        height: 800,
+                    },
                 },
                 {
                     nodeId: pendingNodeId,
                     type: 'image',
                     assetId: assignment.assetId,
                     mediaGenerationPhase: 'pending-before-first-frame',
-                    position: { x: 1000, y: 0 },
-                    dimensions: { width: 800, height: 800 },
+                    position: {
+                        x: 1000,
+                        y: 0,
+                    },
+                    dimensions: {
+                        width: 800,
+                        height: 800,
+                    },
                 },
             ],
             edges: [],
@@ -582,8 +715,14 @@ describe('asset canvas projection', () => {
                     imageModelIds: [],
                     videoModelIds: [],
                 },
-                position: { x: 0, y: 0 },
-                dimensions: { width: 200, height: 60 },
+                position: {
+                    x: 0,
+                    y: 0,
+                },
+                dimensions: {
+                    width: 200,
+                    height: 60,
+                },
                 temporary: true,
             } as any],
         }
@@ -666,8 +805,14 @@ describe('asset canvas projection', () => {
             type: 'image',
         }))
         expect(storedState.edges).toEqual(expect.arrayContaining([
-            expect.objectContaining({ sourceNodeId: 'source-media', targetNodeId: 'branch-line-request-1-r0-image-0' }),
-            expect.objectContaining({ sourceNodeId: 'branch-line-request-1-r0-image-0', targetNodeId: pendingNodeId }),
+            expect.objectContaining({
+                sourceNodeId: 'source-media',
+                targetNodeId: 'branch-line-request-1-r0-image-0',
+            }),
+            expect.objectContaining({
+                sourceNodeId: 'branch-line-request-1-r0-image-0',
+                targetNodeId: pendingNodeId,
+            }),
         ]))
         expect(geometry).toMatchObject({
             removedNodeIds: expect.arrayContaining(['origin-1', 'fork-1', 'late-preflight-marker']),
@@ -682,13 +827,51 @@ describe('asset canvas projection', () => {
         const planned = projectGeneratedAssetNode({
             canvasState: (() => {
                 const plan = lineagePlan()
+
                 return {
                     ...emptyCanvasState(),
                     nodes: [
-                        { nodeId: plan.branchOrigin!.nodeId, type: 'branchOrigin', branchId: 'branch-1', generationRequestId: 'request-1', position: { x: 0, y: 0 }, dimensions: { width: 120, height: 60 }, provenance: plan.branchOrigin!.provenance },
-                        { nodeId: 'fork-1', type: 'branchFork', branchId: 'branch-1', generationRequestId: 'request-1', reasoningRunId: 'reasoning-1', reasoningModelId: 'Anthropic:claude-sonnet-4-6', reasoningIndex: 0, position: { x: 200, y: 0 }, dimensions: { width: 120, height: 60 }, provenance: plan.branchForks[0]!.provenance },
+                        {
+                            nodeId: plan.branchOrigin!.nodeId,
+                            type: 'branchOrigin',
+                            branchId: 'branch-1',
+                            generationRequestId: 'request-1',
+                            position: {
+                                x: 0,
+                                y: 0,
+                            },
+                            dimensions: {
+                                width: 120,
+                                height: 60,
+                            },
+                            provenance: plan.branchOrigin!.provenance,
+                        },
+                        {
+                            nodeId: 'fork-1',
+                            type: 'branchFork',
+                            branchId: 'branch-1',
+                            generationRequestId: 'request-1',
+                            reasoningRunId: 'reasoning-1',
+                            reasoningModelId: 'Anthropic:claude-sonnet-4-6',
+                            reasoningIndex: 0,
+                            position: {
+                                x: 200,
+                                y: 0,
+                            },
+                            dimensions: {
+                                width: 120,
+                                height: 60,
+                            },
+                            provenance: plan.branchForks[0]!.provenance,
+                        },
                     ],
-                    edges: [{ edgeId: 'edge-origin-1-fork-1', sourceNodeId: 'origin-1', targetNodeId: 'fork-1', sourceHandle: 'right', targetHandle: 'left' }],
+                    edges: [{
+                        edgeId: 'edge-origin-1-fork-1',
+                        sourceNodeId: 'origin-1',
+                        targetNodeId: 'fork-1',
+                        sourceHandle: 'right',
+                        targetHandle: 'left',
+                    }],
                 } as CanvasState
             })(),
             assetId: 'asset-1',
@@ -732,8 +915,14 @@ describe('asset canvas projection', () => {
                     progress,
                     updatedAt: 1,
                 },
-                position: { x: 100, y: 100 },
-                dimensions: { width: 800, height: 800 },
+                position: {
+                    x: 100,
+                    y: 100,
+                },
+                dimensions: {
+                    width: 800,
+                    height: 800,
+                },
             }],
             edges: [],
         }
@@ -790,11 +979,17 @@ describe('asset canvas projection', () => {
         // resize the card and trigger a tree reflow, even though the real
         // aspect ratio (16/9) would imply a shorter card.
         expect(first).toMatchObject({
-            dimensions: { width: 800, height: 800 },
+            dimensions: {
+                width: 800,
+                height: 800,
+            },
             mediaGenerationPhase: 'ready',
         })
         expect(second).toMatchObject({
-            dimensions: { width: 800, height: 800 },
+            dimensions: {
+                width: 800,
+                height: 800,
+            },
             mediaGenerationPhase: 'pending-before-first-frame',
         })
         expect(first.position.x).toBe(second.position.x)
@@ -841,12 +1036,22 @@ describe('asset canvas projection', () => {
 
         expect(canonicalGenerationTree(reverse)).toEqual(canonicalGenerationTree(forward))
         expect(forward.nodes).toEqual(expect.arrayContaining([
-            expect.objectContaining({ dimensions: { width: 800, height: 800 }, mediaGenerationPhase: 'ready' }),
+            expect.objectContaining({
+                dimensions: {
+                    width: 800,
+                    height: 800,
+                },
+                mediaGenerationPhase: 'ready',
+            }),
         ]))
         const readyNodes = forward.nodes.filter((node) => (node.type === 'image') && node.mediaGenerationPhase === 'ready')
         expect(readyNodes).toHaveLength(2)
+
         for (const node of readyNodes) {
-            expect(node.dimensions).toEqual({ width: 800, height: 800 })
+            expect(node.dimensions).toEqual({
+                width: 800,
+                height: 800,
+            })
         }
     })
 
@@ -861,13 +1066,29 @@ describe('asset canvas projection', () => {
 
         expect(canonicalGenerationTree(videoFirst)).toEqual(canonicalGenerationTree(imageFirst))
         expect(imageFirst.nodes).toEqual(expect.arrayContaining([
-            expect.objectContaining({ type: 'image', dimensions: { width: 800, height: 800 } }),
-            expect.objectContaining({ type: 'video', dimensions: { width: 800, height: 800 } }),
+            expect.objectContaining({
+                type: 'image',
+                dimensions: {
+                    width: 800,
+                    height: 800,
+                },
+            }),
+            expect.objectContaining({
+                type: 'video',
+                dimensions: {
+                    width: 800,
+                    height: 800,
+                },
+            }),
         ]))
     })
 
     it('does not emit a geometry update when a refresh has no server-side change', async () => {
-        await upsertMediaLineagePlanToCanvas({ workspaceId: 'workspace-1', conversationAssetId: 'thread-1', lineagePlan: lineagePlan() })
+        await upsertMediaLineagePlanToCanvas({
+            workspaceId: 'workspace-1',
+            conversationAssetId: 'thread-1',
+            lineagePlan: lineagePlan(),
+        })
 
         const geometry = await refreshMediaGenerationRequestCanvasGeometry({
             workspaceId: 'workspace-1',
@@ -888,8 +1109,14 @@ describe('asset canvas projection', () => {
                     type: 'image',
                     assetId: 'parent-asset',
                     mediaGenerationPhase: 'ready',
-                    position: { x: 0, y: 200 },
-                    dimensions: { width: 800, height: 800 },
+                    position: {
+                        x: 0,
+                        y: 200,
+                    },
+                    dimensions: {
+                        width: 800,
+                        height: 800,
+                    },
                     generatedBy: {
                         conversationAssetId: 'previous-thread',
                         responseId: '',
@@ -951,8 +1178,14 @@ describe('asset canvas projection', () => {
             nodes: [{
                 nodeId: pendingNodeId,
                 type: 'image',
-                position: { x: 0, y: 0 },
-                dimensions: { width: 100, height: 100 },
+                position: {
+                    x: 0,
+                    y: 0,
+                },
+                dimensions: {
+                    width: 100,
+                    height: 100,
+                },
             }],
             edges: [],
         } as CanvasState
@@ -987,8 +1220,14 @@ describe('asset canvas projection', () => {
                     ),
                     updatedAt: 100,
                 },
-                position: { x: 100, y: 100 },
-                dimensions: { width: 800, height: 800 },
+                position: {
+                    x: 100,
+                    y: 100,
+                },
+                dimensions: {
+                    width: 800,
+                    height: 800,
+                },
             }],
             edges: [],
         }
@@ -1021,8 +1260,14 @@ describe('asset canvas projection', () => {
                     type: 'branchFork',
                     branchId: 'branch-1',
                     generationRequestId: 'request-1',
-                    position: { x: -200, y: 0 },
-                    dimensions: { width: 120, height: 60 },
+                    position: {
+                        x: -200,
+                        y: 0,
+                    },
+                    dimensions: {
+                        width: 120,
+                        height: 60,
+                    },
                     temporary: true,
                 },
                 {
@@ -1030,8 +1275,14 @@ describe('asset canvas projection', () => {
                     type: 'image',
                     assetId: 'asset-1',
                     mediaGenerationPhase: 'pending-before-first-frame',
-                    position: { x: 0, y: 0 },
-                    dimensions: { width: 800, height: 800 },
+                    position: {
+                        x: 0,
+                        y: 0,
+                    },
+                    dimensions: {
+                        width: 800,
+                        height: 800,
+                    },
                     generatedBy: { generationRequestId: 'request-1' },
                 },
                 {
@@ -1057,8 +1308,14 @@ describe('asset canvas projection', () => {
                         supportCode: 'support-1',
                         action: 'none',
                     },
-                    position: { x: 0, y: 0 },
-                    dimensions: { width: 360, height: 104 },
+                    position: {
+                        x: 0,
+                        y: 0,
+                    },
+                    dimensions: {
+                        width: 360,
+                        height: 104,
+                    },
                     createdAt: 1,
                     updatedAt: 2,
                 },
@@ -1067,8 +1324,14 @@ describe('asset canvas projection', () => {
                     type: 'image',
                     assetId: 'asset-2',
                     mediaGenerationPhase: 'ready',
-                    position: { x: 1000, y: 0 },
-                    dimensions: { width: 800, height: 600 },
+                    position: {
+                        x: 1000,
+                        y: 0,
+                    },
+                    dimensions: {
+                        width: 800,
+                        height: 600,
+                    },
                     generatedBy: {
                         generationRequestId: 'request-1',
                         branchId: 'branch-1',
@@ -1100,7 +1363,10 @@ describe('asset canvas projection', () => {
             status: 'failed',
             message: 'The provider rejected this request.',
             problem: expect.objectContaining({ supportCode: 'support-1' }),
-            dimensions: { width: 360, height: 104 },
+            dimensions: {
+                width: 360,
+                height: 104,
+            },
             lineageAssignment: expect.objectContaining({
                 branchId: 'branch-1',
                 branchForkNodeId: 'fork-1',
@@ -1116,7 +1382,10 @@ describe('asset canvas projection', () => {
         expect(geometry).toMatchObject({
             removedNodeIds: [operationNodeId],
             nodeSnapshots: expect.arrayContaining([
-                expect.objectContaining({ nodeId: pendingNodeId, type: 'operationStatus' }),
+                expect.objectContaining({
+                    nodeId: pendingNodeId,
+                    type: 'operationStatus',
+                }),
             ]),
         })
         expect(mocks.detachWorkspaceReference).toHaveBeenCalledWith(expect.objectContaining({
@@ -1148,8 +1417,14 @@ describe('asset canvas projection', () => {
                         ),
                         updatedAt: 2,
                     },
-                    position: { x: 300, y: 400 },
-                    dimensions: { width: 800, height: 800 },
+                    position: {
+                        x: 300,
+                        y: 400,
+                    },
+                    dimensions: {
+                        width: 800,
+                        height: 800,
+                    },
                     generatedBy: { generationRequestId: 'request-1' },
                 },
                 {
@@ -1164,8 +1439,14 @@ describe('asset canvas projection', () => {
                     mediaRunId: 'media-1',
                     outputNodeId: pendingNodeId,
                     plannedMediaType: 'image',
-                    position: { x: 1200, y: 50 },
-                    dimensions: { width: 360, height: 104 },
+                    position: {
+                        x: 1200,
+                        y: 50,
+                    },
+                    dimensions: {
+                        width: 360,
+                        height: 104,
+                    },
                     createdAt: 1,
                     updatedAt: 2,
                 },
@@ -1218,8 +1499,14 @@ describe('asset canvas projection', () => {
             message: problem.detail,
             problem,
             requestRevision: 3,
-            position: { x: 520, y: 748 },
-            dimensions: { width: 360, height: 104 },
+            position: {
+                x: 520,
+                y: 748,
+            },
+            dimensions: {
+                width: 360,
+                height: 104,
+            },
         })])
         expect(storedState.nodes.some(node => node.type === 'image')).toBe(false)
         expect(storedState.nodes.some(node => node.nodeId === operationNodeId)).toBe(false)
@@ -1230,7 +1517,10 @@ describe('asset canvas projection', () => {
         expect(geometry).toMatchObject({
             removedNodeIds: [operationNodeId],
             nodeSnapshots: expect.arrayContaining([
-                expect.objectContaining({ nodeId: pendingNodeId, type: 'operationStatus' }),
+                expect.objectContaining({
+                    nodeId: pendingNodeId,
+                    type: 'operationStatus',
+                }),
             ]),
         })
         expect(mocks.detachWorkspaceReference).toHaveBeenCalledWith(expect.objectContaining({
@@ -1253,8 +1543,14 @@ describe('asset canvas projection', () => {
                     title: 'Generating with OpenAI:gpt-image-1',
                     message: 'Provider failed.',
                     generationRequestId: 'request-1',
-                    position: { x: 0, y: 0 },
-                    dimensions: { width: 800, height: 800 },
+                    position: {
+                        x: 0,
+                        y: 0,
+                    },
+                    dimensions: {
+                        width: 800,
+                        height: 800,
+                    },
                     createdAt: 1,
                     updatedAt: 2,
                 },
@@ -1263,8 +1559,14 @@ describe('asset canvas projection', () => {
                     type: 'image',
                     assetId: '',
                     mediaGenerationPhase: 'pending-before-first-frame',
-                    position: { x: 1000, y: 0 },
-                    dimensions: { width: 800, height: 800 },
+                    position: {
+                        x: 1000,
+                        y: 0,
+                    },
+                    dimensions: {
+                        width: 800,
+                        height: 800,
+                    },
                 },
             ],
             edges: [],
@@ -1279,7 +1581,10 @@ describe('asset canvas projection', () => {
             lineagePlan: plan,
         })
 
-        expect(storedState.nodes).toEqual([expect.objectContaining({ nodeId: failedNodeId, type: 'operationStatus' })])
+        expect(storedState.nodes).toEqual([expect.objectContaining({
+            nodeId: failedNodeId,
+            type: 'operationStatus',
+        })])
         expect(geometry).toMatchObject({ removedNodeIds: [pendingNodeId] })
     })
 
@@ -1294,13 +1599,36 @@ describe('asset canvas projection', () => {
                 contextChips: ['media-1'],
             },
             nodes: [
-                { nodeId: 'fork-1', type: 'branchFork', branchId: 'branch-1', generationRequestId: 'request-1', reasoningRunId: 'reasoning-1', reasoningModelId: 'Anthropic:claude-sonnet-4-6', reasoningIndex: 0, position: { x: 0, y: 0 }, dimensions: { width: 120, height: 60 }, provenance: {} },
+                {
+                    nodeId: 'fork-1',
+                    type: 'branchFork',
+                    branchId: 'branch-1',
+                    generationRequestId: 'request-1',
+                    reasoningRunId: 'reasoning-1',
+                    reasoningModelId: 'Anthropic:claude-sonnet-4-6',
+                    reasoningIndex: 0,
+                    position: {
+                        x: 0,
+                        y: 0,
+                    },
+                    dimensions: {
+                        width: 120,
+                        height: 60,
+                    },
+                    provenance: {},
+                },
                 {
                     nodeId: 'media-1',
                     type: 'image',
                     assetId: 'asset-1',
-                    position: { x: 200, y: 0 },
-                    dimensions: { width: 100, height: 100 },
+                    position: {
+                        x: 200,
+                        y: 0,
+                    },
+                    dimensions: {
+                        width: 100,
+                        height: 100,
+                    },
                     generationProgress: {
                         generationRequestId: 'request-1',
                         status: 'completed',
@@ -1319,10 +1647,20 @@ describe('asset canvas projection', () => {
                     },
                 },
             ] as any,
-            edges: [{ edgeId: 'edge-fork-1-media-1', sourceNodeId: 'fork-1', targetNodeId: 'media-1', sourceHandle: 'right', targetHandle: 'left' }],
+            edges: [{
+                edgeId: 'edge-fork-1-media-1',
+                sourceNodeId: 'fork-1',
+                targetNodeId: 'media-1',
+                sourceHandle: 'right',
+                targetHandle: 'left',
+            }],
         }
 
-        const accepted = detachReviewedGeneratedOutputsFromCanvas({ canvasState: state, scope: 'output-node', nodeId: 'media-1' })
+        const accepted = detachReviewedGeneratedOutputsFromCanvas({
+            canvasState: state,
+            scope: 'output-node',
+            nodeId: 'media-1',
+        })
         const superseded = removeGeneratedOutputCandidateFromCanvas({
             canvasState: state,
             nodeId: 'media-1',
@@ -1358,16 +1696,28 @@ describe('asset canvas projection', () => {
                     nodeId: 'source-media-1',
                     type: 'image',
                     assetId: 'asset-source-1',
-                    position: { x: 0, y: 0 },
-                    dimensions: { width: 100, height: 100 },
+                    position: {
+                        x: 0,
+                        y: 0,
+                    },
+                    dimensions: {
+                        width: 100,
+                        height: 100,
+                    },
                 },
                 {
                     nodeId: 'branch-line-1',
                     type: 'branchLine',
                     branchId: 'branch-1',
                     generationRequestId: 'request-1',
-                    position: { x: 200, y: 0 },
-                    dimensions: { width: 120, height: 60 },
+                    position: {
+                        x: 200,
+                        y: 0,
+                    },
+                    dimensions: {
+                        width: 120,
+                        height: 60,
+                    },
                     temporary: true,
                 },
             ] as any,

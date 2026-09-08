@@ -13,48 +13,56 @@ import { withoutLayout } from '@lixpi/test-utils'
 
 const sourceFileNames = new Map<string, string>()
 
-function readSourceFile(relativePath: string, displayName = relativePath): string {
+const readSourceFile = (relativePath: string, displayName = relativePath): string => {
     const source = readFileSync(
         resolve(import.meta.dirname, relativePath),
         'utf-8',
     )
     sourceFileNames.set(source, displayName)
+
     return source
 }
 
-function sourceName(source: string): string {
-    return sourceFileNames.get(source) ?? 'source excerpt'
-}
+const loadNodeDeletion = (): string =>
+    readSourceFile('../../packages/lixpi/canvas-components-lixpi-specific/src/shared/scene/workspace-node-deletion.ts')
 
-function expectSourceToContain(source: string, snippet: string): void {
+const loadNodeGestures = (): string =>
+    readSourceFile('../../packages/lixpi/canvas-components-lixpi-specific/src/frontend/workspace/workspace-node-gestures.ts')
+
+const loadGenerationHandlers = (): string =>
+    readSourceFile('../../packages/lixpi/canvas-components-lixpi-specific/src/frontend/media/workspace-generation-handlers.ts')
+
+const sourceName = (source: string): string => sourceFileNames.get(source) ?? 'source excerpt'
+
+const expectSourceToContain = (source: string, snippet: string): void => {
     expect(
         withoutLayout(source).includes(withoutLayout(snippet)),
         `${sourceName(source)} should contain:\n${snippet}`,
     ).toBe(true)
 }
 
-function expectSourceNotToContain(source: string, snippet: string): void {
+const expectSourceNotToContain = (source: string, snippet: string): void => {
     expect(
         withoutLayout(source).includes(withoutLayout(snippet)),
         `${sourceName(source)} should not contain:\n${snippet}`,
     ).toBe(false)
 }
 
-function expectExcerptToContain(excerpt: string, snippet: string, label = 'source excerpt'): void {
+const expectExcerptToContain = (excerpt: string, snippet: string, label = 'source excerpt'): void => {
     expect(
         withoutLayout(excerpt).includes(withoutLayout(snippet)),
         `${label} should contain:\n${snippet}`,
     ).toBe(true)
 }
 
-function expectExcerptNotToContain(excerpt: string, snippet: string, label = 'source excerpt'): void {
+const expectExcerptNotToContain = (excerpt: string, snippet: string, label = 'source excerpt'): void => {
     expect(
         withoutLayout(excerpt).includes(withoutLayout(snippet)),
         `${label} should not contain:\n${snippet}`,
     ).toBe(false)
 }
 
-function loadScss(): string {
+const loadScss = (): string => {
     return readSourceFile('../../packages/lixpi/canvas-components-lixpi-specific/src/frontend/workspace/workspace-canvas.scss').replace(
         '@import "@lixpi/canvas-components-lixpi-specific/styles/canvas-chrome";',
         readSourceFile('../../packages/lixpi/canvas-components-lixpi-specific/src/frontend/workspace/workspace-canvas-chrome.scss'),
@@ -95,11 +103,9 @@ function loadScss(): string {
     )
 }
 
-function loadOutputChrome(): string {
-    return readSourceFile('../../packages/lixpi/canvas-components-lixpi-specific/src/frontend/media/workspace-output-chrome.ts')
-}
+const loadOutputChrome = (): string => readSourceFile('../../packages/lixpi/canvas-components-lixpi-specific/src/frontend/media/workspace-output-chrome.ts')
 
-function loadTs(): string {
+const loadTs = (): string => {
     const workspaceOwnerFiles = [
         'workspace-canvas.ts',
         'workspace-canvas-contracts.ts',
@@ -126,36 +132,29 @@ function loadTs(): string {
     const nodeShells = readSourceFile('../../packages/lixpi/canvas-components-lixpi-specific/src/frontend/nodes/workspace-node-shells.ts')
     const source = `${loadNodeDeletion()}\n${loadNodeGestures()}\n${loadGenerationHandlers()}\n${workspaceOwners}\n${nodeShells}`
     sourceFileNames.set(source, 'workspace renderer, focused owners, and generation handlers')
+
     return source
 }
 
-function loadNodeDeletion(): string {
-    return readSourceFile('../../packages/lixpi/canvas-components-lixpi-specific/src/shared/scene/workspace-node-deletion.ts')
-}
-
-function loadNodeGestures(): string {
-    return readSourceFile('../../packages/lixpi/canvas-components-lixpi-specific/src/frontend/workspace/workspace-node-gestures.ts')
-}
-
-function loadGenerationHandlers(): string {
-    return readSourceFile('../../packages/lixpi/canvas-components-lixpi-specific/src/frontend/media/workspace-generation-handlers.ts')
-}
-
-function closingBraceIndex(source: string, openIndex: number): number {
+const closingBraceIndex = (source: string, openIndex: number): number => {
     let depth = 0
 
     for (let index = openIndex; index < source.length; index++) {
-        if (source[index] === '{') depth++
+        if (source[index] === '{')
+            depth++
+
         if (source[index] === '}') {
             depth--
-            if (depth === 0) return index + 1
+
+            if (depth === 0)
+                return index + 1
         }
     }
 
     return source.length
 }
 
-function loadWorkspacePreflightMethod(name: string, module = 'workspace-preflight-markers'): string {
+const loadWorkspacePreflightMethod = (name: string, module = 'workspace-preflight-markers'): string => {
     const source = readSourceFile(`../../packages/lixpi/canvas-components-lixpi-specific/src/shared/generation/${module}.ts`)
     const start = source.indexOf(`\n    ${name}(`)
     expect(start, `Missing preflight method ${name}`).toBeGreaterThan(-1)
@@ -163,80 +162,52 @@ function loadWorkspacePreflightMethod(name: string, module = 'workspace-prefligh
     // change in how deeply the formatter indents the closing brace.
     const end = closingBraceIndex(source, source.indexOf('{', start))
     expect(end).toBeGreaterThan(start)
+
     return source.slice(start, end)
 }
 
-function loadRightPanel(): string {
-    return readSourceFile('../../packages/lixpi/canvas-components-lixpi-specific/src/frontend/workspace/workspace-right-panel.ts')
-}
+const loadRightPanel = (): string => readSourceFile('../../packages/lixpi/canvas-components-lixpi-specific/src/frontend/workspace/workspace-right-panel.ts')
 
-function extractMarqueeConfiguration(source: string): string {
+const extractMarqueeConfiguration = (source: string): string => {
     const configuration = source.match(/this\.marquee = [^\n]+\.installMarquee\([\s\S]*?^        \}\)/m)?.[0]
     expect(configuration, 'Workspace must configure the engine marquee controller').toBeDefined()
+
     return configuration!
 }
 
-function loadPixiMediaLayer(): string {
-    return readSourceFile('../../packages/lixpi/canvas-components-lixpi-specific/src/frontend/media/workspace-media-layer.ts')
-}
+const loadPixiMediaLayer = (): string => readSourceFile('../../packages/lixpi/canvas-components-lixpi-specific/src/frontend/media/workspace-media-layer.ts')
 
-function loadViewportBridge(): string {
-    return readSourceFile('../../packages/lixpi/canvas-engine/src/frontend/viewport/viewport-bridge.ts', 'packages/lixpi/canvas-engine/src/frontend/viewport/viewport-bridge.ts')
-}
+const loadViewportBridge = (): string => readSourceFile('../../packages/lixpi/canvas-engine/src/frontend/viewport/viewport-bridge.ts', 'packages/lixpi/canvas-engine/src/frontend/viewport/viewport-bridge.ts')
 
-function loadPixiTravelingOutlineRenderer(): string {
-    return readSourceFile('../../packages/lixpi/canvas-components/src/frontend/effects/outline/traveling-outline.ts')
-}
+const loadPixiTravelingOutlineRenderer = (): string => readSourceFile('../../packages/lixpi/canvas-components/src/frontend/effects/outline/traveling-outline.ts')
 
-function loadWorkspaceLoadingOutline(): string {
-    return readSourceFile('../../packages/lixpi/canvas-components/src/frontend/loading/loading-overlay.ts', 'packages/lixpi/canvas-components/src/frontend/loading/loading-overlay.ts')
-}
+const loadWorkspaceLoadingOutline = (): string => readSourceFile('../../packages/lixpi/canvas-components/src/frontend/loading/loading-overlay.ts', 'packages/lixpi/canvas-components/src/frontend/loading/loading-overlay.ts')
 
-function loadWorkspaceLineageProjection(): string {
-    return readSourceFile('../../packages/lixpi/canvas-components-lixpi-specific/src/shared/branch-tree-layout/workspace-lineage-projection.ts')
-}
+const loadWorkspaceLineageProjection = (): string => readSourceFile('../../packages/lixpi/canvas-components-lixpi-specific/src/shared/branch-tree-layout/workspace-lineage-projection.ts')
 
-function loadWorkspaceMarkerHandoff(): string {
-    return readSourceFile('../../packages/lixpi/canvas-components-lixpi-specific/src/shared/generation/workspace-branch-marker-handoff.ts')
-}
+const loadWorkspaceMarkerHandoff = (): string => readSourceFile('../../packages/lixpi/canvas-components-lixpi-specific/src/shared/generation/workspace-branch-marker-handoff.ts')
 
-function loadWorkspaceCanvasView(): string {
+const loadWorkspaceCanvasView = (): string => {
     return readSourceFile('../components/workspaceCanvasView/workspaceCanvasView.ts', 'components/workspaceCanvasView/workspaceCanvasView.ts')
         + readSourceFile('../../packages/lixpi/canvas-components-lixpi-specific/src/frontend/workspace/workspace-canvas-chrome.ts')
         + readSourceFile('../../packages/lixpi/canvas-components-lixpi-specific/src/frontend/workspace/workspace-canvas-surface.ts')
 }
 
-function loadCanvasMembershipStateRebase(): string {
-    return readSourceFile('../../packages/lixpi/canvas-components-lixpi-specific/src/shared/scene/membership-state-rebase.ts')
-}
+const loadCanvasMembershipStateRebase = (): string => readSourceFile('../../packages/lixpi/canvas-components-lixpi-specific/src/shared/scene/membership-state-rebase.ts')
 
-function loadContextPreview(): string {
-    return readSourceFile('../../packages/lixpi/canvas-components-lixpi-specific/src/frontend/context/context-preview.ts', 'context-preview.ts')
-}
+const loadContextPreview = (): string => readSourceFile('../../packages/lixpi/canvas-components-lixpi-specific/src/frontend/context/context-preview.ts', 'context-preview.ts')
 
-function loadAiInteractionService(): string {
-    return readSourceFile('../services/ai-interaction-service.ts', 'services/ai-interaction-service.ts')
-}
+const loadAiInteractionService = (): string => readSourceFile('../services/ai-interaction-service.ts', 'services/ai-interaction-service.ts')
 
-function loadAiChatThreadPlugin(): string {
-    return readSourceFile('../components/proseMirror/plugins/aiChatThreadPlugin/aiChatThreadPlugin.ts', 'components/proseMirror/plugins/aiChatThreadPlugin/aiChatThreadPlugin.ts')
-}
+const loadAiChatThreadPlugin = (): string => readSourceFile('../components/proseMirror/plugins/aiChatThreadPlugin/aiChatThreadPlugin.ts', 'components/proseMirror/plugins/aiChatThreadPlugin/aiChatThreadPlugin.ts')
 
-function loadAiGeneratedImageNode(): string {
-    return readSourceFile('../components/proseMirror/plugins/aiChatThreadPlugin/aiGeneratedImageNode.ts', 'components/proseMirror/plugins/aiChatThreadPlugin/aiGeneratedImageNode.ts')
-}
+const loadAiGeneratedImageNode = (): string => readSourceFile('../components/proseMirror/plugins/aiChatThreadPlugin/aiGeneratedImageNode.ts', 'components/proseMirror/plugins/aiChatThreadPlugin/aiGeneratedImageNode.ts')
 
-function loadAiGeneratedMediaCanvasRouter(): string {
-    return readSourceFile('../../packages/lixpi/canvas-components-lixpi-specific/src/shared/generation/canvas-generation-events.ts')
-}
+const loadAiGeneratedMediaCanvasRouter = (): string => readSourceFile('../../packages/lixpi/canvas-components-lixpi-specific/src/shared/generation/canvas-generation-events.ts')
 
-function loadAiPromptComposer(): string {
-    return readSourceFile('../../packages/lixpi/canvas-components-lixpi-specific/src/frontend/composer/ai-prompt-composer.ts', 'ai-prompt-composer.ts')
-}
+const loadAiPromptComposer = (): string => readSourceFile('../../packages/lixpi/canvas-components-lixpi-specific/src/frontend/composer/ai-prompt-composer.ts', 'ai-prompt-composer.ts')
 
-function loadWorkspaceComposerStyles(): string {
-    return readSourceFile('../../packages/lixpi/canvas-components-lixpi-specific/src/frontend/composer/workspace-prompt-composer.scss')
-}
+const loadWorkspaceComposerStyles = (): string => readSourceFile('../../packages/lixpi/canvas-components-lixpi-specific/src/frontend/composer/workspace-prompt-composer.scss')
 
 describe('Branch prompt-reference theme integration', () => {
     it('uses a lighter Capability accent on the dark branch message without changing marker layout', () => {
@@ -245,7 +216,10 @@ describe('Branch prompt-reference theme integration', () => {
         const selector = '.workspace-branch-marker-message-text .prompt-reference-chip {'
         const ruleStart = componentScss.indexOf(selector)
         const ruleEnd = componentScss.indexOf('\n}', ruleStart)
-        const rule = ruleStart >= 0 && ruleEnd >= 0 ? componentScss.slice(ruleStart, ruleEnd) : ''
+        const rule = ruleStart >= 0
+            && ruleEnd >= 0
+            ? componentScss.slice(ruleStart, ruleEnd)
+            : ''
         // The dark palette is declared once on the marker surface, so every chip
         // inside it — prompt line, reference row, pipeline trace — inherits it.
         // Anchored to the newline so this finds the top-level rule rather than the
@@ -253,7 +227,8 @@ describe('Branch prompt-reference theme integration', () => {
         const theme = readSourceFile('./workspace-theme.scss')
         const markerSurfaceStart = theme.indexOf('\n.workspace-branch-marker-content,')
         const markerSurfaceEnd = theme.indexOf('\n}', markerSurfaceStart)
-        const markerSurfaceRule = markerSurfaceStart >= 0 && markerSurfaceEnd >= 0
+        const markerSurfaceRule = markerSurfaceStart >= 0
+            && markerSurfaceEnd >= 0
             ? theme.slice(markerSurfaceStart, markerSurfaceEnd)
             : ''
 
@@ -266,35 +241,21 @@ describe('Branch prompt-reference theme integration', () => {
     })
 })
 
-function loadSidePanel(): string {
-    return readSourceFile('../../packages/lixpi/ui-kit/src/components/sidePanel/sidePanel.ts', 'packages/lixpi/ui-kit/src/components/sidePanel/sidePanel.ts')
-}
+const loadSidePanel = (): string => readSourceFile('../../packages/lixpi/ui-kit/src/components/sidePanel/sidePanel.ts', 'packages/lixpi/ui-kit/src/components/sidePanel/sidePanel.ts')
 
-function loadSidePanelScss(): string {
-    return readSourceFile('../../packages/lixpi/ui-kit/src/components/sidePanel/side-panel.scss', 'packages/lixpi/ui-kit/src/components/sidePanel/side-panel.scss')
-}
+const loadSidePanelScss = (): string => readSourceFile('../../packages/lixpi/ui-kit/src/components/sidePanel/side-panel.scss', 'packages/lixpi/ui-kit/src/components/sidePanel/side-panel.scss')
 
-function loadMediaModelBadgeScss(): string {
-    return readSourceFile('../../packages/lixpi/ui-kit/src/components/mediaModelBadge/media-model-badge.scss', 'packages/lixpi/ui-kit/src/components/mediaModelBadge/media-model-badge.scss')
-}
+const loadMediaModelBadgeScss = (): string => readSourceFile('../../packages/lixpi/ui-kit/src/components/mediaModelBadge/media-model-badge.scss', 'packages/lixpi/ui-kit/src/components/mediaModelBadge/media-model-badge.scss')
 
-function loadCanvasNodeFooterScss(): string {
-    return readSourceFile('../../packages/lixpi/ui-kit/src/components/canvasNodeFooter/canvas-node-footer.scss', 'packages/lixpi/ui-kit/src/components/canvasNodeFooter/canvas-node-footer.scss')
-}
+const loadCanvasNodeFooterScss = (): string => readSourceFile('../../packages/lixpi/ui-kit/src/components/canvasNodeFooter/canvas-node-footer.scss', 'packages/lixpi/ui-kit/src/components/canvasNodeFooter/canvas-node-footer.scss')
 
-function loadLayout(): string {
-    return readSourceFile('../views/layouts/layout.ts', 'views/layouts/layout.ts')
-}
+const loadLayout = (): string => readSourceFile('../views/layouts/layout.ts', 'views/layouts/layout.ts')
 
-function loadNavigationSidePanel(): string {
-    return readSourceFile('../components/navigationSidePanel/navigationSidePanel.ts', 'components/navigationSidePanel/navigationSidePanel.ts')
-}
+const loadNavigationSidePanel = (): string => readSourceFile('../components/navigationSidePanel/navigationSidePanel.ts', 'components/navigationSidePanel/navigationSidePanel.ts')
 
-function loadNavigationSidePanelScss(): string {
-    return readSourceFile('../components/navigationSidePanel/navigation-side-panel.scss', 'components/navigationSidePanel/navigation-side-panel.scss')
-}
+const loadNavigationSidePanelScss = (): string => readSourceFile('../components/navigationSidePanel/navigation-side-panel.scss', 'components/navigationSidePanel/navigation-side-panel.scss')
 
-function loadSettings(): string {
+const loadSettings = (): string => {
     return [
         readSourceFile('../settings.ts', 'settings.ts'),
         readSourceFile('../../packages/lixpi/canvas-components-lixpi-specific/src/frontend/settings/canvas-settings.ts'),
@@ -302,27 +263,31 @@ function loadSettings(): string {
     ].join('\n')
 }
 
-function loadSvgIcons(): string {
-    return readSourceFile('../../packages/lixpi/ui-kit/src/svg/svgIcons.ts', 'ui-kit/svg/svgIcons.ts')
-}
+const loadSvgIcons = (): string => readSourceFile('../../packages/lixpi/ui-kit/src/svg/svgIcons.ts', 'ui-kit/svg/svgIcons.ts')
 
-function extractBlock(scss: string, selector: string): string {
+const extractBlock = (scss: string, selector: string): string => {
     const escapedSelector = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
     const pattern = new RegExp(`${escapedSelector}\\s*\\{`)
     const match = pattern.exec(scss)
-    if (!match) return ''
+
+    if (!match)
+        return ''
 
     let depth = 0
     let start = match.index + match[0].length
     let end = start
 
     for (let i = start; i < scss.length; i++) {
-        if (scss[i] === '{') depth++
+        if (scss[i] === '{')
+            depth++
+
         if (scss[i] === '}') {
             if (depth === 0) {
                 end = i
+
                 break
             }
+
             depth--
         }
     }
@@ -330,23 +295,31 @@ function extractBlock(scss: string, selector: string): string {
     return scss.slice(match.index, end + 1)
 }
 
-function extractBlockContainingSelector(scss: string, selector: string): string {
+const extractBlockContainingSelector = (scss: string, selector: string): string => {
     const selectorIndex = scss.indexOf(selector)
-    if (selectorIndex === -1) return ''
+
+    if (selectorIndex === -1)
+        return ''
 
     const openIndex = scss.indexOf('{', selectorIndex)
-    if (openIndex === -1) return ''
+
+    if (openIndex === -1)
+        return ''
 
     let depth = 0
     let end = openIndex
 
     for (let i = openIndex + 1; i < scss.length; i++) {
-        if (scss[i] === '{') depth++
+        if (scss[i] === '{')
+            depth++
+
         if (scss[i] === '}') {
             if (depth === 0) {
                 end = i
+
                 break
             }
+
             depth--
         }
     }
@@ -354,12 +327,13 @@ function extractBlockContainingSelector(scss: string, selector: string): string 
     return scss.slice(selectorIndex, end + 1)
 }
 
-function extractBoxShadowValues(block: string): string[] {
+const extractBoxShadowValues = (block: string): string[] => {
     const matches = [...block.matchAll(/box-shadow:\s*([^;]+);/g)]
+
     return matches.map(m => m[1].trim())
 }
 
-function extractFunctionBody(source: string, functionName: string): string {
+const extractFunctionBody = (source: string, functionName: string): string => {
     const declarations = [
         `private ${functionName} =`,
         `    ${functionName} =`,
@@ -371,42 +345,57 @@ function extractFunctionBody(source: string, functionName: string): string {
         .map(declaration => source.indexOf(declaration))
         .filter(index => index >= 0)
         .sort((left, right) => left - right)[0] ?? -1
-    if (functionIndex === -1) return ''
+
+    if (functionIndex === -1)
+        return ''
 
     // Track paren depth instead of taking the first `)`, which now lands inside a
     // parameter type or default value once the formatter expands the signature.
     const signatureOpenIndex = source.indexOf('(', functionIndex)
-    if (signatureOpenIndex === -1) return ''
+
+    if (signatureOpenIndex === -1)
+        return ''
 
     let signatureCloseIndex = -1
     let signatureDepth = 0
 
     for (let i = signatureOpenIndex; i < source.length; i++) {
-        if (source[i] === '(') signatureDepth++
+        if (source[i] === '(')
+            signatureDepth++
+
         if (source[i] === ')') {
             signatureDepth--
+
             if (signatureDepth === 0) {
                 signatureCloseIndex = i
+
                 break
             }
         }
     }
 
-    if (signatureCloseIndex === -1) return ''
+    if (signatureCloseIndex === -1)
+        return ''
 
     const trailingSignature = source.slice(signatureCloseIndex + 1)
     const returnTypeObjectStart = trailingSignature.match(/^\s*:\s*\{/)
     let bodySearchIndex = signatureCloseIndex
+
     if (returnTypeObjectStart) {
         const returnTypeOpenIndex = signatureCloseIndex + 1 + returnTypeObjectStart[0].lastIndexOf('{')
         let returnTypeDepth = 0
+
         for (let i = returnTypeOpenIndex + 1; i < source.length; i++) {
-            if (source[i] === '{') returnTypeDepth++
+            if (source[i] === '{')
+                returnTypeDepth++
+
             if (source[i] === '}') {
                 if (returnTypeDepth === 0) {
                     bodySearchIndex = i
+
                     break
                 }
+
                 returnTypeDepth--
             }
         }
@@ -420,14 +409,21 @@ function extractFunctionBody(source: string, functionName: string): string {
         const beforeBody = source.slice(signatureCloseIndex, methodBodyIndex)
         const lastArrow = beforeBody.lastIndexOf('=>')
 
-        if (lastArrow !== -1 && beforeBody.slice(lastArrow + 2).trim() === '') {
+        if (
+            lastArrow !== -1
+            && beforeBody.slice(lastArrow + 2).trim() === ''
+        ) {
             let depth = 0
 
             for (let i = methodBodyIndex; i < source.length; i++) {
-                if (source[i] === '{') depth++
+                if (source[i] === '{')
+                    depth++
+
                 if (source[i] === '}') {
                     depth--
-                    if (depth === 0) return source.slice(functionIndex, i + 1)
+
+                    if (depth === 0)
+                        return source.slice(functionIndex, i + 1)
                 }
             }
         }
@@ -437,38 +433,72 @@ function extractFunctionBody(source: string, functionName: string): string {
 
     // A concise arrow body (`=> void this.chrome.sync(state)`) has no braces, so the
     // declaration ends at the end of its line.
-    if (arrowIndex !== -1 && (methodBodyIndex === -1 || arrowIndex < methodBodyIndex)) {
+    if (
+        arrowIndex !== -1
+        && (methodBodyIndex === -1 || arrowIndex < methodBodyIndex)
+    ) {
         let conciseStart = arrowIndex + 2
-        while (conciseStart < source.length && /\s/.test(source[conciseStart]!)) conciseStart++
+
+        while (
+            conciseStart < source.length
+            && /\s/.test(source[conciseStart]!)
+        )
+            conciseStart++
 
         if (source[conciseStart] !== '{') {
             let depth = 0
 
             for (let i = conciseStart; i < source.length; i++) {
                 const character = source[i]
-                if (character === '(' || character === '[' || character === '{') depth++
-                if (character === ')' || character === ']' || character === '}') depth--
-                if (character === '\n' && depth <= 0) return source.slice(functionIndex, i)
+
+                if (
+                    character === '('
+                    || character === '['
+                    || character === '{'
+                )
+                    depth++
+
+                if (
+                    character === ')'
+                    || character === ']'
+                    || character === '}'
+                )
+                    depth--
+
+                if (
+                    character === '\n'
+                    && depth <= 0
+                )
+                    return source.slice(functionIndex, i)
             }
 
             return source.slice(functionIndex)
         }
     }
 
-    const arrowBodyIndex = arrowIndex !== -1 && (methodBodyIndex === -1 || arrowIndex < methodBodyIndex) ? source.indexOf('{', arrowIndex) : -1
+    const arrowBodyIndex = arrowIndex !== -1
+        && (methodBodyIndex === -1 || arrowIndex < methodBodyIndex)
+        ? source.indexOf('{', arrowIndex)
+        : -1
     const openIndex = arrowBodyIndex !== -1 ? arrowBodyIndex : methodBodyIndex
-    if (openIndex === -1) return ''
+
+    if (openIndex === -1)
+        return ''
 
     let depth = 0
     let endIndex = openIndex
 
     for (let i = openIndex + 1; i < source.length; i++) {
-        if (source[i] === '{') depth++
+        if (source[i] === '{')
+            depth++
+
         if (source[i] === '}') {
             if (depth === 0) {
                 endIndex = i
+
                 break
             }
+
             depth--
         }
     }
@@ -629,9 +659,7 @@ describe('workspace node CSS — box-shadow consistency', () => {
         expectExcerptNotToContain(docNodeBlock, 'transition:box-shadow')
     })
 
-    it('.workspace-image-node base uses the theme-configured default box-shadow', () => {
-        expect(imageNodeBlock).toMatch(/^\s*box-shadow:\s*var\(--workspace-media-node-default-box-shadow\);/m)
-    })
+    it('.workspace-image-node base uses the theme-configured default box-shadow', () => void expect(imageNodeBlock).toMatch(/^\s*box-shadow:\s*var\(--workspace-media-node-default-box-shadow\);/m))
 
     it('keeps generated media model chrome free of badge and button shadows', () => {
         const badgeBlock = extractBlock(loadMediaModelBadgeScss(), '.media-model-badge')
@@ -1284,9 +1312,7 @@ describe('Workspace canvas — content descriptors (documents & threads)', () =>
         expectExcerptToContain(resolutionBody, 'patchWorkspaceContextImprovedDescriptors(resolution.improvedDescriptors)', 'handleWorkspaceContextResolution')
     })
 
-    it('clears pending descriptor timers on destroy', () => {
-        expectSourceToContain(ts, 'this.mediaAnalysis?.destroy()')
-    })
+    it('clears pending descriptor timers on destroy', () => void expectSourceToContain(ts, 'this.mediaAnalysis?.destroy()'))
 })
 
 // =============================================================================
@@ -1686,9 +1712,7 @@ describe('AI chat thread — workspace CSS overrides for auto-grow', () => {
         expect(scss).toMatch(/\.workspace-ai-chat-thread-node\s+\.ai-chat-thread-node-editor\s+\.ProseMirror\s*\{[^}]*min-height:\s*0/)
     })
 
-    it('sets ProseMirror padding-bottom to 1rem inside workspace thread', () => {
-        expect(scss).toMatch(/\.workspace-ai-chat-thread-node\s+\.ai-chat-thread-node-editor\s+\.ProseMirror\s*\{[^}]*padding:\s*0\s+0\s+1rem/)
-    })
+    it('sets ProseMirror padding-bottom to 1rem inside workspace thread', () => void expect(scss).toMatch(/\.workspace-ai-chat-thread-node\s+\.ai-chat-thread-node-editor\s+\.ProseMirror\s*\{[^}]*padding:\s*0\s+0\s+1rem/))
 })
 
 // =============================================================================
@@ -1779,13 +1803,9 @@ describe('Right side panel — TS infrastructure', () => {
         expectExcerptNotToContain(fnBody, 'promptInputController.setTarget')
     })
 
-    it('removes the extraction-only image bubble menu callback', () => {
-        expectSourceNotToContain(ts, `on${'AskAi'}`)
-    })
+    it('removes the extraction-only image bubble menu callback', () => void expectSourceNotToContain(ts, `on${'AskAi'}`))
 
-    it('bubble menu callbacks include onTriggerConnection', () => {
-        expectSourceToContain(ts, 'onTriggerConnection')
-    })
+    it('bubble menu callbacks include onTriggerConnection', () => void expectSourceToContain(ts, 'onTriggerConnection'))
 
     it('anchors the canvas image bubble menu to the image node box', () => {
         expectSourceToContain(ts, 'this.ports.menu.showNode(nodeId)')
@@ -1793,9 +1813,7 @@ describe('Right side panel — TS infrastructure', () => {
         expectSourceToContain(ts, 'viewport: this.viewportEl,')
     })
 
-    it('onTriggerConnection triggers connection via startConnectionFromMenu', () => {
-        expect(ts).toMatch(/onTriggerConnection.*startConnectionFromMenu|startConnectionFromMenu.*onTriggerConnection/s)
-    })
+    it('onTriggerConnection triggers connection via startConnectionFromMenu', () => void expect(ts).toMatch(/onTriggerConnection.*startConnectionFromMenu|startConnectionFromMenu.*onTriggerConnection/s))
 
     it('keeps one panel owner per canvas alongside the global composer', () => {
         expect([...ts.matchAll(/new WorkspaceRightPanel\(/g)]).toHaveLength(1)
@@ -2641,9 +2659,7 @@ describe('Image loading — PIXI ownership and URL resolution strategy', () => {
         expectSourceToContain(host, 'resolveAuthenticatedMediaUrl(source,')
         expectSourceNotToContain(ts, 'resolveAuthenticatedMediaUrl(')
     })
-    it('keeps workspace identity on the renderer instance for route changes', () => {
-        expectSourceToContain(ts, 'this.workspaceId = this.options.workspaceId')
-    })
+    it('keeps workspace identity on the renderer instance for route changes', () => void expectSourceToContain(ts, 'this.workspaceId = this.options.workspaceId'))
 
     it('render() accepts optional newWorkspaceId parameter and updates workspaceId', () => {
         expect(/render = \([^)]*newWorkspaceId\?: string/.test(ts)).toBe(true)
@@ -2661,11 +2677,12 @@ describe('Image loading — PIXI ownership and URL resolution strategy', () => {
 describe('Image generation error cleanup', () => {
     const ts = loadTs()
 
-    function getImageErrorHandler(): string {
+    const getImageErrorHandler = (): string => {
         const start = ts.indexOf('onImageErrorToCanvas: ({')
         expect(start, 'WorkspaceCanvas.ts should contain onImageErrorToCanvas handler').toBeGreaterThan(-1)
         const end = ts.indexOf('onImagePartialToCanvas:', start)
         expect(end, 'onImageErrorToCanvas handler should end before onImagePartialToCanvas').toBeGreaterThan(start)
+
         return ts.slice(start, end)
     }
 
@@ -2955,10 +2972,11 @@ describe('canvas node deletion', () => {
 // =============================================================================
 
 describe('Workspace canvas — selection deletion', () => {
-    function extractDeleteCanvasNodes(source: string): string {
+    const extractDeleteCanvasNodes = (source: string): string => {
         const start = source.indexOf('async deleteCanvasNodes(')
         expect(start >= 0, 'deleteCanvasNodes should exist').toBe(true)
         const end = source.indexOf('\n    }', start)
+
         return source.slice(start, end)
     }
 

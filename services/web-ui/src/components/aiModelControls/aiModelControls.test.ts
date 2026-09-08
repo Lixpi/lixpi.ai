@@ -62,6 +62,7 @@ vi.mock('@lixpi/ui-kit/components/dropdown', () => ({
         }
         mockState.dropdownConfigs.push(config)
         mockState.dropdownInstances.push(instance)
+
         return instance
     }),
 }))
@@ -70,11 +71,10 @@ vi.mock('@lixpi/ui-kit/components/tag-pill', () => ({
     createTagPill: vi.fn((parent: any, config: any) => {
         const group = parent.append('g')
             .attr('data-test-tag-pill-id', config.id)
-        const destroy = vi.fn(() => {
-            group.remove()
-        })
+        const destroy = vi.fn(() => void group.remove())
         mockState.tagPillConfigs.push(config)
         mockState.tagPillDestroyFns.push(destroy)
+
         return {
             render: vi.fn(),
             resize: vi.fn(),
@@ -93,6 +93,7 @@ vi.mock('@lixpi/ui-kit/components/sliding-dropdown', () => ({
         }
         mockState.slidingDropdownConfigs.push(config)
         mockState.slidingDropdownInstances.push(instance)
+
         return instance
     }),
 }))
@@ -105,6 +106,7 @@ vi.mock('@lixpi/ui-kit/components/sliding-switch', () => ({
         }
         mockState.slidingSwitchConfigs.push(config)
         mockState.slidingSwitchInstances.push(instance)
+
         return instance
     }),
 }))
@@ -114,6 +116,7 @@ vi.mock('@lixpi/ui-kit/components/help-tooltip', () => ({
         const dom = document.createElement('span')
         dom.className = 'mock-help-tooltip'
         mockState.helpTooltipConfigs.push(config)
+
         return {
             dom,
             destroy: vi.fn(() => dom.remove()),
@@ -126,13 +129,12 @@ vi.mock('@lixpi/ui-kit/components/toggle-switch', () => ({
         let checked = config.checked ?? false
         const instance = {
             getChecked: vi.fn(() => checked),
-            setChecked: vi.fn((nextChecked: boolean) => {
-                checked = nextChecked
-            }),
+            setChecked: vi.fn((nextChecked: boolean) => void (checked = nextChecked)),
             destroy: vi.fn(),
         }
         mockState.toggleSwitchConfigs.push(config)
         mockState.toggleSwitchInstances.push(instance)
+
         return instance
     }),
 }))
@@ -143,6 +145,7 @@ vi.mock('$src/stores/aiModelsStore.ts', () => {
             data: aiModelsStoreState.data,
             mediaGenerationConfigMatrix: aiModelsStoreState.mediaGenerationConfigMatrix,
         }
+
         for (const subscriber of aiModelsStoreState.subscribers) subscriber(state)
     }
 
@@ -179,9 +182,8 @@ vi.mock('$src/stores/aiModelsStore.ts', () => {
                     data: aiModelsStoreState.data,
                     mediaGenerationConfigMatrix: aiModelsStoreState.mediaGenerationConfigMatrix,
                 })
-                return () => {
-                    aiModelsStoreState.subscribers.delete(subscriber)
-                }
+
+                return () => void aiModelsStoreState.subscribers.delete(subscriber)
             },
             getDefaultModelId: (capability: 'reasoning' | 'image' | 'video') => (
                 aiModelsStoreState.defaultModels[capability]
@@ -212,7 +214,7 @@ type MediaGenerationConfigSelectionGroup = {
     >
 }
 
-function resetMocks(): void {
+const resetMocks = (): void => {
     mockState.dropdownConfigs.length = 0
     mockState.dropdownInstances.length = 0
     mockState.slidingDropdownConfigs.length = 0
@@ -226,23 +228,22 @@ function resetMocks(): void {
     mockState.helpTooltipConfigs.length = 0
 }
 
-function model(provider: string, modelId: string, shortTitle: string, modality: string): any {
+const model = (provider: string, modelId: string, shortTitle: string, modality: string): any => {
     return {
         provider,
         model: modelId,
         shortTitle,
         iconName: 'gpt',
-        modalities: [{ modality, shortTitle: modality }],
+        modalities: [{
+            modality,
+            shortTitle: modality,
+        }],
     }
 }
 
-function latestDropdownConfig(predicate: (config: any) => boolean): any {
-    return [...mockState.dropdownConfigs].reverse().find(predicate)
-}
+const latestDropdownConfig = (predicate: (config: any) => boolean): any => [...mockState.dropdownConfigs].reverse().find(predicate)
 
-function latestSlidingDropdownConfig(predicate: (config: any) => boolean): any {
-    return [...mockState.slidingDropdownConfigs].reverse().find(predicate)
-}
+const latestSlidingDropdownConfig = (predicate: (config: any) => boolean): any => [...mockState.slidingDropdownConfigs].reverse().find(predicate)
 
 beforeEach(() => {
     resetMocks()
@@ -267,8 +268,14 @@ beforeEach(() => {
                         label: 'Aspect ratio',
                         defaultValue: '1:1',
                         options: [
-                            { value: '1:1', label: 'Square' },
-                            { value: '16:9', label: 'Wide' },
+                            {
+                                value: '1:1',
+                                label: 'Square',
+                            },
+                            {
+                                value: '16:9',
+                                label: 'Wide',
+                            },
                         ],
                     }],
                 },
@@ -282,8 +289,14 @@ beforeEach(() => {
                         key: 'aspectRatio',
                         label: 'Aspect ratio',
                         options: [
-                            { value: '16:9', label: 'Wide' },
-                            { value: '4:3', label: 'Classic' },
+                            {
+                                value: '16:9',
+                                label: 'Wide',
+                            },
+                            {
+                                value: '4:3',
+                                label: 'Classic',
+                            },
                         ],
                     }],
                 },
@@ -298,8 +311,14 @@ beforeEach(() => {
                         label: 'Aspect ratio',
                         defaultValue: '9:16',
                         options: [
-                            { value: '9:16', label: 'Vertical' },
-                            { value: '1:1', label: 'Square' },
+                            {
+                                value: '9:16',
+                                label: 'Vertical',
+                            },
+                            {
+                                value: '1:1',
+                                label: 'Square',
+                            },
                         ],
                     }],
                 },
@@ -319,7 +338,7 @@ afterEach(() => {
 // =============================================================================
 
 describe('createMediaGenerationConfigMatrixView', () => {
-    function createControls(overrides: {
+    const createControls = (overrides: {
         mediaType?: 'reasoning' | 'image' | 'video'
         selectedModelIds?: string[]
         configGroups?: MediaGenerationConfigSelectionGroup[]
@@ -328,7 +347,7 @@ describe('createMediaGenerationConfigMatrixView', () => {
         configGroups: MediaGenerationConfigSelectionGroup[]
         setSelectedModelIds: ReturnType<typeof vi.fn>
         setConfigGroups: ReturnType<typeof vi.fn>
-    } {
+    } => {
         const controls = {
             selectedModelIds: overrides.selectedModelIds ?? ['google:imagen-4', 'openai:gpt-image-1', 'google:veo-3'],
             configGroups: overrides.configGroups ?? [{
@@ -338,15 +357,12 @@ describe('createMediaGenerationConfigMatrixView', () => {
             }],
             mediaType: overrides.mediaType ?? 'image',
             getSelectedModelIds: vi.fn(() => controls.selectedModelIds),
-            setSelectedModelIds: vi.fn((modelIds: string[]) => {
-                controls.selectedModelIds = modelIds
-            }),
+            setSelectedModelIds: vi.fn((modelIds: string[]) => void (controls.selectedModelIds = modelIds)),
             getConfigGroups: vi.fn(() => controls.configGroups),
-            setConfigGroups: vi.fn((groups: MediaGenerationConfigSelectionGroup[]) => {
-                controls.configGroups = groups
-            }),
+            setConfigGroups: vi.fn((groups: MediaGenerationConfigSelectionGroup[]) => void (controls.configGroups = groups)),
             createModelDropdown: vi.fn(() => {
                 const dom = document.createElement('div')
+
                 return {
                     dom,
                     update: vi.fn(),
@@ -354,6 +370,7 @@ describe('createMediaGenerationConfigMatrixView', () => {
                 }
             }),
         }
+
         return controls
     }
 
@@ -387,8 +404,14 @@ describe('createMediaGenerationConfigMatrixView', () => {
         ))
         expect(imageSizeDropdown?.selectedValue).toBe('1:1')
         expect(imageSizeDropdown?.options).toEqual([
-            { value: '1:1', label: 'Square' },
-            { value: '16:9', label: 'Wide' },
+            {
+                value: '1:1',
+                label: 'Square',
+            },
+            {
+                value: '16:9',
+                label: 'Wide',
+            },
         ])
         expect(imageSizeDropdown?.renderOption).toEqual(expect.any(Function))
         expect(imageSizeDropdown?.optionHorizontalPadding).toBe(
@@ -428,7 +451,10 @@ describe('createMediaGenerationConfigMatrixView', () => {
         const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
         const optionState = {
             id: 'wide-dimension',
-            option: { label: '21:9', value: '21:9' },
+            option: {
+                label: '21:9',
+                value: '21:9',
+            },
             index: 0,
             x: 2.75,
             y: 2,
@@ -469,8 +495,14 @@ describe('createMediaGenerationConfigMatrixView', () => {
             kind: 'segmented',
             defaultValue: '1024x1024',
             options: [
-                { value: '1024x1024', label: '1:1' },
-                { value: '1536x1024', label: '3:2' },
+                {
+                    value: '1024x1024',
+                    label: '1:1',
+                },
+                {
+                    value: '1536x1024',
+                    label: '3:2',
+                },
             ],
         }]
         const controls = createControls({
@@ -489,8 +521,14 @@ describe('createMediaGenerationConfigMatrixView', () => {
             config.id === 'image:google/openai:google:imagen-4:imageSize'
         ))
         expect(imageSizeDropdown.options).toEqual([
-            { value: '1024x1024', label: '1:1' },
-            { value: '1536x1024', label: '3:2' },
+            {
+                value: '1024x1024',
+                label: '1:1',
+            },
+            {
+                value: '1536x1024',
+                label: '3:2',
+            },
         ])
         expect(imageSizeDropdown.selectedValue).toBe('1536x1024')
 
@@ -523,8 +561,16 @@ describe('createMediaGenerationConfigMatrixView', () => {
                 kind: 'segmented',
                 defaultValue: 'auto',
                 options: [
-                    { value: 'auto', label: 'Auto', description: 'Provider-selected quality.' },
-                    { value: 'high', label: 'High', description: 'Highest available quality.' },
+                    {
+                        value: 'auto',
+                        label: 'Auto',
+                        description: 'Provider-selected quality.',
+                    },
+                    {
+                        value: 'high',
+                        label: 'High',
+                        description: 'Highest available quality.',
+                    },
                 ],
             },
             {
@@ -533,8 +579,16 @@ describe('createMediaGenerationConfigMatrixView', () => {
                 kind: 'segmented',
                 defaultValue: 'auto',
                 options: [
-                    { value: 'auto', label: 'Auto', description: 'Provider-selected background.' },
-                    { value: 'transparent', label: 'Transparent', description: 'Requests an alpha channel.' },
+                    {
+                        value: 'auto',
+                        label: 'Auto',
+                        description: 'Provider-selected background.',
+                    },
+                    {
+                        value: 'transparent',
+                        label: 'Transparent',
+                        description: 'Requests an alpha channel.',
+                    },
                 ],
             },
         ]
@@ -543,7 +597,10 @@ describe('createMediaGenerationConfigMatrixView', () => {
             configGroups: [{
                 groupId: 'image:google/openai',
                 modelIds: ['openai:gpt-image-1'],
-                values: { quality: 'high', background: 'transparent' },
+                values: {
+                    quality: 'high',
+                    background: 'transparent',
+                },
             }],
         })
         const view = createMediaGenerationConfigMatrixView(controls)
@@ -569,7 +626,10 @@ describe('createMediaGenerationConfigMatrixView', () => {
         expect(controls.setConfigGroups).toHaveBeenLastCalledWith([{
             groupId: 'image:google/openai',
             modelIds: ['openai:gpt-image-1'],
-            values: { quality: 'auto', background: 'transparent' },
+            values: {
+                quality: 'auto',
+                background: 'transparent',
+            },
         }])
 
         view.destroy()
@@ -586,8 +646,14 @@ describe('createMediaGenerationConfigMatrixView', () => {
                 kind: 'aspect-ratio',
                 defaultValue: '1:1',
                 options: [
-                    { value: '1:1', label: '1:1' },
-                    { value: '16:9', label: '16:9' },
+                    {
+                        value: '1:1',
+                        label: '1:1',
+                    },
+                    {
+                        value: '16:9',
+                        label: '16:9',
+                    },
                 ],
             },
             {
@@ -596,8 +662,14 @@ describe('createMediaGenerationConfigMatrixView', () => {
                 kind: 'segmented',
                 defaultValue: '1K',
                 options: [
-                    { value: '1K', label: '1K' },
-                    { value: '2K', label: '2K' },
+                    {
+                        value: '1K',
+                        label: '1K',
+                    },
+                    {
+                        value: '2K',
+                        label: '2K',
+                    },
                 ],
             },
         ]
@@ -632,8 +704,14 @@ describe('createMediaGenerationConfigMatrixView', () => {
                 kind: 'aspect-ratio',
                 defaultValue: '1:1',
                 options: [
-                    { value: '1:1', label: '1:1' },
-                    { value: '16:9', label: '16:9' },
+                    {
+                        value: '1:1',
+                        label: '1:1',
+                    },
+                    {
+                        value: '16:9',
+                        label: '16:9',
+                    },
                 ],
             },
             {
@@ -643,7 +721,10 @@ describe('createMediaGenerationConfigMatrixView', () => {
                 readOnly: true,
                 defaultValue: '1K',
                 description: 'Controls output resolution and image-token cost.',
-                options: [{ value: '1K', label: '1K' }],
+                options: [{
+                    value: '1K',
+                    label: '1K',
+                }],
             },
         ]
         const controls = createControls({
@@ -660,8 +741,14 @@ describe('createMediaGenerationConfigMatrixView', () => {
         expect(aspectRatioDropdown).toEqual(expect.objectContaining({
             selectedValue: '1:1',
             options: [
-                { value: '1:1', label: '1:1' },
-                { value: '16:9', label: '16:9' },
+                {
+                    value: '1:1',
+                    label: '1:1',
+                },
+                {
+                    value: '16:9',
+                    label: '16:9',
+                },
             ],
         }))
         expect(resolutionDropdown).toBeUndefined()
@@ -672,16 +759,31 @@ describe('createMediaGenerationConfigMatrixView', () => {
         expect(controls.setConfigGroups).toHaveBeenLastCalledWith([{
             groupId: 'image:google/openai',
             modelIds: ['google:imagen-4'],
-            values: { imageSize: '16:9', resolution: '1K' },
+            values: {
+                imageSize: '16:9',
+                resolution: '1K',
+            },
         }])
 
         view.destroy()
     })
 
     it.each([
-        { mediaType: 'reasoning' as const, modelId: 'openai:reasoning-only', key: 'reasoningEffort' },
-        { mediaType: 'image' as const, modelId: 'google:image-only', key: 'resolution' },
-        { mediaType: 'video' as const, modelId: 'google:video-only', key: 'duration' },
+        {
+            mediaType: 'reasoning' as const,
+            modelId: 'openai:reasoning-only',
+            key: 'reasoningEffort',
+        },
+        {
+            mediaType: 'image' as const,
+            modelId: 'google:image-only',
+            key: 'resolution',
+        },
+        {
+            mediaType: 'video' as const,
+            modelId: 'google:video-only',
+            key: 'duration',
+        },
     ])('hides single-value $mediaType controls even when their metadata is not marked fixed', ({
         mediaType,
         modelId,
@@ -699,7 +801,10 @@ describe('createMediaGenerationConfigMatrixView', () => {
                 label: 'Only value',
                 kind: 'segmented',
                 defaultValue: 'only',
-                options: [{ value: 'only', label: 'Only' }],
+                options: [{
+                    value: 'only',
+                    label: 'Only',
+                }],
             }],
         }]
         const controls = createControls({
@@ -739,7 +844,10 @@ describe('createMediaGenerationConfigMatrixView', () => {
         expect(removeButton.getAttribute('aria-label')).toBe('Remove model')
         expect(removeButton.getAttribute('data-help-tooltip')).toBe('aria-label')
         expect(removeButton.getAttribute('title')).toBeNull()
-        removeButton.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }))
+        removeButton.dispatchEvent(new MouseEvent('click', {
+            bubbles: true,
+            cancelable: true,
+        }))
 
         expect(controls.setSelectedModelIds).toHaveBeenLastCalledWith(['openai:gpt-image-1'])
 
@@ -760,8 +868,14 @@ describe('createMediaGenerationConfigMatrixView', () => {
                 label: 'Aspect ratio',
                 defaultValue: '1:1',
                 options: [
-                    { value: '1:1', label: 'Square' },
-                    { value: '16:9', label: 'Wide' },
+                    {
+                        value: '1:1',
+                        label: 'Square',
+                    },
+                    {
+                        value: '16:9',
+                        label: 'Wide',
+                    },
                 ],
             },
             {
@@ -770,8 +884,14 @@ describe('createMediaGenerationConfigMatrixView', () => {
                 label: 'Watermark',
                 defaultValue: 'false',
                 options: [
-                    { value: 'false', label: 'Off' },
-                    { value: 'true', label: 'On' },
+                    {
+                        value: 'false',
+                        label: 'Off',
+                    },
+                    {
+                        value: 'true',
+                        label: 'On',
+                    },
                 ],
             },
         ]
@@ -780,7 +900,10 @@ describe('createMediaGenerationConfigMatrixView', () => {
             configGroups: [{
                 groupId: 'image:google/openai',
                 modelIds: ['google:imagen-4'],
-                values: { imageSize: '1:1', watermark: 'false' },
+                values: {
+                    imageSize: '1:1',
+                    watermark: 'false',
+                },
             }],
         })
         const view = createMediaGenerationConfigMatrixView(controls)
@@ -809,12 +932,18 @@ describe('createMediaGenerationConfigMatrixView', () => {
             checked: false,
         }))
 
-        toggle.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }))
+        toggle.dispatchEvent(new MouseEvent('click', {
+            bubbles: true,
+            cancelable: true,
+        }))
 
         expect(controls.setConfigGroups).toHaveBeenLastCalledWith([{
             groupId: 'image:google/openai',
             modelIds: ['google:imagen-4'],
-            values: { imageSize: '1:1', watermark: 'true' },
+            values: {
+                imageSize: '1:1',
+                watermark: 'true',
+            },
         }])
         expect(toggle.ariaPressed).toBe('true')
         expect(mockState.toggleSwitchInstances.at(-1)?.setChecked).toHaveBeenCalledWith(true)
@@ -833,8 +962,15 @@ describe('createMediaGenerationConfigMatrixView', () => {
             kind: 'segmented',
             defaultValue: '720p',
             options: [
-                { value: '720p', label: '720p' },
-                { value: '1080p', label: '1080p', description: '1080p requires an 8 second duration.' },
+                {
+                    value: '720p',
+                    label: '720p',
+                },
+                {
+                    value: '1080p',
+                    label: '1080p',
+                    description: '1080p requires an 8 second duration.',
+                },
             ],
         }]
         const controls = createControls({
@@ -858,7 +994,10 @@ describe('createMediaGenerationConfigMatrixView', () => {
         const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
         resolutionDropdown.renderOption(select(svg).append('g'), {
             id: 'video-resolution',
-            option: { value: '1080p', label: '1080p' },
+            option: {
+                value: '1080p',
+                label: '1080p',
+            },
             index: 1,
             x: 0,
             y: 0,
@@ -893,8 +1032,14 @@ describe('createMediaGenerationConfigMatrixView', () => {
                 kind: 'segmented',
                 defaultValue: 'mov',
                 options: [
-                    { value: 'mp4', label: 'MP4' },
-                    { value: 'mov', label: 'MOV' },
+                    {
+                        value: 'mp4',
+                        label: 'MP4',
+                    },
+                    {
+                        value: 'mov',
+                        label: 'MOV',
+                    },
                 ],
             },
             {
@@ -903,8 +1048,14 @@ describe('createMediaGenerationConfigMatrixView', () => {
                 kind: 'toggle',
                 defaultValue: 'true',
                 options: [
-                    { value: 'true', label: 'On' },
-                    { value: 'false', label: 'Off' },
+                    {
+                        value: 'true',
+                        label: 'On',
+                    },
+                    {
+                        value: 'false',
+                        label: 'Off',
+                    },
                 ],
             },
         ]
@@ -927,8 +1078,14 @@ describe('createMediaGenerationConfigMatrixView', () => {
 
         expect(outputFormatDropdown.selectedValue).toBe('mov')
         expect(outputFormatDropdown.options).toEqual([
-            { value: 'mp4', label: 'MP4' },
-            { value: 'mov', label: 'MOV' },
+            {
+                value: 'mp4',
+                label: 'MP4',
+            },
+            {
+                value: 'mov',
+                label: 'MOV',
+            },
         ])
         expect(mockState.slidingSwitchConfigs.some(config => config.id.endsWith(':outputFormat'))).toBe(false)
         expect(audioToggle.getAttribute('aria-pressed')).toBe('false')
@@ -937,14 +1094,23 @@ describe('createMediaGenerationConfigMatrixView', () => {
         expect(controls.setConfigGroups).toHaveBeenLastCalledWith([{
             groupId: 'video:bytedance',
             modelIds: ['bytedance:seedance'],
-            values: { outputFormat: 'mp4', generateAudio: 'false' },
+            values: {
+                outputFormat: 'mp4',
+                generateAudio: 'false',
+            },
         }])
 
-        audioToggle.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }))
+        audioToggle.dispatchEvent(new MouseEvent('click', {
+            bubbles: true,
+            cancelable: true,
+        }))
         expect(controls.setConfigGroups).toHaveBeenLastCalledWith([{
             groupId: 'video:bytedance',
             modelIds: ['bytedance:seedance'],
-            values: { outputFormat: 'mp4', generateAudio: 'true' },
+            values: {
+                outputFormat: 'mp4',
+                generateAudio: 'true',
+            },
         }])
 
         view.destroy()
@@ -975,6 +1141,7 @@ describe('model selector popovers', () => {
         ))
 
         expect(selectorConfigs).toHaveLength(3)
+
         for (const config of selectorConfigs) {
             expect(config).toEqual(expect.objectContaining({
                 observeParentResize: false,
@@ -996,9 +1163,7 @@ describe('createGenericVideoAspectDropdown', () => {
     it('replaces stale aspect-ratio options and normalizes the selected value when the video model changes', () => {
         let selectedVideoModel = 'google:veo-3'
         let aspectRatio = '16:9'
-        const setValue = vi.fn((value: string) => {
-            aspectRatio = value
-        })
+        const setValue = vi.fn((value: string) => void (aspectRatio = value))
 
         const dropdown = createGenericVideoAspectDropdown({
             getValue: () => aspectRatio,
@@ -1013,10 +1178,19 @@ describe('createGenericVideoAspectDropdown', () => {
         expect(setValue).toHaveBeenLastCalledWith('9:16')
         expect(instance?.setOptions).toHaveBeenLastCalledWith({
             options: [
-                { title: 'Vertical', value: '9:16' },
-                { title: 'Square', value: '1:1' },
+                {
+                    title: 'Vertical',
+                    value: '9:16',
+                },
+                {
+                    title: 'Square',
+                    value: '1:1',
+                },
             ],
-            selectedValue: { title: 'Vertical', value: '9:16' },
+            selectedValue: {
+                title: 'Vertical',
+                value: '9:16',
+            },
         })
 
         dropdown.destroy()

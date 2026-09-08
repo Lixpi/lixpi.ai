@@ -16,7 +16,11 @@ import {
 const settings = (): WorkspaceCanvasHost['settings'] => ({
     ...createLixpiCanvasSettings(),
     aiChatThread: {
-        styles: { nodeBorder: 'border', nodeBoxShadow: 'shadow', panelSectionDividerBorder: 'divider' },
+        styles: {
+            nodeBorder: 'border',
+            nodeBoxShadow: 'shadow',
+            panelSectionDividerBorder: 'divider',
+        },
         contextPreview: {
             styles: new Proxy({}, { get: (_target, property) => String(property) }),
         },

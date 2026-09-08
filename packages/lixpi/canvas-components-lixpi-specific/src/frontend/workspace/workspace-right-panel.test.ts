@@ -23,7 +23,16 @@ import {
     type WorkspaceRightPanelOptions,
 } from './workspace-right-panel.ts'
 
-const mocks = vi.hoisted(() => ({ sides: [] as { config: SidePanelConfig; instance: SidePanelInstance }[], switches: [] as { config: SlidingSwitchConfig; instance: SlidingSwitchInstance }[] }))
+const mocks = vi.hoisted(() => ({
+    sides: [] as {
+        config: SidePanelConfig
+        instance: SidePanelInstance
+    }[],
+    switches: [] as {
+        config: SlidingSwitchConfig
+        instance: SlidingSwitchInstance
+    }[],
+}))
 vi.mock('@lixpi/ui-kit/components/side-panel', () => ({
     createSidePanel: (config: SidePanelConfig) => {
         let width = config.loadState?.()?.width ?? config.defaultWidth
@@ -47,55 +56,87 @@ vi.mock('@lixpi/ui-kit/components/side-panel', () => ({
             applyConstraints: vi.fn(),
             destroy: vi.fn(),
         } as unknown as SidePanelInstance
-        mocks.sides.push({ config, instance })
+        mocks.sides.push({
+            config,
+            instance,
+        })
+
         return instance
     },
 }))
 vi.mock('@lixpi/ui-kit/components/sliding-switch', () => ({
     createSlidingSwitch: (_parent: unknown, config: SlidingSwitchConfig) => {
-        const instance = { resize: vi.fn(), destroy: vi.fn() } as unknown as SlidingSwitchInstance
-        mocks.switches.push({ config, instance })
+        const instance = {
+            resize: vi.fn(),
+            destroy: vi.fn(),
+        } as unknown as SlidingSwitchInstance
+        mocks.switches.push({
+            config,
+            instance,
+        })
+
         return instance
     },
 }))
 
 const owners: WorkspaceRightPanel[] = []
-function fixture(isOpen = true) {
-    const state = { isOpen, topLevelMode: 'media', contextChips: [] } as CanvasAiChatPanelState
+const fixture = (isOpen = true) => {
+    const state = {
+        isOpen,
+        topLevelMode: 'media',
+        contextChips: [],
+    } as CanvasAiChatPanelState
     const pane = document.createElement('div')
     document.body.appendChild(pane)
     const frames: FrameRequestCallback[] = []
     const timers: (() => void)[] = []
     const releasePan = vi.fn()
-    const mounted: { host: HTMLElement; signal: AbortSignal; dispose: ReturnType<typeof vi.fn> }[] = []
+    const mounted: {
+        host: HTMLElement
+        signal: AbortSignal
+        dispose: ReturnType<typeof vi.fn>
+    }[] = []
     const options: WorkspaceRightPanelOptions = {
         pane,
         widthHost: pane,
         settings: {
             defaultDimensions: { width: 494 },
-            dimensions: { minWidth: 320, maxPaneMargin: 64 },
+            dimensions: {
+                minWidth: 320,
+                maxPaneMargin: 64,
+            },
             layout: { contentInset: 10 },
-            resizeHandle: { offset: 0, grabWidth: 20 },
-            toggle: { openAriaLabel: 'Close', closedAriaLabel: 'Open' },
+            resizeHandle: {
+                offset: 0,
+                grabWidth: 20,
+            },
+            toggle: {
+                openAriaLabel: 'Close',
+                closedAriaLabel: 'Open',
+            },
             animation: { durationMs: 200 },
             overlay: { enabled: false },
             drag: { enabled: false },
         },
-        switchSettings: { height: 36, transitionDurationMs: 300, transitionMinDurationMs: 100, transitionDistanceSpeedupFactor: 1 },
+        switchSettings: {
+            height: 36,
+            transitionDurationMs: 300,
+            transitionMinDurationMs: 100,
+            transitionDistanceSpeedupFactor: 1,
+        },
         cssProperties: { '--ai-chat-thread-node-border': '1px solid blue' },
         getState: () => state,
-        onWidthChange: vi.fn(width => {
-            state.width = width
-        }),
-        onModeChange: vi.fn(mode => {
-            state.topLevelMode = mode
-        }),
-        onOpenChange: vi.fn(open => {
-            state.isOpen = open
-        }),
+        onWidthChange: vi.fn(width => void (state.width = width)),
+        onModeChange: vi.fn(mode => void (state.topLevelMode = mode)),
+        onOpenChange: vi.fn(open => void (state.isOpen = open)),
         mountContent: vi.fn((host, _mode, signal) => {
             const dispose = vi.fn()
-            mounted.push({ host, signal, dispose })
+            mounted.push({
+                host,
+                signal,
+                dispose,
+            })
+
             return dispose
         }),
         acquirePanLock: vi.fn(() => releasePan),
@@ -107,7 +148,17 @@ function fixture(isOpen = true) {
     }
     const owner = new WorkspaceRightPanel(options)
     owners.push(owner)
-    return { owner, options, state, pane, frames, timers, mounted, releasePan }
+
+    return {
+        owner,
+        options,
+        state,
+        pane,
+        frames,
+        timers,
+        mounted,
+        releasePan,
+    }
 }
 beforeEach(() => {
     mocks.sides.length = 0
@@ -115,6 +166,7 @@ beforeEach(() => {
 })
 afterEach(() => {
     for (const owner of owners.splice(0)) owner.destroy()
+
     document.body.replaceChildren()
     vi.restoreAllMocks()
 })
@@ -169,9 +221,7 @@ describe('WorkspaceRightPanel', () => {
         await Promise.resolve()
         let finish!: () => void
         vi.mocked(side.instance.playClose).mockImplementation(() =>
-            new Promise<void>(resolve => {
-                finish = resolve
-            })
+            new Promise<void>(resolve => void (finish = resolve))
         )
         f.state.isOpen = false
         const closing = f.owner.close()
@@ -190,9 +240,7 @@ describe('WorkspaceRightPanel', () => {
         f.owner.render()
         let finish!: () => void
         vi.mocked(mocks.sides[0].instance.playClose).mockImplementation(() =>
-            new Promise<void>(resolve => {
-                finish = resolve
-            })
+            new Promise<void>(resolve => void (finish = resolve))
         )
         f.state.isOpen = false
         const closing = f.owner.close()
@@ -221,7 +269,9 @@ describe('WorkspaceRightPanel', () => {
         expect(side.instance.destroy).toHaveBeenCalledOnce()
         expect(modeSwitch.instance.destroy).toHaveBeenCalledOnce()
         const resizeCount = vi.mocked(modeSwitch.instance.resize).mock.calls.length
+
         for (const frame of f.frames) frame(0)
+
         modeSwitch.config.onChange?.('aiThreads', modeSwitch.config.id)
         side.config.persistState?.({ width: 800 })
         side.config.onOpenChange?.(true)

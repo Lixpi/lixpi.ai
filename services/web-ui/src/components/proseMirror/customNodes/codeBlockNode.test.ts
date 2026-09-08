@@ -19,13 +19,9 @@ const documentSchema = createProseMirrorSchema(DOCUMENT_TYPE.DOCUMENT)
 const aiChatSchema = createProseMirrorSchema(DOCUMENT_TYPE.AI_CHAT_THREAD)
 
 describe('codeBlockNode re-exports', () => {
-    it('re-exports the same node type constant as the shared package', () => {
-        expect(codeBlockNodeType).toBe(packageCodeBlockNodeType)
-    })
+    it('re-exports the same node type constant as the shared package', () => void expect(codeBlockNodeType).toBe(packageCodeBlockNodeType))
 
-    it('re-exports the shared code block node spec by reference', () => {
-        expect(codeBlockNodeSpec).toBe(packageCodeBlockNodeSpec)
-    })
+    it('re-exports the shared code block node spec by reference', () => void expect(codeBlockNodeSpec).toBe(packageCodeBlockNodeSpec))
 
     it('uses the package theme default and appears in shared schema nodes', () => {
         expect(codeBlockNodeSpec.attrs?.theme).toEqual({ default: 'gruvboxDark' })

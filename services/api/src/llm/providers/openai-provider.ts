@@ -969,10 +969,10 @@ export class OpenAIProvider extends BaseProvider {
     }
 }
 
-function mergeProviderUpdates(
+const mergeProviderUpdates = (
     first: Partial<ProviderState>,
     second: Partial<ProviderState>,
-): Partial<ProviderState> {
+): Partial<ProviderState> => {
     const firstUsage = first.usage
     const secondUsage = second.usage
 

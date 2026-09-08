@@ -164,7 +164,5 @@ describe('MediaGenerationRunPlanner', () => {
         })
     })
 
-    it('builds a matrix reasoning run id from generation request id and index', () => {
-        expect(planner.buildReasoningRunId('request-6', 11)).toBe('request-6:reasoning:11')
-    })
+    it('builds a matrix reasoning run id from generation request id and index', () => void expect(planner.buildReasoningRunId('request-6', 11)).toBe('request-6:reasoning:11'))
 })

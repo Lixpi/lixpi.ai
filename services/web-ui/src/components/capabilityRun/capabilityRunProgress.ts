@@ -37,6 +37,26 @@ export type CapabilityProgressState = {
     outputAssetIds: string[]
 }
 
+const createStreamedCapabilityRun = (event: CapabilityRunEvent): CapabilityRun => ({
+    runId: event.runId,
+    rootCapabilityId: '',
+    resolvedManifests: [],
+    workspaceId: '',
+    origin: 'model',
+    status: event.runStatus,
+    currentStepIds: event.stepId
+        && event.stepStatus === 'running'
+        ? [event.stepId]
+        : [],
+    outputAssetIds: event.outputAssetIds ?? [],
+    eventStreamName: '',
+    createdAt: event.timestamp,
+    updatedAt: event.timestamp,
+})
+
+const isTerminalCapabilityRunStatus = (status: CapabilityRun['status']): boolean =>
+    status === 'completed' || status === 'failed' || status === 'cancelled'
+
 export const projectCapabilityRunEvents = (
     run: CapabilityRun,
     events: CapabilityRunEvent[],
@@ -263,26 +283,3 @@ export const createCapabilityRunProgress = (
     client?: Pick<CapabilityCatalogClient, 'replay' | 'subscribeToRunEvents'>,
     previewRenderer?: PromptReferencePreviewRenderer,
 ): CapabilityRunProgressInstance => new CapabilityRunProgress(client, previewRenderer)
-
-function createStreamedCapabilityRun(event: CapabilityRunEvent): CapabilityRun {
-    return {
-        runId: event.runId,
-        rootCapabilityId: '',
-        resolvedManifests: [],
-        workspaceId: '',
-        origin: 'model',
-        status: event.runStatus,
-        currentStepIds: event.stepId
-            && event.stepStatus === 'running'
-            ? [event.stepId]
-            : [],
-        outputAssetIds: event.outputAssetIds ?? [],
-        eventStreamName: '',
-        createdAt: event.timestamp,
-        updatedAt: event.timestamp,
-    }
-}
-
-function isTerminalCapabilityRunStatus(status: CapabilityRun['status']): boolean {
-    return status === 'completed' || status === 'failed' || status === 'cancelled'
-}

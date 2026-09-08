@@ -122,23 +122,47 @@ describe('CharacterSheetRenderPlan', () => {
     })
 
     it('rejects missing dependencies, changed generated-reference metadata, unstable ids, and changed retry bounds', () => {
-        const plan = buildCharacterSheetRenderPlan({ capabilityRunId: 'run-1', sourceAssetIds: [], userPrompt: 'Courier' })
+        const plan = buildCharacterSheetRenderPlan({
+            capabilityRunId: 'run-1',
+            sourceAssetIds: [],
+            userPrompt: 'Courier',
+        })
 
-        expect(() => assertValidCharacterSheetRenderPlan({ ...plan, semanticRetryLimit: 2 })).toThrow('CHARACTER_SHEET_PLAN_RETRY_LIMIT_INVALID')
-        expect(() => assertValidCharacterSheetRenderPlan({ ...plan, panels: plan.panels.map((panel, index) => index === 0 ? { ...panel, panelId: 'Bad ID' } : panel) }))
+        expect(() => assertValidCharacterSheetRenderPlan({
+            ...plan,
+            semanticRetryLimit: 2,
+        })).toThrow('CHARACTER_SHEET_PLAN_RETRY_LIMIT_INVALID')
+        expect(() => assertValidCharacterSheetRenderPlan({
+            ...plan,
+            panels: plan.panels.map((panel, index) => index === 0 ? {
+                ...panel,
+                panelId: 'Bad ID',
+            } : panel),
+        }))
             .toThrow('CHARACTER_SHEET_PLAN_PANEL_ID_INVALID')
-        expect(() => assertValidCharacterSheetRenderPlan({ ...plan, panels: plan.panels.map((panel, index) => index === 0 ? { ...panel, dependsOn: ['missing'] } : panel) }))
+        expect(() => assertValidCharacterSheetRenderPlan({
+            ...plan,
+            panels: plan.panels.map((panel, index) => index === 0 ? {
+                ...panel,
+                dependsOn: ['missing'],
+            } : panel),
+        }))
             .toThrow('CHARACTER_SHEET_PLAN_DEPENDENCY_UNKNOWN')
         expect(() =>
             assertValidCharacterSheetRenderPlan({
                 ...plan,
                 panels: plan.panels.map(panel => {
-                    if (panel.panelId !== 'body-back') return panel
+                    if (panel.panelId !== 'body-back')
+                        return panel
+
                     return {
                         ...panel,
                         outputBindings: panel.outputBindings.map((binding, index) =>
                             index === 1
-                                ? { ...binding, fileName: 'GENERATED_WRONG_ANCHOR.png' }
+                                ? {
+                                    ...binding,
+                                    fileName: 'GENERATED_WRONG_ANCHOR.png',
+                                }
                                 : binding
                         ),
                     }
@@ -150,8 +174,13 @@ describe('CharacterSheetRenderPlan', () => {
             assertValidCharacterSheetRenderPlan({
                 ...plan,
                 panels: plan.panels.map(panel => {
-                    if (panel.panelId !== 'body-back') return panel
-                    return { ...panel, panelId: 'body-profile' }
+                    if (panel.panelId !== 'body-back')
+                        return panel
+
+                    return {
+                        ...panel,
+                        panelId: 'body-profile',
+                    }
                 }),
             })
         )
@@ -160,8 +189,13 @@ describe('CharacterSheetRenderPlan', () => {
             assertValidCharacterSheetRenderPlan({
                 ...plan,
                 panels: plan.panels.map(panel => {
-                    if (panel.panelId !== CHARACTER_OUTFIT_ANCHOR_PANEL_ID) return panel
-                    return { ...panel, required: false }
+                    if (panel.panelId !== CHARACTER_OUTFIT_ANCHOR_PANEL_ID)
+                        return panel
+
+                    return {
+                        ...panel,
+                        required: false,
+                    }
                 }),
             })
         )

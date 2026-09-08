@@ -37,8 +37,15 @@ vi.mock('@lixpi/canvas-engine/frontend/rendering', async importOriginal => {
         private id = 0
         scopes: AbortController[] = []
         ready = Promise.resolve(true)
-        imageRequests: Array<{ request: Parameters<EngineMedia['acquireImage']>[0]; resolve: (lease: ImageLease) => void }> = []
-        handle = <Kind extends ResourceKind>(kind: Kind): ResourceHandle<Kind> => ({ kind, id: String(++this.id), owner: this.owner })
+        imageRequests: Array<{
+            request: Parameters<EngineMedia['acquireImage']>[0]
+            resolve: (lease: ImageLease) => void
+        }> = []
+        handle = <Kind extends ResourceKind>(kind: Kind): ResourceHandle<Kind> => ({
+            kind,
+            id: String(++this.id),
+            owner: this.owner,
+        })
         resources = {
             createGroup: vi.fn(() => this.handle('group')),
             createTexture: vi.fn(() => this.handle('texture')),
@@ -53,19 +60,27 @@ vi.mock('@lixpi/canvas-engine/frontend/rendering', async importOriginal => {
             setVisible: vi.fn(),
             release: vi.fn(),
         }
-        layers = { media: this.handle('layer'), connectors: this.handle('layer'), foreground: this.handle('layer') }
+        layers = {
+            media: this.handle('layer'),
+            connectors: this.handle('layer'),
+            foreground: this.handle('layer'),
+        }
         constructor(private options: CanvasRendererOptions) {
             renderers.push(this)
         }
         createScope() {
             const controller = new AbortController()
             this.scopes.push(controller)
+
             return {
                 signal: controller.signal,
                 resources: this.resources,
                 layers: this.layers,
                 media: {
-                    acquireImage: vi.fn((request: Parameters<EngineMedia['acquireImage']>[0]) => new Promise<ImageLease>(resolve => this.imageRequests.push({ request, resolve }))),
+                    acquireImage: vi.fn((request: Parameters<EngineMedia['acquireImage']>[0]) => new Promise<ImageLease>(resolve => this.imageRequests.push({
+                        request,
+                        resolve,
+                    }))),
                     acquirePlayback: async (request: Parameters<EngineMedia['acquirePlayback']>[0]) => this.options.mediaResolver!.resolve(request.media, request.renditionId, request.signal),
                 },
                 invalidate: vi.fn(),
@@ -81,41 +96,89 @@ vi.mock('@lixpi/canvas-engine/frontend/rendering', async importOriginal => {
             for (const scope of this.scopes) scope.abort()
         }
     }
-    return { ...actual, CanvasRenderer: Renderer }
+
+    return {
+        ...actual,
+        CanvasRenderer: Renderer,
+    }
 })
 
 vi.mock('@lixpi/canvas-components/effects/glass', async importOriginal => {
     const actual = await importOriginal<typeof import('@lixpi/canvas-components/effects/glass')>()
     class Material {
         bake() {
-            return { kind: 'pixels', size: { width: 1, height: 1 }, rgba: new Uint8Array(4) }
+            return {
+                kind: 'pixels',
+                size: {
+                    width: 1,
+                    height: 1,
+                },
+                rgba: new Uint8Array(4),
+            }
         }
     }
-    return { ...actual, TravelingSnakeGlassMaterial: Material, ClosedGlassStripMaterial: Material }
+
+    return {
+        ...actual,
+        TravelingSnakeGlassMaterial: Material,
+        ClosedGlassStripMaterial: Material,
+    }
 })
 
 vi.mock('@lixpi/canvas-components-lixpi-specific/frontend/loading', async importOriginal => ({
     ...await importOriginal<typeof import('@lixpi/canvas-components-lixpi-specific/frontend/loading')>(),
-    createWorkspaceLoadingOutline: () => ({ setVisible: vi.fn(), setErrorMessage: vi.fn(), destroy: vi.fn() }),
+    createWorkspaceLoadingOutline: () => ({
+        setVisible: vi.fn(),
+        setErrorMessage: vi.fn(),
+        destroy: vi.fn(),
+    }),
 }))
 
-const libraryMounts = vi.hoisted(() => [] as { options: any; instance: any }[])
+const libraryMounts = vi.hoisted(() => [] as {
+    options: any
+    instance: any
+}[])
 vi.mock('@lixpi/canvas-components-lixpi-specific/frontend/library', async importOriginal => {
     const actual = await importOriginal<typeof import('@lixpi/canvas-components-lixpi-specific/frontend/library')>()
     const create = (options: any) => {
         const rootEl = document.createElement('div')
-        const instance = { rootEl, element: rootEl, load: vi.fn(async () => {}), mountInto: (host: HTMLElement) => host.append(rootEl), unmount: () => rootEl.remove(), destroy: vi.fn(() => rootEl.remove()) }
-        libraryMounts.push({ options, instance })
+        const instance = {
+            rootEl,
+            element: rootEl,
+            load: vi.fn(async () => {}),
+            mountInto: (host: HTMLElement) => host.append(rootEl),
+            unmount: () => rootEl.remove(),
+            destroy: vi.fn(() => rootEl.remove()),
+        }
+        libraryMounts.push({
+            options,
+            instance,
+        })
+
         return instance
     }
-    return { ...actual, createMediaLibraryPanel: create, createArtifactLibraryPanel: create, createCapabilityLibraryPanel: create }
+
+    return {
+        ...actual,
+        createMediaLibraryPanel: create,
+        createArtifactLibraryPanel: create,
+        createCapabilityLibraryPanel: create,
+    }
 })
 
 const owners: LixpiWorkspaceCanvas[] = []
-function state(): CanvasState {
-    return { nodes: [], edges: [], viewport: { x: 0, y: 0, zoom: 1 } }
+const state = (): CanvasState => {
+    return {
+        nodes: [],
+        edges: [],
+        viewport: {
+            x: 0,
+            y: 0,
+            zoom: 1,
+        },
+    }
 }
-function fixture(overrides: Partial<WorkspaceCanvasHost> = {}, optionOverrides: Partial<WorkspaceCanvasOptions> = {}, configure?: (host: WorkspaceCanvasHost) => void) {
+const fixture = (overrides: Partial<WorkspaceCanvasHost> = {}, optionOverrides: Partial<WorkspaceCanvasOptions> = {}, configure?: (host: WorkspaceCanvasHost) => void) => {
     const paneEl = document.createElement('div')
     const viewportEl = document.createElement('div')
     paneEl.append(viewportEl)
@@ -123,16 +186,34 @@ function fixture(overrides: Partial<WorkspaceCanvasHost> = {}, optionOverrides: 
     const settings = {
         ...createLixpiCanvasSettings(),
         aiChatThread: {
-            styles: { nodeBorder: '', nodeBoxShadow: '', panelSectionDividerBorder: '' },
+            styles: {
+                nodeBorder: '',
+                nodeBoxShadow: '',
+                panelSectionDividerBorder: '',
+            },
             contextPreview: { styles: {} },
-            panelSwitch: { height: 36, transitionDurationMs: 0, transitionMinDurationMs: 0, transitionDistanceSpeedupFactor: 1 },
+            panelSwitch: {
+                height: 36,
+                transitionDurationMs: 0,
+                transitionMinDurationMs: 0,
+                transitionDistanceSpeedupFactor: 1,
+            },
         },
         rightSidePanel: {
             defaultDimensions: { width: 494 },
-            dimensions: { minWidth: 320, maxPaneMargin: 64 },
+            dimensions: {
+                minWidth: 320,
+                maxPaneMargin: 64,
+            },
             layout: { contentInset: 10 },
-            resizeHandle: { offset: 0, grabWidth: 20 },
-            toggle: { openAriaLabel: 'Close', closedAriaLabel: 'Open' },
+            resizeHandle: {
+                offset: 0,
+                grabWidth: 20,
+            },
+            toggle: {
+                openAriaLabel: 'Close',
+                closedAriaLabel: 'Open',
+            },
             animation: { durationMs: 0 },
             overlay: { enabled: false },
             drag: { enabled: false },
@@ -157,10 +238,15 @@ function fixture(overrides: Partial<WorkspaceCanvasHost> = {}, optionOverrides: 
         openExternalUrl: vi.fn(),
         onOpenCapabilityLibrary: callback => {
             command = callback
+
             return releaseCommand
         },
         editors: {
-            createPrompt: () => () => ({ editorView: null, restoreContent: vi.fn(), destroy: editorDispose }),
+            createPrompt: () => () => ({
+                editorView: null,
+                restoreContent: vi.fn(),
+                destroy: editorDispose,
+            }),
             createConversation: vi.fn(),
             mountAsset: vi.fn(),
             mountDocument: vi.fn(),
@@ -174,6 +260,7 @@ function fixture(overrides: Partial<WorkspaceCanvasHost> = {}, optionOverrides: 
             subscribe: callback => {
                 assetCallbacks.push(callback)
                 callback({ items: new Map() })
+
                 return releases[0]
             },
             get: vi.fn(),
@@ -209,6 +296,7 @@ function fixture(overrides: Partial<WorkspaceCanvasHost> = {}, optionOverrides: 
             subscribe: callback => {
                 workspaceCallbacks.push(callback)
                 callback({ loadingStatus: LoadingStatus.success })
+
                 return releases[2]
             },
         },
@@ -221,29 +309,85 @@ function fixture(overrides: Partial<WorkspaceCanvasHost> = {}, optionOverrides: 
             subscribe: callback => {
                 modelCallbacks.push(callback)
                 callback()
+
                 return releases[1]
             },
         },
         capabilities: {
-            frontend: { get: vi.fn(), require: vi.fn() },
-            shared: { get: vi.fn(), require: vi.fn() },
+            frontend: {
+                get: vi.fn(),
+                require: vi.fn(),
+            },
+            shared: {
+                get: vi.fn(),
+                require: vi.fn(),
+            },
             ensureStyles: vi.fn(),
-            catalog: vi.fn(() => ({ list: async () => [], get: vi.fn(), invalidate: vi.fn() })),
-            promptCatalog: vi.fn(() => ({ getModule: vi.fn(), search: vi.fn() })),
+            catalog: vi.fn(() => ({
+                list: async () => [],
+                get: vi.fn(),
+                invalidate: vi.fn(),
+            })),
+            promptCatalog: vi.fn(() => ({
+                getModule: vi.fn(),
+                search: vi.fn(),
+            })),
         },
-        media: { sources: { getAsset: () => undefined, resolveAssetRendition: vi.fn(), resolveTransientSource: vi.fn() }, renditionPath: vi.fn(), prepareRenditionUrls: vi.fn(), download: vi.fn(), uploadReplacement: vi.fn() },
-        contextEnvironment: sources => ({ ...sources, extractDocumentText: () => '', getAssetRenditionPath: () => '', prepareAuthorizedRenditionUrl: vi.fn() }),
+        media: {
+            sources: {
+                getAsset: () => undefined,
+                resolveAssetRendition: vi.fn(),
+                resolveTransientSource: vi.fn(),
+            },
+            renditionPath: vi.fn(),
+            prepareRenditionUrls: vi.fn(),
+            download: vi.fn(),
+            uploadReplacement: vi.fn(),
+        },
+        contextEnvironment: sources => ({
+            ...sources,
+            extractDocumentText: () => '',
+            getAssetRenditionPath: () => '',
+            prepareAuthorizedRenditionUrl: vi.fn(),
+        }),
         extractText: () => '',
         traceDetail: () => ({}),
-        storage: { getItem: () => null, setItem: vi.fn() },
+        storage: {
+            getItem: () => null,
+            setItem: vi.fn(),
+        },
         debugEnabled: () => false,
         ...overrides,
     } as WorkspaceCanvasHost
-    const options: WorkspaceCanvasOptions = { paneEl, viewportEl, mediaModeSwitchMountEl: document.createElement('div'), modelMenuControlMountEl: document.createElement('div'), workspaceId: 'first', canvasState: state(), documents: [], aiChatThreads: [], ...optionOverrides }
+    const options: WorkspaceCanvasOptions = {
+        paneEl,
+        viewportEl,
+        mediaModeSwitchMountEl: document.createElement('div'),
+        modelMenuControlMountEl: document.createElement('div'),
+        workspaceId: 'first',
+        canvasState: state(),
+        documents: [],
+        aiChatThreads: [],
+        ...optionOverrides,
+    }
     configure?.(host)
     const owner = new LixpiWorkspaceCanvas(options, host)
     owners.push(owner)
-    return { owner, host, options, paneEl, viewportEl, command: (workspaceId?: string) => command?.(workspaceId), releaseCommand, releases, assetCallbacks, modelCallbacks, workspaceCallbacks, editorDispose }
+
+    return {
+        owner,
+        host,
+        options,
+        paneEl,
+        viewportEl,
+        command: (workspaceId?: string) => command?.(workspaceId),
+        releaseCommand,
+        releases,
+        assetCallbacks,
+        modelCallbacks,
+        workspaceCallbacks,
+        editorDispose,
+    }
 }
 
 beforeEach(() => {
@@ -261,6 +405,7 @@ beforeEach(() => {
 })
 afterEach(() => {
     for (const owner of owners.splice(0)) owner.destroy()
+
     vi.restoreAllMocks()
     vi.unstubAllGlobals()
     vi.useRealTimers()
@@ -302,8 +447,11 @@ describe('LixpiWorkspaceCanvas composition', () => {
         onCanvasStateChange.mockClear()
         expect(() => {
             for (const changed of f.assetCallbacks) changed({ items: new Map() })
+
             for (const changed of f.modelCallbacks) changed()
+
             for (const changed of f.workspaceCallbacks) changed({ loadingStatus: LoadingStatus.error })
+
             f.owner.render(state(), [], [], 'second')
             f.owner.commitTransientCanvasState(state())
             f.owner.toggleMediaLibrary()
@@ -316,18 +464,24 @@ describe('LixpiWorkspaceCanvas composition', () => {
     it.each(['navigation', 'destruction'])('rejects a library insertion completing after %s', async action => {
         let finish!: (value: CanvasState) => void
         const attach = vi.fn(() =>
-            new Promise<CanvasState>(resolve => {
-                finish = resolve
-            })
+            new Promise<CanvasState>(resolve => void (finish = resolve))
         )
         const f = fixture({}, { onAssetAttach: attach })
         f.owner.toggleMediaLibrary()
         const library = libraryMounts.at(-1)!
-        const pending = library.options.onInsertAsset({ assetId: 'a', primaryCategory: 'image', aspectRatio: 1 })
+        const pending = library.options.onInsertAsset({
+            assetId: 'a',
+            primaryCategory: 'image',
+            aspectRatio: 1,
+        })
         expect(attach).toHaveBeenCalledTimes(1)
         const accepted = attach.mock.calls[0] as unknown as [{ canvasState: CanvasState }]
-        if (action === 'navigation') f.owner.render(state(), [], [], 'second')
-        else f.owner.destroy()
+
+        if (action === 'navigation')
+            f.owner.render(state(), [], [], 'second')
+        else
+            f.owner.destroy()
+
         finish(accepted[0].canvasState)
         expect(await pending).toBe(false)
         expect(f.owner.getCanvasState()?.nodes ?? []).toEqual([])
@@ -337,8 +491,15 @@ describe('LixpiWorkspaceCanvas composition', () => {
     it('accepts a library insertion in its original scene', async () => {
         const f = fixture({}, { onAssetAttach: async ({ canvasState }) => canvasState })
         f.owner.toggleMediaLibrary()
-        expect(await libraryMounts.at(-1)!.options.onInsertAsset({ assetId: 'a', primaryCategory: 'image', aspectRatio: 1 })).toBe(true)
-        expect(f.owner.getCanvasState()?.nodes).toMatchObject([{ type: 'image', assetId: 'a' }])
+        expect(await libraryMounts.at(-1)!.options.onInsertAsset({
+            assetId: 'a',
+            primaryCategory: 'image',
+            aspectRatio: 1,
+        })).toBe(true)
+        expect(f.owner.getCanvasState()?.nodes).toMatchObject([{
+            type: 'image',
+            assetId: 'a',
+        }])
     })
 
     it('replaces workspace-bound libraries and prompt catalogs on navigation', () => {
@@ -355,8 +516,25 @@ describe('LixpiWorkspaceCanvas composition', () => {
     it.each(['first', 'other'])('admits library review geometry only for its workspace (%s)', async workspaceId => {
         const canvasState: CanvasState = {
             ...state(),
-            nodes: [{ type: 'capabilityArtifact', nodeId: 'artifact-node', assetId: 'artifact', artifactTypeId: 'test-artifact', position: { x: 0, y: 0 }, dimensions: { width: 120, height: 80 } }],
-            aiChatPanel: { isOpen: true, topLevelMode: 'artifacts', contextChips: [] },
+            nodes: [{
+                type: 'capabilityArtifact',
+                nodeId: 'artifact-node',
+                assetId: 'artifact',
+                artifactTypeId: 'test-artifact',
+                position: {
+                    x: 0,
+                    y: 0,
+                },
+                dimensions: {
+                    width: 120,
+                    height: 80,
+                },
+            }],
+            aiChatPanel: {
+                isOpen: true,
+                topLevelMode: 'artifacts',
+                contextChips: [],
+            },
         }
         const f = fixture({}, { canvasState }, host => {
             vi.mocked(host.assets.refresh).mockImplementation(() => new Promise(() => {}))
@@ -367,7 +545,11 @@ describe('LixpiWorkspaceCanvas composition', () => {
                 acceptedAssetIds: ['artifact'],
                 rejectedAssetIds: [],
                 supersededAssetIds: [],
-                canvasGeometry: { layoutRevision: 1, nodes: [], removedNodeIds: ['artifact-node'] },
+                canvasGeometry: {
+                    layoutRevision: 1,
+                    nodes: [],
+                    removedNodeIds: ['artifact-node'],
+                },
             })
         })
         const library = libraryMounts.find(mount => mount.options.onAcceptAsset)!
@@ -376,7 +558,9 @@ describe('LixpiWorkspaceCanvas composition', () => {
     })
 
     it('cleans earlier mounts when the final subscription fails', () => {
-        const assetRelease = vi.fn(), modelRelease = vi.fn(), commandRelease = vi.fn()
+        const assetRelease = vi.fn()
+        const modelRelease = vi.fn()
+        const commandRelease = vi.fn()
         expect(() =>
             fixture({}, {}, host => {
                 host.assets.subscribe = () => assetRelease

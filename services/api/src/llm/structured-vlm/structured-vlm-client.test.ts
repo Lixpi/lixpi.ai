@@ -83,7 +83,10 @@ const GOOGLE_LEVEL_CAPABILITIES: AiModelInferenceCapabilities = {
 
 const baseArgs: Omit<VlmCallArgs, 'provider' | 'modelVersion' | 'natsService'> = {
     systemPrompt: 'You are helping.',
-    userMessages: [{ role: 'user', content: 'analyze this' }],
+    userMessages: [{
+        role: 'user',
+        content: 'analyze this',
+    }],
     schema,
     inferenceCapabilities: OPENAI_CAPABILITIES,
     temperature: 0.6,
@@ -111,9 +114,16 @@ const makeOpenAiTextDelta = (delta: string) => ({
     type: 'response.output_text.delta',
     delta,
 })
-const makeOpenAiCompleted = (outputText: string, model: string, usage?: { input_tokens: number; output_tokens: number }) => ({
+const makeOpenAiCompleted = (outputText: string, model: string, usage?: {
+    input_tokens: number
+    output_tokens: number
+}) => ({
     type: 'response.completed',
-    response: { model, output_text: outputText, ...(usage ? { usage } : {}) },
+    response: {
+        model,
+        output_text: outputText,
+        ...(usage ? { usage } : {}),
+    },
 })
 
 let debugInfoSpy: ReturnType<typeof vi.spyOn> | null = null
@@ -145,7 +155,10 @@ describe('callStructuredVlm', () => {
         openAiCreate.mockResolvedValueOnce(makeAsyncStream([
             makeOpenAiTextDelta('{"status":"'),
             makeOpenAiTextDelta('ok"}'),
-            makeOpenAiCompleted('{"status":"ok"}', 'gpt-4.1', { input_tokens: 11, output_tokens: 8 }),
+            makeOpenAiCompleted('{"status":"ok"}', 'gpt-4.1', {
+                input_tokens: 11,
+                output_tokens: 8,
+            }),
         ]))
 
         const result = await callStructuredVlm({
@@ -164,7 +177,11 @@ describe('callStructuredVlm', () => {
         const createRequest = openAiCreate.mock.calls[0]?.[0]
         expect(createRequest?.model).toBe('gpt-4.1')
         expect(createRequest?.instructions).toBe('You are helping.')
-        expect(createRequest?.text?.format).toMatchObject({ type: 'json_schema', name: 'extract', strict: true })
+        expect(createRequest?.text?.format).toMatchObject({
+            type: 'json_schema',
+            name: 'extract',
+            strict: true,
+        })
     })
 
     it('wraps OpenAI open schemas in a closed payload envelope and returns the parsed payload', async () => {
@@ -187,7 +204,10 @@ describe('callStructuredVlm', () => {
         openAiCreate.mockResolvedValueOnce(makeAsyncStream([
             makeOpenAiTextDelta(envelopeText.slice(0, 12)),
             makeOpenAiTextDelta(envelopeText.slice(12)),
-            makeOpenAiCompleted(envelopeText, 'gpt-4.1', { input_tokens: 14, output_tokens: 9 }),
+            makeOpenAiCompleted(envelopeText, 'gpt-4.1', {
+                input_tokens: 14,
+                output_tokens: 9,
+            }),
         ]))
 
         const result = await callStructuredVlm({
@@ -200,7 +220,10 @@ describe('callStructuredVlm', () => {
         })
 
         expect(result.rawText).toBe(payloadText)
-        expect(result.parsed).toEqual({ status: 'ok', optionalNote: 'kept' })
+        expect(result.parsed).toEqual({
+            status: 'ok',
+            optionalNote: 'kept',
+        })
         expect(chunks).toEqual([])
 
         const createRequest = openAiCreate.mock.calls[0]?.[0]
@@ -243,8 +266,15 @@ describe('callStructuredVlm', () => {
     it('omits temperature from forced Anthropic tool calls when synchronized capabilities disable it', async () => {
         anthropicStream.mockReturnValueOnce(makeAnthropicStream([], {
             model: 'claude-sonnet-5',
-            content: [{ type: 'tool_use', name: 'extract', input: { status: 'ok' } }],
-            usage: { input_tokens: 5, output_tokens: 7 },
+            content: [{
+                type: 'tool_use',
+                name: 'extract',
+                input: { status: 'ok' },
+            }],
+            usage: {
+                input_tokens: 5,
+                output_tokens: 7,
+            },
         }))
 
         await callStructuredVlm({
@@ -264,7 +294,15 @@ describe('callStructuredVlm', () => {
 
     it('retries and succeeds when OpenAI throws a transient error once', async () => {
         const headers = { get: vi.fn((key: string) => key === 'retry-after' ? '0' : undefined) }
-        const transientError = { name: 'APIConnectionError', message: 'Connection error.', cause: { code: 'ECONNRESET', message: 'socket hang up' }, headers }
+        const transientError = {
+            name: 'APIConnectionError',
+            message: 'Connection error.',
+            cause: {
+                code: 'ECONNRESET',
+                message: 'socket hang up',
+            },
+            headers,
+        }
 
         openAiCreate
             .mockRejectedValueOnce(transientError)
@@ -313,7 +351,10 @@ describe('callStructuredVlm', () => {
             cause: {
                 name: 'CauseError',
                 message: 'timeout while reading',
-                cause: { code: 'ETIMEDOUT', message: 'socket timed out' },
+                cause: {
+                    code: 'ETIMEDOUT',
+                    message: 'socket timed out',
+                },
             },
         }
 
@@ -338,7 +379,15 @@ describe('callStructuredVlm', () => {
 
     it('retries transient failures up to three attempts and then throws with enriched context', async () => {
         const headers = { get: vi.fn(() => '0') }
-        const transientError = { name: 'APIConnectionError', message: 'Connection error.', cause: { code: 'ECONNRESET', message: 'socket hang up' }, headers }
+        const transientError = {
+            name: 'APIConnectionError',
+            message: 'Connection error.',
+            cause: {
+                code: 'ECONNRESET',
+                message: 'socket hang up',
+            },
+            headers,
+        }
         openAiCreate
             .mockRejectedValueOnce(transientError)
             .mockRejectedValueOnce(transientError)
@@ -357,14 +406,43 @@ describe('callStructuredVlm', () => {
     it('retries a thinking-enabled Anthropic run with forced tool call if thinking emits no tool', async () => {
         anthropicStream
             .mockReturnValueOnce(makeAnthropicStream([
-                { type: 'content_block_delta', delta: { type: 'text_delta', text: 'thinking...' } },
-            ], { model: 'claude-sonnet-4-6', content: [{ type: 'text', text: 'analysis-only' }], usage: { input_tokens: 3, output_tokens: 9 } }))
-            .mockReturnValueOnce(makeAnthropicStream([
-                { type: 'content_block_delta', delta: { type: 'text_delta', text: '...' } },
+                {
+                    type: 'content_block_delta',
+                    delta: {
+                        type: 'text_delta',
+                        text: 'thinking...',
+                    },
+                },
             ], {
                 model: 'claude-sonnet-4-6',
-                content: [{ type: 'tool_use', name: 'extract', input: { status: 'ok' } }],
-                usage: { input_tokens: 5, output_tokens: 12 },
+                content: [{
+                    type: 'text',
+                    text: 'analysis-only',
+                }],
+                usage: {
+                    input_tokens: 3,
+                    output_tokens: 9,
+                },
+            }))
+            .mockReturnValueOnce(makeAnthropicStream([
+                {
+                    type: 'content_block_delta',
+                    delta: {
+                        type: 'text_delta',
+                        text: '...',
+                    },
+                },
+            ], {
+                model: 'claude-sonnet-4-6',
+                content: [{
+                    type: 'tool_use',
+                    name: 'extract',
+                    input: { status: 'ok' },
+                }],
+                usage: {
+                    input_tokens: 5,
+                    output_tokens: 12,
+                },
             }))
 
         const result = await callStructuredVlm({
@@ -382,15 +460,37 @@ describe('callStructuredVlm', () => {
         expect(result.completionTokens).toBe(12)
         const firstRequest = anthropicStream.mock.calls[0]?.[0]
         const secondRequest = anthropicStream.mock.calls[1]?.[0]
-        expect(firstRequest?.thinking).toEqual({ type: 'adaptive', display: 'summarized' })
+        expect(firstRequest?.thinking).toEqual({
+            type: 'adaptive',
+            display: 'summarized',
+        })
         expect(firstRequest?.tool_choice).toEqual({ type: 'auto' })
-        expect(secondRequest?.tool_choice).toEqual({ type: 'tool', name: 'extract' })
+        expect(secondRequest?.tool_choice).toEqual({
+            type: 'tool',
+            name: 'extract',
+        })
     })
 
     it('throws from Anthropic when forced tool-call mode still returns no tool use', async () => {
         anthropicStream.mockReturnValueOnce(makeAnthropicStream(
-            [{ type: 'content_block_delta', delta: { type: 'text_delta', text: 'plain text' } }],
-            { model: 'claude-sonnet-4-6', content: [{ type: 'text', text: 'plain text' }], usage: { input_tokens: 3, output_tokens: 1 } },
+            [{
+                type: 'content_block_delta',
+                delta: {
+                    type: 'text_delta',
+                    text: 'plain text',
+                },
+            }],
+            {
+                model: 'claude-sonnet-4-6',
+                content: [{
+                    type: 'text',
+                    text: 'plain text',
+                }],
+                usage: {
+                    input_tokens: 3,
+                    output_tokens: 1,
+                },
+            },
         ))
 
         await expect(callStructuredVlm({
@@ -407,7 +507,10 @@ describe('callStructuredVlm', () => {
     it('dispatches to Google and strips markdown fences before JSON parse', async () => {
         googleGenerateContent.mockResolvedValue({
             candidates: [{ content: { parts: [{ text: '```json\n{"status":"ok"}\n```' }] } }],
-            usageMetadata: { promptTokenCount: 2, candidatesTokenCount: 1 },
+            usageMetadata: {
+                promptTokenCount: 2,
+                candidatesTokenCount: 1,
+            },
         })
 
         const result = await callStructuredVlm({
@@ -434,7 +537,10 @@ describe('callStructuredVlm', () => {
             {
                 candidates: [
                     {
-                        content: { parts: [{ text: '{"status"' }, { thought: true, text: '"ignore":true' }] },
+                        content: { parts: [{ text: '{"status"' }, {
+                            thought: true,
+                            text: '"ignore":true',
+                        }] },
                     },
                 ],
                 finishReason: 'STOP',
@@ -479,7 +585,10 @@ describe('callStructuredVlm', () => {
                     content: { parts: [{ text: 'not-json' }] },
                 },
             ],
-            usageMetadata: { promptTokenCount: 2, candidatesTokenCount: 1 },
+            usageMetadata: {
+                promptTokenCount: 2,
+                candidatesTokenCount: 1,
+            },
         }
         googleGenerateContent.mockResolvedValue(malformedGoogleResponse)
 

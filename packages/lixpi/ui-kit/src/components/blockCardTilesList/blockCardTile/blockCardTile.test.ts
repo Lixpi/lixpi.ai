@@ -7,9 +7,7 @@ import {
 } from 'vitest'
 import { createBlockCardTile } from './blockCardTile.ts'
 
-afterEach(() => {
-    document.body.innerHTML = ''
-})
+afterEach(() => void (document.body.innerHTML = ''))
 
 describe('createBlockCardTile', () => {
     it('renders the preserved marker, title, metadata, selection, and action layout', () => {
@@ -20,7 +18,10 @@ describe('createBlockCardTile', () => {
                 primaryMeta: 'Aug 14, 7:56 PM · 1 day ago',
                 secondaryMeta: '2 messages · Completed',
                 selected: true,
-                action: { ariaLabel: 'Remove item', iconSvg: '<svg><path /></svg>' },
+                action: {
+                    ariaLabel: 'Remove item',
+                    iconSvg: '<svg><path /></svg>',
+                },
             },
         })
 
@@ -42,7 +43,10 @@ describe('createBlockCardTile', () => {
                 title: 'First',
                 primaryMeta: 'Earlier',
                 secondaryMeta: 'Pending',
-                action: { ariaLabel: 'Open action', iconSvg: '<svg></svg>' },
+                action: {
+                    ariaLabel: 'Open action',
+                    iconSvg: '<svg></svg>',
+                },
             },
             onSelect,
             onAction,
@@ -55,7 +59,10 @@ describe('createBlockCardTile', () => {
             primaryMeta: 'Now',
             secondaryMeta: 'Ready',
             selected: true,
-            action: { ariaLabel: 'Open updated action', iconSvg: '<svg></svg>' },
+            action: {
+                ariaLabel: 'Open updated action',
+                iconSvg: '<svg></svg>',
+            },
         })
         card.element.querySelector<HTMLButtonElement>('.block-card-tile-open')?.click()
         card.element.querySelector<HTMLButtonElement>('.block-card-tile-action')?.click()

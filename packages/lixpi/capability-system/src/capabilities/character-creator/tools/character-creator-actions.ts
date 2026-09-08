@@ -76,7 +76,7 @@ export const registerCharacterCreatorActions = (
 // Asset titles are resolved by the client from its Asset store, so the durable
 // handle carries the Asset identity and a readable fallback rather than a title
 // that could drift after the trace is sealed.
-function characterReferenceHandles(value: unknown): ExecutionTraceHandle[] {
+const characterReferenceHandles = (value: unknown): ExecutionTraceHandle[] => {
     if (!Array.isArray(value))
         return []
 
@@ -95,10 +95,10 @@ function characterReferenceHandles(value: unknown): ExecutionTraceHandle[] {
     )
 }
 
-function buildPlanOutput(
+const buildPlanOutput = (
     input: Readonly<Record<string, unknown>>,
     context: CapabilityActionExecutionContext,
-): Record<string, CapabilityJsonValue> {
+): Record<string, CapabilityJsonValue> => {
     const plan = buildCharacterSheetRenderPlan({
         capabilityRunId: context.runId,
         sourceAssetIds: readStringArray(
@@ -124,10 +124,10 @@ function buildPlanOutput(
     }
 }
 
-function validateCharacterCreatorRequest(input: Readonly<Record<string, unknown>>): {
+const validateCharacterCreatorRequest = (input: Readonly<Record<string, unknown>>): {
     prompt: string
     referenceAssetIds: string[]
-} {
+} => {
     const prompt = readString(input.prompt, 'prompt').trim()
 
     if (prompt.length > 8000)
@@ -150,19 +150,18 @@ function validateCharacterCreatorRequest(input: Readonly<Record<string, unknown>
     }
 }
 
-function authorizeCharacterCreator(context: { rootCapabilityId: string }): boolean {
-    return context.rootCapabilityId === CHARACTER_CREATOR_CAPABILITY_IDS.tool
-}
+const authorizeCharacterCreator = (context: { rootCapabilityId: string }): boolean =>
+    context.rootCapabilityId === CHARACTER_CREATOR_CAPABILITY_IDS.tool
 
-function registerIfMissing(
+const registerIfMissing = (
     registry: CapabilityActionRegistry,
     definition: Parameters<CapabilityActionRegistry['register']>[0],
-): void {
+): void => {
     if (!registry.has(definition.key))
         registry.register(definition)
 }
 
-function validateObject(input: unknown): CapabilityActionValidationResult {
+const validateObject = (input: unknown): CapabilityActionValidationResult => {
     return asRecord(input)
         ? { valid: true }
         : {
@@ -171,7 +170,7 @@ function validateObject(input: unknown): CapabilityActionValidationResult {
         }
 }
 
-function validatePlanOutput(output: unknown): CapabilityActionValidationResult {
+const validatePlanOutput = (output: unknown): CapabilityActionValidationResult => {
     const record = asRecord(output)
 
     if (
@@ -195,10 +194,10 @@ function validatePlanOutput(output: unknown): CapabilityActionValidationResult {
     }
 }
 
-function readString(
+const readString = (
     value: unknown,
     field: string,
-): string {
+): string => {
     if (
         typeof value !== 'string'
         || !value.trim()
@@ -208,11 +207,11 @@ function readString(
     return value
 }
 
-function readStringArray(
+const readStringArray = (
     value: unknown,
     field: string,
     optional: boolean,
-): string[] {
+): string[] => {
     if (
         value === undefined
         && optional
@@ -228,7 +227,7 @@ function readStringArray(
     return value as string[]
 }
 
-function asRecord(value: unknown): Record<string, any> | undefined {
+const asRecord = (value: unknown): Record<string, any> | undefined => {
     return value
         && typeof value === 'object'
         && !Array.isArray(value)
@@ -236,14 +235,8 @@ function asRecord(value: unknown): Record<string, any> | undefined {
         : undefined
 }
 
-function stringLength(value: unknown): number {
-    return typeof value === 'string' ? value.length : 0
-}
+const stringLength = (value: unknown): number => (typeof value === 'string' ? value.length : 0)
 
-function arrayLength(value: unknown): number {
-    return Array.isArray(value) ? value.length : 0
-}
+const arrayLength = (value: unknown): number => (Array.isArray(value) ? value.length : 0)
 
-function formatReferenceCount(count: number): string {
-    return `${count} reference Asset${count === 1 ? '' : 's'}`
-}
+const formatReferenceCount = (count: number): string => `${count} reference Asset${count === 1 ? '' : 's'}`

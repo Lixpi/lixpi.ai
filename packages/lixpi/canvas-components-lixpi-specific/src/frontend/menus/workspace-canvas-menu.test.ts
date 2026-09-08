@@ -19,24 +19,23 @@ import {
     type WorkspaceCanvasMenuPorts,
 } from './workspace-canvas-menu.ts'
 
-const menus = vi.hoisted(() => ({ failMount: false, instances: [] as FakeMenu[] }))
+const menus = vi.hoisted(() => ({
+    failMount: false,
+    instances: [] as FakeMenu[],
+}))
 class FakeMenu {
     isVisible = false
-    readonly show = vi.fn((_context: string, _position: BubbleMenuPositionRequest) => {
-        this.isVisible = true
-    })
-    readonly hide = vi.fn(() => {
-        this.isVisible = false
-    })
-    readonly forceHide = vi.fn(() => {
-        this.isVisible = false
-    })
+    readonly show = vi.fn((_context: string, _position: BubbleMenuPositionRequest) => void (this.isVisible = true))
+    readonly hide = vi.fn(() => void (this.isVisible = false))
+    readonly forceHide = vi.fn(() => void (this.isVisible = false))
     readonly refreshState = vi.fn()
     readonly reposition = vi.fn()
     readonly destroy = vi.fn()
     constructor(readonly options: BubbleMenuOptions) {
         menus.instances.push(this)
-        if (menus.failMount) throw new Error('menu failed')
+
+        if (menus.failMount)
+            throw new Error('menu failed')
     }
 }
 vi.mock('@lixpi/ui-kit/components/bubble-menu', () => ({
@@ -47,7 +46,7 @@ vi.mock('@lixpi/ui-kit/components/bubble-menu', () => ({
     },
 }))
 const owners: WorkspaceCanvasMenu[] = []
-function fixture() {
+const fixture = () => {
     const pane = document.createElement('div')
     const viewport = document.createElement('div')
     pane.appendChild(viewport)
@@ -60,22 +59,47 @@ function fixture() {
         getNode: id => nodes.get(id),
         getEdgeRect: vi.fn(() => edgeRect),
         getVisualScale: () => 1.2,
-        actions: { onDeleteNode: vi.fn(), onDeleteEdge: vi.fn(), onChangeConnectorCurve: vi.fn(), onDownloadMedia: vi.fn(), onReplaceMedia: vi.fn(), onOpenAsset: vi.fn(), onTriggerConnection: vi.fn() },
+        actions: {
+            onDeleteNode: vi.fn(),
+            onDeleteEdge: vi.fn(),
+            onChangeConnectorCurve: vi.fn(),
+            onDownloadMedia: vi.fn(),
+            onReplaceMedia: vi.fn(),
+            onOpenAsset: vi.fn(),
+            onTriggerConnection: vi.fn(),
+        },
     }
     const owner = new WorkspaceCanvasMenu(ports)
     owners.push(owner)
     const menu = menus.instances.at(-1)!
     const addNode = (nodeId: string, type: CanvasNode['type'] = 'image') => {
-        nodes.set(nodeId, { nodeId, type } as CanvasNode)
+        nodes.set(nodeId, {
+            nodeId,
+            type,
+        } as CanvasNode)
         const element = document.createElement('div')
         element.dataset.nodeId = nodeId
         viewport.appendChild(element)
         const rect = new DOMRect(10, 20, 300, 200)
         vi.spyOn(element, 'getBoundingClientRect').mockReturnValue(rect)
-        return { element, rect }
+
+        return {
+            element,
+            rect,
+        }
     }
     const button = (title: string) => menu.options.items.find(item => item.element.getAttribute('aria-label') === title)!.element
-    return { owner, ports, menu, nodes, viewport, edgeRect, addNode, button }
+
+    return {
+        owner,
+        ports,
+        menu,
+        nodes,
+        viewport,
+        edgeRect,
+        addNode,
+        button,
+    }
 }
 beforeEach(() => {
     menus.instances.length = 0
@@ -83,6 +107,7 @@ beforeEach(() => {
 })
 afterEach(() => {
     for (const owner of owners.splice(0)) owner.destroy()
+
     document.body.replaceChildren()
     vi.restoreAllMocks()
 })
@@ -92,11 +117,21 @@ describe('WorkspaceCanvasMenu', () => {
         const f = fixture()
         const { rect } = f.addNode('node')
         f.owner.showNode('node')
-        expect(f.menu.show).toHaveBeenCalledWith('canvasImage', { targetRect: rect, placement: 'below', clampToParent: false, animateOnShow: false })
+        expect(f.menu.show).toHaveBeenCalledWith('canvasImage', {
+            targetRect: rect,
+            placement: 'below',
+            clampToParent: false,
+            animateOnShow: false,
+        })
         expect(f.menu.options.getVisualScale?.()).toBe(1.2)
         expect(f.menu.refreshState).toHaveBeenCalledOnce()
         f.owner.repositionNode('node')
-        expect(f.menu.reposition).toHaveBeenCalledWith({ targetRect: rect, placement: 'below', clampToParent: false, animateOnShow: false })
+        expect(f.menu.reposition).toHaveBeenCalledWith({
+            targetRect: rect,
+            placement: 'below',
+            clampToParent: false,
+            animateOnShow: false,
+        })
     })
 
     it.each([['video', 'canvasVideo'], ['mediaDocument', 'canvasDocument'], ['audio', 'canvasAudio']] as const)('assigns the %s canvas context', (type, context) => {
@@ -132,7 +167,10 @@ describe('WorkspaceCanvasMenu', () => {
         expect(f.ports.actions.onDeleteEdge).toHaveBeenCalledExactlyOnceWith('edge')
         f.owner.showEdge('edge')
         f.owner.repositionEdge('edge')
-        expect(f.menu.reposition).toHaveBeenCalledWith({ targetRect: f.edgeRect, placement: 'below' })
+        expect(f.menu.reposition).toHaveBeenCalledWith({
+            targetRect: f.edgeRect,
+            placement: 'below',
+        })
         f.owner.showNode('node')
         f.button('Delete connection').click()
         expect(f.ports.actions.onDeleteEdge).toHaveBeenCalledTimes(1)
@@ -176,7 +214,9 @@ describe('WorkspaceCanvasMenu', () => {
         menus.failMount = true
         expect(() => fixture()).toThrow('menu failed')
         const menu = menus.instances[0]
+
         for (const item of menu.options.items) item.element.click()
+
         expect(menu.options.items.every(item => !item.element.isConnected)).toBe(true)
     })
 

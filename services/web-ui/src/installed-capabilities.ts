@@ -52,6 +52,18 @@ export const getCapabilityArtifactIcon = (artifactTypeId: string): string => {
 
 const styledDocuments = new WeakSet<Document>()
 
+export const ensureCapabilityStyles = (document: Document): void => {
+    if (styledDocuments.has(document))
+        return
+
+    const documentHtml = createDocumentHtml(document)
+    const style = documentHtml`<style></style>` as HTMLStyleElement
+    style.dataset.capabilityStyles = ACTION_TIMELINE_MODULE_ID
+    style.textContent = ACTION_TIMELINE_FRONTEND_STYLES
+    document.head.appendChild(style)
+    styledDocuments.add(document)
+}
+
 export const createInstalledCapabilityControls = (host: CapabilityControlsHost): CapabilityControlsView => {
     const mounted = new Map<string, {
         root: HTMLElement
@@ -133,16 +145,4 @@ export const createInstalledCapabilityControls = (host: CapabilityControlsHost):
                 unmount(module)
         },
     }
-}
-
-export function ensureCapabilityStyles(document: Document): void {
-    if (styledDocuments.has(document))
-        return
-
-    const documentHtml = createDocumentHtml(document)
-    const style = documentHtml`<style></style>` as HTMLStyleElement
-    style.dataset.capabilityStyles = ACTION_TIMELINE_MODULE_ID
-    style.textContent = ACTION_TIMELINE_FRONTEND_STYLES
-    document.head.appendChild(style)
-    styledDocuments.add(document)
 }

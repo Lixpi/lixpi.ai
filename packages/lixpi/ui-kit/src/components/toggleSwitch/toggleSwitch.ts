@@ -217,7 +217,7 @@ export const createToggleSwitch = (
     }
 
     // Public API
-    function setChecked(checked: boolean) {
+    const setChecked = (checked: boolean) => {
         state.checked = checked
         render()
     }

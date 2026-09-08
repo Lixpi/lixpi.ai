@@ -223,14 +223,14 @@ export const planActionTimelineBatches = (
     return batches
 }
 
-async function writeSegments(
+const writeSegments = async (
     prepared: ValidatedTimelineRequest,
     context: CapabilityActionExecutionContext,
     model: CapabilityStructuredModelPort,
 ): Promise<{
     input: ActionTimelineInput
     segments: ActionTimelineGeneratedSegment[]
-}> {
+}> => {
     if (context.variant.axis !== 'reasoning-model')
         throw new CapabilityError('CAPABILITY_ACTION_INPUT_INVALID', 'Action Timeline requires a sealed reasoning-model variant')
 
@@ -316,12 +316,12 @@ async function writeSegments(
     }
 }
 
-function validateBatchResponse(
+const validateBatchResponse = (
     input: unknown,
     batch: readonly ActionTimelineGridSlot[],
     authorizedAssetIds: ReadonlySet<string>,
     modelInputs: readonly CapabilityResolvedModelInput[],
-): TimelineBatchResponse {
+): TimelineBatchResponse => {
     const record = asRecord(input)
 
     if (
@@ -356,12 +356,12 @@ function validateBatchResponse(
     }
 }
 
-function buildBatchPrompt(
+const buildBatchPrompt = (
     input: ActionTimelineInput,
     batch: readonly ActionTimelineGridSlot[],
     continuity: string,
     modelInputs: readonly CapabilityResolvedModelInput[],
-): string {
+): string => {
     const slots = batch.map(slot => `${slot.slotIndex}: ${slot.startMs}-${slot.endMs}ms`).join('\n')
     const referenceRoster = modelInputs.length > 0
         ? modelInputs.map(modelInput => `${resolveModelInputTitle(modelInput)} => ${modelInput.assetId}`).join('\n')
@@ -392,10 +392,10 @@ type CanonicalReferenceTitle = {
     foldedTitle: string
 }
 
-function normalizeReferenceTitleRuns(
+const normalizeReferenceTitleRuns = (
     segments: readonly ActionTimelineGeneratedSegment[],
     modelInputs: readonly CapabilityResolvedModelInput[],
-): ActionTimelineGeneratedSegment[] {
+): ActionTimelineGeneratedSegment[] => {
     const referencesByTitle = new Map<string, Array<{
         assetId: string
         title: string
@@ -451,10 +451,10 @@ function normalizeReferenceTitleRuns(
     )
 }
 
-function splitTextRunAtReferenceTitles(
+const splitTextRunAtReferenceTitles = (
     text: string,
     references: readonly CanonicalReferenceTitle[],
-): ActionTimelineRun[] {
+): ActionTimelineRun[] => {
     const foldedText = text.toLocaleLowerCase('en-US')
     const runs: ActionTimelineRun[] = []
     let cursor = 0
@@ -512,11 +512,11 @@ function splitTextRunAtReferenceTitles(
     return runs.length > 0 ? runs : [{ text }]
 }
 
-function hasReferenceTitleBoundaries(
+const hasReferenceTitleBoundaries = (
     text: string,
     start: number,
     length: number,
-): boolean {
+): boolean => {
     const first = text[start]
     const last = text[start + length - 1]
     const before = text[start - 1]
@@ -526,11 +526,9 @@ function hasReferenceTitleBoundaries(
         && (!isWordCharacter(last) || !isWordCharacter(after))
 }
 
-function isWordCharacter(value: string | undefined): boolean {
-    return Boolean(value && /[\p{L}\p{N}_]/u.test(value))
-}
+const isWordCharacter = (value: string | undefined): boolean => Boolean(value && /[\p{L}\p{N}_]/u.test(value))
 
-function mergeAdjacentTextRuns(runs: readonly ActionTimelineRun[]): ActionTimelineRun[] {
+const mergeAdjacentTextRuns = (runs: readonly ActionTimelineRun[]): ActionTimelineRun[] => {
     const merged: ActionTimelineRun[] = []
 
     for (const run of runs) {
@@ -552,7 +550,7 @@ function mergeAdjacentTextRuns(runs: readonly ActionTimelineRun[]): ActionTimeli
     return merged
 }
 
-function normalizeInput(input: Readonly<Record<string, unknown>>): ActionTimelineInput {
+const normalizeInput = (input: Readonly<Record<string, unknown>>): ActionTimelineInput => {
     const prompt = readString(input.prompt, 'prompt').trim()
 
     if (!prompt)
@@ -573,7 +571,7 @@ function normalizeInput(input: Readonly<Record<string, unknown>>): ActionTimelin
     }
 }
 
-function readValidatedRequest(input: unknown): ValidatedTimelineRequest {
+const readValidatedRequest = (input: unknown): ValidatedTimelineRequest => {
     const record = asRecord(input)
 
     if (!record)
@@ -594,7 +592,7 @@ function readValidatedRequest(input: unknown): ValidatedTimelineRequest {
     }
 }
 
-function readWrittenOutput(input: unknown): { segments: ActionTimelineGeneratedSegment[] } {
+const readWrittenOutput = (input: unknown): { segments: ActionTimelineGeneratedSegment[] } => {
     const record = asRecord(input)
 
     if (
@@ -606,7 +604,7 @@ function readWrittenOutput(input: unknown): { segments: ActionTimelineGeneratedS
     return { segments: record.segments.map(readGeneratedSegment) }
 }
 
-function readGeneratedSegment(input: unknown): ActionTimelineGeneratedSegment {
+const readGeneratedSegment = (input: unknown): ActionTimelineGeneratedSegment => {
     const record = asRecord(input)
 
     if (
@@ -622,7 +620,7 @@ function readGeneratedSegment(input: unknown): ActionTimelineGeneratedSegment {
     }
 }
 
-function readRun(input: unknown): ActionTimelineRun {
+const readRun = (input: unknown): ActionTimelineRun => {
     const record = asRecord(input)
 
     if (!record)
@@ -644,7 +642,7 @@ function readRun(input: unknown): ActionTimelineRun {
     throw new Error('ACTION_TIMELINE_RUN_SCHEMA_INVALID')
 }
 
-function collectReferencedAssetIds(segments: readonly ActionTimelineGeneratedSegment[]): string[] {
+const collectReferencedAssetIds = (segments: readonly ActionTimelineGeneratedSegment[]): string[] => {
     const seen = new Set<string>()
     const assetIds: string[] = []
 
@@ -664,10 +662,10 @@ function collectReferencedAssetIds(segments: readonly ActionTimelineGeneratedSeg
     return assetIds
 }
 
-function buildReferenceMetadata(modelInputs: readonly CapabilityResolvedModelInput[]): ReadonlyMap<string, {
+const buildReferenceMetadata = (modelInputs: readonly CapabilityResolvedModelInput[]): ReadonlyMap<string, {
     mediaKind: 'image' | 'video' | 'audio' | 'document'
     displayName: string
-}> {
+}> => {
     return new Map(
         modelInputs.map(
             input => [input.assetId, {
@@ -682,7 +680,7 @@ function buildReferenceMetadata(modelInputs: readonly CapabilityResolvedModelInp
     )
 }
 
-function resolveModelInputTitle(input: CapabilityResolvedModelInput): string {
+const resolveModelInputTitle = (input: CapabilityResolvedModelInput): string => {
     if (
         typeof input.title === 'string'
         && input.title.trim()
@@ -694,18 +692,16 @@ function resolveModelInputTitle(input: CapabilityResolvedModelInput): string {
     return markerTitle?.replaceAll('\\"', '"').trim() || input.assetId
 }
 
-function authorizeActionTimeline(context: { rootCapabilityId: string }): boolean {
-    return context.rootCapabilityId === ACTION_TIMELINE_TOOL_ID
-}
+const authorizeActionTimeline = (context: { rootCapabilityId: string }): boolean => context.rootCapabilityId === ACTION_TIMELINE_TOOL_ID
 
-function validateObject(value: unknown): CapabilityActionValidationResult {
+const validateObject = (value: unknown): CapabilityActionValidationResult => {
     return asRecord(value) ? { valid: true } : {
         valid: false,
         message: 'Value must be an object',
     }
 }
 
-function validatePreparedInput(value: unknown): CapabilityActionValidationResult {
+const validatePreparedInput = (value: unknown): CapabilityActionValidationResult => {
     const record = asRecord(value)
 
     return record
@@ -717,7 +713,7 @@ function validatePreparedInput(value: unknown): CapabilityActionValidationResult
         }
 }
 
-function validateWrittenOutput(value: unknown): CapabilityActionValidationResult {
+const validateWrittenOutput = (value: unknown): CapabilityActionValidationResult => {
     const record = asRecord(value)
 
     return record
@@ -729,7 +725,7 @@ function validateWrittenOutput(value: unknown): CapabilityActionValidationResult
         }
 }
 
-function validatePersistInput(value: unknown): CapabilityActionValidationResult {
+const validatePersistInput = (value: unknown): CapabilityActionValidationResult => {
     const record = asRecord(value)
 
     return record
@@ -742,7 +738,7 @@ function validatePersistInput(value: unknown): CapabilityActionValidationResult 
         }
 }
 
-function validatePersistOutput(value: unknown): CapabilityActionValidationResult {
+const validatePersistOutput = (value: unknown): CapabilityActionValidationResult => {
     const record = asRecord(value)
 
     return record?.outputKind === 'capabilityArtifact'
@@ -754,7 +750,7 @@ function validatePersistOutput(value: unknown): CapabilityActionValidationResult
         }
 }
 
-function asRecord(value: unknown): Record<string, unknown> | undefined {
+const asRecord = (value: unknown): Record<string, unknown> | undefined => {
     return value
         && typeof value === 'object'
         && !Array.isArray(value)
@@ -762,20 +758,20 @@ function asRecord(value: unknown): Record<string, unknown> | undefined {
         : undefined
 }
 
-function readString(
+const readString = (
     value: unknown,
     field: string,
-): string {
+): string => {
     if (typeof value !== 'string')
         throw new CapabilityError('CAPABILITY_ACTION_INPUT_INVALID', `${field} must be a string`)
 
     return value
 }
 
-function readPositiveInteger(
+const readPositiveInteger = (
     value: unknown,
     field: string,
-): number {
+): number => {
     if (
         !Number.isSafeInteger(value)
         || Number(value) <= 0
@@ -785,10 +781,10 @@ function readPositiveInteger(
     return value as number
 }
 
-function readStringArray(
+const readStringArray = (
     value: unknown,
     field: string,
-): string[] {
+): string[] => {
     if (
         !Array.isArray(value)
         || value.some(item => typeof item !== 'string' || !item.trim())
@@ -798,11 +794,9 @@ function readStringArray(
     return value.map(item => String(item).trim())
 }
 
-function arrayLength(value: unknown): number {
-    return Array.isArray(value) ? value.length : 0
-}
+const arrayLength = (value: unknown): number => (Array.isArray(value) ? value.length : 0)
 
-function isRetryablePersistenceError(error: unknown): boolean {
+const isRetryablePersistenceError = (error: unknown): boolean => {
     const message = error instanceof Error ? error.message : String(error)
 
     return /throttl|timeout|temporar|conflict/i.test(message)

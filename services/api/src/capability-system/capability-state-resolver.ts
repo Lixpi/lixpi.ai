@@ -201,7 +201,7 @@ export const executeRequiredCapabilitiesForState = async (
     }
 }
 
-function resolveExecutionVariants(
+const resolveExecutionVariants = (
     multiplicity: 'once' | 'per-reasoning-model',
     reasoningPolicy: 'all-selected' | 'first-selected' | 'ignore',
     variants: readonly CapabilityReasoningModelVariant[],
@@ -209,7 +209,7 @@ function resolveExecutionVariants(
 ): Array<{
     axis: 'request'
     variantKey: 'request'
-} | CapabilityReasoningModelVariant> {
+} | CapabilityReasoningModelVariant> => {
     if (multiplicity === 'once')
         return [{
             axis: 'request',
@@ -230,7 +230,7 @@ function resolveExecutionVariants(
     return available
 }
 
-function reasoningVariantFromState(state: ProviderState): CapabilityReasoningModelVariant {
+const reasoningVariantFromState = (state: ProviderState): CapabilityReasoningModelVariant => {
     const reasoningModelId = state.generationRun?.reasoningModelId
         ?? `${state.provider}:${state.aiModelMetaInfo?.model ?? state.modelVersion}`
 
@@ -347,7 +347,7 @@ export const hasPendingModelRequiredCapabilityOnlyOutput = (state: ProviderState
     })
 }
 
-function summarizeToolOutputForModel(output: Record<string, CapabilityJsonValue>): Record<string, CapabilityJsonValue> {
+const summarizeToolOutputForModel = (output: Record<string, CapabilityJsonValue>): Record<string, CapabilityJsonValue> => {
     const summary = { ...output }
     const referenceImages = summary.referenceImages
 
@@ -389,10 +389,10 @@ export const requiredCapabilityProducedCapabilityOnlyOutput = (
         && state.enableVideoGeneration === false
 }
 
-export function defaultToolInput(
+export const defaultToolInput = (
     state: ProviderState,
     capabilityId: string,
-): Record<string, CapabilityJsonValue> {
+): Record<string, CapabilityJsonValue> => {
     const lastUserMessage = [...state.messages].reverse().find(message => message.role === 'user')
     const prompt = extractUserPrompt(lastUserMessage?.content)
     const input: Record<string, CapabilityJsonValue> = prompt
@@ -409,7 +409,7 @@ export function defaultToolInput(
     return input
 }
 
-function extractUserPrompt(content: unknown): string {
+const extractUserPrompt = (content: unknown): string => {
     if (typeof content === 'string')
         return content
 
@@ -436,7 +436,7 @@ function extractUserPrompt(content: unknown): string {
     }).join('\n')
 }
 
-export function collectExplicitReferenceAssetIds(state: ProviderState): string[] {
+export const collectExplicitReferenceAssetIds = (state: ProviderState): string[] => {
     const assetIds: string[] = []
     const seen = new Set<string>()
 
@@ -455,11 +455,11 @@ export function collectExplicitReferenceAssetIds(state: ProviderState): string[]
     return assetIds
 }
 
-export function toolInputDeclaresProperty(
+export const toolInputDeclaresProperty = (
     plan: ProviderState['resolvedCapabilityPlan'],
     capabilityId: string,
     property: string,
-): boolean {
+): boolean => {
     const capability = plan?.getManifest(capabilityId)
     const inputSchema = capability?.manifest.tool?.inputSchema
 
@@ -482,7 +482,7 @@ export function toolInputDeclaresProperty(
     }
 }
 
-export function requesterFromState(state: ProviderState): CapabilityRequesterContext {
+export const requesterFromState = (state: ProviderState): CapabilityRequesterContext => {
     const userId = state.eventMeta.userId
 
     if (!userId)
@@ -495,7 +495,7 @@ export function requesterFromState(state: ProviderState): CapabilityRequesterCon
     }
 }
 
-function buildSkillContext(plan: NonNullable<ProviderState['resolvedCapabilityPlan']>): string {
+const buildSkillContext = (plan: NonNullable<ProviderState['resolvedCapabilityPlan']>): string => {
     const sections: string[] = []
     let length = 0
 

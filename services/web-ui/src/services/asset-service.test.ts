@@ -73,7 +73,7 @@ vi.mock('$src/stores/userStore.ts', () => ({
     },
 }))
 
-function makeAsset(overrides: Partial<Asset> & Pick<Asset, 'assetId' | 'title'>): Asset {
+const makeAsset = (overrides: Partial<Asset> & Pick<Asset, 'assetId' | 'title'>): Asset => {
     return {
         organizationId: 'organization-1',
         scope: 'workspace',
@@ -141,7 +141,10 @@ describe('AssetService.create', () => {
             title: 'Referenced Action Timeline request',
             primaryCategory: 'conversation',
             assetId: 'conversation-1',
-            initialDoc: { type: 'doc', content: [] },
+            initialDoc: {
+                type: 'doc',
+                content: [],
+            },
         })).rejects.toThrow('Asset creation failed: INITIAL_EMBEDDED_ASSETS_REQUIRE_ATTACH')
 
         expect(mocks.request).toHaveBeenCalledWith(
@@ -171,8 +174,14 @@ describe('AssetService.loadWorkspaceAssets', () => {
                         type: 'capabilityArtifact',
                         assetId: 'timeline-asset',
                         artifactTypeId: 'action-timeline',
-                        position: { x: 0, y: 0 },
-                        dimensions: { width: 400, height: 300 },
+                        position: {
+                            x: 0,
+                            y: 0,
+                        },
+                        dimensions: {
+                            width: 400,
+                            height: 300,
+                        },
                     }],
                 },
             })
@@ -183,7 +192,10 @@ describe('AssetService.loadWorkspaceAssets', () => {
         const timelineAsset = makeAsset({
             assetId: 'timeline-asset',
             title: 'Action Timeline',
-            artifact: { artifactTypeId: 'action-timeline', schemaVersion: 'action-timeline-v1' },
+            artifact: {
+                artifactTypeId: 'action-timeline',
+                schemaVersion: 'action-timeline-v1',
+            },
             lineage: { sourceAssetIds: ['shelby-asset', 'train-asset'] },
             states: {
                 lifecycle: 'active',
@@ -215,9 +227,15 @@ describe('AssetService.loadWorkspaceAssets', () => {
             },
         })
         mocks.request.mockImplementation(async (_subject: string, payload: Record<string, unknown>) => {
-            if (payload.assetId === 'timeline-asset') return timelineAsset
-            if (payload.assetId === 'shelby-asset') return shelbyAsset
-            if (payload.assetId === 'train-asset') return trainAsset
+            if (payload.assetId === 'timeline-asset')
+                return timelineAsset
+
+            if (payload.assetId === 'shelby-asset')
+                return shelbyAsset
+
+            if (payload.assetId === 'train-asset')
+                return trainAsset
+
             return { error: 'NOT_FOUND' }
         })
 
@@ -246,8 +264,14 @@ describe('AssetService.ensureAssetsLoaded', () => {
     })
 
     it('hydrates missing Artifact reference Assets without reloading cached Assets', async () => {
-        const cachedAsset = makeAsset({ assetId: 'cached-asset', title: 'Shelby' })
-        const missingAsset = makeAsset({ assetId: 'missing-asset', title: 'Slop Train' })
+        const cachedAsset = makeAsset({
+            assetId: 'cached-asset',
+            title: 'Shelby',
+        })
+        const missingAsset = makeAsset({
+            assetId: 'missing-asset',
+            title: 'Slop Train',
+        })
         mocks.getAsset.mockImplementation((assetId: string) => (
             assetId === cachedAsset.assetId ? cachedAsset : undefined
         ))
@@ -264,7 +288,10 @@ describe('AssetService.ensureAssetsLoaded', () => {
         expect(mocks.request).toHaveBeenCalledTimes(1)
         expect(mocks.request).toHaveBeenCalledWith(
             NATS_SUBJECTS.ASSET_SUBJECTS.GET,
-            { token: 'token', assetId: missingAsset.assetId },
+            {
+                token: 'token',
+                assetId: missingAsset.assetId,
+            },
             undefined,
         )
         expect(mocks.upsert).toHaveBeenCalledWith(missingAsset)

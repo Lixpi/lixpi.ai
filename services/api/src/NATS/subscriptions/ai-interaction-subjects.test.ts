@@ -88,7 +88,11 @@ vi.mock('@lixpi/nats-service', () => ({
     default: {
         getInstance: () => {
             mocks.nats.getInstance()
-            return { publish: mocks.nats.publish, getObject: mocks.nats.getObject }
+
+            return {
+                publish: mocks.nats.publish,
+                getObject: mocks.nats.getObject,
+            }
         },
     },
 }))
@@ -131,9 +135,7 @@ const SUBJECTS = NATS_SUBJECTS.AI_INTERACTION_SUBJECTS
 const getHandler = (subject: string) => aiInteractionSubjects.find((subscription) => subscription.subject === subject)!.handler
 
 const flushPromises = (): Promise<void> =>
-    new Promise((resolve) => {
-        setTimeout(resolve, 0)
-    })
+    new Promise((resolve) => void setTimeout(resolve, 0))
 
 const requester = {
     userId: 'user-1',
@@ -151,7 +153,13 @@ const conversationDoc = {
             content: [
                 {
                     type: 'aiUserMessage',
-                    content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Hello' }] }],
+                    content: [{
+                        type: 'paragraph',
+                        content: [{
+                            type: 'text',
+                            text: 'Hello',
+                        }],
+                    }],
                 },
             ],
         },
@@ -167,13 +175,22 @@ const conversationAsset = {
 const workspace = {
     workspaceId: 'workspace-1',
     organizationId: 'org-1',
-    accessList: [{ userId: 'user-1', accessLevel: 'owner' }],
+    accessList: [{
+        userId: 'user-1',
+        accessLevel: 'owner',
+    }],
     canvasState: { nodes: [] },
 }
 
 const baseMessageData = {
-    user: { userId: 'user-1', stripeCustomerId: 'stripe-1' },
-    messages: [{ role: 'user', content: 'Hello' }],
+    user: {
+        userId: 'user-1',
+        stripeCustomerId: 'stripe-1',
+    },
+    messages: [{
+        role: 'user',
+        content: 'Hello',
+    }],
     aiReasoningModels: ['openai:gpt-4'],
     aiImageModels: ['google:imagen3'],
     aiVideoModels: ['openai:gpt-4o-video'],
@@ -191,10 +208,22 @@ const actionTimelineInputSchema = new TextEncoder().encode(JSON.stringify({
     additionalProperties: false,
     required: ['prompt', 'referenceAssetIds', 'durationMs', 'precisionMs'],
     properties: {
-        prompt: { type: 'string', minLength: 1 },
-        referenceAssetIds: { type: 'array', items: { type: 'string' } },
-        durationMs: { type: 'integer', minimum: 1 },
-        precisionMs: { type: 'integer', minimum: 1 },
+        prompt: {
+            type: 'string',
+            minLength: 1,
+        },
+        referenceAssetIds: {
+            type: 'array',
+            items: { type: 'string' },
+        },
+        durationMs: {
+            type: 'integer',
+            minimum: 1,
+        },
+        precisionMs: {
+            type: 'integer',
+            minimum: 1,
+        },
     },
 }))
 
@@ -218,21 +247,41 @@ const actionTimelineCitedImageAsset = {
     scopeOwnerId: 'workspace-1',
     states: { lifecycle: 'active' },
     documents: {},
-    subjectIdentity: { classification: 'no-person', source: 'automatic-lineage', providerVerifications: [] },
+    subjectIdentity: {
+        classification: 'no-person',
+        source: 'automatic-lineage',
+        providerVerifications: [],
+    },
     media: {
         kind: 'image',
-        renditions: { canonical: { status: 'ready', blobHash: 'hash-1', mimeType: 'image/png' } },
+        renditions: { canonical: {
+            status: 'ready',
+            blobHash: 'hash-1',
+            mimeType: 'image/png',
+        } },
     },
     createdAt: 1,
 }
 
 const actionTimelineArtifactDoc = buildActionTimelineDocument(
-    { durationMs: 2000, precisionMs: 1000 },
+    {
+        durationMs: 2000,
+        precisionMs: 1000,
+    },
     [
-        { slotIndex: 0, runs: [{ assetId: 'timeline-image-1' }, { text: ' opens the alley beat.' }] },
-        { slotIndex: 1, runs: [{ text: 'They walk deeper into the alley.' }] },
+        {
+            slotIndex: 0,
+            runs: [{ assetId: 'timeline-image-1' }, { text: ' opens the alley beat.' }],
+        },
+        {
+            slotIndex: 1,
+            runs: [{ text: 'They walk deeper into the alley.' }],
+        },
     ],
-    new Map([['timeline-image-1', { mediaKind: 'image' as const, displayName: 'Night encounter first frame' }]]),
+    new Map([['timeline-image-1', {
+        mediaKind: 'image' as const,
+        displayName: 'Night encounter first frame',
+    }]]),
 )
 
 // Conversation where the user cites an existing Action Timeline Artifact and asks
@@ -241,7 +290,10 @@ const actionTimelineArtifactDoc = buildActionTimelineDocument(
 const useReferencedActionTimelineConversation = (promptText: string): void => {
     mocks.assetDocumentService.loadCurrentSnapshot.mockImplementation(async (_asset: unknown, documentKind: string) => (
         documentKind === 'capabilityArtifact'
-            ? { doc: actionTimelineArtifactDoc, version: 2 }
+            ? {
+                doc: actionTimelineArtifactDoc,
+                version: 2,
+            }
             : {
                 doc: {
                     ...conversationDoc,
@@ -252,7 +304,10 @@ const useReferencedActionTimelineConversation = (promptText: string): void => {
                             content: [{
                                 type: 'paragraph',
                                 content: [
-                                    { type: 'text', text: promptText },
+                                    {
+                                        type: 'text',
+                                        text: promptText,
+                                    },
                                     {
                                         type: 'prompt_reference',
                                         attrs: {
@@ -271,8 +326,12 @@ const useReferencedActionTimelineConversation = (promptText: string): void => {
             }
     ))
     mocks.asset.get.mockImplementation(async ({ assetId }: { assetId: string }) => {
-        if (assetId === 'timeline-1') return actionTimelineArtifactAsset
-        if (assetId === 'timeline-image-1') return actionTimelineCitedImageAsset
+        if (assetId === 'timeline-1')
+            return actionTimelineArtifactAsset
+
+        if (assetId === 'timeline-image-1')
+            return actionTimelineCitedImageAsset
+
         return conversationAsset
     })
 }
@@ -307,7 +366,10 @@ describe('AI interaction message routing', () => {
         mocks.asset.renewLease.mockResolvedValue(undefined)
         mocks.asset.claimConversationReceivingSystem.mockResolvedValue({ assetId: 'conv-1' })
         mocks.asset.updateConversationStateSystem.mockResolvedValue(undefined)
-        mocks.assetDocumentService.loadCurrentSnapshot.mockResolvedValue({ doc: conversationDoc, version: 5 })
+        mocks.assetDocumentService.loadCurrentSnapshot.mockResolvedValue({
+            doc: conversationDoc,
+            version: 5,
+        })
         mocks.eventRelay.ensure.mockReturnValue('live-subject')
         mocks.aiModel.getAiModel.mockResolvedValue({ modelVersion: '1' })
         mocks.workspace.getWorkspace.mockResolvedValue(workspace)
@@ -323,7 +385,10 @@ describe('AI interaction message routing', () => {
             updatedAt: 1,
         }))
         mocks.mediaRequestService.cancelCurrent.mockResolvedValue({ status: 'cancelled' })
-        mocks.blob.get.mockResolvedValue({ bucketName: 'blobs', objectKey: 'object-1' })
+        mocks.blob.get.mockResolvedValue({
+            bucketName: 'blobs',
+            objectKey: 'object-1',
+        })
         mocks.nats.getObject.mockResolvedValue(new Uint8Array([0x89, 0x50, 0x4e, 0x47, 13, 10, 26, 10]))
         mocks.pipelineEventLog.replayPipelineEvents.mockResolvedValue({
             streamName: 'PIPELINE_EVENTS_workspace-1',
@@ -392,7 +457,10 @@ describe('AI interaction message routing', () => {
 
         await getHandler(SUBJECTS.CHAT_SEND_MESSAGE)({
             ...baseMessageData,
-            messages: [{ role: 'user', content: 'Generate a video following Night encounter shot plan' }],
+            messages: [{
+                role: 'user',
+                content: 'Generate a video following Night encounter shot plan',
+            }],
             mediaGenerationRequest: {
                 generationRequestId: 'request-timeline-1',
                 reasoningModelIds: ['openai:gpt-4'],
@@ -420,7 +488,10 @@ describe('AI interaction message routing', () => {
 
         await getHandler(SUBJECTS.CHAT_SEND_MESSAGE)({
             ...baseMessageData,
-            messages: [{ role: 'user', content: 'Generate a video from this shot plan Night encounter shot plan' }],
+            messages: [{
+                role: 'user',
+                content: 'Generate a video from this shot plan Night encounter shot plan',
+            }],
             mediaGenerationRequest: {
                 generationRequestId: 'request-timeline-2',
                 reasoningModelIds: ['openai:gpt-4'],
@@ -499,7 +570,10 @@ describe('AI interaction message routing', () => {
             initialLineagePlan: expect.objectContaining({
                 branchForks: [],
                 runAssignments: [
-                    expect.objectContaining({ mediaModelId: 'google:imagen3', mediaType: 'image' }),
+                    expect.objectContaining({
+                        mediaModelId: 'google:imagen3',
+                        mediaType: 'image',
+                    }),
                 ],
             }),
         }))
@@ -508,7 +582,10 @@ describe('AI interaction message routing', () => {
             'openai',
             expect.objectContaining({
                 durableMediaRuns: [
-                    expect.objectContaining({ mediaType: 'image', status: 'pending' }),
+                    expect.objectContaining({
+                        mediaType: 'image',
+                        status: 'pending',
+                    }),
                 ],
                 videoModelMetaInfo: null,
             }),
@@ -529,7 +606,10 @@ describe('AI interaction message routing', () => {
                         type: 'aiUserMessage',
                         content: [{
                             type: 'paragraph',
-                            content: [{ type: 'text', text: 'Create a cinematic video where Robert walks through the alley.' }],
+                            content: [{
+                                type: 'text',
+                                text: 'Create a cinematic video where Robert walks through the alley.',
+                            }],
                         }],
                     }],
                 }],
@@ -568,7 +648,10 @@ describe('AI interaction message routing', () => {
             'openai',
             expect.objectContaining({
                 imageModelMetaInfo: null,
-                durableMediaRuns: [expect.objectContaining({ mediaType: 'video', status: 'pending' })],
+                durableMediaRuns: [expect.objectContaining({
+                    mediaType: 'video',
+                    status: 'pending',
+                })],
             }),
         )
     })
@@ -578,8 +661,14 @@ describe('AI interaction message routing', () => {
             nodeId: 'context-image-node',
             type: 'image',
             assetId: 'context-image-asset',
-            position: { x: 100, y: 200 },
-            dimensions: { width: 640, height: 480 },
+            position: {
+                x: 100,
+                y: 200,
+            },
+            dimensions: {
+                width: 640,
+                height: 480,
+            },
         } as const
         const contextImageAsset = {
             assetId: contextImageNode.assetId,
@@ -634,8 +723,14 @@ describe('AI interaction message routing', () => {
             nodeId: 'context-image-node',
             type: 'image',
             assetId: 'context-image-asset',
-            position: { x: 100, y: 200 },
-            dimensions: { width: 640, height: 480 },
+            position: {
+                x: 100,
+                y: 200,
+            },
+            dimensions: {
+                width: 640,
+                height: 480,
+            },
         } as const
         const contextImageAsset = {
             assetId: contextImageNode.assetId,
@@ -713,7 +808,13 @@ describe('AI interaction message routing', () => {
                     ...conversationDoc.content[0],
                     content: [{
                         type: 'aiUserMessage',
-                        content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Make a shot plan for this' }] }],
+                        content: [{
+                            type: 'paragraph',
+                            content: [{
+                                type: 'text',
+                                text: 'Make a shot plan for this',
+                            }],
+                        }],
                     }],
                 }],
             },
@@ -722,7 +823,10 @@ describe('AI interaction message routing', () => {
 
         await getHandler(SUBJECTS.CHAT_SEND_MESSAGE)({
             ...baseMessageData,
-            messages: [{ role: 'user', content: 'Make a shot plan for this' }],
+            messages: [{
+                role: 'user',
+                content: 'Make a shot plan for this',
+            }],
             aiImageModels: ['google:imagen3'],
             aiVideoModels: ['openai:gpt-4o-video'],
         })
@@ -761,15 +865,33 @@ describe('AI interaction message routing', () => {
                     content: [
                         {
                             type: 'aiUserMessage',
-                            content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Make a shot plan for this chase' }] }],
+                            content: [{
+                                type: 'paragraph',
+                                content: [{
+                                    type: 'text',
+                                    text: 'Make a shot plan for this chase',
+                                }],
+                            }],
                         },
                         {
                             type: 'aiResponseMessage',
-                            content: [{ type: 'paragraph', content: [{ type: 'text', text: 'What duration and timing gap should I use?' }] }],
+                            content: [{
+                                type: 'paragraph',
+                                content: [{
+                                    type: 'text',
+                                    text: 'What duration and timing gap should I use?',
+                                }],
+                            }],
                         },
                         {
                             type: 'aiUserMessage',
-                            content: [{ type: 'paragraph', content: [{ type: 'text', text: clarification }] }],
+                            content: [{
+                                type: 'paragraph',
+                                content: [{
+                                    type: 'text',
+                                    text: clarification,
+                                }],
+                            }],
                         },
                     ],
                 }],
@@ -780,9 +902,18 @@ describe('AI interaction message routing', () => {
         await getHandler(SUBJECTS.CHAT_SEND_MESSAGE)({
             ...baseMessageData,
             messages: [
-                { role: 'user', content: 'Make a shot plan for this chase' },
-                { role: 'assistant', content: 'What duration and timing gap should I use?' },
-                { role: 'user', content: clarification },
+                {
+                    role: 'user',
+                    content: 'Make a shot plan for this chase',
+                },
+                {
+                    role: 'assistant',
+                    content: 'What duration and timing gap should I use?',
+                },
+                {
+                    role: 'user',
+                    content: clarification,
+                },
             ],
             mediaGenerationRequest: undefined,
         })
@@ -817,7 +948,13 @@ describe('AI interaction message routing', () => {
                     ...conversationDoc.content[0],
                     content: [{
                         type: 'aiUserMessage',
-                        content: [{ type: 'paragraph', content: [{ type: 'text', text: prompt }] }],
+                        content: [{
+                            type: 'paragraph',
+                            content: [{
+                                type: 'text',
+                                text: prompt,
+                            }],
+                        }],
                     }],
                 }],
             },
@@ -826,7 +963,10 @@ describe('AI interaction message routing', () => {
 
         await getHandler(SUBJECTS.CHAT_SEND_MESSAGE)({
             ...baseMessageData,
-            messages: [{ role: 'user', content: prompt }],
+            messages: [{
+                role: 'user',
+                content: prompt,
+            }],
             aiImageModels: ['google:imagen3'],
             aiVideoModels: ['openai:gpt-4o-video'],
             mediaGenerationRequest: undefined,
@@ -928,7 +1068,10 @@ describe('AI interaction message routing', () => {
                         type: 'aiUserMessage',
                         content: [{
                             type: 'paragraph',
-                            content: [{ type: 'text', text: authoritativePrompt }],
+                            content: [{
+                                type: 'text',
+                                text: authoritativePrompt,
+                            }],
                         }],
                     }],
                 }],
@@ -938,7 +1081,10 @@ describe('AI interaction message routing', () => {
 
         await getHandler(SUBJECTS.CHAT_SEND_MESSAGE)({
             ...baseMessageData,
-            messages: [{ role: 'user', content: 'untrusted browser prompt' }],
+            messages: [{
+                role: 'user',
+                content: 'untrusted browser prompt',
+            }],
             aiImageModels: [],
             aiVideoModels: [],
             mediaGenerationRequest: undefined,
@@ -965,7 +1111,10 @@ describe('AI interaction message routing', () => {
             string,
             string,
             {
-                messages: Array<{ role: string; content: string }>
+                messages: Array<{
+                    role: string
+                    content: string
+                }>
                 mediaBranchCandidateSnapshot: { promptText: string }
                 workspaceContextSnapshot: { promptText: string }
             },
@@ -981,8 +1130,14 @@ describe('AI interaction message routing', () => {
             type: 'capabilityArtifact',
             artifactTypeId: 'action-timeline',
             assetId: 'asset-timeline',
-            position: { x: 100, y: 200 },
-            dimensions: { width: 520, height: 360 },
+            position: {
+                x: 100,
+                y: 200,
+            },
+            dimensions: {
+                width: 520,
+                height: 360,
+            },
             generatedBy: {
                 outputKind: 'capabilityArtifact',
                 conversationAssetId: 'source-conversation',
@@ -1044,8 +1199,14 @@ describe('AI interaction message routing', () => {
             type: 'capabilityArtifact',
             artifactTypeId: 'action-timeline',
             assetId: 'asset-timeline',
-            position: { x: 100, y: 200 },
-            dimensions: { width: 520, height: 360 },
+            position: {
+                x: 100,
+                y: 200,
+            },
+            dimensions: {
+                width: 520,
+                height: 360,
+            },
         } as const
         mocks.workspace.getWorkspace.mockResolvedValueOnce({
             ...workspace,
@@ -1090,7 +1251,13 @@ describe('AI interaction message routing', () => {
                     ...conversationDoc.content[0],
                     content: [{
                         type: 'aiUserMessage',
-                        content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Create a video clip.' }] }],
+                        content: [{
+                            type: 'paragraph',
+                            content: [{
+                                type: 'text',
+                                text: 'Create a video clip.',
+                            }],
+                        }],
                     }],
                 }],
             },
@@ -1147,7 +1314,13 @@ describe('AI interaction message routing', () => {
                     ...conversationDoc.content[0],
                     content: [{
                         type: 'aiUserMessage',
-                        content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Create a video clip.' }] }],
+                        content: [{
+                            type: 'paragraph',
+                            content: [{
+                                type: 'text',
+                                text: 'Create a video clip.',
+                            }],
+                        }],
                     }],
                 }],
             },
@@ -1258,15 +1431,16 @@ describe('AI interaction message routing', () => {
             workspaceId: 'workspace-1',
             userId: 'user-1',
         })
-        expect(result).toEqual({ status: 'stopped', generationRequestId: 'request-stop' })
+        expect(result).toEqual({
+            status: 'stopped',
+            generationRequestId: 'request-stop',
+        })
     })
 
     it('starts durable cancellation without waiting for provider shutdown', async () => {
         let finishMatrixStop!: () => void
         mocks.llmModule.stopMediaGenerationMatrix.mockReturnValueOnce(
-            new Promise<void>((resolve) => {
-                finishMatrixStop = resolve
-            }),
+            new Promise<void>((resolve) => void (finishMatrixStop = resolve)),
         )
 
         const stopRequest = getHandler(SUBJECTS.CHAT_STOP_MESSAGE)({
@@ -1287,8 +1461,16 @@ describe('AI interaction message routing', () => {
             streamName: 'PIPELINE_EVENTS_workspace-1',
             subject: `${SUBJECTS.CHAT_PIPELINE_EVENTS}.workspace-1.pipeline-1`,
             events: [
-                { eventId: 'old', streamSequence: 4, payload: { content: { status: 'old' } } },
-                { eventId: 'next', streamSequence: 6, payload: { content: { status: 'new' } } },
+                {
+                    eventId: 'old',
+                    streamSequence: 4,
+                    payload: { content: { status: 'old' } },
+                },
+                {
+                    eventId: 'next',
+                    streamSequence: 6,
+                    payload: { content: { status: 'new' } },
+                },
             ],
         })
 
@@ -1315,7 +1497,11 @@ describe('AI interaction message routing', () => {
             subject: `${SUBJECTS.CHAT_PIPELINE_EVENTS}.workspace-1.pipeline-1`,
             liveSubject: 'live-subject',
             events: [
-                { eventId: 'next', streamSequence: 6, payload: { content: { status: 'new' } } },
+                {
+                    eventId: 'next',
+                    streamSequence: 6,
+                    payload: { content: { status: 'new' } },
+                },
             ],
         })
     })

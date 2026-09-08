@@ -8,19 +8,9 @@ import {
     createProseMirrorSchema,
     DOCUMENT_TYPE,
 } from './schema-builder.ts'
-import {
-    aiGeneratedImageNodeSpec,
-    aiGeneratedVideoNodeSpec,
-    aiLineageEventNodeSpec,
-    aiMediaGenerationProgressNodeSpec,
-    aiPromptInputNodeSpec,
-    aiPromptInputNodeType,
-    aiResponseMessageNodeSpec,
-    aiUserMessageNodeSpec,
-    normalizeReferenceNodeIds,
-} from './node-specs.ts'
+import { aiGeneratedImageNodeSpec, aiGeneratedVideoNodeSpec, aiLineageEventNodeSpec, aiMediaGenerationProgressNodeSpec, aiPromptInputNodeSpec, aiResponseMessageNodeSpec, aiUserMessageNodeSpec, normalizeReferenceNodeIds } from './node-specs.ts'
 
-function fakeDom(attrs: Record<string, string | null>, querySelector?: (selector: string) => Record<string, any> | null): HTMLElement {
+const fakeDom = (attrs: Record<string, string | null>, querySelector?: (selector: string) => Record<string, any> | null): HTMLElement => {
     return {
         getAttribute: (name: string): string | null => attrs[name] ?? null,
         querySelector: querySelector ?? (() => null),
@@ -28,13 +18,9 @@ function fakeDom(attrs: Record<string, string | null>, querySelector?: (selector
 }
 
 describe('normalizeReferenceNodeIds', () => {
-    it('deduplicates, trims and drops empty reference ids', () => {
-        expect(normalizeReferenceNodeIds(['a', '  ', 'b', 'a', '', 'c'])).toEqual(['a', 'b', 'c'])
-    })
+    it('deduplicates, trims and drops empty reference ids', () => void expect(normalizeReferenceNodeIds(['a', '  ', 'b', 'a', '', 'c'])).toEqual(['a', 'b', 'c']))
 
-    it('falls back to comma-splitting for malformed JSON', () => {
-        expect(normalizeReferenceNodeIds('a, b, a, c')).toEqual(['a', 'b', 'c'])
-    })
+    it('falls back to comma-splitting for malformed JSON', () => void expect(normalizeReferenceNodeIds('a, b, a, c')).toEqual(['a', 'b', 'c']))
 })
 
 describe('aiPromptInputNodeSpec', () => {
@@ -251,7 +237,10 @@ describe('aiMediaGenerationProgressNodeSpec', () => {
             },
             updatedAt: 1,
         }
-        const node = schema.nodes.aiMediaGenerationProgress.create({ id: 'request-1', state })
+        const node = schema.nodes.aiMediaGenerationProgress.create({
+            id: 'request-1',
+            state,
+        })
         const dom = aiMediaGenerationProgressNodeSpec.toDOM(node as any)[1] as Record<string, string>
 
         expect(node.attrs.state).toEqual(state)

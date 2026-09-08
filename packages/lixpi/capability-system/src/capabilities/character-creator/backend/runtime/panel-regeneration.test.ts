@@ -69,7 +69,10 @@ describe('selectCharacterPanelsForRegeneration', () => {
     it('always regenerates missing stored components in addition to the selected panels', () => {
         const decision = selectCharacterPanelsForRegeneration({
             panels,
-            availableComponentIds: new Set(['head-front-neutral', 'body-front']),
+            availableComponentIds: new Set([
+                'head-front-neutral',
+                'body-front',
+            ]),
             regenerationScope: 'selected-panels',
             affectedPanelIds: ['body-front'],
         })

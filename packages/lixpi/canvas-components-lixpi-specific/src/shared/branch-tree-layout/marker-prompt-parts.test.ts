@@ -15,7 +15,10 @@ const submittedMessage = {
     content: [{
         type: 'paragraph',
         content: [
-            { type: 'text', text: 'Create ' },
+            {
+                type: 'text',
+                text: 'Create ',
+            },
             {
                 type: 'prompt_reference',
                 attrs: {
@@ -24,7 +27,10 @@ const submittedMessage = {
                     displayName: 'Action Timeline',
                 },
             },
-            { type: 'text', text: ' 15s duration 2s gaps with imaginary plot' },
+            {
+                type: 'text',
+                text: ' 15s duration 2s gaps with imaginary plot',
+            },
         ],
     }],
 }
@@ -45,10 +51,16 @@ describe('branch marker prompt content', () => {
                 type: 'aiUserMessage',
                 content: [{
                     type: 'paragraph',
-                    content: [{ type: 'text', text: 'Persisted user request' }],
+                    content: [{
+                        type: 'text',
+                        text: 'Persisted user request',
+                    }],
                 }],
             },
-            submittedParts: [{ type: 'text', text: 'Submitted user request' }],
+            submittedParts: [{
+                type: 'text',
+                text: 'Submitted user request',
+            }],
             fallbackText: 'Serialized provider request',
         }))).toBe('Persisted user request')
     })
@@ -59,7 +71,10 @@ describe('branch marker prompt content', () => {
             content: [{
                 type: 'paragraph',
                 content: [
-                    { type: 'text', text: 'create a character sheet ' },
+                    {
+                        type: 'text',
+                        text: 'create a character sheet ',
+                    },
                     {
                         type: 'prompt_reference',
                         attrs: {
@@ -81,7 +96,10 @@ describe('branch marker prompt content', () => {
     it('truncates by displayed character order without moving the Capability badge', () => {
         const parts = truncateBranchMarkerPromptParts(getBranchMarkerPromptParts(submittedMessage, ''), 27)
 
-        expect(parts[0]).toEqual({ type: 'text', text: 'Create ' })
+        expect(parts[0]).toEqual({
+            type: 'text',
+            text: 'Create ',
+        })
         expect(parts[1]?.type).toBe('capability-module')
         expect(getBranchMarkerPromptDisplayText(parts)).toBe('Create Action Timeline 15s ...')
     })
@@ -99,7 +117,10 @@ describe('branch marker prompt content', () => {
             content: [{
                 type: 'paragraph',
                 content: [
-                    { type: 'text', text: 'Create character ' },
+                    {
+                        type: 'text',
+                        text: 'Create character ',
+                    },
                     {
                         type: 'prompt_reference',
                         attrs: {
@@ -108,7 +129,10 @@ describe('branch marker prompt content', () => {
                             displayName: 'Character Creator',
                         },
                     },
-                    { type: 'text', text: ' for ' },
+                    {
+                        type: 'text',
+                        text: ' for ',
+                    },
                     {
                         type: 'prompt_reference',
                         attrs: {

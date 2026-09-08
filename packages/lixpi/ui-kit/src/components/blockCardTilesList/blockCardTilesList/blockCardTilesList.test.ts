@@ -7,9 +7,7 @@ import {
 } from 'vitest'
 import { createBlockCardTilesList } from './blockCardTilesList.ts'
 
-afterEach(() => {
-    document.body.innerHTML = ''
-})
+afterEach(() => void (document.body.innerHTML = ''))
 
 describe('createBlockCardTilesList', () => {
     it('renders a titled list and delegates card selection and actions', () => {
@@ -22,7 +20,10 @@ describe('createBlockCardTilesList', () => {
                 title: 'First block',
                 primaryMeta: 'Today',
                 secondaryMeta: 'Ready',
-                action: { ariaLabel: 'Block action', iconSvg: '<svg></svg>' },
+                action: {
+                    ariaLabel: 'Block action',
+                    iconSvg: '<svg></svg>',
+                },
             }],
             onSelect,
             onAction,
@@ -40,7 +41,12 @@ describe('createBlockCardTilesList', () => {
         const list = createBlockCardTilesList({
             title: 'Blocks',
             emptyText: 'No blocks',
-            items: [{ id: 'block-1', title: 'First', primaryMeta: 'Today', secondaryMeta: 'Ready' }],
+            items: [{
+                id: 'block-1',
+                title: 'First',
+                primaryMeta: 'Today',
+                secondaryMeta: 'Ready',
+            }],
         })
 
         list.setItems([])

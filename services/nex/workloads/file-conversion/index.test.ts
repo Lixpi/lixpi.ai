@@ -95,7 +95,11 @@ describe('file-conversion index responder', () => {
             organizationId: 'org-1',
             assetId: 'asset-1',
             sourceBlobHash: 'sha256:abc',
-            renditions: [{ name: 'thumbnail', status: 'ready', blobHash: 'sha256:def' }],
+            renditions: [{
+                name: 'thumbnail',
+                status: 'ready',
+                blobHash: 'sha256:def',
+            }],
         })
 
         await loadResponder()
@@ -111,7 +115,11 @@ describe('file-conversion index responder', () => {
             organizationId: 'org-1',
             assetId: 'asset-1',
             sourceBlobHash: 'sha256:abc',
-            renditions: [{ name: 'thumbnail', status: 'ready', blobHash: 'sha256:def' }],
+            renditions: [{
+                name: 'thumbnail',
+                status: 'ready',
+                blobHash: 'sha256:def',
+            }],
         })
         expect(generateAssetRenditionsMock).toHaveBeenCalledWith(request, storage)
     })
@@ -157,7 +165,11 @@ describe('file-conversion index responder', () => {
 
         const result = await subscription.handler(request)
         expect(result.renditions).toEqual([
-            { name: 'thumbnail', status: 'failed', errorCode: 'CONVERSION_FAILED' },
+            {
+                name: 'thumbnail',
+                status: 'failed',
+                errorCode: 'CONVERSION_FAILED',
+            },
         ])
     })
 

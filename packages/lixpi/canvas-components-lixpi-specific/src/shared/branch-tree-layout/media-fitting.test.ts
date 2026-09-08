@@ -35,8 +35,22 @@ describe('generated output chrome collision insets', () => {
 describe('generated media progress collision envelope', () => {
     it('reserves the fixed right-side timeline width and measured vertical disclosure height', () => {
         expect(getGeneratedMediaProgressCollisionRect(
-            { x: 100, y: 150, width: 800, height: 700 },
-            { position: { x: 100, y: 200 }, dimensions: { width: 800, height: 600 } },
+            {
+                x: 100,
+                y: 150,
+                width: 800,
+                height: 700,
+            },
+            {
+                position: {
+                    x: 100,
+                    y: 200,
+                },
+                dimensions: {
+                    width: 800,
+                    height: 600,
+                },
+            },
             900,
         )).toEqual({
             x: 100,

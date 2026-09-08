@@ -5,14 +5,7 @@ import {
 } from 'vitest'
 import { EditorState } from 'prosemirror-state'
 
-import {
-    applyStreamingBlockContentToTransaction,
-    applyStreamingInlineContentToTransaction,
-    applyStreamingSegmentToTransaction,
-    buildStreamingSegmentSteps,
-    buildStreamingSegmentTransaction,
-    createStreamingMarks,
-} from './stream-assembly.ts'
+import { applyStreamingBlockContentToTransaction, applyStreamingInlineContentToTransaction, buildStreamingSegmentSteps, buildStreamingSegmentTransaction, createStreamingMarks } from './stream-assembly.ts'
 import {
     createProseMirrorSchema,
     DOCUMENT_TYPE,
@@ -23,10 +16,10 @@ type SegmentTargetInfo = {
     childCount: number
 }
 
-function createDocumentState(): {
+const createDocumentState = (): {
     state: import('prosemirror-state').EditorState
     schema: ReturnType<typeof createProseMirrorSchema>
-} {
+} => {
     const schema = createProseMirrorSchema(DOCUMENT_TYPE.ASSET_CONTENT)
     const doc = schema.nodes.doc.create(null, [
         schema.nodes.documentTitle.create(null, schema.text('Document Title')),
@@ -39,24 +32,24 @@ function createDocumentState(): {
     }
 }
 
-function getFirstParagraphEnd(state: EditorState): number {
+const getFirstParagraphEnd = (state: EditorState): number => {
     let paragraphStart = 0
     let paragraphNode = state.doc
     state.doc.descendants((node, pos) => {
         if (node.type.name === 'paragraph') {
             paragraphStart = pos
             paragraphNode = node
+
             return false
         }
+
         return true
     })
 
     return paragraphStart + paragraphNode.nodeSize
 }
 
-function getDocumentEnd(state: EditorState): number {
-    return state.doc.content.size + 1
-}
+const getDocumentEnd = (state: EditorState): number => state.doc.content.size + 1
 
 describe('createStreamingMarks', () => {
     it('returns null when no styles are present', () => {
@@ -74,7 +67,10 @@ describe('createStreamingMarks', () => {
 
 describe('buildStreamingSegmentTransaction', () => {
     it('routes block-defining and inline segments to expected handlers', () => {
-        const { state, schema } = createDocumentState()
+        const {
+            state,
+            schema,
+        } = createDocumentState()
         const blockTarget: SegmentTargetInfo = {
             endOfNodePos: getDocumentEnd(state),
             childCount: state.doc.childCount,
@@ -156,7 +152,10 @@ describe('applyStreamingBlockContentToTransaction', () => {
     })
 
     it('adds empty paragraphs when paragraph content is empty', () => {
-        const { state, schema } = createDocumentState()
+        const {
+            state,
+            schema,
+        } = createDocumentState()
         const tr = state.tr
         const target: SegmentTargetInfo = {
             endOfNodePos: getDocumentEnd(state),
@@ -219,7 +218,10 @@ describe('applyStreamingInlineContentToTransaction', () => {
     })
 
     it('applies unknown style markers as inline text with no crash', () => {
-        const { state, schema } = createDocumentState()
+        const {
+            state,
+            schema,
+        } = createDocumentState()
         const tr = state.tr
         const markAware = createStreamingMarks(schema, undefined)
         applyStreamingInlineContentToTransaction(tr, 'text', 'safe', markAware, getFirstParagraphEnd(state))

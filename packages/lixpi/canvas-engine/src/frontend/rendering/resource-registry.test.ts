@@ -19,9 +19,7 @@ describe('drawing resource ownership', () => {
 
     it('retains a released texture until its mesh releases it', () => {
         const retire: Array<() => void> = []
-        const registry = new ResourceRegistry(dispose => {
-            retire.push(dispose)
-        })
+        const registry = new ResourceRegistry(dispose => void retire.push(dispose))
         const textureDispose = vi.fn()
         const meshDispose = vi.fn()
         const texture = registry.add('texture', {}, textureDispose)
@@ -32,7 +30,9 @@ describe('drawing resource ownership', () => {
         registry.release(mesh)
         expect(retire).toHaveLength(2)
         expect(meshDispose).not.toHaveBeenCalled()
+
         for (const dispose of retire) dispose()
+
         expect(textureDispose).toHaveBeenCalledOnce()
         expect(meshDispose).toHaveBeenCalledOnce()
         registry.release(texture)
@@ -54,12 +54,8 @@ describe('drawing resource ownership', () => {
     it('releases descendants before their owning group', () => {
         const order: string[] = []
         const registry = new ResourceRegistry(dispose => dispose())
-        const group = registry.add('group', {}, () => {
-            order.push('group')
-        })
-        registry.add('path', {}, () => {
-            order.push('path')
-        }, { parent: group })
+        const group = registry.add('group', {}, () => void order.push('group'))
+        registry.add('path', {}, () => void order.push('path'), { parent: group })
         registry.release(group)
         expect(order).toEqual(['path', 'group'])
         registry.destroy()

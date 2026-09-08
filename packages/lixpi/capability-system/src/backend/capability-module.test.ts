@@ -20,20 +20,14 @@ import {
 const makeSkill = (capabilityId: string, calls: string[]): CapabilitySkillPackageInstaller => ({
     kind: 'skill',
     capabilityId,
-    seed: async context => {
-        calls.push(`seed:${capabilityId}:${context.parentModuleId}:${context.catalogExposure}`)
-    },
+    seed: async context => void calls.push(`seed:${capabilityId}:${context.parentModuleId}:${context.catalogExposure}`),
 })
 
 const makeTool = (capabilityId: string, calls: string[]): CapabilityToolPackageInstaller => ({
     kind: 'tool',
     capabilityId,
-    registerActions: () => {
-        calls.push(`register:${capabilityId}`)
-    },
-    seed: async context => {
-        calls.push(`seed:${capabilityId}:${context.parentModuleId}:${context.catalogExposure}`)
-    },
+    registerActions: () => void calls.push(`register:${capabilityId}`),
+    seed: async context => void calls.push(`seed:${capabilityId}:${context.parentModuleId}:${context.catalogExposure}`),
 })
 
 const makeModule = (
@@ -62,7 +56,10 @@ const makeModule = (
             summary: 'Runs one local workflow.',
         },
     },
-    entry: { capabilityId: entry, kind: 'tool' },
+    entry: {
+        capabilityId: entry,
+        kind: 'tool',
+    },
     tools: [makeTool(entry, calls)],
     skills: [makeSkill(`${entry}.instructions`, calls)],
 })
@@ -109,17 +106,95 @@ describe('CapabilityModuleCatalog', () => {
 
     it.each(
         [
-            ['missing sheet', (definition: CapabilityModuleDefinition) => ({ ...definition, descriptionSheet: undefined }), 'CAPABILITY_MODULE_DESCRIPTION_SHEET_REQUIRED'],
-            ['empty purpose', (definition: CapabilityModuleDefinition) => ({ ...definition, descriptionSheet: { ...definition.descriptionSheet, purpose: ' ' } }), 'CAPABILITY_MODULE_DESCRIPTION_PURPOSE_REQUIRED'],
-            ['missing inputs', (definition: CapabilityModuleDefinition) => ({ ...definition, descriptionSheet: { ...definition.descriptionSheet, expectedInputs: [] } }), 'CAPABILITY_MODULE_DESCRIPTION_EXPECTED_INPUTS_REQUIRED'],
-            ['duplicate input names', (definition: CapabilityModuleDefinition) => ({ ...definition, descriptionSheet: { ...definition.descriptionSheet, expectedInputs: [definition.descriptionSheet.expectedInputs[0]!, { ...definition.descriptionSheet.expectedInputs[0]!, name: ' prompt ' }] } }), 'CAPABILITY_MODULE_DESCRIPTION_INPUT_NAME_DUPLICATE'],
-            ['invalid input requirement', (definition: CapabilityModuleDefinition) => ({ ...definition, descriptionSheet: { ...definition.descriptionSheet, expectedInputs: [{ ...definition.descriptionSheet.expectedInputs[0]!, requirement: 'sometimes' }] } }), 'CAPABILITY_MODULE_DESCRIPTION_INPUT_REQUIREMENT_INVALID'],
-            ['empty accepted kinds', (definition: CapabilityModuleDefinition) => ({ ...definition, descriptionSheet: { ...definition.descriptionSheet, expectedInputs: [{ ...definition.descriptionSheet.expectedInputs[0]!, accepts: [] }] } }), 'CAPABILITY_MODULE_DESCRIPTION_INPUT_ACCEPTS_INVALID'],
-            ['missing best results', (definition: CapabilityModuleDefinition) => ({ ...definition, descriptionSheet: { ...definition.descriptionSheet, bestResults: [] } }), 'CAPABILITY_MODULE_DESCRIPTION_BEST_RESULTS_REQUIRED'],
-            ['missing limitations', (definition: CapabilityModuleDefinition) => ({ ...definition, descriptionSheet: { ...definition.descriptionSheet, limitations: [] } }), 'CAPABILITY_MODULE_DESCRIPTION_LIMITATIONS_REQUIRED'],
-            ['invalid cost', (definition: CapabilityModuleDefinition) => ({ ...definition, descriptionSheet: { ...definition.descriptionSheet, executionCharacteristics: { ...definition.descriptionSheet.executionCharacteristics, cost: 'extreme' } } }), 'CAPABILITY_MODULE_DESCRIPTION_EXECUTION_COST_INVALID'],
-            ['invalid latency', (definition: CapabilityModuleDefinition) => ({ ...definition, descriptionSheet: { ...definition.descriptionSheet, executionCharacteristics: { ...definition.descriptionSheet.executionCharacteristics, latency: 'instant' } } }), 'CAPABILITY_MODULE_DESCRIPTION_EXECUTION_LATENCY_INVALID'],
-            ['raw HTML', (definition: CapabilityModuleDefinition) => ({ ...definition, descriptionSheet: { ...definition.descriptionSheet, purpose: '<strong>Unsafe</strong>' } }), 'CAPABILITY_MODULE_DESCRIPTION_PURPOSE_HTML_FORBIDDEN'],
+            ['missing sheet', (definition: CapabilityModuleDefinition) => ({
+                ...definition,
+                descriptionSheet: undefined,
+            }), 'CAPABILITY_MODULE_DESCRIPTION_SHEET_REQUIRED'],
+            ['empty purpose', (definition: CapabilityModuleDefinition) => ({
+                ...definition,
+                descriptionSheet: {
+                    ...definition.descriptionSheet,
+                    purpose: ' ',
+                },
+            }), 'CAPABILITY_MODULE_DESCRIPTION_PURPOSE_REQUIRED'],
+            ['missing inputs', (definition: CapabilityModuleDefinition) => ({
+                ...definition,
+                descriptionSheet: {
+                    ...definition.descriptionSheet,
+                    expectedInputs: [],
+                },
+            }), 'CAPABILITY_MODULE_DESCRIPTION_EXPECTED_INPUTS_REQUIRED'],
+            ['duplicate input names', (definition: CapabilityModuleDefinition) => ({
+                ...definition,
+                descriptionSheet: {
+                    ...definition.descriptionSheet,
+                    expectedInputs: [definition.descriptionSheet.expectedInputs[0]!, {
+                        ...definition.descriptionSheet.expectedInputs[0]!,
+                        name: ' prompt ',
+                    }],
+                },
+            }), 'CAPABILITY_MODULE_DESCRIPTION_INPUT_NAME_DUPLICATE'],
+            ['invalid input requirement', (definition: CapabilityModuleDefinition) => ({
+                ...definition,
+                descriptionSheet: {
+                    ...definition.descriptionSheet,
+                    expectedInputs: [{
+                        ...definition.descriptionSheet.expectedInputs[0]!,
+                        requirement: 'sometimes',
+                    }],
+                },
+            }), 'CAPABILITY_MODULE_DESCRIPTION_INPUT_REQUIREMENT_INVALID'],
+            ['empty accepted kinds', (definition: CapabilityModuleDefinition) => ({
+                ...definition,
+                descriptionSheet: {
+                    ...definition.descriptionSheet,
+                    expectedInputs: [{
+                        ...definition.descriptionSheet.expectedInputs[0]!,
+                        accepts: [],
+                    }],
+                },
+            }), 'CAPABILITY_MODULE_DESCRIPTION_INPUT_ACCEPTS_INVALID'],
+            ['missing best results', (definition: CapabilityModuleDefinition) => ({
+                ...definition,
+                descriptionSheet: {
+                    ...definition.descriptionSheet,
+                    bestResults: [],
+                },
+            }), 'CAPABILITY_MODULE_DESCRIPTION_BEST_RESULTS_REQUIRED'],
+            ['missing limitations', (definition: CapabilityModuleDefinition) => ({
+                ...definition,
+                descriptionSheet: {
+                    ...definition.descriptionSheet,
+                    limitations: [],
+                },
+            }), 'CAPABILITY_MODULE_DESCRIPTION_LIMITATIONS_REQUIRED'],
+            ['invalid cost', (definition: CapabilityModuleDefinition) => ({
+                ...definition,
+                descriptionSheet: {
+                    ...definition.descriptionSheet,
+                    executionCharacteristics: {
+                        ...definition.descriptionSheet.executionCharacteristics,
+                        cost: 'extreme',
+                    },
+                },
+            }), 'CAPABILITY_MODULE_DESCRIPTION_EXECUTION_COST_INVALID'],
+            ['invalid latency', (definition: CapabilityModuleDefinition) => ({
+                ...definition,
+                descriptionSheet: {
+                    ...definition.descriptionSheet,
+                    executionCharacteristics: {
+                        ...definition.descriptionSheet.executionCharacteristics,
+                        latency: 'instant',
+                    },
+                },
+            }), 'CAPABILITY_MODULE_DESCRIPTION_EXECUTION_LATENCY_INVALID'],
+            ['raw HTML', (definition: CapabilityModuleDefinition) => ({
+                ...definition,
+                descriptionSheet: {
+                    ...definition.descriptionSheet,
+                    purpose: '<strong>Unsafe</strong>',
+                },
+            }), 'CAPABILITY_MODULE_DESCRIPTION_PURPOSE_HTML_FORBIDDEN'],
         ] as const,
     )('rejects description sheets with %s', (_name, mutate, errorCode) => {
         const definition = mutate(makeModule('character-creator', [])) as CapabilityModuleDefinition
@@ -144,7 +219,10 @@ describe('CapabilityModuleCatalog', () => {
             .toThrow('CAPABILITY_MODULE_ENTRY_NOT_OWNED:character-creator:global.missing')
 
         const wrongKind = makeModule('style-extraction', [])
-        wrongKind.entry = { ...wrongKind.entry, kind: 'skill' }
+        wrongKind.entry = {
+            ...wrongKind.entry,
+            kind: 'skill',
+        }
         expect(() => catalog.registerModule(wrongKind))
             .toThrow('CAPABILITY_MODULE_ENTRY_KIND_MISMATCH:style-extraction:global.style-extraction')
     })

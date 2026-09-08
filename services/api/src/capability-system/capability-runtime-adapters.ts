@@ -77,12 +77,10 @@ export class CapabilityModelResolverStore implements CapabilityResolverStore {
     }
 }
 
-function snapshotKey(
+const snapshotKey = (
     capabilityId: string,
     manifestBlobHash: string,
-): string {
-    return `${capabilityId}\u0000${manifestBlobHash}`
-}
+): string => `${capabilityId}\u0000${manifestBlobHash}`
 
 export const createCapabilityModelRunPersistence = (
     ownerUserId: string,
@@ -176,7 +174,7 @@ export const mirrorCapabilityRunEventToChat = async (args: {
     }
 }
 
-async function publishCapabilityChatPayload(args: {
+const publishCapabilityChatPayload = async (args: {
     workspaceId: string
     organizationId?: string
     conversationAssetId: string
@@ -186,7 +184,7 @@ async function publishCapabilityChatPayload(args: {
         conversationAssetId: string
         pipelineEventId: string
     }
-}): Promise<void> {
+}): Promise<void> => {
     try {
         const durable = await new PipelineEventLog(args.natsService).publishEvent({
             workspaceId: args.workspaceId,
@@ -209,7 +207,7 @@ async function publishCapabilityChatPayload(args: {
     }
 }
 
-function toCatalogRequester(requester: CapabilityRequesterContext): CatalogRequesterContext {
+const toCatalogRequester = (requester: CapabilityRequesterContext): CatalogRequesterContext => {
     return {
         userId: requester.userId,
         organizationIds: requester.organizationId ? [requester.organizationId] : [],
