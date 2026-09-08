@@ -1,0 +1,37 @@
+{
+    "_meta": {
+        "sourceName": "Google Generative Language API",
+        "sourceId": "provider-api",
+        "queriedEndpoints": [
+            {
+                "endpoint": "GET https://generativelanguage.googleapis.com/v1beta/models",
+                "params": {
+                    "pageSize": 100,
+                    "pagesFetched": 1
+                },
+                "note": "Paged with pageToken until exhausted. The API key travels as a query parameter and is not recorded."
+            }
+        ],
+        "hasDataForThisModel": true,
+        "inferenceProvidersWithData": [
+            "google"
+        ],
+        "fetchedAt": "2026-09-07T23:42:12.625Z",
+        "publishedVersions": {
+            "currentVersion": "lyria-realtime-exp",
+            "allPublishedVersions": [
+                "lyria-realtime-exp"
+            ]
+        }
+    },
+    "byInferenceProvider": {
+        "google": {
+            "title": "Lyria Realtime Experimental",
+            "contextWindow": 1048576,
+            "maxCompletionSize": 65536,
+            "model": "lyria-realtime-exp",
+            "modelVersion": "lyria-realtime-exp",
+            "modelKeyAtSource": "lyria-realtime-exp"
+        }
+    }
+}

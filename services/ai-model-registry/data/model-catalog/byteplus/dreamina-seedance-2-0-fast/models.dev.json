@@ -1,0 +1,17 @@
+{
+    "_meta": {
+        "sourceName": "models.dev",
+        "sourceId": "models.dev",
+        "queriedEndpoints": [
+            {
+                "endpoint": "https://models.dev/api.json",
+                "note": "Whole catalog fetched once per run; it publishes no provider for byteplus, so only \"amazon-bedrock\" is read."
+            }
+        ],
+        "hasDataForThisModel": false,
+        "inferenceProvidersWithData": [],
+        "fetchedAt": "2026-09-07T23:42:12.695Z",
+        "note": "This source has no entry for this model."
+    },
+    "byInferenceProvider": {}
+}
