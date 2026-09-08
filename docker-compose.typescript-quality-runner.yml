@@ -72,11 +72,11 @@ services:
             - ./packages/lixpi/constants/ts/index.ts:/usr/src/repository/packages/lixpi/constants/ts/index.ts:cached
             - ./packages/lixpi/constants/ts/media-generation-layout-settings.ts:/usr/src/repository/packages/lixpi/constants/ts/media-generation-layout-settings.ts:cached
             - ./packages/lixpi/constants/ts/media-generation-progress.ts:/usr/src/repository/packages/lixpi/constants/ts/media-generation-progress.ts:cached
-            - ./packages/lixpi/constants/ts/metrics-contracts.ts:/usr/src/repository/packages/lixpi/constants/ts/metrics-contracts.ts:cached
             - ./packages/lixpi/constants/ts/types.ts:/usr/src/repository/packages/lixpi/constants/ts/types.ts:cached
             - ./packages/lixpi/constants/ts/workspace-persistence-settings.ts:/usr/src/repository/packages/lixpi/constants/ts/workspace-persistence-settings.ts:cached
             - ./packages/lixpi/debug-tools/ts/debug-tools.ts:/usr/src/repository/packages/lixpi/debug-tools/ts/debug-tools.ts:cached
             - ./packages/lixpi/dynamodb-service/src:/usr/src/repository/packages/lixpi/dynamodb-service/src:cached
+            - ./packages/lixpi/usage-reporter/src:/usr/src/repository/packages/lixpi/usage-reporter/src:cached
             - ./packages/lixpi/nats-auth-callout-service/src:/usr/src/repository/packages/lixpi/nats-auth-callout-service/src:cached
             - ./packages/lixpi/nats-service/ts/nats-service.ts:/usr/src/repository/packages/lixpi/nats-service/ts/nats-service.ts:cached
             - ./packages/lixpi/prosemirror/src:/usr/src/repository/packages/lixpi/prosemirror/src:cached

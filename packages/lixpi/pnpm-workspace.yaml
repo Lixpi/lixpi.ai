@@ -13,3 +13,4 @@ packages:
   - "test-utils"
   - "ui-kit"
   - "ui-primitives"
+  - "usage-reporter"

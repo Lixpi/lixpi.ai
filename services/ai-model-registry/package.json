@@ -22,6 +22,7 @@
         "@codemirror/view": "*",
         "@lezer/highlight": "*",
         "@lixpi/ui-primitives": "workspace:*",
+        "@lixpi/usage-reporter": "workspace:*",
         "@nats-io/nats-core": "*",
         "@nats-io/transport-node": "*",
         "cm6-theme-basic-dark": "*",

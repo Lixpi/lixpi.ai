@@ -1,7 +1,7 @@
 // Read-only projections of a catalog model, shared by the table and the detail
 // panel so both describe a model the same way.
 
-import { activeInferenceProviderPricing } from '@lixpi/constants'
+import { pricingForCalledInferenceProvider } from '@lixpi/usage-reporter'
 
 import {
     type CatalogModel,
@@ -50,8 +50,8 @@ export const formatNumber = (value: unknown): string => typeof value === 'number
 // is billed at. Every other endpoint's rates are in the detail panel. A model with
 // none of them priced yet reads as a dash rather than as free.
 export const pricingSummary = (model: CatalogModel): string => {
-    const pricing = activeInferenceProviderPricing(model.model ?? undefined)
-        ?? activeInferenceProviderPricing(model.file)
+    const pricing = pricingForCalledInferenceProvider(model.model ?? undefined)
+        ?? pricingForCalledInferenceProvider(model.file)
         ?? {} as Record<string, any>
     const currency = String(pricing.currency ?? 'USD')
 

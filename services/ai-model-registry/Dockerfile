@@ -19,6 +19,7 @@ COPY ./packages/lixpi/debug-tools ./packages/lixpi/debug-tools
 COPY ./packages/lixpi/dynamodb-service ./packages/lixpi/dynamodb-service
 COPY ./packages/lixpi/nats-service ./packages/lixpi/nats-service
 COPY ./packages/lixpi/ui-primitives ./packages/lixpi/ui-primitives
+COPY ./packages/lixpi/usage-reporter ./packages/lixpi/usage-reporter
 COPY ./services/ai-model-registry/pnpm-workspace.yaml ./pnpm-workspace.yaml
 
 # Install dependencies, redundant when running locally because starting service each time will install deps, but needed for deployment

@@ -1,8 +1,6 @@
 export * from './types.ts'
-export * from './ai-model-pricing.ts'
 export * from './asset-types.ts'
 export * from './aws-resources.ts'
-export * from './metrics-contracts.ts'
 export * from './media-generation-progress.ts'
 export {
     mediaGenerationLayoutSettings,
@@ -70,10 +68,6 @@ export const STREAM_STATUS = AI_INTERACTION_CONSTANTS.STREAM_STATUS as {
 }
 export type StreamStatus = typeof STREAM_STATUS[keyof typeof STREAM_STATUS]
 
-export const METRICS_CONFIG: Record<string, string> = {
-    defaultCurrency: 'usd',
-}
-
 // Schema version stamped onto every ContentDescriptor (see ContentDescriptor in
 // types.ts). Bump when the descriptor shape or generation prompt changes so
 // stale descriptors can be detected/regenerated. SUMMARY_MAX_LENGTH keeps the
@@ -87,11 +81,6 @@ export const MEDIA_DESCRIPTOR_TITLE_MAX_WORDS = 3
 // descriptor only needs the gist, so we cap the prompt rather than paying to
 // summarize an entire long document/transcript every edit.
 export const CONTENT_DESCRIPTOR_TEXT_INPUT_MAX_LENGTH = 12000
-
-export const STRIPE_COMISSION: Record<string, string> = { // Values processed as strings by decimal.js to avoid floating point errors
-    comissionPercentRate: '0.029', // 2.9%
-    fixedFee: '0.30', // 30 cents
-}
 
 export enum LoadingStatus {
     idle = 'idle',

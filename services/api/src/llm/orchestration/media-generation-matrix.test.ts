@@ -816,7 +816,7 @@ describe('MediaGenerationMatrixOrchestrator', () => {
         expect(registry.process).not.toHaveBeenCalled()
     })
 
-    it('rejects metrics admission before shared preflight persists pending media lineage', async () => {
+    it('rejects an unauthorized spend before shared preflight persists pending media lineage', async () => {
         const registry = createRegistry()
         const orchestrator = new MediaGenerationMatrixOrchestrator(registry.asRegistry as any, natsService)
         const getAiModel = vi.spyOn(AiModelModelModule.default, 'getAiModel')
@@ -841,9 +841,9 @@ describe('MediaGenerationMatrixOrchestrator', () => {
                 ],
             } as any
         })
-        registry.preflightAdmission.mockRejectedValueOnce(new Error('Metrics: balance does not cover this workflow'))
+        registry.preflightAdmission.mockRejectedValueOnce(new Error('UsageMetering: balance does not cover this workflow'))
 
-        await expect(orchestrator.process(createRequest())).rejects.toThrow('Metrics: balance does not cover this workflow')
+        await expect(orchestrator.process(createRequest())).rejects.toThrow('UsageMetering: balance does not cover this workflow')
 
         expect(workspaceContextSpy).not.toHaveBeenCalled()
         expect(generatedAssetStorageMocks.ensurePendingGeneratedAssets).not.toHaveBeenCalled()

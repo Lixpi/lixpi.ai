@@ -278,7 +278,7 @@ The API catalog copies those controls into one configuration-matrix group per mo
 
 ## Usage Metering
 
-`reportVideoUsage` ([`usage-reporter.ts`](../../services/api/src/llm/usage/usage-reporter.ts)) branches on `pricing.video.measuringUnit`: `'seconds'` computes per-second cost (VEO, byte-identical to before), `'tokens'` computes `total_tokens × price / pricePer` (Seedance — `total_tokens` threaded from the ModelArk task response through `videoUsage`). It returns a `VideoUsageReport`.
+`reportVideoUsage` ([`usage-reporter.ts`](../../packages/lixpi/usage-reporter/src/usage-reporter.ts)) branches on `pricing.video.measuringUnit`: `'seconds'` computes per-second cost (VEO, byte-identical to before), `'tokens'` computes `total_tokens × price / pricePer` (Seedance — `total_tokens` threaded from the ModelArk task response through `videoUsage`). It returns a `VideoUsageReport`.
 
 {% callout type="warning" %}
 Usage reports are computed and logged today; they are not published to NATS yet. Per-second VEO prices are still placeholders to reconcile; Seedance token pricing follows the Dreamina resource packs.
@@ -339,7 +339,7 @@ services/api/src/
 │   │   ├── video-publisher.ts        # VIDEO_PENDING/GENERATING/COMPLETE/ERROR, MP4/MOV validation
 │   │   ├── media-branch-resolver.ts  # VLM gate generalized to video; VEO ref mapping
 │   │   └── stream-publisher.ts       # videoGenerationTrace()
-│   ├── usage/usage-reporter.ts       # reportVideoUsage (per-second VEO / per-token Seedance)
+│   ├── usage/check-metering.ts       # graph run → @lixpi/usage-reporter's admission estimate
 │   ├── config.ts                     # VEO_POLL_INTERVAL_MS, BYTEPLUS_ARK_BASE_URL, BYTEPLUS_VIDEO_POLL_INTERVAL_MS
 │   └── prompts/
 │       ├── load-prompts.ts           # getSystemPrompt(includeVideoGeneration)

@@ -3,7 +3,6 @@ import * as process from 'process'
 
 import {
     getDynamoDbTableStageName,
-    withoutInferenceProviderPricing,
     type AiModel,
     type AiModelId,
     type AiModelsCatalogResponse,
@@ -14,8 +13,11 @@ import {
     type MediaGenerationConfigControlKey,
     type MediaGenerationConfigGroup,
     type MediaGenerationConfigMatrix,
-    type PublicAiModel,
 } from '@lixpi/constants'
+import {
+    withoutInferenceProviderPricing,
+    type PricedAiModel,
+} from '@lixpi/usage-reporter'
 
 import { settings } from '../settings.ts'
 
@@ -25,17 +27,17 @@ const {
 } = process.env
 
 const modelHasGenerationModality = (
-    model: PublicAiModel,
+    model: AiModel,
     modality: 'image_generation' | 'video_generation',
 ): boolean => model.modalities?.some(entry => entry.modality === modality) ?? false
 
 const modelIdFor = (model: Pick<AiModel, 'provider' | 'model'>): AiModelId => `${model.provider}:${model.model}` as AiModelId
 
 const findConfiguredCatalogModel = (
-    models: Array<PublicAiModel>,
+    models: Array<AiModel>,
     configuredModelId: AiModelId,
-    matchesCapability: (model: PublicAiModel) => boolean,
-): PublicAiModel | undefined => {
+    matchesCapability: (model: AiModel) => boolean,
+): AiModel | undefined => {
     const exactModel = models.find(model => modelIdFor(model) === configuredModelId && matchesCapability(model))
 
     if (exactModel)
@@ -82,7 +84,7 @@ const isResolutionValue = (value: string): boolean => /^\d+x\d+$/i.test(value)
 
 const isAspectRatioValue = (value: string): boolean => /^\d+:\d+$/.test(value)
 
-const getImageSizeControlLabel = (model: PublicAiModel): string => {
+const getImageSizeControlLabel = (model: AiModel): string => {
     if (model.imageSizeMode === 'resolution')
         return 'Resolution'
 
@@ -100,7 +102,7 @@ const getImageSizeControlLabel = (model: PublicAiModel): string => {
     return 'Image option'
 }
 
-const buildImageControls = (model: PublicAiModel): MediaGenerationConfigControl[] => {
+const buildImageControls = (model: AiModel): MediaGenerationConfigControl[] => {
     if (model.imageGenerationControls?.length) {
         return model.imageGenerationControls.map(
             control => ({
@@ -152,7 +154,7 @@ const SUPPORTED_MEDIA_GENERATION_CONTROL_KEYS = new Set<MediaGenerationConfigCon
     'thinkingLevel',
 ])
 
-const buildReasoningControls = (model: PublicAiModel): MediaGenerationConfigControl[] =>
+const buildReasoningControls = (model: AiModel): MediaGenerationConfigControl[] =>
     (model.reasoningGenerationControls ?? []).filter(control => SUPPORTED_MEDIA_GENERATION_CONTROL_KEYS.has(control.key)).map(
         control => ({
             ...control,
@@ -160,7 +162,7 @@ const buildReasoningControls = (model: PublicAiModel): MediaGenerationConfigCont
         }),
     )
 
-const buildVideoControls = (model: PublicAiModel): MediaGenerationConfigControl[] => {
+const buildVideoControls = (model: AiModel): MediaGenerationConfigControl[] => {
     return (model.videoGenerationControls ?? []).filter(control => SUPPORTED_MEDIA_GENERATION_CONTROL_KEYS.has(control.key)).map(
         control => ({
             ...control,
@@ -186,7 +188,7 @@ const getControlOptionsSignature = (controls: MediaGenerationConfigControl[]): s
 }
 
 const getMatrixGroupKey = (
-    model: PublicAiModel,
+    model: AiModel,
     mediaType: 'reasoning' | 'image' | 'video',
     controls: MediaGenerationConfigControl[],
 ): string => {
@@ -201,7 +203,7 @@ const getMatrixGroupKey = (
 
 const appendMatrixGroup = (
     groupsByKey: Map<string, MediaGenerationConfigGroup>,
-    model: PublicAiModel,
+    model: AiModel,
     mediaType: 'reasoning' | 'image' | 'video',
     controls: MediaGenerationConfigControl[],
 ): void => {
@@ -245,15 +247,15 @@ const appendMatrixGroup = (
 // Derive the default model id per capability from the catalog. API-configured
 // defaults win when available, followed by synchronization flags and then
 // the first model matching the requested capability.
-const resolveDefaultModels = (models: Array<PublicAiModel>): DefaultAiModelSelection => {
-    const isReasoningModel = (model: PublicAiModel): boolean => !modelHasGenerationModality(model, 'image_generation') && !modelHasGenerationModality(
+const resolveDefaultModels = (models: Array<AiModel>): DefaultAiModelSelection => {
+    const isReasoningModel = (model: AiModel): boolean => !modelHasGenerationModality(model, 'image_generation') && !modelHasGenerationModality(
         model,
         'video_generation',
     )
 
     const resolve = (
         capability: DefaultAiModelCapability,
-        matches: (model: PublicAiModel) => boolean,
+        matches: (model: AiModel) => boolean,
         configuredModelId?: AiModelId,
     ): AiModelId => {
         const configured = configuredModelId
@@ -290,7 +292,7 @@ const resolveDefaultModels = (models: Array<PublicAiModel>): DefaultAiModelSelec
     }
 }
 
-const buildMediaGenerationConfigMatrix = (models: Array<PublicAiModel>): MediaGenerationConfigMatrix => {
+const buildMediaGenerationConfigMatrix = (models: Array<AiModel>): MediaGenerationConfigMatrix => {
     const groupsByKey = new Map<string, MediaGenerationConfigGroup>()
 
     for (const model of models) {
@@ -344,7 +346,7 @@ export default {
         })
 
         const models = availableAiModels.items
-            .map(item => withoutInferenceProviderPricing(item as AiModel))
+            .map(item => withoutInferenceProviderPricing(item as PricedAiModel))
             .sort((a, b) => a.sortingPosition - b.sortingPosition)
 
         return {
@@ -357,7 +359,7 @@ export default {
         provider,
         model,
         omitPricing = true,
-    }: Pick<AiModel, 'provider' | 'model'> & { omitPricing?: boolean }): Promise<AiModel | PublicAiModel | undefined> => {
+    }: Pick<AiModel, 'provider' | 'model'> & { omitPricing?: boolean }): Promise<AiModel | PricedAiModel | undefined> => {
         const aiModel = await dynamoDBService.getItem({
             tableName: getDynamoDbTableStageName(
                 'AI_MODELS_LIST',
@@ -375,7 +377,7 @@ export default {
             return undefined
 
         if (omitPricing)
-            return withoutInferenceProviderPricing(aiModel as AiModel)
+            return withoutInferenceProviderPricing(aiModel as PricedAiModel)
 
         return aiModel
     },

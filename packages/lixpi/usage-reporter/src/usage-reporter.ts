@@ -1,24 +1,23 @@
 import { Decimal } from 'decimal.js'
 
-import { activeInferenceProviderPricing } from '@lixpi/constants'
 import { warn } from '@lixpi/debug-tools'
 
+import { pricingForCalledInferenceProvider } from './model-pricing.ts'
 import {
-    type AiModelMetaInfo,
-    type EventMeta,
-    type Usage,
-} from '../graph/state.ts'
+    type MeteredAiModel,
+    type TokenUsageCounts,
+    type UsageEventMeta,
+} from './types.ts'
 
-// Match Python `Decimal` behavior (default 28-digit precision, ROUND_HALF_EVEN).
-// decimal.js defaults to 20-digit precision; bumping it here so pricing
-// arithmetic stays byte-identical to the Python implementation.
+// Matches the Python Decimal defaults this replaced (28 digits, round half even),
+// so amounts stay byte-identical. decimal.js would otherwise use 20.
 Decimal.set({
     precision: 28,
     rounding: Decimal.ROUND_HALF_EVEN,
 })
 
-export type UsageReport = {
-    eventMeta: EventMeta
+export type TextCallSpend = {
+    eventMeta: UsageEventMeta
     aiModel: string
     modelVersion: string // canonical vendor id for the metering backend (aiModel is the display id)
     aiVendorRequestId: string
@@ -50,8 +49,8 @@ export type UsageReport = {
     }
 }
 
-export type ImageUsageReport = {
-    eventMeta: EventMeta
+export type ImageCallSpend = {
+    eventMeta: UsageEventMeta
     aiModel: string
     modelVersion: string // canonical vendor id for the metering backend (aiModel is the display id)
     aiVendorRequestId: string
@@ -68,8 +67,8 @@ export type ImageUsageReport = {
     }
 }
 
-export type VideoUsageReport = {
-    eventMeta: EventMeta
+export type VideoCallSpend = {
+    eventMeta: UsageEventMeta
     aiModel: string
     modelVersion: string // canonical vendor id for the metering backend (aiModel is the display id)
     aiVendorRequestId: string
@@ -96,22 +95,25 @@ export type VideoUsageReport = {
     }
 }
 
-const dec = (
-    v: unknown,
+// Rates and counts arrive as strings, numbers or nothing at all, so every one of
+// them goes through here before any arithmetic touches it.
+const decimal = (
+    value: unknown,
     fallback: string = '0',
-): Decimal => new Decimal(v == null ? fallback : String(v))
+): Decimal => new Decimal(value == null ? fallback : String(value))
 
 export class UsageReporter {
-    // Currently logs only. Swap the return value for natsService.publish('usage.tokens.ai', report) when ready.
-    reportTokensUsage(args: {
-        eventMeta: EventMeta
-        aiModelMetaInfo: AiModelMetaInfo
+    // Prices one returned call. Nothing is published yet: see the TODOs below and
+    // ../documentation/RECORDED-SPEND.md.
+    priceTextCall(args: {
+        eventMeta: UsageEventMeta
+        aiModelMetaInfo: MeteredAiModel
         aiVendorRequestId: string
         aiVendorModelName: string
-        usage: Partial<Usage>
+        usage: Partial<TokenUsageCounts>
         aiRequestReceivedAt: number
         aiRequestFinishedAt: number
-    }): UsageReport | undefined {
+    }): TextCallSpend | undefined {
         try {
             const {
                 aiModelMetaInfo,
@@ -121,32 +123,32 @@ export class UsageReporter {
                 aiRequestReceivedAt,
                 aiRequestFinishedAt,
             } = args
-            const pricing: Record<string, any> = activeInferenceProviderPricing(aiModelMetaInfo) ?? {}
-            const pricePer = dec(pricing.text?.pricePer, '1000000')
+            const pricing: Record<string, any> = pricingForCalledInferenceProvider(aiModelMetaInfo) ?? {}
+            const pricePer = decimal(pricing.text?.pricePer, '1000000')
             const tiers = pricing.text?.tiers?.default ?? {}
-            const promptPrice = dec(tiers.prompt, '0')
-            const completionPrice = dec(tiers.completion, '0')
+            const promptPrice = decimal(tiers.prompt, '0')
+            const completionPrice = decimal(tiers.completion, '0')
 
             const promptTokens = usage.promptTokens ?? 0
             const completionTokens = usage.completionTokens ?? 0
             const totalTokens = usage.totalTokens ?? 0
 
             const promptPurchased = promptPrice.div(pricePer).mul(
-                dec(promptTokens),
+                decimal(promptTokens),
             )
             const promptSold = promptPrice.div(pricePer).mul(
-                dec(promptTokens),
+                decimal(promptTokens),
             )
             const completionPurchased = completionPrice.div(pricePer).mul(
-                dec(completionTokens),
+                decimal(completionTokens),
             )
             const completionSold = completionPrice.div(pricePer).mul(
-                dec(completionTokens),
+                decimal(completionTokens),
             )
             const totalPurchased = promptPurchased.plus(completionPurchased)
             const totalSold = promptSold.plus(completionSold)
 
-            const report: UsageReport = {
+            const spend: TextCallSpend = {
                 eventMeta,
                 aiModel: `${aiModelMetaInfo.provider}:${aiModelMetaInfo.model}`,
                 modelVersion: aiModelMetaInfo.modelVersion ?? '',
@@ -180,23 +182,23 @@ export class UsageReporter {
             }
 
             // TODO: publish to NATS once usage.tokens.ai subject is wired up.
-            return report
-        } catch (e) {
-            warn(`Failed to report token usage: ${e}`)
+            return spend
+        } catch (error) {
+            warn(`Failed to price a text call: ${error}`)
 
             return undefined
         }
     }
 
-    reportImageUsage(args: {
-        eventMeta: EventMeta
-        aiModelMetaInfo: AiModelMetaInfo
+    priceImageCall(args: {
+        eventMeta: UsageEventMeta
+        aiModelMetaInfo: MeteredAiModel
         aiVendorRequestId: string
         imageSize: string
         imageQuality: string
         aiRequestReceivedAt: number
         aiRequestFinishedAt: number
-    }): ImageUsageReport | undefined {
+    }): ImageCallSpend | undefined {
         try {
             const {
                 eventMeta,
@@ -207,15 +209,15 @@ export class UsageReporter {
                 aiRequestReceivedAt,
                 aiRequestFinishedAt,
             } = args
-            const pricing: Record<string, any> = activeInferenceProviderPricing(aiModelMetaInfo) ?? {}
-            const imagePricing = pricing.image ?? {}
-            const sizePricing = imagePricing[imageSize]
-                ?? imagePricing.default
+            const pricing: Record<string, any> = pricingForCalledInferenceProvider(aiModelMetaInfo) ?? {}
+            const imageRates = pricing.image ?? {}
+            const ratesForSize = imageRates[imageSize]
+                ?? imageRates.default
                 ?? {}
-            const qualityKey = imageQuality in sizePricing ? imageQuality : 'high'
-            const pricePerImage = dec(sizePricing[qualityKey], '0.04')
+            const qualityKey = imageQuality in ratesForSize ? imageQuality : 'high'
+            const pricePerImage = decimal(ratesForSize[qualityKey], '0.04')
 
-            const report: ImageUsageReport = {
+            const spend: ImageCallSpend = {
                 eventMeta,
                 aiModel: `${aiModelMetaInfo.provider}:${aiModelMetaInfo.model}`,
                 modelVersion: aiModelMetaInfo.modelVersion ?? '',
@@ -234,21 +236,19 @@ export class UsageReporter {
             }
 
             // TODO: publish to NATS once usage.images.ai subject is wired up.
-            return report
-        } catch (e) {
-            warn(`Failed to report image usage: ${e}`)
+            return spend
+        } catch (error) {
+            warn(`Failed to price an image call: ${error}`)
 
             return undefined
         }
     }
 
-    // Video models are billed either per second (VEO) or per vendor token
-    // (Seedance via ModelArk). The branch is driven by pricing.video.measuringUnit
-    // so a token-metered provider needs no new call-site — VEO's per-second math
-    // is byte-identical to before.
-    reportVideoUsage(args: {
-        eventMeta: EventMeta
-        aiModelMetaInfo: AiModelMetaInfo
+    // Per second (VEO) or per vendor token (Seedance), branching on
+    // pricing.video.measuringUnit so a token-metered provider needs no new caller.
+    priceVideoCall(args: {
+        eventMeta: UsageEventMeta
+        aiModelMetaInfo: MeteredAiModel
         aiVendorRequestId: string
         durationSeconds: number
         resolution: string
@@ -258,7 +258,7 @@ export class UsageReporter {
         inputVideoSeconds?: number
         aiRequestReceivedAt: number
         aiRequestFinishedAt: number
-    }): VideoUsageReport | undefined {
+    }): VideoCallSpend | undefined {
         try {
             const {
                 eventMeta,
@@ -273,12 +273,12 @@ export class UsageReporter {
                 aiRequestReceivedAt,
                 aiRequestFinishedAt,
             } = args
-            const pricing: Record<string, any> = activeInferenceProviderPricing(aiModelMetaInfo) ?? {}
-            const videoPricing = pricing.video ?? {}
-            const measuringUnit = videoPricing.measuringUnit ?? 'seconds'
-            const price = dec(videoPricing.price, '0')
+            const pricing: Record<string, any> = pricingForCalledInferenceProvider(aiModelMetaInfo) ?? {}
+            const videoRates = pricing.video ?? {}
+            const measuringUnit = videoRates.measuringUnit ?? 'seconds'
+            const price = decimal(videoRates.price, '0')
 
-            const video: VideoUsageReport['video'] = {
+            const video: VideoCallSpend['video'] = {
                 measuringUnit,
                 durationSeconds: Number(durationSeconds) || 0,
                 resolution,
@@ -292,32 +292,32 @@ export class UsageReporter {
                 soldToClientFor: '0',
             }
 
-            let purchased: Decimal
-            let sold: Decimal
+            let purchasedFor: Decimal
+            let soldFor: Decimal
 
             if (measuringUnit === 'tokens') {
                 // total_tokens × price / pricePer (per-1M-token resource packs).
-                const pricePer = dec(videoPricing.pricePer, '1000000')
-                const tokens = dec(totalTokens, '0')
-                purchased = price.div(pricePer).mul(tokens)
-                sold = price.div(pricePer).mul(tokens)
+                const pricePer = decimal(videoRates.pricePer, '1000000')
+                const tokens = decimal(totalTokens, '0')
+                purchasedFor = price.div(pricePer).mul(tokens)
+                soldFor = price.div(pricePer).mul(tokens)
                 video.totalTokens = Number(totalTokens) || 0
                 video.completionTokens = Number(completionTokens) || 0
                 video.price = price.toString()
                 video.pricePer = pricePer.toString()
             } else {
-                // seconds (VEO) — unchanged: price-per-second × duration.
-                const seconds = dec(durationSeconds, '0')
-                purchased = price.mul(seconds)
-                sold = price.mul(seconds)
+                // Seconds (VEO): price per second times duration.
+                const seconds = decimal(durationSeconds, '0')
+                purchasedFor = price.mul(seconds)
+                soldFor = price.mul(seconds)
                 video.pricePerSecond = price.toString()
                 video.pricePerSecondResale = price.toString()
             }
 
-            video.purchasedFor = purchased.toString()
-            video.soldToClientFor = sold.toString()
+            video.purchasedFor = purchasedFor.toString()
+            video.soldToClientFor = soldFor.toString()
 
-            const report: VideoUsageReport = {
+            const spend: VideoCallSpend = {
                 eventMeta,
                 aiModel: `${aiModelMetaInfo.provider}:${aiModelMetaInfo.model}`,
                 modelVersion: aiModelMetaInfo.modelVersion ?? '',
@@ -328,9 +328,9 @@ export class UsageReporter {
             }
 
             // TODO: publish to NATS once usage.videos.ai subject is wired up.
-            return report
-        } catch (e) {
-            warn(`Failed to report video usage: ${e}`)
+            return spend
+        } catch (error) {
+            warn(`Failed to price a video call: ${error}`)
 
             return undefined
         }

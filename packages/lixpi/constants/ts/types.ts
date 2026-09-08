@@ -461,7 +461,7 @@ export type DefaultAiModelCapability = 'reasoning' | 'image' | 'video'
 export type DefaultAiModelSelection = Record<DefaultAiModelCapability, AiModelId>
 
 export type AiModelsCatalogResponse = {
-    models: PublicAiModel[]
+    models: AiModel[]
     mediaGenerationConfigMatrix: MediaGenerationConfigMatrix
     defaultModels: DefaultAiModelSelection
 }
@@ -2348,9 +2348,10 @@ export type AiModel = {
     updatedAt: number
 }
 
-// One endpoint's view of a model. Prices live here and nowhere else: the same model
-// costs different amounts through a vendor's own API and through AWS Bedrock, so a
-// single rate on the model would be true for at most one of them.
+// One endpoint's view of a model: what that endpoint calls it, what it allows there,
+// and which sources reported it. A model reached through a vendor's own API and
+// through AWS Bedrock is the same model with two sets of limits and two rates, so
+// these are recorded per endpoint rather than once.
 export type AiModelInferenceProvider = {
     inferenceProviderTitle: string
     isCalledByThePlatform: boolean
@@ -2361,135 +2362,13 @@ export type AiModelInferenceProvider = {
     modelKeyAtSource: Record<string, string>
     contextWindow?: number
     maxCompletionSize?: number
-    pricing?: AiModelPricing
+    // Rates are deliberately absent. What a model costs is metering data, and it
+    // lives in @lixpi/usage-reporter with everything else that reads a price.
+    //
     // What that endpoint reports that no model field holds, such as AWS Bedrock's
     // lifecycle status and the id to invoke.
     providerReportedFacts?: Record<string, unknown>
 }
 
-// The model as the browser sees it. Rates are an internal fact used for metering, so
-// every endpoint's pricing block is stripped before the catalog leaves the API.
-export type PublicAiModelInferenceProvider = Omit<AiModelInferenceProvider, 'pricing'>
-
-export type PublicAiModel = Omit<AiModel, 'inferenceProviders'> & {
-    inferenceProviders?: Record<string, PublicAiModelInferenceProvider>
-}
-
-export type AiModelPricing = {
-    currency: string
-    text?: {
-        measuringUnit: string
-        pricePer: string
-        tiers: {
-            default: {
-                prompt: string
-                completion: string
-            }
-        }
-    }
-    audio?: {
-        measuringUnit: string
-        pricePer: string
-        prompt: string
-        completion: string
-    }
-    image?: {
-        measuringUnit: string
-        pricePer: string
-        prompt: string
-        completion: string
-    }
-    // Video models are billed per second of generated video (VEO) or per
-    // vendor video token (Seedance). `price` is the flat rate and stays the
-    // fallback for models that publish one. `tiers` carries the per-resolution
-    // rates for vendors that price by output resolution AND by whether the
-    // input contained video, keyed by the same resolution values as
-    // videoResolutions. Consumers use a matching tier when there is one and
-    // fall back to `price` otherwise.
-    video?: {
-        measuringUnit: string
-        pricePer: string
-        price: string
-        tiers?: Record<string, {
-            withoutVideoInput: string
-            withVideoInput: string
-        }>
-    }
-}
-
-export type EventMeta = {
-    userId: string
-    stripeCustomerId: string
-    organizationId: string
-    documentId: string
-}
-
 export type AiModelId = `${string}:${string}`
 
-export type TokensUsage = {
-    eventMeta: EventMeta
-    aiModelMetaInfo: AiModel
-    aiVendorRequestId: string
-    aiVendorModelName: string
-    usage: {
-        promptTokens: number
-        promptAudioTokens: number
-        promptCachedTokens: number
-        completionTokens: number
-        completionAudioTokens: number
-        completionReasoningTokens: number
-        totalTokens: number
-    }
-    aiRequestReceivedAt: number
-    aiRequestFinishedAt: number
-}
-
-export type TokensUsageEvent = {
-    eventMeta: EventMeta
-    aiModel: AiModelId
-    aiVendorRequestId: string
-    aiRequestReceivedAt: number
-    aiRequestFinishedAt: number
-    textPricePer: string
-    textPromptPrice: string
-    textCompletionPrice: string
-    textPromptPriceResale: string
-    textCompletionPriceResale: string
-    prompt: {
-        usageTokens: number
-        cachedTokens: number
-        audioTokens: number
-        purchasedFor: string
-        soldToClientFor: string
-    }
-    completion: {
-        usageTokens: number
-        reasoningTokens: number
-        audioTokens: number
-        purchasedFor: string
-        soldToClientFor: string
-    }
-    total: {
-        usageTokens: number
-        purchasedFor: string
-        soldToClientFor: string
-    }
-    image?: {
-        generatedCount: number
-        size: string
-        purchasedFor: string
-        soldToClientFor: string
-    }
-}
-
-export type FinancialTransaction = {
-    userId: string
-    provider: 'Stripe'
-    transactionId: string
-    amount_decimal: string
-    currency: string
-    description: string
-    status: string
-    rawEvent: Record<string, any>
-    createdAt: number
-}

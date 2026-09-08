@@ -1,8 +1,10 @@
 import {
     type AiModel,
-    type AiModelInferenceProvider,
-    type AiModelPricing,
 } from '@lixpi/constants'
+import {
+    type AiModelPricing,
+    type PricedAiModel,
+} from '@lixpi/usage-reporter'
 
 // The model catalog is a directory tree, the same way the parameter registry is.
 // There is no database and no index of its own: the layout defines the catalog.
@@ -278,7 +280,8 @@ export type MergeStatus =
 // said. Rates only exist here: an authored price override names its endpoint and is
 // resolved into that endpoint's block, so no rate is ever stated for the model as a
 // whole.
-export type MergedInferenceProvider = Partial<Pick<AiModelInferenceProvider, 'pricing'>> & Partial<Pick<AiModel, 'contextWindow' | 'maxCompletionSize' | 'title'>> & {
+export type MergedInferenceProvider = Partial<Pick<AiModel, 'contextWindow' | 'maxCompletionSize' | 'title'>> & {
+    pricing?: AiModelPricing
     // The endpoint's own name. `title`, when a source reports one, is what that
     // endpoint calls the model, which is not always what the vendor calls it.
     inferenceProviderTitle: string
@@ -292,7 +295,7 @@ export type MergedInferenceProvider = Partial<Pick<AiModelInferenceProvider, 'pr
 
 // The resolved model, and nothing else. How it was resolved lives beside it in the
 // meta file, so a reader who wants the catalog is not wading through provenance.
-export type MergedModelFile = Partial<AiModel>
+export type MergedModelFile = Partial<PricedAiModel>
 
 // The account of one merge: which sources were consulted, which of them supplied
 // each field, whether they agreed, and where the authored file overrode them.
@@ -360,7 +363,7 @@ export type MergedModel = {
     modelId: string
     file: MergedModelFile
     meta: ModelMetaFile
-    model: AiModel | null
+    model: PricedAiModel | null
     drift: DriftFinding[]
     // Fields the merge worked out a default for that belong to the authored file. The
     // sync writes them there through the same API a person edits with, so the default

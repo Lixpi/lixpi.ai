@@ -9,8 +9,8 @@ import {
     warn,
 } from '@lixpi/debug-tools'
 import {
-    type AiModel,
-} from '@lixpi/constants'
+    type PricedAiModel,
+} from '@lixpi/usage-reporter'
 
 import { CatalogBaseIndex } from './base-index.ts'
 import { CatalogConfigApi } from './catalog-config-api.ts'
@@ -386,7 +386,7 @@ export class CatalogSync {
         for (const entry of usedFallback)
             warn(`NO SOURCE ${entry.modelId}: ${entry.detail.join(', ')} written from the schema fallback`)
 
-        const byProvider = new Map<ProviderDirectory, AiModel[]>()
+        const byProvider = new Map<ProviderDirectory, PricedAiModel[]>()
 
         for (const entry of merged) {
             if (!entry.model)

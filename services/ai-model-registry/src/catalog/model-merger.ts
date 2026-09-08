@@ -1,6 +1,6 @@
 import {
-    type AiModel,
-} from '@lixpi/constants'
+    type PricedAiModel,
+} from '@lixpi/usage-reporter'
 
 import {
     type CatalogSchema,
@@ -910,9 +910,9 @@ export class ModelMerger {
             ...(rateStatedOnTheModel !== undefined && { note: `The authored file states a rate on the model itself, which was ignored: rates belong to one endpoint and go under byInferenceProvider.<${activeProvider}>.pricing.` }),
         }
 
-        // Only a complete, included model becomes an AiModel. Anything else stays a
+        // Only a complete, included model becomes a catalog record. Anything else stays a
         // file on disk with its meta saying why.
-        let model: AiModel | null = null
+        let model: PricedAiModel | null = null
 
         if (status === 'written-to-database') {
             const now = Date.now()
@@ -920,7 +920,7 @@ export class ModelMerger {
                 ...values,
                 createdAt: now,
                 updatedAt: now,
-            } as unknown as AiModel)
+            } as unknown as PricedAiModel)
         }
 
         return {

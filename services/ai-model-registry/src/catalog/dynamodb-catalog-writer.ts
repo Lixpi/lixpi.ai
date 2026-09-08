@@ -7,8 +7,10 @@ import {
 } from '@lixpi/debug-tools'
 import {
     getDynamoDbTableStageName,
-    type AiModel,
 } from '@lixpi/constants'
+import {
+    type PricedAiModel,
+} from '@lixpi/usage-reporter'
 
 export type CatalogWriteResult = {
     processed: number
@@ -45,7 +47,7 @@ export class DynamoDbCatalogWriter {
         )
     }
 
-    private async readExisting(provider: string): Promise<AiModel[]> {
+    private async readExisting(provider: string): Promise<PricedAiModel[]> {
         const result = await this.dynamoDBService.queryItems({
             tableName: this.tableName,
             keyConditions: { provider },
@@ -53,12 +55,12 @@ export class DynamoDbCatalogWriter {
             origin: this.origin,
         })
 
-        return (result?.items ?? []) as AiModel[]
+        return (result?.items ?? []) as PricedAiModel[]
     }
 
     // Updates go one at a time so a single rejected item cannot fail a batch that
     // also carries good rows.
-    private async updateAll(models: AiModel[]): Promise<void> {
+    private async updateAll(models: PricedAiModel[]): Promise<void> {
         for (const model of models) {
             await this.dynamoDBService.putItem({
                 tableName: this.tableName,
@@ -68,7 +70,7 @@ export class DynamoDbCatalogWriter {
         }
     }
 
-    private async deleteAll(models: AiModel[]): Promise<void> {
+    private async deleteAll(models: PricedAiModel[]): Promise<void> {
         for (const model of models) {
             await this.dynamoDBService.deleteItems({
                 tableName: this.tableName,
@@ -83,7 +85,7 @@ export class DynamoDbCatalogWriter {
 
     async writeProvider(
         provider: string,
-        models: AiModel[],
+        models: PricedAiModel[],
     ): Promise<CatalogWriteResult> {
         const existing = await this.readExisting(provider)
         const existingIds = new Set(

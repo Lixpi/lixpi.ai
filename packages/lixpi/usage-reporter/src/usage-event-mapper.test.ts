@@ -5,14 +5,14 @@ import {
 } from 'vitest'
 
 import {
-    tokenUsageConfirm,
-    imageUsageConfirm,
-    videoUsageConfirm,
+    usageRecordForTextCall,
+    usageRecordForImageCall,
+    usageRecordForVideoCall,
 } from './usage-event-mapper.ts'
 import {
-    type UsageReport,
-    type ImageUsageReport,
-    type VideoUsageReport,
+    type TextCallSpend,
+    type ImageCallSpend,
+    type VideoCallSpend,
 } from './usage-reporter.ts'
 
 const eventMeta = { organizationId: 'org_1', userId: 'usr_1', workspaceId: 'ws_1' }
@@ -25,16 +25,16 @@ const head = {
     aiRequestFinishedAt: Date.UTC(2026, 0, 1),
 }
 
-describe('tokenUsageConfirm', () => {
+describe('usageRecordForTextCall', () => {
     const report = {
         ...head,
         prompt: { usageTokens: 700, cachedTokens: 100 },
         completion: { usageTokens: 112, reasoningTokens: 30 },
         total: { usageTokens: 812 },
-    } as unknown as UsageReport
+    } as unknown as TextCallSpend
 
-    it('maps tokens to a confirm request with the prompt/completion split (no cost)', () => {
-        const req = tokenUsageConfirm(report, 'wf_a1b2', 1)
+    it('maps tokens to a usage record with the prompt and completion split, and no cost', () => {
+        const req = usageRecordForTextCall(report, 'wf_a1b2', 1)
         expect(req).toMatchObject({
             providerRequestId: 'req_77',
             orgId: 'org_1',
@@ -53,14 +53,14 @@ describe('tokenUsageConfirm', () => {
     })
 })
 
-describe('imageUsageConfirm', () => {
+describe('usageRecordForImageCall', () => {
     const report = {
         ...head,
         image: { size: '1024x1024', quality: 'high', count: 1, pricePerImageResale: '0.05', purchasedFor: '0.04', soldToClientFor: '0.05' },
-    } as unknown as ImageUsageReport
+    } as unknown as ImageCallSpend
 
     it('maps an image call to count/size/quality dimensions', () => {
-        const req = imageUsageConfirm(report, 'wf_a1b2', 2)
+        const req = usageRecordForImageCall(report, 'wf_a1b2', 2)
         expect(req).toMatchObject({
             modality: 'image',
             measuringUnit: 'images',
@@ -70,13 +70,13 @@ describe('imageUsageConfirm', () => {
     })
 })
 
-describe('videoUsageConfirm', () => {
+describe('usageRecordForVideoCall', () => {
     it('maps a per-second (VEO) video call to durationSeconds + resolution', () => {
         const report = {
             ...head,
             video: { measuringUnit: 'seconds', durationSeconds: 8, resolution: '720p', aspectRatio: '16:9', purchasedFor: '0.64', soldToClientFor: '0.80' },
-        } as unknown as VideoUsageReport
-        const req = videoUsageConfirm(report, 'wf_a1b2', 3)
+        } as unknown as VideoCallSpend
+        const req = usageRecordForVideoCall(report, 'wf_a1b2', 3)
         expect(req).toMatchObject({
             modality: 'video',
             measuringUnit: 'seconds',
@@ -88,8 +88,8 @@ describe('videoUsageConfirm', () => {
         const report = {
             ...head,
             video: { measuringUnit: 'tokens', durationSeconds: 5, totalTokens: 1000, completionTokens: 1000, purchasedFor: '0.02', soldToClientFor: '0.03' },
-        } as unknown as VideoUsageReport
-        const req = videoUsageConfirm(report, 'wf_a1b2', 4)
+        } as unknown as VideoCallSpend
+        const req = usageRecordForVideoCall(report, 'wf_a1b2', 4)
         expect(req).toMatchObject({
             modality: 'video',
             measuringUnit: 'tokens',

@@ -95,8 +95,8 @@ const mocks = vi.hoisted(() => {
         }
     }
 
-    const metricsConfigFromEnv = vi.fn(() => ({}))
-    const MetricsClient = vi.fn()
+    const usageMeteringOptionsFromEnv = vi.fn(() => ({}))
+    const UsageMeteringClient = vi.fn()
 
     const log = vi.fn()
     const info = vi.fn()
@@ -160,8 +160,8 @@ const mocks = vi.hoisted(() => {
         startAssetMaintenanceWorker,
         CapabilityRunEventRelay,
         capabilityRunEventRelayStart,
-        metricsConfigFromEnv,
-        MetricsClient,
+        usageMeteringOptionsFromEnv,
+        UsageMeteringClient,
         log,
         info,
         infoStr,
@@ -276,9 +276,9 @@ vi.mock('./services/capability-run-event-log.ts', () => ({
     CapabilityRunEventRelay: mocks.CapabilityRunEventRelay,
 }))
 
-vi.mock('./metrics/metrics-client.ts', () => ({
-    MetricsClient: mocks.MetricsClient,
-    metricsConfigFromEnv: mocks.metricsConfigFromEnv,
+vi.mock('@lixpi/usage-reporter', () => ({
+    UsageMeteringClient: mocks.UsageMeteringClient,
+    usageMeteringOptionsFromEnv: mocks.usageMeteringOptionsFromEnv,
 }))
 
 async function loadServer(): Promise<void> {
@@ -333,8 +333,8 @@ function resetMockState(): void {
     mocks.setLlmModule.mockClear()
     mocks.setPromptReferenceModuleCatalog.mockClear()
     mocks.startAssetMaintenanceWorker.mockClear()
-    mocks.metricsConfigFromEnv.mockClear()
-    mocks.MetricsClient.mockClear()
+    mocks.usageMeteringOptionsFromEnv.mockClear()
+    mocks.UsageMeteringClient.mockClear()
     mocks.log.mockClear()
     mocks.info.mockClear()
     mocks.infoStr.mockClear()
@@ -413,7 +413,7 @@ describe('services/api server startup', () => {
         })
         expect(mocks.createLlmModule).toHaveBeenCalledWith({
             natsService: mocks.natsInstance,
-            metrics: expect.anything(),
+            usageMetering: expect.anything(),
         })
         expect(mocks.getLlmModule()?.seedCapabilities).toHaveBeenCalledTimes(1)
         expect(mocks.setPromptReferenceModuleCatalog).toHaveBeenCalledWith(mocks.capabilityModuleCatalog)

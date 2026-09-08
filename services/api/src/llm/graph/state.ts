@@ -3,7 +3,6 @@ import {
     type CapabilityPromptReference,
     type CapabilityReasoningModelVariant,
     type AiModelInferenceCapabilities,
-    type AiModelPricing,
     type ImageReferenceCapabilities,
     type MediaBranchCandidateSnapshot,
     type MediaBranchVlmResolution,
@@ -19,6 +18,13 @@ import {
     type WorkspaceContextSnapshot,
 } from '@lixpi/constants'
 import {
+    type ImageUsageCounts,
+    type PricedModelFields,
+    type TokenUsageCounts,
+    type UsageEventMeta,
+    type VideoUsageCounts,
+} from '@lixpi/usage-reporter'
+import {
     type CapabilityMediaExecutionPlan,
     type SealedResolvedCapabilityPlan,
 } from '@lixpi/capability-system/backend'
@@ -30,41 +36,12 @@ import {
     type ImageReferenceAdaptation,
 } from '../providers/image-reference-adapters.ts'
 
-export type Usage = {
-    promptTokens: number
-    promptAudioTokens: number
-    promptCachedTokens: number
-    completionTokens: number
-    completionAudioTokens: number
-    completionReasoningTokens: number
-    totalTokens: number
-}
-
-export type ImageUsage = {
-    generatedCount: number
-    size: string
-    quality: string
-}
-
-export type VideoUsage = {
-    durationSeconds: number
-    resolution: string
-    aspectRatio: string
-    // Vendor token usage for token-metered video providers (e.g. Seedance via
-    // ModelArk). Absent for per-second providers like VEO. Metrics branches on
-    // pricing.video.measuringUnit (see usage-reporter.reportVideoUsage).
-    completionTokens?: number
-    totalTokens?: number
-}
-
-export type EventMeta = {
-    userId?: string
-    stripeCustomerId?: string
-    organizationId?: string
-    workspaceId?: string
-    aiChatThreadId?: string
-    [key: string]: unknown
-}
+// What a call consumed and who it belongs to are metering's vocabulary, so the graph
+// borrows the definitions rather than keeping a second copy that can drift.
+export type Usage = TokenUsageCounts
+export type ImageUsage = ImageUsageCounts
+export type VideoUsage = VideoUsageCounts
+export type EventMeta = UsageEventMeta
 
 export type AiModelMetaInfo = {
     provider: string
@@ -78,12 +55,10 @@ export type AiModelMetaInfo = {
     videoMaxReferenceImages?: number
     // Rates are per inference provider, because the same model costs different
     // amounts through a vendor API and through AWS Bedrock. Metering reads the block
-    // for the endpoint the request went to (see activeInferenceProviderPricing).
+    // for the endpoint the request went to; see pricingForCalledInferenceProvider in
+    // @lixpi/usage-reporter, which owns this shape.
     inferenceProviderCalledByThePlatform?: string
-    inferenceProviders?: Record<string, {
-        isCalledByThePlatform?: boolean
-        pricing?: AiModelPricing
-    }>
+    inferenceProviders?: PricedModelFields['inferenceProviders']
     [key: string]: unknown
 }
 

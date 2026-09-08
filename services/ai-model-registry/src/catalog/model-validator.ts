@@ -1,8 +1,10 @@
 import {
-    activeInferenceProviderPricing,
-    type AiModel,
     type AiModelInputKind,
 } from '@lixpi/constants'
+import {
+    pricingForCalledInferenceProvider,
+    type PricedAiModel,
+} from '@lixpi/usage-reporter'
 
 // Shape rules a merged model must satisfy before it reaches DynamoDB. These are
 // checks, not data, which is why they stay in code while every value they check
@@ -39,7 +41,7 @@ const REQUIRED_FIELDS = [
     'inferenceProviders',
 ] as const
 
-export const assertRequiredFields = (model: AiModel): AiModel => {
+export const assertRequiredFields = (model: PricedAiModel): PricedAiModel => {
     const missing = REQUIRED_FIELDS.filter(field => model[field] === undefined)
 
     if (missing.length > 0)
@@ -54,13 +56,13 @@ export const assertRequiredFields = (model: AiModel): AiModel => {
     // Rates belong to an endpoint, so the one the platform is calling is the one that
     // has to carry them. What the other endpoints cost is recorded but does not decide
     // whether this model can be billed.
-    if (!activeInferenceProviderPricing(model)?.currency)
+    if (!pricingForCalledInferenceProvider(model)?.currency)
         throw new Error(`MODEL_PRICING_INVALID:${model.provider}:${model.model}`)
 
     return model
 }
 
-export const assertValidInferenceCapabilities = (model: AiModel): AiModel => {
+export const assertValidInferenceCapabilities = (model: PricedAiModel): PricedAiModel => {
     const profile = model.inferenceCapabilities
 
     if (!profile)
@@ -96,7 +98,7 @@ export const assertValidInferenceCapabilities = (model: AiModel): AiModel => {
     return model
 }
 
-export const assertValidImageReferenceCapabilities = (model: AiModel): AiModel => {
+export const assertValidImageReferenceCapabilities = (model: PricedAiModel): PricedAiModel => {
     const supportsImageGeneration = model.modalities.some(({ modality }) => modality === 'image_generation')
     const profile = model.imageReferenceCapabilities
 
@@ -150,7 +152,7 @@ export const assertValidImageReferenceCapabilities = (model: AiModel): AiModel =
     return model
 }
 
-export const assertValidVideoGenerationControls = (model: AiModel): AiModel => {
+export const assertValidVideoGenerationControls = (model: PricedAiModel): PricedAiModel => {
     const supportsVideoGeneration = model.modalities.some(({ modality }) => modality === 'video_generation')
     const controls = model.videoGenerationControls
 
@@ -185,7 +187,7 @@ export const assertValidVideoGenerationControls = (model: AiModel): AiModel => {
     return model
 }
 
-export const validateModel = (model: AiModel): AiModel => assertValidVideoGenerationControls(
+export const validateModel = (model: PricedAiModel): PricedAiModel => assertValidVideoGenerationControls(
     assertValidImageReferenceCapabilities(
         assertValidInferenceCapabilities(
             assertRequiredFields(model),

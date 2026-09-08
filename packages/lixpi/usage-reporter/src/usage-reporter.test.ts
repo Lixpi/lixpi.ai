@@ -6,8 +6,8 @@ import {
 
 import { UsageReporter } from './usage-reporter.ts'
 import {
-    type AiModelMetaInfo,
-} from '../graph/state.ts'
+    type MeteredAiModel,
+} from './types.ts'
 
 const reporter = new UsageReporter()
 
@@ -29,7 +29,7 @@ const veoMeta = {
             pricing: { currency: 'USD', video: { measuringUnit: 'seconds', pricePer: '1', price: '0.40' } },
         },
     },
-} as unknown as AiModelMetaInfo
+} as unknown as MeteredAiModel
 
 const seedanceMeta = {
     provider: 'BytePlus',
@@ -42,11 +42,11 @@ const seedanceMeta = {
             pricing: { currency: 'USD', video: { measuringUnit: 'tokens', pricePer: '1000000', price: '4.30' } },
         },
     },
-} as unknown as AiModelMetaInfo
+} as unknown as MeteredAiModel
 
-describe('UsageReporter.reportVideoUsage', () => {
+describe('UsageReporter.priceVideoCall', () => {
     it('bills VEO per second (unchanged): price-per-second × duration', () => {
-        const report = reporter.reportVideoUsage({
+        const report = reporter.priceVideoCall({
             ...baseArgs,
             aiModelMetaInfo: veoMeta,
             durationSeconds: 8,
@@ -62,7 +62,7 @@ describe('UsageReporter.reportVideoUsage', () => {
     })
 
     it('bills Seedance per token: total_tokens × price / pricePer', () => {
-        const report = reporter.reportVideoUsage({
+        const report = reporter.priceVideoCall({
             ...baseArgs,
             aiModelMetaInfo: seedanceMeta,
             durationSeconds: 5,
@@ -83,7 +83,7 @@ describe('UsageReporter.reportVideoUsage', () => {
     })
 
     it('treats a token-metered model with no token usage as zero cost', () => {
-        const report = reporter.reportVideoUsage({
+        const report = reporter.priceVideoCall({
             ...baseArgs,
             aiModelMetaInfo: seedanceMeta,
             durationSeconds: 5,

@@ -8,8 +8,8 @@ import {
 } from '@lixpi/capability-system/backend'
 
 import {
-    type MetricsClient,
-} from './metrics/metrics-client.ts'
+    type UsageMeteringClient,
+} from '@lixpi/usage-reporter'
 import {
     type ImageRouter,
 } from './llm/tools/image-router.ts'
@@ -28,7 +28,7 @@ export type InstalledCapabilityDependencies = {
     natsService: NatsService
     imageRouter: ImageRouter
     characterCreatorRuntime: CharacterCreatorRuntimePorts
-    metrics?: MetricsClient
+    usageMetering?: UsageMeteringClient
 }
 
 export const createDefaultCapabilityModuleCatalog = (dependencies: InstalledCapabilityDependencies): CapabilityModuleCatalog => {
