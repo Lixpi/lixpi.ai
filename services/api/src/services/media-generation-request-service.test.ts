@@ -177,7 +177,10 @@ const unresolvedBinding = (
     candidateAssetIds: string[],
 ): UnresolvedReferenceBinding => ({
     bindingId,
-    promptRange: { from: 0, to: originalText.length },
+    promptRange: {
+        from: 0,
+        to: originalText.length,
+    },
     originalText,
     matcherVersion: 'bounded-local-v1',
     candidates: candidateAssetIds.map((assetId, index) => ({
@@ -245,8 +248,17 @@ describe('media generation checkpoint safety', () => {
     it('accepts structured prompt, stable references, and model configuration', () => {
         expect(() =>
             assertSafeMediaGenerationCheckpoint({
-                promptDocument: { type: 'doc', content: [{ type: 'text', text: 'Animate REFERENCE_1' }] },
-                selectedReferences: [{ assetId: 'asset-1', nodeId: 'node-1' }],
+                promptDocument: {
+                    type: 'doc',
+                    content: [{
+                        type: 'text',
+                        text: 'Animate REFERENCE_1',
+                    }],
+                },
+                selectedReferences: [{
+                    assetId: 'asset-1',
+                    nodeId: 'node-1',
+                }],
                 modelSelection: { mediaModelIds: ['Google:veo-3.1'] },
             })
         ).not.toThrow()
@@ -258,9 +270,7 @@ describe('media generation checkpoint safety', () => {
         [{ configuration: { 'Byted_Token': 'secret' } }, 'MEDIA_REQUEST_CHECKPOINT_SECRET_FORBIDDEN:$.configuration.Byted_Token'],
         [{ selectedReferences: [{ preview: 'data:image/png;base64,AAAA' }] }, 'MEDIA_REQUEST_CHECKPOINT_MEDIA_BYTES_FORBIDDEN:$.selectedReferences[0].preview'],
         [{ payload: new Uint8Array([1, 2, 3]) }, 'MEDIA_REQUEST_CHECKPOINT_BINARY_FORBIDDEN:$.payload'],
-    ])('rejects secret or media-byte checkpoint payloads', (checkpoint, expected) => {
-        expect(() => assertSafeMediaGenerationCheckpoint(checkpoint)).toThrow(expected)
-    })
+    ])('rejects secret or media-byte checkpoint payloads', (checkpoint, expected) => void expect(() => assertSafeMediaGenerationCheckpoint(checkpoint)).toThrow(expected))
 })
 
 describe('media generation reference resolution actions', () => {
@@ -449,12 +459,32 @@ describe('media generation request lineage binding', () => {
         mocks.operationProjection.project.mockResolvedValue({
             generationRequestId: 'media-request-1',
             layoutRevision: 10,
-            nodes: [{ nodeId: run.outputNodeId!, position: { x: 0, y: 0 }, dimensions: { width: 800, height: 800 } }],
+            nodes: [{
+                nodeId: run.outputNodeId!,
+                position: {
+                    x: 0,
+                    y: 0,
+                },
+                dimensions: {
+                    width: 800,
+                    height: 800,
+                },
+            }],
         })
         mocks.canvasProjection.upsertLineage.mockResolvedValue({
             generationRequestId: 'media-request-1',
             layoutRevision: 11,
-            nodes: [{ nodeId: 'branch-origin-1', position: { x: -200, y: 0 }, dimensions: { width: 120, height: 60 } }],
+            nodes: [{
+                nodeId: 'branch-origin-1',
+                position: {
+                    x: -200,
+                    y: 0,
+                },
+                dimensions: {
+                    width: 120,
+                    height: 60,
+                },
+            }],
         })
         const eventLog = { append: vi.fn(async () => undefined) }
         const onCanvasGeometryProjected = vi.fn()
@@ -556,7 +586,10 @@ describe('media generation request terminal settlement', () => {
     })
 
     it('flushes the accumulated JetStream trace to DynamoDB once when the run finishes', async () => {
-        const run = { ...pendingRun(), status: 'running' as const }
+        const run = {
+            ...pendingRun(),
+            status: 'running' as const,
+        }
         const request: MediaGenerationRequest = {
             ...deferredRequest(),
             status: 'running',
@@ -573,7 +606,10 @@ describe('media generation request terminal settlement', () => {
                 status: 'completed' as const,
                 trace: {
                     traceVersion: 'execution-trace-v1' as const,
-                    facts: [{ label: 'Overall score', value: '0.91' }],
+                    facts: [{
+                        label: 'Overall score',
+                        value: '0.91',
+                    }],
                 },
             }],
         }
@@ -588,7 +624,10 @@ describe('media generation request terminal settlement', () => {
                     sequence: request.revision,
                     status: 'MEDIA_GENERATION_PROGRESS',
                     requestRevision: request.revision,
-                    payload: { generationRun: 0, progress: streamedProgress },
+                    payload: {
+                        generationRun: 0,
+                        progress: streamedProgress,
+                    },
                     createdAt: 2,
                 },
                 streamSequence: 12,
@@ -675,7 +714,10 @@ describe('media generation request terminal settlement', () => {
         })
         expect(result.runs[0]).not.toHaveProperty('problem')
         expect(mocks.mediaRequestModel.transition).toHaveBeenCalledWith({
-            request: expect.objectContaining({ status: 'completed', revision: 3 }),
+            request: expect.objectContaining({
+                status: 'completed',
+                revision: 3,
+            }),
             expectedRevision: 2,
         })
         expect(mocks.operationProjection.removeOne).toHaveBeenCalledWith(expect.objectContaining({
@@ -729,7 +771,10 @@ describe('media generation request terminal settlement', () => {
         const cancelledRequest: MediaGenerationRequest = {
             ...deferredRequest(),
             status: 'cancelled',
-            runs: [{ ...pendingRun(), status: 'running' }],
+            runs: [{
+                ...pendingRun(),
+                status: 'running',
+            }],
         }
         mocks.mediaRequestModel.get.mockResolvedValue(cancelledRequest)
         const service = new MediaGenerationRequestService()
@@ -769,7 +814,10 @@ describe('media generation request terminal settlement', () => {
             ...deferredRequest(),
             status: 'running',
             revision: 5,
-            runs: [{ ...pendingRun(), status: 'running' }],
+            runs: [{
+                ...pendingRun(),
+                status: 'running',
+            }],
         }
         const eventLog = {
             append: vi.fn(async () => undefined),
@@ -785,9 +833,15 @@ describe('media generation request terminal settlement', () => {
             userId: activeRequest.userId,
         })
 
-        expect(result).toMatchObject({ status: 'cancelled', revision: 6 })
+        expect(result).toMatchObject({
+            status: 'cancelled',
+            revision: 6,
+        })
         expect(mocks.mediaRequestModel.transition).toHaveBeenCalledWith({
-            request: expect.objectContaining({ status: 'cancelled', revision: 6 }),
+            request: expect.objectContaining({
+                status: 'cancelled',
+                revision: 6,
+            }),
             expectedRevision: 5,
         })
         expect(mocks.operationProjection.removeAll).toHaveBeenCalledWith({
@@ -811,7 +865,10 @@ describe('media generation request terminal settlement', () => {
             ...deferredRequest(),
             status: 'completed-with-errors',
             revision: 7,
-            runs: [{ ...pendingRun(), status: 'failed' }],
+            runs: [{
+                ...pendingRun(),
+                status: 'failed',
+            }],
         }
         mocks.mediaRequestModel.getAuthorized.mockResolvedValue(terminalRequest)
 
@@ -926,7 +983,10 @@ describe('media generation run progress trace merging', () => {
             role: 'media',
             provider: 'OpenAI',
             modelId: 'OpenAI:gpt-image-2',
-            params: [{ name: 'size', value: '1024x1536' }],
+            params: [{
+                name: 'size',
+                value: '1024x1536',
+            }],
         }],
     }
 
@@ -972,9 +1032,7 @@ describe('media generation run progress trace merging', () => {
         })
     }
 
-    beforeEach(() => {
-        mocks.mediaRequestModel.transition.mockReset()
-    })
+    beforeEach(() => void mocks.mediaRequestModel.transition.mockReset())
 
     it('keeps a recorded trace when a later progress write carries none', async () => {
         const next = await recordProgress([tracedItem(renderTrace)], [tracedItem()])
@@ -983,7 +1041,13 @@ describe('media generation run progress trace merging', () => {
     })
 
     it('replaces an older trace with the newer one', async () => {
-        const newerTrace = { ...renderTrace, facts: [{ label: 'Overall score', value: '0.91' }] }
+        const newerTrace = {
+            ...renderTrace,
+            facts: [{
+                label: 'Overall score',
+                value: '0.91',
+            }],
+        }
 
         const next = await recordProgress([tracedItem(renderTrace)], [tracedItem(newerTrace)])
 

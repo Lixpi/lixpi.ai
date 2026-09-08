@@ -16,21 +16,61 @@ import { Easing } from '../animation/index.ts'
 
 // The 8 phase positions (mirrored from source to verify against)
 const EXPECTED_PHASE_POSITIONS = [
-    { x: 0.8, y: 0.1 },
-    { x: 0.6, y: 0.2 },
-    { x: 0.35, y: 0.25 },
-    { x: 0.25, y: 0.6 },
-    { x: 0.2, y: 0.9 },
-    { x: 0.4, y: 0.8 },
-    { x: 0.65, y: 0.75 },
-    { x: 0.75, y: 0.4 },
+    {
+        x: 0.8,
+        y: 0.1,
+    },
+    {
+        x: 0.6,
+        y: 0.2,
+    },
+    {
+        x: 0.35,
+        y: 0.25,
+    },
+    {
+        x: 0.25,
+        y: 0.6,
+    },
+    {
+        x: 0.2,
+        y: 0.9,
+    },
+    {
+        x: 0.4,
+        y: 0.8,
+    },
+    {
+        x: 0.65,
+        y: 0.75,
+    },
+    {
+        x: 0.75,
+        y: 0.4,
+    },
 ]
 
 const EXPECTED_COLORS = [
-    { r: 0xff, g: 0xf5, b: 0xfa }, // whisper pink
-    { r: 0xf5, g: 0xef, b: 0xf9 }, // whisper lavender
-    { r: 0xe6, g: 0xe9, b: 0xf6 }, // whisper periwinkle
-    { r: 0xf3, g: 0xe4, b: 0xf2 }, // whisper orchid
+    {
+        r: 0xff,
+        g: 0xf5,
+        b: 0xfa,
+    }, // whisper pink
+    {
+        r: 0xf5,
+        g: 0xef,
+        b: 0xf9,
+    }, // whisper lavender
+    {
+        r: 0xe6,
+        g: 0xe9,
+        b: 0xf6,
+    }, // whisper periwinkle
+    {
+        r: 0xf3,
+        g: 0xe4,
+        b: 0xf2,
+    }, // whisper orchid
 ]
 
 const BITMAP_WIDTH = 60
@@ -42,9 +82,10 @@ type RendererAny = ShiftingGradientRenderer & Record<string, any>
 
 const renderers = new Set<ShiftingGradientRenderer>()
 
-function getShiftingGradientRenderer(colors?: ConstructorParameters<typeof ShiftingGradientRenderer>[0]): ShiftingGradientRenderer {
+const getShiftingGradientRenderer = (colors?: ConstructorParameters<typeof ShiftingGradientRenderer>[0]): ShiftingGradientRenderer => {
     const renderer = new ShiftingGradientRenderer(colors)
     renderers.add(renderer)
+
     return renderer
 }
 
@@ -55,7 +96,7 @@ function getShiftingGradientRenderer(colors?: ConstructorParameters<typeof Shift
 // Create a mock CanvasRenderingContext2D that happy-dom might not fully support.
 // The gradient renderer only uses createImageData/putImageData on the offscreen
 // canvas, and drawImage + smoothing settings on subscriber canvases.
-function createMockCanvasContext() {
+const createMockCanvasContext = () => {
     return {
         createImageData: (w: number, h: number) => ({
             data: new Uint8ClampedArray(w * h * 4),
@@ -76,38 +117,60 @@ function createMockCanvasContext() {
     }
 }
 
-function getRenderer(): RendererAny {
-    return getShiftingGradientRenderer() as RendererAny
-}
+const getRenderer = (): RendererAny => getShiftingGradientRenderer() as RendererAny
 
 // Create a canvas element with a patched getContext for happy-dom compatibility
-function createSubscriberCanvas(w = 200, h = 150): HTMLCanvasElement {
+const createSubscriberCanvas = (w = 200, h = 150): HTMLCanvasElement => {
     const canvas = document.createElement('canvas')
     canvas.width = w
     canvas.height = h
     canvas.getContext = ((id: string) => {
-        if (id === '2d') return createMockCanvasContext()
+        if (id === '2d')
+            return createMockCanvasContext()
+
         return null
     }) as typeof canvas.getContext
+
     return canvas
 }
 
 // Gather the 4 color-point positions for a given phase (same logic as source)
-function gatherPositions(phase: number): Array<{ x: number; y: number }> {
-    const result: Array<{ x: number; y: number }> = []
+const gatherPositions = (phase: number): Array<{
+    x: number
+    y: number
+}> => {
+    const result: Array<{
+        x: number
+        y: number
+    }> = []
+
     for (let i = 0; i < 4; i++) {
         let pos = phase + i * 2
+
         while (pos >= 8) pos -= 8
+
         result.push({ ...EXPECTED_PHASE_POSITIONS[pos] })
     }
+
     return result
 }
 
 // Read a pixel from the renderer's ImageData buffer
-function readPixel(renderer: RendererAny, x: number, y: number): { r: number; g: number; b: number; a: number } {
+const readPixel = (renderer: RendererAny, x: number, y: number): {
+    r: number
+    g: number
+    b: number
+    a: number
+} => {
     const data: Uint8ClampedArray = renderer.imageData.data
     const idx = (y * BITMAP_WIDTH + x) * 4
-    return { r: data[idx], g: data[idx + 1], b: data[idx + 2], a: data[idx + 3] }
+
+    return {
+        r: data[idx],
+        g: data[idx + 1],
+        b: data[idx + 2],
+        a: data[idx + 3],
+    }
 }
 
 // =============================================================================
@@ -118,7 +181,7 @@ let rafId = 0
 
 beforeEach(() => {
     rafId = 0
-    vi.stubGlobal('requestAnimationFrame', vi.fn(() => ++rafId))
+    vi.stubGlobal('requestAnimationFrame', vi.fn(() => void (++rafId)))
     vi.stubGlobal('cancelAnimationFrame', vi.fn())
 
     // Provide a mock OffscreenCanvas so the renderer constructor doesn't
@@ -145,12 +208,16 @@ beforeEach(() => {
     vi.spyOn(document, 'createElement').mockImplementation(
         ((tagName: string, options?: ElementCreationOptions) => {
             const el = origCreateElement(tagName, options)
+
             if (tagName === 'canvas') {
                 ;(el as HTMLCanvasElement).getContext = ((id: string) => {
-                    if (id === '2d') return createMockCanvasContext() as unknown as CanvasRenderingContext2D
+                    if (id === '2d')
+                        return createMockCanvasContext() as unknown as CanvasRenderingContext2D
+
                     return null
                 }) as typeof HTMLCanvasElement.prototype.getContext
             }
+
             return el
         }) as typeof document.createElement,
     )
@@ -158,6 +225,7 @@ beforeEach(() => {
 
 afterEach(() => {
     for (const renderer of renderers) renderer.destroy()
+
     renderers.clear()
     vi.restoreAllMocks()
     vi.unstubAllGlobals()
@@ -193,10 +261,26 @@ describe('ShiftingGradientRenderer — palette selection', () => {
         const renderer = getShiftingGradientRenderer(['#123456', '#654321', '#aabbcc', '#ccbbaa']) as RendererAny
 
         expect(renderer.colors).toEqual([
-            { r: 0x12, g: 0x34, b: 0x56 },
-            { r: 0x65, g: 0x43, b: 0x21 },
-            { r: 0xaa, g: 0xbb, b: 0xcc },
-            { r: 0xcc, g: 0xbb, b: 0xaa },
+            {
+                r: 0x12,
+                g: 0x34,
+                b: 0x56,
+            },
+            {
+                r: 0x65,
+                g: 0x43,
+                b: 0x21,
+            },
+            {
+                r: 0xaa,
+                g: 0xbb,
+                b: 0xcc,
+            },
+            {
+                r: 0xcc,
+                g: 0xbb,
+                b: 0xaa,
+            },
         ])
         renderer.destroy()
     })
@@ -222,6 +306,7 @@ describe('ShiftingGradientRenderer — initial state', () => {
     it('loads exactly 4 gradient colors', () => {
         const r = getRenderer()
         expect(r.colors).toHaveLength(4)
+
         for (let i = 0; i < 4; i++) {
             expect(r.colors[i]).toEqual(EXPECTED_COLORS[i])
         }
@@ -276,6 +361,7 @@ describe('ShiftingGradientRenderer — nextPhase', () => {
     it('decrements phase with wrap from the initial phase', () => {
         const r = getRenderer()
         const expectedSequence = [3, 2, 1, 0, 7, 6, 5, 4]
+
         for (const expected of expectedSequence) {
             r.nextPhase()
             expect(r.currentPhase).toBe(expected)
@@ -285,12 +371,15 @@ describe('ShiftingGradientRenderer — nextPhase', () => {
     it('completes a full cycle back to original phase', () => {
         const r = getRenderer()
         expect(r.currentPhase).toBe(INITIAL_PHASE)
+
         for (let i = 0; i < 8; i++) r.nextPhase()
+
         expect(r.currentPhase).toBe(INITIAL_PHASE)
     })
 
     it('sets phaseFrom = (phaseTo + 1) % 8 after each transition', () => {
         const r = getRenderer()
+
         for (let i = 0; i < 8; i++) {
             r.nextPhase()
             expect(r.phaseFrom).toBe((r.phaseTo + 1) % 8)
@@ -351,6 +440,7 @@ describe('ShiftingGradientRenderer — getInterpolatedPositions', () => {
 
     it('always returns exactly 4 positions', () => {
         const r = getRenderer()
+
         for (let i = 0; i < 8; i++) {
             r.nextPhase()
             r.animationProgress = 1
@@ -360,9 +450,11 @@ describe('ShiftingGradientRenderer — getInterpolatedPositions', () => {
 
     it('all position coordinates are in [0, 1]', () => {
         const r = getRenderer()
+
         for (let i = 0; i < 8; i++) {
             r.nextPhase()
             r.animationProgress = 1
+
             for (const pos of r.getInterpolatedPositions()) {
                 expect(pos.x).toBeGreaterThanOrEqual(0)
                 expect(pos.x).toBeLessThanOrEqual(1)
@@ -413,6 +505,7 @@ describe('ShiftingGradientRenderer — easing', () => {
     it('easing is monotonically increasing', () => {
         const r = getRenderer()
         let prev = -1
+
         for (let t = 0; t <= 1; t += 0.01) {
             const val = r.easingInterpolator(t)
             expect(val).toBeGreaterThanOrEqual(prev)
@@ -422,6 +515,7 @@ describe('ShiftingGradientRenderer — easing', () => {
 
     it('easing output stays within [0, 1]', () => {
         const r = getRenderer()
+
         for (let t = 0; t <= 1; t += 0.01) {
             const val = r.easingInterpolator(t)
             expect(val).toBeGreaterThanOrEqual(0)
@@ -452,6 +546,7 @@ describe('ShiftingGradientRenderer — rendered pixels', () => {
     it('all pixels have alpha = 255', () => {
         const r = getRenderer()
         const data = r.imageData.data as Uint8ClampedArray
+
         for (let i = 3; i < data.length; i += 4) {
             expect(data[i]).toBe(255)
         }
@@ -460,6 +555,7 @@ describe('ShiftingGradientRenderer — rendered pixels', () => {
     it('all RGB values are in valid range [0, 255]', () => {
         const r = getRenderer()
         const data = r.imageData.data as Uint8ClampedArray
+
         for (let i = 0; i < data.length; i++) {
             expect(data[i]).toBeGreaterThanOrEqual(0)
             expect(data[i]).toBeLessThanOrEqual(255)
@@ -543,7 +639,11 @@ describe('ShiftingGradientRenderer — swirl distortion', () => {
         const positions = r.getInterpolatedPositions()
 
         // Manual IDW at (0.5, 0.5) — identical with or without swirl
-        let rSum = 0, gSum = 0, bSum = 0, wSum = 0
+        let rSum = 0
+        let gSum = 0
+        let bSum = 0
+        let wSum = 0
+
         for (let i = 0; i < 4; i++) {
             const dx = 0.5 - positions[i].x
             const dy = 0.5 - positions[i].y
@@ -791,7 +891,11 @@ describe('ShiftingGradientRenderer — visibility', () => {
 
 describe('ShiftingGradientRenderer — pattern', () => {
     it('cancels a pending pattern on disposal and ignores its late result', async () => {
-        const images: Array<{ onload: (() => void) | null; onerror: (() => void) | null; src: string }> = []
+        const images: Array<{
+            onload: (() => void) | null
+            onerror: (() => void) | null
+            src: string
+        }> = []
         vi.stubGlobal(
             'Image',
             class {
@@ -814,7 +918,11 @@ describe('ShiftingGradientRenderer — pattern', () => {
     })
 
     it('keeps a newer pattern when requests resolve out of order', async () => {
-        const images: Array<{ onload: (() => void) | null; onerror: (() => void) | null; src: string }> = []
+        const images: Array<{
+            onload: (() => void) | null
+            onerror: (() => void) | null
+            src: string
+        }> = []
         vi.stubGlobal(
             'Image',
             class {
@@ -1001,6 +1109,7 @@ describe('ShiftingGradientRenderer — render determinism', () => {
             r.nextPhase()
             r.animationProgress = 1
         }
+
         r.renderGradient()
         const afterFullCycle = new Uint8ClampedArray(r.imageData.data)
 
@@ -1022,12 +1131,15 @@ describe('ShiftingGradientRenderer — render determinism', () => {
         for (let i = 0; i < 8; i++) {
             for (let j = i + 1; j < 8; j++) {
                 let differ = false
+
                 for (let k = 0; k < snapshots[i].length; k++) {
                     if (snapshots[i][k] !== snapshots[j][k]) {
                         differ = true
+
                         break
                     }
                 }
+
                 expect(differ).toBe(true)
             }
         }
@@ -1060,11 +1172,15 @@ describe('ShiftingGradientRenderer — phase position coverage', () => {
 
             // All should be distinct (by reference to EXPECTED_PHASE_POSITIONS indices)
             const indices = new Set<number>()
+
             for (let i = 0; i < 4; i++) {
                 let idx = phase + i * 2
+
                 while (idx >= 8) idx -= 8
+
                 indices.add(idx)
             }
+
             expect(indices.size).toBe(4)
         }
     })
@@ -1097,11 +1213,21 @@ describe('ShiftingGradientRenderer — animation progress', () => {
         // Mid should differ from both start and end (whole-buffer comparison)
         let diffFromStart = false
         let diffFromEnd = false
+
         for (let i = 0; i < midData.length; i++) {
-            if (midData[i] !== startData[i]) diffFromStart = true
-            if (midData[i] !== endData[i]) diffFromEnd = true
-            if (diffFromStart && diffFromEnd) break
+            if (midData[i] !== startData[i])
+                diffFromStart = true
+
+            if (midData[i] !== endData[i])
+                diffFromEnd = true
+
+            if (
+                diffFromStart
+                && diffFromEnd
+            )
+                break
         }
+
         expect(diffFromStart).toBe(true)
         expect(diffFromEnd).toBe(true)
     })
@@ -1112,7 +1238,10 @@ describe('ShiftingGradientRenderer — animation progress', () => {
 // =============================================================================
 
 describe('createShiftingGradientBackground', () => {
-    let mockIntersectionObserverInstances: Array<{ observe: ReturnType<typeof vi.fn>; disconnect: ReturnType<typeof vi.fn> }>
+    let mockIntersectionObserverInstances: Array<{
+        observe: ReturnType<typeof vi.fn>
+        disconnect: ReturnType<typeof vi.fn>
+    }>
     let mockResizeObserverInstances: Array<{
         observe: ReturnType<typeof vi.fn>
         disconnect: ReturnType<typeof vi.fn>
@@ -1158,7 +1287,14 @@ describe('createShiftingGradientBackground', () => {
     it('creates a canvas element inside the container', () => {
         const container = document.createElement('div')
         Object.defineProperty(container, 'getBoundingClientRect', {
-            value: () => ({ width: 400, height: 300, top: 0, left: 0, right: 400, bottom: 300 }),
+            value: () => ({
+                width: 400,
+                height: 300,
+                top: 0,
+                left: 0,
+                right: 400,
+                bottom: 300,
+            }),
         })
 
         const result = createShiftingGradientBackground(container)
@@ -1170,7 +1306,14 @@ describe('createShiftingGradientBackground', () => {
     it('canvas has the correct CSS class', () => {
         const container = document.createElement('div')
         Object.defineProperty(container, 'getBoundingClientRect', {
-            value: () => ({ width: 400, height: 300, top: 0, left: 0, right: 400, bottom: 300 }),
+            value: () => ({
+                width: 400,
+                height: 300,
+                top: 0,
+                left: 0,
+                right: 400,
+                bottom: 300,
+            }),
         })
 
         const result = createShiftingGradientBackground(container)
@@ -1182,17 +1325,40 @@ describe('createShiftingGradientBackground', () => {
         const container = document.createElement('div')
         const customColors: [string, string, string, string] = ['#DDECE7', '#C7DAD4', '#EEF8F5', '#D6E7E1']
         Object.defineProperty(container, 'getBoundingClientRect', {
-            value: () => ({ width: 400, height: 300, top: 0, left: 0, right: 400, bottom: 300 }),
+            value: () => ({
+                width: 400,
+                height: 300,
+                top: 0,
+                left: 0,
+                right: 400,
+                bottom: 300,
+            }),
         })
 
         const result = createShiftingGradientBackground(container, { colors: customColors })
         const customRenderer = (result as unknown as { renderer: RendererAny }).renderer
 
         expect(customRenderer.colors).toEqual([
-            { r: 0xdd, g: 0xec, b: 0xe7 },
-            { r: 0xc7, g: 0xda, b: 0xd4 },
-            { r: 0xee, g: 0xf8, b: 0xf5 },
-            { r: 0xd6, g: 0xe7, b: 0xe1 },
+            {
+                r: 0xdd,
+                g: 0xec,
+                b: 0xe7,
+            },
+            {
+                r: 0xc7,
+                g: 0xda,
+                b: 0xd4,
+            },
+            {
+                r: 0xee,
+                g: 0xf8,
+                b: 0xf5,
+            },
+            {
+                r: 0xd6,
+                g: 0xe7,
+                b: 0xe1,
+            },
         ])
         expect(getRenderer().colors).toEqual(EXPECTED_COLORS)
 
@@ -1205,7 +1371,14 @@ describe('createShiftingGradientBackground', () => {
         const existingChild = document.createElement('span')
         container.appendChild(existingChild)
         Object.defineProperty(container, 'getBoundingClientRect', {
-            value: () => ({ width: 400, height: 300, top: 0, left: 0, right: 400, bottom: 300 }),
+            value: () => ({
+                width: 400,
+                height: 300,
+                top: 0,
+                left: 0,
+                right: 400,
+                bottom: 300,
+            }),
         })
 
         const result = createShiftingGradientBackground(container)
@@ -1216,7 +1389,14 @@ describe('createShiftingGradientBackground', () => {
     it('sets up IntersectionObserver and ResizeObserver', () => {
         const container = document.createElement('div')
         Object.defineProperty(container, 'getBoundingClientRect', {
-            value: () => ({ width: 400, height: 300, top: 0, left: 0, right: 400, bottom: 300 }),
+            value: () => ({
+                width: 400,
+                height: 300,
+                top: 0,
+                left: 0,
+                right: 400,
+                bottom: 300,
+            }),
         })
 
         const result = createShiftingGradientBackground(container)
@@ -1228,7 +1408,14 @@ describe('createShiftingGradientBackground', () => {
     it('destroy removes canvas, disconnects observers, and unsubscribes', () => {
         const container = document.createElement('div')
         Object.defineProperty(container, 'getBoundingClientRect', {
-            value: () => ({ width: 400, height: 300, top: 0, left: 0, right: 400, bottom: 300 }),
+            value: () => ({
+                width: 400,
+                height: 300,
+                top: 0,
+                left: 0,
+                right: 400,
+                bottom: 300,
+            }),
         })
 
         const result = createShiftingGradientBackground(container)
@@ -1241,7 +1428,14 @@ describe('createShiftingGradientBackground', () => {
     it('triggerAnimation calls nextPhase on the renderer', () => {
         const container = document.createElement('div')
         Object.defineProperty(container, 'getBoundingClientRect', {
-            value: () => ({ width: 400, height: 300, top: 0, left: 0, right: 400, bottom: 300 }),
+            value: () => ({
+                width: 400,
+                height: 300,
+                top: 0,
+                left: 0,
+                right: 400,
+                bottom: 300,
+            }),
         })
 
         const result = createShiftingGradientBackground(container)
@@ -1285,9 +1479,19 @@ describe('createShiftingGradientBackground', () => {
     it('canvas dimensions account for device pixel ratio (capped at 2x)', () => {
         const container = document.createElement('div')
         Object.defineProperty(container, 'getBoundingClientRect', {
-            value: () => ({ width: 400, height: 300, top: 0, left: 0, right: 400, bottom: 300 }),
+            value: () => ({
+                width: 400,
+                height: 300,
+                top: 0,
+                left: 0,
+                right: 400,
+                bottom: 300,
+            }),
         })
-        Object.defineProperty(window, 'devicePixelRatio', { value: 3, configurable: true })
+        Object.defineProperty(window, 'devicePixelRatio', {
+            value: 3,
+            configurable: true,
+        })
 
         const result = createShiftingGradientBackground(container)
         // DPR capped at 2, so 400*2=800, 300*2=600
@@ -1295,7 +1499,10 @@ describe('createShiftingGradientBackground', () => {
         expect(result.canvas.height).toBe(600)
 
         result.destroy()
-        Object.defineProperty(window, 'devicePixelRatio', { value: 1, configurable: true })
+        Object.defineProperty(window, 'devicePixelRatio', {
+            value: 1,
+            configurable: true,
+        })
     })
 
     it('redraws immediately after resize so backing-store clears do not flicker', () => {
@@ -1303,9 +1510,19 @@ describe('createShiftingGradientBackground', () => {
         let height = 300
         const container = document.createElement('div')
         Object.defineProperty(container, 'getBoundingClientRect', {
-            value: () => ({ width, height, top: 0, left: 0, right: width, bottom: height }),
+            value: () => ({
+                width,
+                height,
+                top: 0,
+                left: 0,
+                right: width,
+                bottom: height,
+            }),
         })
-        Object.defineProperty(window, 'devicePixelRatio', { value: 1, configurable: true })
+        Object.defineProperty(window, 'devicePixelRatio', {
+            value: 1,
+            configurable: true,
+        })
 
         const result = createShiftingGradientBackground(container)
         const renderer = (result as unknown as { renderer: RendererAny }).renderer
@@ -1328,9 +1545,19 @@ describe('createShiftingGradientBackground', () => {
     it('does not rewrite the canvas backing store when observed size is unchanged', () => {
         const container = document.createElement('div')
         Object.defineProperty(container, 'getBoundingClientRect', {
-            value: () => ({ width: 400, height: 300, top: 0, left: 0, right: 400, bottom: 300 }),
+            value: () => ({
+                width: 400,
+                height: 300,
+                top: 0,
+                left: 0,
+                right: 400,
+                bottom: 300,
+            }),
         })
-        Object.defineProperty(window, 'devicePixelRatio', { value: 1, configurable: true })
+        Object.defineProperty(window, 'devicePixelRatio', {
+            value: 1,
+            configurable: true,
+        })
 
         const result = createShiftingGradientBackground(container)
         const renderer = (result as unknown as { renderer: RendererAny }).renderer
@@ -1351,7 +1578,14 @@ describe('createShiftingGradientBackground', () => {
     it('parses CSS pattern variables and forwards normalized setPattern options', async () => {
         const container = document.createElement('div')
         Object.defineProperty(container, 'getBoundingClientRect', {
-            value: () => ({ width: 400, height: 300, top: 0, left: 0, right: 400, bottom: 300 }),
+            value: () => ({
+                width: 400,
+                height: 300,
+                top: 0,
+                left: 0,
+                right: 400,
+                bottom: 300,
+            }),
         })
 
         const style = {
@@ -1409,9 +1643,11 @@ describe('ShiftingGradientRenderer — constants stability', () => {
         // Verify by rendering all phases and checking that gathered positions
         // match EXPECTED_PHASE_POSITIONS indices
         const r = getRenderer()
+
         for (let phase = 0; phase < 8; phase++) {
             // Move to this phase
             while (r.currentPhase !== phase) r.nextPhase()
+
             r.animationProgress = 1
             const positions = r.getInterpolatedPositions()
             const expected = gatherPositions(phase)
@@ -1445,11 +1681,19 @@ describe('ShiftingGradientRenderer — constants stability', () => {
 // =============================================================================
 
 describe('Conditional gradient creation — aggregation pattern', () => {
-    function createContainer(): HTMLDivElement {
+    const createContainer = (): HTMLDivElement => {
         const container = document.createElement('div')
         Object.defineProperty(container, 'getBoundingClientRect', {
-            value: () => ({ width: 400, height: 300, top: 0, left: 0, right: 400, bottom: 300 }),
+            value: () => ({
+                width: 400,
+                height: 300,
+                top: 0,
+                left: 0,
+                right: 400,
+                bottom: 300,
+            }),
         })
+
         return container
     }
 
@@ -1498,9 +1742,7 @@ describe('Conditional gradient creation — aggregation pattern', () => {
     it('REGRESSION: closure wrapper is always callable even when gradient is null', () => {
         // This is the CORRECT pattern — always a function, safe to call
         const gradient: { triggerAnimation: () => void } | null = null
-        const closure = () => {
-            gradient?.triggerAnimation()
-        }
+        const closure = () => void (gradient?.triggerAnimation())
 
         expect(typeof closure).toBe('function')
         // Calling it should not throw
@@ -1512,9 +1754,7 @@ describe('Conditional gradient creation — aggregation pattern', () => {
         const gradient = createShiftingGradientBackground(container)
         const renderer = (gradient as unknown as { renderer: RendererAny }).renderer
 
-        const closure = () => {
-            gradient?.triggerAnimation()
-        }
+        const closure = () => void (gradient?.triggerAnimation())
         expect(renderer.currentPhase).toBe(INITIAL_PHASE)
 
         closure()
@@ -1528,9 +1768,7 @@ describe('Conditional gradient creation — aggregation pattern', () => {
         const renderer = getRenderer()
 
         const initialPhase = renderer.currentPhase
-        const closure = () => {
-            gradient?.triggerAnimation()
-        }
+        const closure = () => void (gradient?.triggerAnimation())
 
         closure()
         expect(renderer.currentPhase).toBe(initialPhase)
@@ -1624,16 +1862,35 @@ describe('Conditional gradient creation — aggregation pattern', () => {
         const container = createContainer()
         const renderer = getRenderer()
 
-        const combinations: Array<{ threadEnabled: boolean; floatingEnabled: boolean }> = [
-            { threadEnabled: false, floatingEnabled: false },
-            { threadEnabled: false, floatingEnabled: true },
-            { threadEnabled: true, floatingEnabled: false },
-            { threadEnabled: true, floatingEnabled: true },
+        const combinations: Array<{
+            threadEnabled: boolean
+            floatingEnabled: boolean
+        }> = [
+            {
+                threadEnabled: false,
+                floatingEnabled: false,
+            },
+            {
+                threadEnabled: false,
+                floatingEnabled: true,
+            },
+            {
+                threadEnabled: true,
+                floatingEnabled: false,
+            },
+            {
+                threadEnabled: true,
+                floatingEnabled: true,
+            },
         ]
 
-        for (const { threadEnabled, floatingEnabled } of combinations) {
+        for (const {
+            threadEnabled,
+            floatingEnabled,
+        } of combinations) {
             // Reset phase for each combo
             while (renderer.currentPhase !== INITIAL_PHASE) renderer.nextPhase()
+
             renderer.animationProgress = 1
 
             const threadGradient = threadEnabled
@@ -1657,10 +1914,13 @@ describe('Conditional gradient creation — aggregation pattern', () => {
             expect(() => triggerGradientAnimation()).not.toThrow()
 
             for (const gradient of [threadGradient, floatingGradient]) {
-                if (!gradient) continue
+                if (!gradient)
+                    continue
+
                 const owned = (gradient as unknown as { renderer: RendererAny }).renderer
                 expect(owned.currentPhase).toBe(3)
             }
+
             expect(renderer.currentPhase).toBe(phaseBefore)
 
             threadGradient?.destroy()

@@ -19,7 +19,12 @@ describe('NodeShell', () => {
         const shell = new NodeShell({
             document,
             nodeId: 'node',
-            bounds: { x: 20, y: 30, width: 200, height: 100 },
+            bounds: {
+                x: 20,
+                y: 30,
+                width: 200,
+                height: 100,
+            },
             layer: 12,
             zoom: 2,
             className: 'custom-node',
@@ -28,10 +33,14 @@ describe('NodeShell', () => {
             onDragStart,
             resize: {
                 handles: ['top-left', 'bottom-right'],
-                measure: zoom => ({ size: 12 / zoom, offset: 6 / zoom }),
+                measure: zoom => ({
+                    size: 12 / zoom,
+                    offset: 6 / zoom,
+                }),
                 onPointerDown: onResize,
                 content: element => {
                     element.textContent = '+'
+
                     return releaseContent
                 },
             },
@@ -67,17 +76,27 @@ describe('NodeShell', () => {
             new NodeShell({
                 document,
                 nodeId: 'node',
-                bounds: { x: 0, y: 0, width: 20, height: 20 },
+                bounds: {
+                    x: 0,
+                    y: 0,
+                    width: 20,
+                    height: 20,
+                },
                 layer: 1,
                 zoom: 1,
                 onClick: vi.fn(),
                 onDragStart: vi.fn(),
                 resize: {
                     handles: ['left', 'right'],
-                    measure: () => ({ size: 10, offset: 5 }),
+                    measure: () => ({
+                        size: 10,
+                        offset: 5,
+                    }),
                     onPointerDown: vi.fn(),
                     content: (_element, corner) => {
-                        if (corner === 'right') throw new Error('content failed')
+                        if (corner === 'right')
+                            throw new Error('content failed')
+
                         return dispose
                     },
                 },

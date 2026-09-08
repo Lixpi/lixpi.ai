@@ -17,6 +17,28 @@ export const defaultAttrs = {
     status: 'active',
 }
 
+const setupContentFocus = (
+    contentDOM,
+    view,
+    getPos,
+): void => {
+    contentDOM.addEventListener('mousedown', () => {
+        if (!view.editable)
+            return
+
+        view.focus()
+        const pos = getPos()
+
+        if (pos !== undefined) {
+            const $pos = view.state.doc.resolve(pos + 1)
+            const selection = Selection.near($pos, 1)
+            view.dispatch(
+                view.state.tr.setSelection(selection),
+            )
+        }
+    })
+}
+
 // Define the node view for AI chat thread
 export const aiChatThreadNodeView = (
     node,
@@ -105,27 +127,4 @@ export const aiChatThreadNodeView = (
             // No-op
         },
     }
-}
-
-// Helper function to setup content focus
-function setupContentFocus(
-    contentDOM,
-    view,
-    getPos,
-) {
-    contentDOM.addEventListener('mousedown', () => {
-        if (!view.editable)
-            return
-
-        view.focus()
-        const pos = getPos()
-
-        if (pos !== undefined) {
-            const $pos = view.state.doc.resolve(pos + 1)
-            const selection = Selection.near($pos, 1)
-            view.dispatch(
-                view.state.tr.setSelection(selection),
-            )
-        }
-    })
 }

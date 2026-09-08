@@ -65,13 +65,14 @@ describe('AI model subject registration', () => {
 })
 
 describe('GET_AVAILABLE_MODELS handler', () => {
-    afterEach(() => {
-        mocks.aiModel.getAvailableAiModels.mockReset()
-    })
+    afterEach(() => void mocks.aiModel.getAvailableAiModels.mockReset())
 
     it('replies with the catalog returned by AiModel.getAvailableAiModels', async () => {
         const catalog = {
-            models: [{ provider: 'Anthropic', model: 'claude-sonnet-4-6' }],
+            models: [{
+                provider: 'Anthropic',
+                model: 'claude-sonnet-4-6',
+            }],
             defaultModels: { reasoning: 'Anthropic:claude-sonnet-4-6' },
             mediaGenerationConfigMatrix: { groups: [] },
         }
@@ -95,9 +96,7 @@ describe('GET_AVAILABLE_MODELS handler', () => {
 describe('MODELS_SYNC_COMPLETED handler', () => {
     let infoSpy: ReturnType<typeof vi.spyOn> | null = null
 
-    beforeEach(() => {
-        infoSpy = vi.spyOn(mocks, 'info')
-    })
+    beforeEach(() => void (infoSpy = vi.spyOn(mocks, 'info')))
 
     afterEach(() => {
         infoSpy?.mockRestore()

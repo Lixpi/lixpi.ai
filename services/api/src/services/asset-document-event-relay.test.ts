@@ -10,13 +10,9 @@ import {
 import { AssetDocumentEventAuthorizationCache } from './asset-document-event-relay.ts'
 import { withoutLayout } from '@lixpi/test-utils'
 
-const expectSourceToContain = (source: string, snippet: string, label: string): void => {
-    expect(withoutLayout(source).includes(withoutLayout(snippet)), `${label} should contain:\n${snippet}`).toBe(true)
-}
+const expectSourceToContain = (source: string, snippet: string, label: string): void => void expect(withoutLayout(source).includes(withoutLayout(snippet)), `${label} should contain:\n${snippet}`).toBe(true)
 
-const expectSourceNotToContain = (source: string, snippet: string, label: string): void => {
-    expect(withoutLayout(source).includes(withoutLayout(snippet)), `${label} should not contain:\n${snippet}`).toBe(false)
-}
+const expectSourceNotToContain = (source: string, snippet: string, label: string): void => void expect(withoutLayout(source).includes(withoutLayout(snippet)), `${label} should not contain:\n${snippet}`).toBe(false)
 
 describe('AssetDocumentEventAuthorizationCache', () => {
     it('does not reauthorize for every event inside the refresh interval', async () => {
@@ -27,7 +23,10 @@ describe('AssetDocumentEventAuthorizationCache', () => {
         })
 
         for (let event = 0; event < 601; event += 1) {
-            await expect(authorization.authorize({ now: 4999, refresh })).resolves.toEqual({
+            await expect(authorization.authorize({
+                now: 4999,
+                refresh,
+            })).resolves.toEqual({
                 authorized: true,
                 refreshed: false,
             })
@@ -43,12 +42,19 @@ describe('AssetDocumentEventAuthorizationCache', () => {
             refreshedAt: 0,
         })
 
-        await expect(authorization.authorize({ now: 5000, refresh })).resolves.toEqual({
+        await expect(authorization.authorize({
+            now: 5000,
+            refresh,
+        })).resolves.toEqual({
             authorized: true,
             refreshed: true,
         })
+
         for (let event = 0; event < 601; event += 1) {
-            await authorization.authorize({ now: 5000, refresh })
+            await authorization.authorize({
+                now: 5000,
+                refresh,
+            })
         }
 
         expect(refresh).toHaveBeenCalledOnce()
@@ -63,17 +69,26 @@ describe('AssetDocumentEventAuthorizationCache', () => {
         await expect(authorization.authorize({
             now: 5000,
             refresh: async () => false,
-        })).resolves.toEqual({ authorized: false, refreshed: true })
+        })).resolves.toEqual({
+            authorized: false,
+            refreshed: true,
+        })
         await expect(authorization.authorize({
             now: 5001,
             refresh: async () => true,
-        })).resolves.toEqual({ authorized: false, refreshed: false })
+        })).resolves.toEqual({
+            authorized: false,
+            refreshed: false,
+        })
 
         authorization.confirmAuthorized(5001)
         await expect(authorization.authorize({
             now: 5001,
             refresh: async () => false,
-        })).resolves.toEqual({ authorized: true, refreshed: false })
+        })).resolves.toEqual({
+            authorized: true,
+            refreshed: false,
+        })
     })
 
     it('keeps Asset reads out of the per-event forwarding loop', () => {

@@ -17,17 +17,29 @@ describe('Capability run form', () => {
         type: 'object',
         required: ['prompt'],
         properties: {
-            prompt: { type: 'string', title: 'Prompt' },
-            count: { type: 'integer', default: 2 },
+            prompt: {
+                type: 'string',
+                title: 'Prompt',
+            },
+            count: {
+                type: 'integer',
+                default: 2,
+            },
             preserveIdentity: { type: 'boolean' },
-            references: { type: 'array', items: { type: 'string' } },
+            references: {
+                type: 'array',
+                items: { type: 'string' },
+            },
         },
     }
 
     it('coerces scalar and array values from controls', () => {
         expect(coerceCapabilityFormValue({ type: 'number' }, '3.5')).toBe(3.5)
         expect(coerceCapabilityFormValue({ type: 'boolean' }, 'on')).toBe(true)
-        expect(coerceCapabilityFormValue({ type: 'array', items: { type: 'string' } }, 'a, b')).toEqual(['a', 'b'])
+        expect(coerceCapabilityFormValue({
+            type: 'array',
+            items: { type: 'string' },
+        }, 'a, b')).toEqual(['a', 'b'])
     })
 
     it('builds schema-shaped run input and applies defaults', () => {
@@ -47,9 +59,7 @@ describe('Capability run form', () => {
         })
     })
 
-    it('rejects a missing required field', () => {
-        expect(readCapabilityRunForm(schema, new FormData()).errors).toEqual(['Prompt is required.'])
-    })
+    it('rejects a missing required field', () => void expect(readCapabilityRunForm(schema, new FormData()).errors).toEqual(['Prompt is required.']))
 
     it('rejects invalid numeric values instead of omitting them', () => {
         const formData = new FormData()

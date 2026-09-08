@@ -61,7 +61,10 @@ vi.mock('@lixpi/nats-service', () => ({
 }))
 
 vi.mock('../../models/asset.ts', () => ({
-    default: { get: mocks.asset.get, updateMetadata: mocks.asset.updateMetadata },
+    default: {
+        get: mocks.asset.get,
+        updateMetadata: mocks.asset.updateMetadata,
+    },
     canEditAssetMetadata: mocks.asset.canEditAssetMetadata,
 }))
 vi.mock('../../models/blob.ts', () => ({ default: mocks.blob }))
@@ -80,9 +83,10 @@ import { mediaDescriptorSubjects } from './media-descriptor-subjects.ts'
 
 const getHandler = () => {
     const subscription = mediaDescriptorSubjects.find((candidate) => candidate.subject === NATS_SUBJECTS.AI_INTERACTION_SUBJECTS.MEDIA_DESCRIBE)
-    if (!subscription) {
+
+    if (!subscription)
         throw new Error('Missing MEDIA_DESCRIBE subject')
-    }
+
     return subscription.handler
 }
 
@@ -104,8 +108,14 @@ const mediaAsset = {
     media: {
         kind: 'image',
         renditions: {
-            preview: { status: 'ready', blobHash: 'hash-1' },
-            original: { status: 'ready', blobHash: 'hash-0' },
+            preview: {
+                status: 'ready',
+                blobHash: 'hash-1',
+            },
+            original: {
+                status: 'ready',
+                blobHash: 'hash-0',
+            },
         },
     },
     documents: {},
@@ -128,7 +138,13 @@ describe('MEDIA_DESCRIBE request handling', () => {
         mocks.requesterContext.get.mockResolvedValue(requester)
         mocks.asset.canEditAssetMetadata.mockResolvedValue(true)
         mocks.asset.get.mockImplementation(async ({ assetId }: { assetId: string }) => assetId === mediaAsset.assetId ? mediaAsset : assetId === textAsset.assetId ? textAsset : { error: 'NOT_FOUND' })
-        mocks.asset.updateMetadata.mockImplementation(async ({ descriptor, title }: any) => ({ descriptor, title }))
+        mocks.asset.updateMetadata.mockImplementation(async ({
+            descriptor,
+            title,
+        }: any) => ({
+            descriptor,
+            title,
+        }))
         mocks.nats.instance = { connectionId: 'nats-1' }
         mocks.settings.mediaDescriptor.defaultVlmMaxTokens = 8192
         mocks.aiModel.getAiModel.mockResolvedValue({
@@ -137,7 +153,10 @@ describe('MEDIA_DESCRIBE request handling', () => {
             maxCompletionSize: 4096,
             inferenceCapabilities: mocks.settings.mediaDescriptor.defaultVlmInferenceCapabilities,
         })
-        mocks.blob.get.mockResolvedValue({ bucketName: 'blob-bucket', objectKey: 'blob-key' })
+        mocks.blob.get.mockResolvedValue({
+            bucketName: 'blob-bucket',
+            objectKey: 'blob-key',
+        })
         mocks.assetDocumentService.loadCurrentSnapshot.mockResolvedValue({ doc: { text: 'Launch notes and priorities' } })
         mocks.mediaDescriptor.describeMediaStill.mockResolvedValue({
             summary: 'A cat sleeping',

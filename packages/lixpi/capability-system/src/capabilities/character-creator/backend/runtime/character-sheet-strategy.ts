@@ -488,10 +488,10 @@ const buildPanelReferenceHandles = (
 
 // Traces are recorded against progress item ids while the run proceeds, then
 // grafted onto the item tree here so the timeline and the trace stay one object.
-function attachProgressTraces(
+const attachProgressTraces = (
     items: OperationProgressItem[],
     traces: ReadonlyMap<string, ExecutionTrace>,
-): OperationProgressItem[] {
+): OperationProgressItem[] => {
     return items.map(
         item => ({
             ...item,
@@ -501,10 +501,10 @@ function attachProgressTraces(
     )
 }
 
-function formatRenderProgressSummary(
+const formatRenderProgressSummary = (
     panelId: string,
     snapshot: CharacterProgressSnapshot,
-): string {
+): string => {
     const panel = snapshot.plan.panels.find(candidate => candidate.panelId === panelId)
     const generatedReferenceRoles = panel?.outputBindings.map(binding => binding.referenceRole) ?? []
     const failure = snapshot.renderFailures.get(panelId)
@@ -569,12 +569,12 @@ function formatRenderProgressSummary(
         : 'Waiting for identity evidence preparation to finish.'
 }
 
-function getAssessmentProgressStatus(
+const getAssessmentProgressStatus = (
     panelId: string,
     snapshot: CharacterProgressSnapshot,
     phaseIndex: number,
     phaseOrder: MediaGenerationRunProgress['phase'][],
-): OperationProgressItem['status'] {
+): OperationProgressItem['status'] => {
     const assessingPhaseIndex = phaseOrder.indexOf('assessing')
 
     if (
@@ -607,10 +607,10 @@ function getAssessmentProgressStatus(
     return phaseIndex > assessingPhaseIndex ? 'failed' : 'pending'
 }
 
-function formatAssessmentProgressSummary(
+const formatAssessmentProgressSummary = (
     panelId: string,
     snapshot: CharacterProgressSnapshot,
-): string {
+): string => {
     if (
         snapshot.renderFailures.has(panelId)
         || !snapshot.renderedPanels.has(panelId)
@@ -650,7 +650,7 @@ function formatAssessmentProgressSummary(
         : 'Waiting for the rendered shot.'
 }
 
-function formatAssessmentResult(assessment: CharacterPanelAssessment): string {
+const formatAssessmentResult = (assessment: CharacterPanelAssessment): string => {
     if (assessment.dimensions.length === 0) {
         const dimensionResult = assessment.vlmError?.message
             ?? 'The evaluator did not return usable per-dimension scores.'
@@ -677,10 +677,10 @@ function formatAssessmentResult(assessment: CharacterPanelAssessment): string {
     return `Overall ${formatPercent(assessment.score)} · ${outcome} · ${dimensionScores} · ${formatFaceFidelityResult(assessment)}${diagnostics}`
 }
 
-function formatAssessmentProgressMeta(
+const formatAssessmentProgressMeta = (
     panelId: string,
     snapshot: CharacterProgressSnapshot,
-): string {
+): string => {
     if (
         snapshot.renderFailures.has(panelId)
         || !snapshot.renderedPanels.has(panelId)
@@ -729,7 +729,7 @@ function formatAssessmentProgressMeta(
     return 'Waiting'
 }
 
-function formatAssessmentGroupSummary(snapshot: CharacterProgressSnapshot): string {
+const formatAssessmentGroupSummary = (snapshot: CharacterProgressSnapshot): string => {
     const evaluated = [...snapshot.assessments.values()].filter(assessment => assessment.dimensions.length > 0).length
     const reviewFlags = [...snapshot.assessments.values()].filter(assessmentNeedsReview).length
     const evaluationFailures = snapshot.plan.panels.filter(panel => assessmentPanelExecutionFailed(panel.panelId, snapshot)).length
@@ -744,7 +744,7 @@ function formatAssessmentGroupSummary(snapshot: CharacterProgressSnapshot): stri
     return 'Each rendered shot will receive per-dimension scores and an overall fidelity result.'
 }
 
-function formatAssessmentGroupMeta(snapshot: CharacterProgressSnapshot): string {
+const formatAssessmentGroupMeta = (snapshot: CharacterProgressSnapshot): string => {
     const scored = [...snapshot.assessments.values()].filter(assessment => assessment.dimensions.length > 0).length
     const flagged = [...snapshot.assessments.values()].filter(assessmentNeedsReview).length
     const failed = snapshot.plan.panels.filter(panel => assessmentPanelExecutionFailed(panel.panelId, snapshot)).length
@@ -760,7 +760,7 @@ function formatAssessmentGroupMeta(snapshot: CharacterProgressSnapshot): string 
     return `${scored} scored · ${flagged} flagged${failed > 0 ? ` · ${failed} failed` : ''}${unavailableFaceChecks > 0 ? ` · ${unavailableFaceChecks} face unavailable` : ''}`
 }
 
-function formatFaceFidelityResult(assessment: CharacterPanelAssessment): string {
+const formatFaceFidelityResult = (assessment: CharacterPanelAssessment): string => {
     if (
         assessment.fidelityMetric.available
         && assessment.fidelityMetric.cosineSimilarity !== undefined
@@ -782,7 +782,7 @@ function formatFaceFidelityResult(assessment: CharacterPanelAssessment): string 
     return `face similarity unavailable (${formatDimensionName(diagnostic)})`
 }
 
-function isRequiredFaceFidelityUnavailable(assessment: CharacterPanelAssessment): boolean {
+const isRequiredFaceFidelityUnavailable = (assessment: CharacterPanelAssessment): boolean => {
     if (assessment.fidelityMetric.available)
         return false
 
@@ -790,10 +790,10 @@ function isRequiredFaceFidelityUnavailable(assessment: CharacterPanelAssessment)
         && assessment.fidelityMetric.unavailableReason !== 'non-photographic'
 }
 
-function assessmentPanelExecutionFailed(
+const assessmentPanelExecutionFailed = (
     panelId: string,
     snapshot: CharacterProgressSnapshot,
-): boolean {
+): boolean => {
     if (
         snapshot.renderFailures.has(panelId)
         || !snapshot.renderedPanels.has(panelId)
@@ -817,10 +817,10 @@ function assessmentPanelExecutionFailed(
     return snapshot.phase === 'composing'
 }
 
-function assessmentPanelNeedsReview(
+const assessmentPanelNeedsReview = (
     panelId: string,
     snapshot: CharacterProgressSnapshot,
-): boolean {
+): boolean => {
     if (
         snapshot.renderFailures.has(panelId)
         || !snapshot.renderedPanels.has(panelId)
@@ -841,18 +841,17 @@ function assessmentPanelNeedsReview(
     return assessment ? assessmentNeedsReview(assessment) : snapshot.phase === 'composing'
 }
 
-function assessmentNeedsReview(assessment: CharacterPanelAssessment): boolean {
-    return assessment.dimensions.length === 0 || assessment.failedDimensions.length > 0
-}
+const assessmentNeedsReview = (assessment: CharacterPanelAssessment): boolean =>
+    assessment.dimensions.length === 0 || assessment.failedDimensions.length > 0
 
-function formatPercent(value: number): string {
+const formatPercent = (value: number): string => {
     return `${Math.round(Math.max(
         0,
         Math.min(1, value),
     ) * 100)}%`
 }
 
-function formatDimensionName(value: string): string {
+const formatDimensionName = (value: string): string => {
     return value
         .replace(/([a-z0-9])([A-Z])/gu, '$1 $2')
         .replace(/[-_]+/gu, ' ')
@@ -2152,13 +2151,13 @@ export class CharacterSheetStrategy implements CapabilityMediaStrategy {
     }
 }
 
-function buildPanelTrace(args: {
+const buildPanelTrace = (args: {
     panel: CharacterPanelSpec
     rendered?: RenderedPanel
     assessment?: CharacterPanelAssessment
     failure?: string
     observed: boolean
-}): CharacterPanelTrace {
+}): CharacterPanelTrace => {
     if (!args.rendered) {
         return {
             panelId: args.panel.panelId,
@@ -2272,12 +2271,12 @@ function buildPanelTrace(args: {
     }
 }
 
-async function runInBatches<Item>(
+const runInBatches = async <Item>(
     items: readonly Item[],
     concurrency: number,
     signal: AbortSignal | undefined,
     execute: (item: Item) => Promise<void>,
-): Promise<void> {
+): Promise<void> => {
     for (let offset = 0; offset < items.length; offset += concurrency) {
         if (signal?.aborted)
             throw signal.reason ?? new DOMException('Aborted', 'AbortError')
@@ -2291,7 +2290,7 @@ async function runInBatches<Item>(
     }
 }
 
-function isAbortFailure(error: unknown): boolean {
+const isAbortFailure = (error: unknown): boolean => {
     const candidate = error as {
         name?: unknown
         message?: unknown
@@ -2304,7 +2303,7 @@ function isAbortFailure(error: unknown): boolean {
         || /(?:^|\b)abort(?:ed)?(?:\b|$)/iu.test(message)
 }
 
-function decodeDataUrl(value: string): Buffer {
+const decodeDataUrl = (value: string): Buffer => {
     const separator = value.indexOf(',')
 
     if (separator < 0)
@@ -2316,7 +2315,7 @@ function decodeDataUrl(value: string): Buffer {
     )
 }
 
-function decodeProviderPartialImage(value: string): Buffer {
+const decodeProviderPartialImage = (value: string): Buffer => {
     const dataUrl = /^data:image\/(?:png|jpeg|webp);base64,([A-Za-z0-9+/=\r\n]+)$/u.exec(value)
     const base64 = dataUrl?.[1] ?? value
 
@@ -2331,10 +2330,10 @@ function decodeProviderPartialImage(value: string): Buffer {
     return bytes
 }
 
-function buildGeneratedPanelReferences(
+const buildGeneratedPanelReferences = (
     bindings: readonly CharacterPanelOutputBinding[],
     boundOutputs: ReadonlyMap<string, CharacterPanelRenderResult>,
-): CharacterImageReference[] {
+): CharacterImageReference[] => {
     return bindings.flatMap(binding => {
         const rendered = boundOutputs.get(binding.bindingKey)
 
@@ -2349,7 +2348,7 @@ function buildGeneratedPanelReferences(
     })
 }
 
-function buildSharedCapabilityReferences(references: ReadonlyArray<{ imageUrl: string }>): CharacterImageReference[] {
+const buildSharedCapabilityReferences = (references: ReadonlyArray<{ imageUrl: string }>): CharacterImageReference[] => {
     const seen = new Set<string>()
 
     return references.flatMap(reference => {
@@ -2371,13 +2370,13 @@ function buildSharedCapabilityReferences(references: ReadonlyArray<{ imageUrl: s
     })
 }
 
-function formatEvidenceSourceAlias(
+const formatEvidenceSourceAlias = (
     sourceAssetId: string | undefined,
     references: ReadonlyArray<{
         assetId: string
         alias: string
     }>,
-): string {
+): string => {
     if (!sourceAssetId)
         return ''
 
@@ -2386,24 +2385,21 @@ function formatEvidenceSourceAlias(
     return alias ? `[${alias}] ` : ''
 }
 
-function isInlineImageDataUrl(value: string): boolean {
-    return /^data:image\/(?:gif|jpeg|png|webp);base64,/u.test(value)
-}
+const isInlineImageDataUrl = (value: string): boolean => /^data:image\/(?:gif|jpeg|png|webp);base64,/u.test(value)
 
-function formatRuntimeWarning(
+const formatRuntimeWarning = (
     prefix: string,
     error: unknown,
-): string {
+): string => {
     const detail = error instanceof Error ? error.message : String(error)
     const normalized = detail.replace(/\s+/gu, ' ').trim().slice(0, 240)
 
     return normalized ? `${prefix}: ${normalized}` : prefix
 }
 
-function normalizeEvidenceFeature(value: string): string {
-    return value.trim().toLocaleLowerCase('en-US')
-}
+const normalizeEvidenceFeature = (value: string): string => value.trim().toLocaleLowerCase('en-US')
 
-function formatAssessmentFailureProgress(failure: string): string {
-    return `Evaluation unavailable; rendered shot retained for review. ${failure.replace(/[.!?]+$/u, '')}`
-}
+const formatAssessmentFailureProgress = (failure: string): string => `Evaluation unavailable; rendered shot retained for review. ${failure.replace(
+    /[.!?]+$/u,
+    '',
+)}`

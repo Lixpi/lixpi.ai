@@ -27,7 +27,7 @@ const scope = {
     mediaRunId: 'media-1',
 }
 
-function makeNats(): ObjectStoreNats {
+const makeNats = (): ObjectStoreNats => {
     return {
         getObjectStore: vi.fn(async () => ({})),
         createObjectStore: vi.fn(async () => ({})),
@@ -36,9 +36,12 @@ function makeNats(): ObjectStoreNats {
     }
 }
 
-function objectKeyFromUrl(url: string): string {
+const objectKeyFromUrl = (url: string): string => {
     const match = url.match(/objects\/(partial-[a-f0-9]{64}\.[a-z0-9]+)/)
-    if (!match?.[1]) throw new Error(`Transient URL did not contain an object key: ${url}`)
+
+    if (!match?.[1])
+        throw new Error(`Transient URL did not contain an object key: ${url}`)
+
     return match[1]
 }
 

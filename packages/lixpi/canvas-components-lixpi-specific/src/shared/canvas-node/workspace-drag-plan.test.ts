@@ -15,7 +15,7 @@ import { computeWorkspaceDragPlan } from './workspace-drag-plan.ts'
 // HELPERS
 // =============================================================================
 
-function makeImage(overrides: Partial<ImageCanvasNode> & { nodeId: string }): ImageCanvasNode {
+const makeImage = (overrides: Partial<ImageCanvasNode> & { nodeId: string }): ImageCanvasNode => {
     return {
         nodeId: overrides.nodeId,
         type: 'image',
@@ -23,28 +23,40 @@ function makeImage(overrides: Partial<ImageCanvasNode> & { nodeId: string }): Im
         workspaceId: overrides.workspaceId ?? 'workspace-1',
         src: overrides.src ?? `/api/images/workspace-1/file-${overrides.nodeId}`,
         aspectRatio: overrides.aspectRatio ?? 1,
-        position: overrides.position ?? { x: 0, y: 0 },
-        dimensions: overrides.dimensions ?? { width: 120, height: 120 },
+        position: overrides.position ?? {
+            x: 0,
+            y: 0,
+        },
+        dimensions: overrides.dimensions ?? {
+            width: 120,
+            height: 120,
+        },
         ...overrides,
     }
 }
 
-function makeDocument(overrides: Partial<DocumentCanvasNode> & { nodeId: string }): DocumentCanvasNode {
+const makeDocument = (overrides: Partial<DocumentCanvasNode> & { nodeId: string }): DocumentCanvasNode => {
     return {
         nodeId: overrides.nodeId,
         type: 'document',
         referenceId: overrides.referenceId ?? `doc-${overrides.nodeId}`,
-        position: overrides.position ?? { x: 0, y: 0 },
-        dimensions: overrides.dimensions ?? { width: 240, height: 180 },
+        position: overrides.position ?? {
+            x: 0,
+            y: 0,
+        },
+        dimensions: overrides.dimensions ?? {
+            width: 240,
+            height: 180,
+        },
         ...overrides,
     }
 }
 
-function plan(overrides: {
+const plan = (overrides: {
     nodes: CanvasNode[]
     primaryNodeId: string
     selectedNodeIds?: Set<string>
-}) {
+}) => {
     return computeWorkspaceDragPlan({
         nodes: overrides.nodes,
         primaryNodeId: overrides.primaryNodeId,
@@ -78,7 +90,10 @@ describe('computeWorkspaceDragPlan — ordinary drags', () => {
         const result = plan({
             nodes: [doc, image],
             primaryNodeId: 'doc-1',
-            selectedNodeIds: new Set(['doc-1', 'image-1']),
+            selectedNodeIds: new Set([
+                'doc-1',
+                'image-1',
+            ]),
         })
 
         expect(result.draggedNodeIds).toEqual(['doc-1', 'image-1'])

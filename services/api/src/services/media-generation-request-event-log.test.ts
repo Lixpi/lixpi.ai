@@ -84,7 +84,10 @@ describe('MediaGenerationRequestEventLog', () => {
             event: {
                 ...event(3),
                 status: 'MEDIA_GENERATION_PROGRESS',
-                payload: { generationRun: 2, progress: { phase: 'rendering' } },
+                payload: {
+                    generationRun: 2,
+                    progress: { phase: 'rendering' },
+                },
             },
         })
 
@@ -100,12 +103,41 @@ describe('MediaGenerationRequestEventLog', () => {
 
     it('replays only the request subject in stream order and reports pagination', async () => {
         const envelopes = new Map([
-            [4, { data: { userId: 'user-1', workspaceId: 'workspace-1', event: event(1), streamSequence: 0 }, seq: 4 }],
-            [9, { data: { userId: 'user-1', workspaceId: 'workspace-1', event: event(2), streamSequence: 0 }, seq: 9 }],
-            [12, { data: { userId: 'user-1', workspaceId: 'workspace-1', event: event(3), streamSequence: 0 }, seq: 12 }],
+            [4, {
+                data: {
+                    userId: 'user-1',
+                    workspaceId: 'workspace-1',
+                    event: event(1),
+                    streamSequence: 0,
+                },
+                seq: 4,
+            }],
+            [9, {
+                data: {
+                    userId: 'user-1',
+                    workspaceId: 'workspace-1',
+                    event: event(2),
+                    streamSequence: 0,
+                },
+                seq: 9,
+            }],
+            [12, {
+                data: {
+                    userId: 'user-1',
+                    workspaceId: 'workspace-1',
+                    event: event(3),
+                    streamSequence: 0,
+                },
+                seq: 12,
+            }],
         ])
-        const getJetStreamMessage = vi.fn(async (_stream: string, selector: { last_by_subj?: string; seq?: number }) => {
-            if (selector.last_by_subj) return envelopes.get(12)
+        const getJetStreamMessage = vi.fn(async (_stream: string, selector: {
+            last_by_subj?: string
+            seq?: number
+        }) => {
+            if (selector.last_by_subj)
+                return envelopes.get(12)
+
             return [...envelopes.entries()].find(([sequence]) => sequence >= (selector.seq ?? 1))?.[1]
         })
         const log = new MediaGenerationRequestEventLog({ getJetStreamMessage } as any)
@@ -130,10 +162,18 @@ describe('MediaGenerationRequestEventLog', () => {
         const progressEvent = {
             ...event(4),
             status: 'MEDIA_GENERATION_PROGRESS' as const,
-            payload: { generationRun: 3, progress: { phase: 'assessing' } },
+            payload: {
+                generationRun: 3,
+                progress: { phase: 'assessing' },
+            },
         }
         const getJetStreamMessage = vi.fn(async () => ({
-            data: { userId: 'user-1', workspaceId: 'workspace-1', event: progressEvent, streamSequence: 0 },
+            data: {
+                userId: 'user-1',
+                workspaceId: 'workspace-1',
+                event: progressEvent,
+                streamSequence: 0,
+            },
             seq: 44,
         }))
         const log = new MediaGenerationRequestEventLog({ getJetStreamMessage } as any)

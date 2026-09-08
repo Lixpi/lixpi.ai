@@ -20,9 +20,18 @@ const RAIL_INSET = 16
 const VALUE_BUBBLE_HEIGHT = 28
 
 const OPTIONS = [
-    { label: 'Low', value: 'low' },
-    { label: 'Medium', value: 'medium' },
-    { label: 'High', value: 'high' },
+    {
+        label: 'Low',
+        value: 'low',
+    },
+    {
+        label: 'Medium',
+        value: 'medium',
+    },
+    {
+        label: 'High',
+        value: 'high',
+    },
 ] as const
 
 type Value = typeof OPTIONS[number]['value']
@@ -34,23 +43,27 @@ const makeImmediateTransition = (target: any): any => {
     const chain: any = {}
     chain.duration = (duration: number) => {
         transitionDurations.push(duration)
+
         return chain
     }
     chain.ease = (easing: unknown) => {
         transitionEasings.push(easing)
+
         return chain
     }
     chain.attr = (name: string, value: unknown) => {
         target.attr(name, value)
+
         return chain
     }
+
     return chain
 }
 ;(selection.prototype as any).transition = function(): any {
     return makeImmediateTransition(this)
 }
 
-function setHitRect(hitEl: SVGRectElement, left: number, width: number): void {
+const setHitRect = (hitEl: SVGRectElement, left: number, width: number): void => {
     vi.spyOn(hitEl, 'getBoundingClientRect').mockReturnValue({
         x: left,
         y: 0,
@@ -64,12 +77,16 @@ function setHitRect(hitEl: SVGRectElement, left: number, width: number): void {
     } as DOMRect)
 }
 
-function mount(
-    options: readonly { label: string; value: Value; disabled?: boolean }[] = OPTIONS,
+const mount = (
+    options: readonly {
+        label: string
+        value: Value
+        disabled?: boolean
+    }[] = OPTIONS,
     selectedValue?: Value,
     onChange = vi.fn(),
     observeParentResize = false,
-) {
+) => {
     const host = document.createElement('div')
     const svg = document.createElementNS(SVG_NS, 'svg') as unknown as SVGSVGElement
     host.appendChild(svg)
@@ -90,11 +107,21 @@ function mount(
     const hit = svg.querySelector('.slider-hit') as SVGRectElement
     setHitRect(hit, 0, WIDTH)
 
-    return { host, svg, slider, onChange, hit }
+    return {
+        host,
+        svg,
+        slider,
+        onChange,
+        hit,
+    }
 }
 
-function dispatchPointerDown(target: Element, clientX: number, pointerId = 1): void {
-    target.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, clientX, pointerId }))
+const dispatchPointerDown = (target: Element, clientX: number, pointerId = 1): void => {
+    target.dispatchEvent(new PointerEvent('pointerdown', {
+        bubbles: true,
+        clientX,
+        pointerId,
+    }))
 }
 
 describe('createSlider — initial render', () => {
@@ -104,9 +131,7 @@ describe('createSlider — initial render', () => {
         transitionEasings.length = 0
     })
 
-    afterEach(() => {
-        vi.restoreAllMocks()
-    })
+    afterEach(() => void vi.restoreAllMocks())
 
     it('positions the thumb, rail and value bubble at the selected option without a defined selectedValue', () => {
         const { svg } = mount(OPTIONS, undefined)
@@ -138,9 +163,19 @@ describe('createSlider — initial render', () => {
 
     it('falls back to the first enabled option when the initially selected option is disabled', () => {
         const optionsWithDisabledFirst = [
-            { label: 'Low', value: 'low' as Value, disabled: true },
-            { label: 'Medium', value: 'medium' as Value },
-            { label: 'High', value: 'high' as Value },
+            {
+                label: 'Low',
+                value: 'low' as Value,
+                disabled: true,
+            },
+            {
+                label: 'Medium',
+                value: 'medium' as Value,
+            },
+            {
+                label: 'High',
+                value: 'high' as Value,
+            },
         ]
         const { slider } = mount(optionsWithDisabledFirst, undefined)
         expect(slider.getValue()).toBe('medium')
@@ -158,7 +193,10 @@ describe('createSlider — initial render', () => {
     })
 
     it('centers the single option on the rail when there is only one option', () => {
-        const { svg } = mount([{ label: 'Only', value: 'only' as Value }], undefined)
+        const { svg } = mount([{
+            label: 'Only',
+            value: 'only' as Value,
+        }], undefined)
         const thumb = svg.querySelector('.slider-thumb')!
         const midpoint = (RAIL_INSET + (WIDTH - RAIL_INSET)) / 2
         expect(thumb.getAttribute('cx')).toBe(String(midpoint))
@@ -195,7 +233,12 @@ describe('createSlider — pointer interaction', () => {
     })
 
     it('selects the nearest option on pointerdown and notifies onChange', () => {
-        const { svg, slider, onChange, hit } = mount(OPTIONS, 'low')
+        const {
+            svg,
+            slider,
+            onChange,
+            hit,
+        } = mount(OPTIONS, 'low')
         setHitRect(hit, 0, WIDTH)
 
         dispatchPointerDown(hit, WIDTH)
@@ -211,40 +254,72 @@ describe('createSlider — pointer interaction', () => {
     })
 
     it('tracks pointermove on window while the drag is active and stops after pointerup', () => {
-        const { slider, onChange, hit } = mount(OPTIONS, 'low')
+        const {
+            slider,
+            onChange,
+            hit,
+        } = mount(OPTIONS, 'low')
         setHitRect(hit, 0, WIDTH)
 
         dispatchPointerDown(hit, 0, 5)
         expect(slider.getValue()).toBe('low')
 
-        window.dispatchEvent(new PointerEvent('pointermove', { clientX: WIDTH / 2, pointerId: 5 }))
+        window.dispatchEvent(new PointerEvent('pointermove', {
+            clientX: WIDTH / 2,
+            pointerId: 5,
+        }))
         expect(slider.getValue()).toBe('medium')
 
-        window.dispatchEvent(new PointerEvent('pointerup', { clientX: WIDTH / 2, pointerId: 5 }))
+        window.dispatchEvent(new PointerEvent('pointerup', {
+            clientX: WIDTH / 2,
+            pointerId: 5,
+        }))
         onChange.mockClear()
 
-        window.dispatchEvent(new PointerEvent('pointermove', { clientX: WIDTH, pointerId: 5 }))
+        window.dispatchEvent(new PointerEvent('pointermove', {
+            clientX: WIDTH,
+            pointerId: 5,
+        }))
         expect(slider.getValue()).toBe('medium')
         expect(onChange).not.toHaveBeenCalled()
     })
 
     it('ignores pointermove and pointerup events from a different pointerId', () => {
-        const { slider, hit } = mount(OPTIONS, 'low')
+        const {
+            slider,
+            hit,
+        } = mount(OPTIONS, 'low')
         setHitRect(hit, 0, WIDTH)
 
         dispatchPointerDown(hit, 0, 1)
-        window.dispatchEvent(new PointerEvent('pointermove', { clientX: WIDTH, pointerId: 99 }))
+        window.dispatchEvent(new PointerEvent('pointermove', {
+            clientX: WIDTH,
+            pointerId: 99,
+        }))
 
         expect(slider.getValue()).toBe('low')
     })
 
     it('skips a disabled middle option and snaps to the nearest enabled one', () => {
         const optionsWithDisabledMiddle = [
-            { label: 'Low', value: 'low' as Value },
-            { label: 'Medium', value: 'medium' as Value, disabled: true },
-            { label: 'High', value: 'high' as Value },
+            {
+                label: 'Low',
+                value: 'low' as Value,
+            },
+            {
+                label: 'Medium',
+                value: 'medium' as Value,
+                disabled: true,
+            },
+            {
+                label: 'High',
+                value: 'high' as Value,
+            },
         ]
-        const { slider, hit } = mount(optionsWithDisabledMiddle, 'low')
+        const {
+            slider,
+            hit,
+        } = mount(optionsWithDisabledMiddle, 'low')
         setHitRect(hit, 0, WIDTH)
 
         dispatchPointerDown(hit, WIDTH / 2)
@@ -253,7 +328,10 @@ describe('createSlider — pointer interaction', () => {
     })
 
     it('treats a zero-width hit rect as index 0', () => {
-        const { slider, hit } = mount(OPTIONS, 'high')
+        const {
+            slider,
+            hit,
+        } = mount(OPTIONS, 'high')
         setHitRect(hit, 0, 0)
 
         dispatchPointerDown(hit, 50)
@@ -269,55 +347,94 @@ describe('createSlider — keyboard interaction', () => {
         transitionEasings.length = 0
     })
 
-    afterEach(() => {
-        vi.restoreAllMocks()
-    })
+    afterEach(() => void vi.restoreAllMocks())
 
     it('moves to the next/previous option with arrow keys and notifies onChange', () => {
-        const { svg, slider, onChange } = mount(OPTIONS, 'medium')
+        const {
+            svg,
+            slider,
+            onChange,
+        } = mount(OPTIONS, 'medium')
         const group = svg.querySelector('.slider-group')!
 
-        group.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }))
+        group.dispatchEvent(new KeyboardEvent('keydown', {
+            key: 'ArrowRight',
+            bubbles: true,
+        }))
         expect(slider.getValue()).toBe('high')
         expect(onChange).toHaveBeenLastCalledWith('high', 'quality')
 
-        group.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }))
-        group.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }))
+        group.dispatchEvent(new KeyboardEvent('keydown', {
+            key: 'ArrowLeft',
+            bubbles: true,
+        }))
+        group.dispatchEvent(new KeyboardEvent('keydown', {
+            key: 'ArrowLeft',
+            bubbles: true,
+        }))
         expect(slider.getValue()).toBe('low')
 
         onChange.mockClear()
-        group.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }))
+        group.dispatchEvent(new KeyboardEvent('keydown', {
+            key: 'ArrowLeft',
+            bubbles: true,
+        }))
         expect(slider.getValue()).toBe('low')
         expect(onChange).not.toHaveBeenCalled()
     })
 
     it('jumps to the first/last option with Home/End', () => {
-        const { svg, slider } = mount(OPTIONS, 'medium')
+        const {
+            svg,
+            slider,
+        } = mount(OPTIONS, 'medium')
         const group = svg.querySelector('.slider-group')!
 
-        group.dispatchEvent(new KeyboardEvent('keydown', { key: 'End', bubbles: true }))
+        group.dispatchEvent(new KeyboardEvent('keydown', {
+            key: 'End',
+            bubbles: true,
+        }))
         expect(slider.getValue()).toBe('high')
 
-        group.dispatchEvent(new KeyboardEvent('keydown', { key: 'Home', bubbles: true }))
+        group.dispatchEvent(new KeyboardEvent('keydown', {
+            key: 'Home',
+            bubbles: true,
+        }))
         expect(slider.getValue()).toBe('low')
     })
 
     it('treats ArrowUp/ArrowDown the same as ArrowRight/ArrowLeft', () => {
-        const { svg, slider } = mount(OPTIONS, 'low')
+        const {
+            svg,
+            slider,
+        } = mount(OPTIONS, 'low')
         const group = svg.querySelector('.slider-group')!
 
-        group.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true }))
+        group.dispatchEvent(new KeyboardEvent('keydown', {
+            key: 'ArrowUp',
+            bubbles: true,
+        }))
         expect(slider.getValue()).toBe('medium')
 
-        group.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }))
+        group.dispatchEvent(new KeyboardEvent('keydown', {
+            key: 'ArrowDown',
+            bubbles: true,
+        }))
         expect(slider.getValue()).toBe('low')
     })
 
     it('ignores unrelated keys', () => {
-        const { svg, slider, onChange } = mount(OPTIONS, 'low')
+        const {
+            svg,
+            slider,
+            onChange,
+        } = mount(OPTIONS, 'low')
         const group = svg.querySelector('.slider-group')!
 
-        group.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }))
+        group.dispatchEvent(new KeyboardEvent('keydown', {
+            key: 'Tab',
+            bubbles: true,
+        }))
 
         expect(slider.getValue()).toBe('low')
         expect(onChange).not.toHaveBeenCalled()
@@ -331,12 +448,14 @@ describe('createSlider — public API', () => {
         transitionEasings.length = 0
     })
 
-    afterEach(() => {
-        vi.restoreAllMocks()
-    })
+    afterEach(() => void vi.restoreAllMocks())
 
     it('setValue updates state without animating or notifying onChange', () => {
-        const { svg, slider, onChange } = mount(OPTIONS, 'low')
+        const {
+            svg,
+            slider,
+            onChange,
+        } = mount(OPTIONS, 'low')
 
         slider.setValue('high')
 
@@ -349,11 +468,24 @@ describe('createSlider — public API', () => {
 
     it('setValue is a no-op for the current value or an unknown/disabled value', () => {
         const optionsWithDisabled = [
-            { label: 'Low', value: 'low' as Value },
-            { label: 'Medium', value: 'medium' as Value, disabled: true },
-            { label: 'High', value: 'high' as Value },
+            {
+                label: 'Low',
+                value: 'low' as Value,
+            },
+            {
+                label: 'Medium',
+                value: 'medium' as Value,
+                disabled: true,
+            },
+            {
+                label: 'High',
+                value: 'high' as Value,
+            },
         ]
-        const { slider, onChange } = mount(optionsWithDisabled, 'low')
+        const {
+            slider,
+            onChange,
+        } = mount(optionsWithDisabled, 'low')
 
         slider.setValue('low')
         slider.setValue('medium')
@@ -364,7 +496,10 @@ describe('createSlider — public API', () => {
     })
 
     it('resize updates host svg geometry and rail bounds', () => {
-        const { svg, slider } = mount(OPTIONS, 'low')
+        const {
+            svg,
+            slider,
+        } = mount(OPTIONS, 'low')
 
         slider.resize(10, 20, 300, 80)
 
@@ -378,7 +513,10 @@ describe('createSlider — public API', () => {
     })
 
     it('render() re-applies the current geometry without animating', () => {
-        const { svg, slider } = mount(OPTIONS, 'medium')
+        const {
+            svg,
+            slider,
+        } = mount(OPTIONS, 'medium')
         transitionDurations.length = 0
 
         slider.render()
@@ -389,7 +527,12 @@ describe('createSlider — public API', () => {
     })
 
     it('destroy removes the group and stops responding to further interaction', () => {
-        const { svg, slider, hit, onChange } = mount(OPTIONS, 'low')
+        const {
+            svg,
+            slider,
+            hit,
+            onChange,
+        } = mount(OPTIONS, 'low')
         setHitRect(hit, 0, WIDTH)
 
         const removeSpy = vi.spyOn(window, 'removeEventListener')
@@ -407,8 +550,14 @@ describe('createSlider — public API', () => {
 
     it('clamps the value bubble position for a very wide label near the edge', () => {
         const wideOptions = [
-            { label: 'Low', value: 'low' as Value },
-            { label: 'An Extremely Long Descriptive Label', value: 'long' as Value },
+            {
+                label: 'Low',
+                value: 'low' as Value,
+            },
+            {
+                label: 'An Extremely Long Descriptive Label',
+                value: 'long' as Value,
+            },
         ]
         const { svg } = mount(wideOptions, 'long')
 

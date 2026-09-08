@@ -12,11 +12,13 @@ const mocks = vi.hoisted(() => {
         handlers: Array<(req: any, res: any, next?: () => void) => unknown>
     }> = []
     const router = {
-        get: vi.fn((path: string, ...handlers: Array<(req: any, res: any, next?: () => void) => unknown>) => {
-            getRoutes.push({ path, handlers })
-        }),
+        get: vi.fn((path: string, ...handlers: Array<(req: any, res: any, next?: () => void) => unknown>) => void getRoutes.push({
+            path,
+            handlers,
+        })),
         post: vi.fn(),
     }
+
     return {
         getRoutes,
         router,
@@ -53,14 +55,17 @@ vi.mock('../services/public-remote-file.ts', () => ({ fetchPublicRemoteFile: vi.
 
 await import('./asset-routes.ts')
 
-function getSnapshotHandler(): (req: any, res: any) => Promise<unknown> {
+const getSnapshotHandler = (): (req: any, res: any) => Promise<unknown> => {
     const route = mocks.getRoutes.find(candidate => candidate.path === '/:assetId/documents/:role/snapshot')
     const handler = route?.handlers.at(-1)
-    if (!handler) throw new Error('Snapshot route was not registered')
+
+    if (!handler)
+        throw new Error('Snapshot route was not registered')
+
     return handler as (req: any, res: any) => Promise<unknown>
 }
 
-function createResponse() {
+const createResponse = () => {
     const response = {
         status: vi.fn(),
         json: vi.fn(),
@@ -70,6 +75,7 @@ function createResponse() {
     response.status.mockReturnValue(response)
     response.json.mockReturnValue(response)
     response.end.mockReturnValue(response)
+
     return response
 }
 
@@ -91,14 +97,20 @@ describe('Asset document snapshot route', () => {
             blobHash: 'a'.repeat(64),
             version: 0,
             schemaVersion: 'action-timeline-v1',
-            doc: { type: 'doc', content: [] },
+            doc: {
+                type: 'doc',
+                content: [],
+            },
         }
         mocks.getAsset.mockResolvedValue(asset)
         mocks.loadSnapshot.mockResolvedValue(snapshot)
         const response = createResponse()
 
         await getSnapshotHandler()({
-            params: { assetId: 'artifact-1', role: 'capabilityArtifact' },
+            params: {
+                assetId: 'artifact-1',
+                role: 'capabilityArtifact',
+            },
             headers: {},
             user: { userId: 'user-1' },
         }, response)
@@ -112,7 +124,10 @@ describe('Asset document snapshot route', () => {
         const response = createResponse()
 
         await getSnapshotHandler()({
-            params: { assetId: 'artifact-1', role: 'unknown' },
+            params: {
+                assetId: 'artifact-1',
+                role: 'unknown',
+            },
             headers: {},
             user: { userId: 'user-1' },
         }, response)

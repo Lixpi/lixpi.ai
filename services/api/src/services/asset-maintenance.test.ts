@@ -62,11 +62,17 @@ const asset = {
     },
     media: {
         renditions: {
-            original: { status: 'ready', blobHash: 'rendition-hash' },
+            original: {
+                status: 'ready',
+                blobHash: 'rendition-hash',
+            },
         },
     },
     composition: {
-        components: [{ componentId: 'detail-view', blobHash: 'component-hash' }],
+        components: [{
+            componentId: 'detail-view',
+            blobHash: 'component-hash',
+        }],
     },
 }
 
@@ -80,9 +86,16 @@ describe('Asset maintenance deletion', () => {
         getItem.mockResolvedValue(asset)
         queryItems
             .mockResolvedValueOnce({ items: [] })
-            .mockResolvedValueOnce({ items: [{ assetId: 'asset-1', principalId: 'user-1' }] })
+            .mockResolvedValueOnce({ items: [{
+                assetId: 'asset-1',
+                principalId: 'user-1',
+            }] })
         transactWrite.mockResolvedValue(undefined)
-        ;(globalThis as any).dynamoDBService = { getItem, queryItems, transactWrite }
+        ;(globalThis as any).dynamoDBService = {
+            getItem,
+            queryItems,
+            transactWrite,
+        }
         mocks.getNatsInstance.mockReturnValue({
             getJetStreamStreamInfoOrNull: mocks.getJetStreamStreamInfoOrNull,
             purgeJetStreamSubject: mocks.purgeJetStreamSubject,
@@ -98,7 +111,11 @@ describe('Asset maintenance deletion', () => {
             referenceKey,
         }))
         mocks.buildBlobReferenceBatchOperations.mockReturnValue({
-            operations: [{ type: 'delete', tableName: 'Blob-References', key: { referenceKey: 'owned' } }],
+            operations: [{
+                type: 'delete',
+                tableName: 'Blob-References',
+                key: { referenceKey: 'owned' },
+            }],
             deletionBlobHashes: ['document-hash', 'rendition-hash', 'component-hash'],
         })
         mocks.removeSurfaceReferencesByPrefixSystem.mockResolvedValue(0)
@@ -127,8 +144,14 @@ describe('Asset maintenance deletion', () => {
         })
         expect(transactWrite).toHaveBeenCalledWith(expect.objectContaining({
             operations: expect.arrayContaining([
-                expect.objectContaining({ type: 'delete', tableName: 'Blob-References' }),
-                expect.objectContaining({ type: 'delete', key: { assetId: 'asset-1' } }),
+                expect.objectContaining({
+                    type: 'delete',
+                    tableName: 'Blob-References',
+                }),
+                expect.objectContaining({
+                    type: 'delete',
+                    key: { assetId: 'asset-1' },
+                }),
             ]),
             origin: 'AssetMaintenance.deleteAsset',
         }))

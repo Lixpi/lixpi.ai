@@ -30,7 +30,11 @@ describe('CapabilityRunEventLog', () => {
         }
         const log = new CapabilityRunEventLog(service as any)
 
-        const result = await log.append({ userId: 'user-1', workspaceId: 'workspace-1', event })
+        const result = await log.append({
+            userId: 'user-1',
+            workspaceId: 'workspace-1',
+            event,
+        })
 
         expect(service.ensureJetStreamStream).toHaveBeenCalledWith(expect.objectContaining({
             name: 'CAPABILITY_RUN_EVENTS_workspace-1',
@@ -40,8 +44,15 @@ describe('CapabilityRunEventLog', () => {
         }))
         expect(service.publishJetStream).toHaveBeenCalledWith(
             'ai.interaction.capability.run.events.workspace-1.run-1',
-            expect.objectContaining({ userId: 'user-1', workspaceId: 'workspace-1', event }),
-            { msgID: 'run-1:1', expect: { streamName: 'CAPABILITY_RUN_EVENTS_workspace-1' } },
+            expect.objectContaining({
+                userId: 'user-1',
+                workspaceId: 'workspace-1',
+                event,
+            }),
+            {
+                msgID: 'run-1:1',
+                expect: { streamName: 'CAPABILITY_RUN_EVENTS_workspace-1' },
+            },
         )
         expect(result.streamSequence).toBe(12)
     })
@@ -49,9 +60,30 @@ describe('CapabilityRunEventLog', () => {
     it('replays a bounded sequence and reports whether more events remain', async () => {
         const service = {
             getJetStreamMessage: vi.fn()
-                .mockResolvedValueOnce({ seq: 4, data: { userId: 'user-1', workspaceId: 'workspace-1', event } })
-                .mockResolvedValueOnce({ seq: 2, data: { userId: 'user-1', workspaceId: 'workspace-1', event } })
-                .mockResolvedValueOnce({ seq: 3, data: { userId: 'user-1', workspaceId: 'workspace-1', event } }),
+                .mockResolvedValueOnce({
+                    seq: 4,
+                    data: {
+                        userId: 'user-1',
+                        workspaceId: 'workspace-1',
+                        event,
+                    },
+                })
+                .mockResolvedValueOnce({
+                    seq: 2,
+                    data: {
+                        userId: 'user-1',
+                        workspaceId: 'workspace-1',
+                        event,
+                    },
+                })
+                .mockResolvedValueOnce({
+                    seq: 3,
+                    data: {
+                        userId: 'user-1',
+                        workspaceId: 'workspace-1',
+                        event,
+                    },
+                }),
         }
         const log = new CapabilityRunEventLog(service as any)
 

@@ -29,7 +29,10 @@ type GetKeyFunction = (
 ) => void
 
 const invokeGetKey = (getKey: GetKeyFunction, kid = 'test-kid') =>
-    new Promise<{ error: Error | null; key: string | undefined }>((resolve) => {
+    new Promise<{
+        error: Error | null
+        key: string | undefined
+    }>((resolve) => {
         getKey({ kid }, (error, key) => {
             resolve({
                 error: error ? (error as Error) : null,
@@ -97,20 +100,19 @@ describe('createGetKeyFunction', () => {
     })
 
     it('resolves publicKey from the jwks client return value', async () => {
-        getSigningKey.mockImplementation((_kid, callback) => {
-            callback(null, { publicKey: '-----BEGIN PUBLIC KEY-----\n' })
-        })
+        getSigningKey.mockImplementation((_kid, callback) => void callback(null, { publicKey: '-----BEGIN PUBLIC KEY-----\n' }))
         const getKey = createFunctionUnderTest()
 
         const result = await invokeGetKey(getKey)
 
-        expect(result).toEqual({ error: null, key: '-----BEGIN PUBLIC KEY-----\n' })
+        expect(result).toEqual({
+            error: null,
+            key: '-----BEGIN PUBLIC KEY-----\n',
+        })
     })
 
     it('falls back to rsaPublicKey when publicKey is missing', async () => {
-        getSigningKey.mockImplementation((_kid, callback) => {
-            callback(null, { rsaPublicKey: '-----BEGIN RSA PUBLIC KEY-----\n' })
-        })
+        getSigningKey.mockImplementation((_kid, callback) => void callback(null, { rsaPublicKey: '-----BEGIN RSA PUBLIC KEY-----\n' }))
         const getKey = createFunctionUnderTest()
 
         const result = await invokeGetKey(getKey)
@@ -122,9 +124,7 @@ describe('createGetKeyFunction', () => {
     })
 
     it('reports an error when no key is returned', async () => {
-        getSigningKey.mockImplementation((_kid, callback) => {
-            callback(null, undefined)
-        })
+        getSigningKey.mockImplementation((_kid, callback) => void callback(null, undefined))
         const getKey = createFunctionUnderTest()
 
         const result = await invokeGetKey(getKey)
@@ -135,9 +135,7 @@ describe('createGetKeyFunction', () => {
     })
 
     it('reports an error when signing key object has no key material', async () => {
-        getSigningKey.mockImplementation((_kid, callback) => {
-            callback(null, { somethingElse: 'no-key-data' })
-        })
+        getSigningKey.mockImplementation((_kid, callback) => void callback(null, { somethingElse: 'no-key-data' }))
         const getKey = createFunctionUnderTest()
 
         const result = await invokeGetKey(getKey)
@@ -147,9 +145,7 @@ describe('createGetKeyFunction', () => {
     })
 
     it('surfaces errors from the jwks client', async () => {
-        getSigningKey.mockImplementation((_kid, callback) => {
-            callback(new Error('upstream failure'))
-        })
+        getSigningKey.mockImplementation((_kid, callback) => void callback(new Error('upstream failure')))
         const getKey = createFunctionUnderTest()
 
         const result = await invokeGetKey(getKey)

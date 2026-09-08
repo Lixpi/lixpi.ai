@@ -15,7 +15,7 @@ import {
     removePreflightBranchMarkersForThread,
 } from './marker-settlement.ts'
 
-function makePreflightMarker(nodeId: string, threadId: string): BranchLineCanvasNode {
+const makePreflightMarker = (nodeId: string, threadId: string): BranchLineCanvasNode => {
     return {
         nodeId,
         type: 'branchLine',
@@ -32,21 +32,33 @@ function makePreflightMarker(nodeId: string, threadId: string): BranchLineCanvas
             imageModelIds: [],
             videoModelIds: [],
         },
-        position: { x: 0, y: 0 },
-        dimensions: { width: 200, height: 50 },
+        position: {
+            x: 0,
+            y: 0,
+        },
+        dimensions: {
+            width: 200,
+            height: 50,
+        },
         temporary: true,
     }
 }
 
-function makePlannedMarker(nodeId: string, threadId: string): BranchOriginCanvasNode {
+const makePlannedMarker = (nodeId: string, threadId: string): BranchOriginCanvasNode => {
     return {
         nodeId,
         type: 'branchOrigin',
         branchId: 'branch-1',
         generationRequestId: 'media-request-1',
         conversationAssetId: threadId,
-        position: { x: 300, y: 0 },
-        dimensions: { width: 200, height: 50 },
+        position: {
+            x: 300,
+            y: 0,
+        },
+        dimensions: {
+            width: 200,
+            height: 50,
+        },
         temporary: true,
     }
 }
@@ -58,11 +70,23 @@ describe('removePreflightBranchMarkersForThread', () => {
         const planned = makePlannedMarker('branch-origin-media-request-1', threadId)
         const unrelated = makePreflightMarker('pending-thread-2', 'thread-2')
         const state: CanvasState = {
-            viewport: { x: 0, y: 0, zoom: 1 },
+            viewport: {
+                x: 0,
+                y: 0,
+                zoom: 1,
+            },
             nodes: [preflight, planned, unrelated] as CanvasNode[],
             edges: [
-                { edgeId: 'stale-edge', sourceNodeId: preflight.nodeId, targetNodeId: planned.nodeId },
-                { edgeId: 'planned-edge', sourceNodeId: planned.nodeId, targetNodeId: unrelated.nodeId },
+                {
+                    edgeId: 'stale-edge',
+                    sourceNodeId: preflight.nodeId,
+                    targetNodeId: planned.nodeId,
+                },
+                {
+                    edgeId: 'planned-edge',
+                    sourceNodeId: planned.nodeId,
+                    targetNodeId: unrelated.nodeId,
+                },
             ],
         }
 
@@ -75,7 +99,11 @@ describe('removePreflightBranchMarkersForThread', () => {
 
     it('returns the original state when the thread has no preflight marker', () => {
         const state: CanvasState = {
-            viewport: { x: 0, y: 0, zoom: 1 },
+            viewport: {
+                x: 0,
+                y: 0,
+                zoom: 1,
+            },
             nodes: [makePlannedMarker('planned', 'thread-1')],
             edges: [],
         }
@@ -109,7 +137,11 @@ describe('getSupersededBranchMarkerNodeIdsForAuthoritativePlan', () => {
         const historical = makePlannedMarker('historical-marker', 'thread-2')
         historical.generationRequestId = 'older-request'
         const state: CanvasState = {
-            viewport: { x: 0, y: 0, zoom: 1 },
+            viewport: {
+                x: 0,
+                y: 0,
+                zoom: 1,
+            },
             nodes: [preflight, provisional, authoritative, historical] as CanvasNode[],
             edges: [],
         }
@@ -126,7 +158,11 @@ describe('getSupersededBranchMarkerNodeIdsForAuthoritativePlan', () => {
         const concurrent = makePlannedMarker('concurrent-origin', 'thread-1')
         concurrent.generationRequestId = 'media-request-2'
         const state: CanvasState = {
-            viewport: { x: 0, y: 0, zoom: 1 },
+            viewport: {
+                x: 0,
+                y: 0,
+                zoom: 1,
+            },
             nodes: [authoritative, concurrent],
             edges: [],
         }

@@ -9,11 +9,12 @@ import {
 
 const STORAGE_KEY = 'navigationSidePanel:state'
 
-async function importFreshStore() {
+const importFreshStore = async () => {
     // `persistentJSON` reads localStorage once at module init time, and the
     // module itself is a singleton, so each test needs a fresh module graph
     // to observe a different starting localStorage value.
     const module = await import('$src/stores/navigationSidePanelStore.ts')
+
     return module
 }
 
@@ -23,9 +24,7 @@ describe('navigationSidePanelStore', () => {
         vi.resetModules()
     })
 
-    afterEach(() => {
-        localStorage.clear()
-    })
+    afterEach(() => void localStorage.clear())
 
     // =============================================================================
     // DEFAULTS AND PERSISTENCE
@@ -35,7 +34,10 @@ describe('navigationSidePanelStore', () => {
         it('defaults to open with no persisted width', async () => {
             const { navigationSidePanelStore } = await importFreshStore()
 
-            expect(navigationSidePanelStore.getData()).toEqual({ isOpen: true, width: null })
+            expect(navigationSidePanelStore.getData()).toEqual({
+                isOpen: true,
+                width: null,
+            })
             expect(navigationSidePanelStore.getData('isOpen')).toBe(true)
             expect(navigationSidePanelStore.getData('width')).toBeNull()
         })
@@ -43,18 +45,30 @@ describe('navigationSidePanelStore', () => {
         it('persists state changes to localStorage under the expected key', async () => {
             const { navigationSidePanelStore } = await importFreshStore()
 
-            navigationSidePanelStore.setValues({ isOpen: false, width: 300 })
+            navigationSidePanelStore.setValues({
+                isOpen: false,
+                width: 300,
+            })
 
             const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) as string)
-            expect(stored).toEqual({ isOpen: false, width: 300 })
+            expect(stored).toEqual({
+                isOpen: false,
+                width: 300,
+            })
         })
 
         it('rehydrates from a previously persisted value on next import', async () => {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify({ isOpen: false, width: 456 }))
+            localStorage.setItem(STORAGE_KEY, JSON.stringify({
+                isOpen: false,
+                width: 456,
+            }))
 
             const { navigationSidePanelStore } = await importFreshStore()
 
-            expect(navigationSidePanelStore.getData()).toEqual({ isOpen: false, width: 456 })
+            expect(navigationSidePanelStore.getData()).toEqual({
+                isOpen: false,
+                width: 456,
+            })
         })
     })
 
@@ -69,7 +83,10 @@ describe('navigationSidePanelStore', () => {
 
             navigationSidePanelStore.setValues({ isOpen: false })
 
-            expect(navigationSidePanelStore.getData()).toEqual({ isOpen: false, width: 320 })
+            expect(navigationSidePanelStore.getData()).toEqual({
+                isOpen: false,
+                width: 320,
+            })
         })
 
         it('merges a partial width update without touching isOpen', async () => {
@@ -78,7 +95,10 @@ describe('navigationSidePanelStore', () => {
 
             navigationSidePanelStore.setValues({ width: 500 })
 
-            expect(navigationSidePanelStore.getData()).toEqual({ isOpen: false, width: 500 })
+            expect(navigationSidePanelStore.getData()).toEqual({
+                isOpen: false,
+                width: 500,
+            })
         })
 
         it('explicitly clears a persisted width back to null when width is passed as null', async () => {
@@ -111,11 +131,17 @@ describe('navigationSidePanelStore', () => {
 
         it('supports calling setValues with no arguments as a no-op', async () => {
             const { navigationSidePanelStore } = await importFreshStore()
-            navigationSidePanelStore.setValues({ isOpen: false, width: 250 })
+            navigationSidePanelStore.setValues({
+                isOpen: false,
+                width: 250,
+            })
 
             navigationSidePanelStore.setValues()
 
-            expect(navigationSidePanelStore.getData()).toEqual({ isOpen: false, width: 250 })
+            expect(navigationSidePanelStore.getData()).toEqual({
+                isOpen: false,
+                width: 250,
+            })
         })
     })
 
@@ -126,13 +152,22 @@ describe('navigationSidePanelStore', () => {
     describe('resetStore', () => {
         it('restores the default state and persists it', async () => {
             const { navigationSidePanelStore } = await importFreshStore()
-            navigationSidePanelStore.setValues({ isOpen: false, width: 700 })
+            navigationSidePanelStore.setValues({
+                isOpen: false,
+                width: 700,
+            })
 
             navigationSidePanelStore.resetStore()
 
-            expect(navigationSidePanelStore.getData()).toEqual({ isOpen: true, width: null })
+            expect(navigationSidePanelStore.getData()).toEqual({
+                isOpen: true,
+                width: null,
+            })
             const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) as string)
-            expect(stored).toEqual({ isOpen: true, width: null })
+            expect(stored).toEqual({
+                isOpen: true,
+                width: null,
+            })
         })
     })
 
@@ -143,18 +178,25 @@ describe('navigationSidePanelStore', () => {
     describe('subscribe', () => {
         it('notifies subscribers with the merged state after setValues', async () => {
             const { navigationSidePanelStore } = await importFreshStore()
-            const seen: Array<{ isOpen: boolean; width: number | null }> = []
-            const unsubscribe = navigationSidePanelStore.subscribe((state) => {
-                seen.push(state)
-            })
+            const seen: Array<{
+                isOpen: boolean
+                width: number | null
+            }> = []
+            const unsubscribe = navigationSidePanelStore.subscribe((state) => void seen.push(state))
 
             navigationSidePanelStore.setValues({ width: 333 })
 
-            expect(seen.at(-1)).toEqual({ isOpen: true, width: 333 })
+            expect(seen.at(-1)).toEqual({
+                isOpen: true,
+                width: 333,
+            })
 
             unsubscribe()
             navigationSidePanelStore.setValues({ width: 999 })
-            expect(seen.at(-1)).toEqual({ isOpen: true, width: 333 })
+            expect(seen.at(-1)).toEqual({
+                isOpen: true,
+                width: 333,
+            })
         })
     })
 

@@ -1,5 +1,7 @@
 #!/bin/sh
 
+# This is the container entry point for every TypeScript, HTML, Sass, and CSS quality mode.
+# It maps repository domains to files and runs only the tools relevant to each action.
 set -eu
 
 repository_dir="/usr/src/repository"
@@ -14,8 +16,10 @@ dprint_config="$tool_dir/dprint.json"
 oxlint_config="$repository_dir/.oxlintrc.json"
 
 cd "$tool_dir"
+# Dependencies live in the disposable runner container and reuse the mounted pnpm store.
 pnpm install --store-dir /pnpm-store --no-lockfile
 
+# Keep action parsing in one place so domain and shared-package dispatch accept the same set.
 is_action() {
     case "$1" in
         validate|fix|lint|lint-fix|format|validate-formatting) return 0 ;;
@@ -23,15 +27,15 @@ is_action() {
     esac
 }
 
-# Warnings do not fail a run. `lixpi/no-nested-ternary` is reported as a warning so it
-# names the code to rewrite without blocking the build, and `--deny-warnings` would turn
-# it straight back into an error.
 # Checksum of every file a fix round can touch, so a round that changes nothing ends the
 # loop instead of burning the remaining attempts on findings no fixer can resolve.
 source_fingerprint() {
     find "$@" -type f -exec cksum {} + 2>/dev/null | sort | cksum
 }
 
+# Oxlint and the custom formatter can expose work for each other. Iterate until both agree,
+# stop when the source no longer changes, and then print the remaining actionable errors.
+# Warnings do not fail the convergence check because advisory rules must not block a fix.
 run_oxlint_fixes() {
     attempt=1
     while [ "$attempt" -le 5 ]; do
@@ -54,6 +58,8 @@ run_oxlint_fixes() {
     node "$typescript_format_runner" check "$@"
 }
 
+# Compose extension checks, formatting, Oxlint, and Stylelint according to the requested
+# action. Keeping this matrix here makes every domain use identical tool semantics.
 run_action() {
     action="$1"
     shift
@@ -99,6 +105,8 @@ run_action() {
     esac
 }
 
+# Resolve an optional shared-package filter into explicit package paths. Explicit paths
+# avoid scanning vendored or unrelated workspaces during a targeted quality run.
 run_shared() {
     package_filter=""
     action="validate"
@@ -153,6 +161,8 @@ run_shared() {
     run_action "$action" $selected_paths
 }
 
+# Domain aliases are the stable command-line API used by Docker Compose and developer docs.
+# Each alias expands to the source roots and configuration files that belong to that domain.
 run_domain() {
     domain="$1"
     action="${2:-validate}"
@@ -196,6 +206,8 @@ run_domain() {
     esac
 }
 
+# The all target spells out every supported source root so ignored workspaces cannot enter
+# the quality boundary accidentally through a broad repository glob.
 run_all() {
     action="${1:-validate}"
     run_action "$action" \
@@ -239,6 +251,8 @@ run_all() {
 
 cd "$repository_dir"
 
+# Dispatch after changing to the repository because all domain paths above are relative to
+# that root. The self-test remains a separate explicit action from normal validation.
 domain="${1:-}"
 if [ -z "$domain" ]; then
     echo "Usage: run-quality.sh {web-ui|api|nex|ai-model-registry|docs-site|infrastructure|random-useful-things|quality-runner|shared|all|self-test} [package] [validate|fix|lint|lint-fix|format|validate-formatting]" >&2

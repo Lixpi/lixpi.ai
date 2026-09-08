@@ -27,7 +27,10 @@ vi.mock('../../services/asset-maintenance-queue.ts', () => maintenanceMocks)
 
 import { VideoPublisher } from './video-publisher.ts'
 
-type Published = { subject: string; payload: { content: Record<string, unknown> } }
+type Published = {
+    subject: string
+    payload: { content: Record<string, unknown> }
+}
 
 const canvasGeometry = {
     generationRequestId: 'request-1',
@@ -105,10 +108,13 @@ const pngSample = Buffer.from([
     0x0a,
 ])
 
-function createPublisher(options: { onPipelineContent?: (content: Record<string, unknown>) => void } = {}) {
+const createPublisher = (options: { onPipelineContent?: (content: Record<string, unknown>) => void } = {}) => {
     const published: Published[] = []
     const nats = {
-        publish: (subject: string, payload: Published['payload']) => published.push({ subject, payload }),
+        publish: (subject: string, payload: Published['payload']) => published.push({
+            subject,
+            payload,
+        }),
     } as any
     const publisher = new VideoPublisher(
         nats,
@@ -120,7 +126,11 @@ function createPublisher(options: { onPipelineContent?: (content: Record<string,
         undefined,
         options.onPipelineContent as any,
     )
-    return { publisher, published }
+
+    return {
+        publisher,
+        published,
+    }
 }
 
 describe('VideoPublisher', () => {
@@ -137,7 +147,10 @@ describe('VideoPublisher', () => {
     })
 
     it('persists API-owned pending geometry before publishing VIDEO_PENDING', async () => {
-        const { publisher, published } = createPublisher()
+        const {
+            publisher,
+            published,
+        } = createPublisher()
 
         await publisher.pending()
 
@@ -160,7 +173,10 @@ describe('VideoPublisher', () => {
 
     it('routes pending geometry through the durable pipeline publisher without publishing NATS directly', async () => {
         const onPipelineContent = vi.fn()
-        const { publisher, published } = createPublisher({ onPipelineContent })
+        const {
+            publisher,
+            published,
+        } = createPublisher({ onPipelineContent })
 
         await publisher.pending()
 
@@ -172,11 +188,17 @@ describe('VideoPublisher', () => {
     })
 
     it('settles the assigned Asset and publishes final API geometry', async () => {
-        const completionGeometry = { ...canvasGeometry, layoutRevision: 101 }
+        const completionGeometry = {
+            ...canvasGeometry,
+            layoutRevision: 101,
+        }
         assetStorageMocks.attachGeneratedAssetNode
             .mockResolvedValueOnce(canvasGeometry)
             .mockResolvedValueOnce(completionGeometry)
-        const { publisher, published } = createPublisher()
+        const {
+            publisher,
+            published,
+        } = createPublisher()
 
         await publisher.pending()
         await publisher.complete({

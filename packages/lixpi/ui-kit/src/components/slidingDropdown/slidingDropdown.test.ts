@@ -21,10 +21,22 @@ const SVG_NS = 'http://www.w3.org/2000/svg'
 const WIDTH = 156
 const HEIGHT = 66
 const OPTIONS = [
-    { label: 'Square', value: 'square' },
-    { label: 'Landscape', value: 'landscape' },
-    { label: 'Portrait', value: 'portrait' },
-    { label: 'Automatic', value: 'automatic' },
+    {
+        label: 'Square',
+        value: 'square',
+    },
+    {
+        label: 'Landscape',
+        value: 'landscape',
+    },
+    {
+        label: 'Portrait',
+        value: 'portrait',
+    },
+    {
+        label: 'Automatic',
+        value: 'automatic',
+    },
 ] as const
 
 type Value = typeof OPTIONS[number]['value']
@@ -46,37 +58,48 @@ const makeImmediateTransition = (target: any): any => {
     const isOpenShadowTransition = target.node?.()?.classList?.contains('sliding-dropdown-open-shadow') ?? false
     chain.duration = (duration: number) => {
         transitionDurations.push(duration)
-        if (isOpenShadowTransition) shadowTransitionDurations.push(duration)
+
+        if (isOpenShadowTransition)
+            shadowTransitionDurations.push(duration)
+
         return chain
     }
     chain.ease = (easing: unknown) => {
         transitionEasings.push(easing)
-        if (isOpenShadowTransition) shadowTransitionEasings.push(easing)
+
+        if (isOpenShadowTransition)
+            shadowTransitionEasings.push(easing)
+
         return chain
     }
     chain.attr = (name: string, value: unknown) => {
         target.attr(name, value)
+
         return chain
     }
     chain.style = (name: string, value: unknown) => {
         target.style(name, value)
+
         return chain
     }
     chain.tween = (name: string, createTween: () => ((progress: number) => void) | null) => {
         const tween = createTween()
+
         for (const progress of transitionTweenProgresses) {
             tween?.(progress)
             transitionTweenObserver?.(name, progress)
         }
+
         return chain
     }
+
     return chain
 }
 ;(selection.prototype as any).transition = function(): any {
     return makeImmediateTransition(this)
 }
 
-function setRect(element: Element, rect: Partial<DOMRect>): void {
+const setRect = (element: Element, rect: Partial<DOMRect>): void => {
     const completeRect = {
         x: rect.left ?? 0,
         y: rect.top ?? 0,
@@ -91,12 +114,18 @@ function setRect(element: Element, rect: Partial<DOMRect>): void {
     vi.spyOn(element, 'getBoundingClientRect').mockReturnValue(completeRect)
 }
 
-function mount(
+const mount = (
     selectedValue: Value = 'square',
     onChange = vi.fn(),
     transition: Partial<SlidingDropdownTransitionConfig> | null = IMMEDIATE_TRANSITION,
-    dimensions: { width: number; height: number } = { width: WIDTH, height: HEIGHT },
-) {
+    dimensions: {
+        width: number
+        height: number
+    } = {
+        width: WIDTH,
+        height: HEIGHT,
+    },
+) => {
     const host = document.createElement('div')
     const svg = document.createElementNS(SVG_NS, 'svg') as unknown as SVGSVGElement
     host.appendChild(svg)
@@ -119,14 +148,23 @@ function mount(
         ...(transition === null ? {} : { transition }),
         onChange,
     })
-    return { host, svg, slidingDropdown, onChange }
+
+    return {
+        host,
+        svg,
+        slidingDropdown,
+        onChange,
+    }
 }
 
-function mountWithOptions(
-    options: Array<{ label: string; value: string }>,
+const mountWithOptions = (
+    options: Array<{
+        label: string
+        value: string
+    }>,
     selectedValue: string,
     transition: Partial<SlidingDropdownTransitionConfig> | null = IMMEDIATE_TRANSITION,
-) {
+) => {
     const host = document.createElement('div')
     const svg = document.createElementNS(SVG_NS, 'svg') as unknown as SVGSVGElement
     host.appendChild(svg)
@@ -148,50 +186,49 @@ function mountWithOptions(
         observeParentResize: false,
         ...(transition === null ? {} : { transition }),
     })
-    return { host, svg, slidingDropdown }
+
+    return {
+        host,
+        svg,
+        slidingDropdown,
+    }
 }
 
-function optionHit(svg: SVGSVGElement, value: Value): SVGRectElement {
-    return svg.querySelector(`.sliding-dropdown-option-group[data-value="${value}"] .sliding-dropdown-hit`)!
-}
+const optionHit = (svg: SVGSVGElement, value: Value): SVGRectElement => svg.querySelector(`.sliding-dropdown-option-group[data-value="${value}"] .sliding-dropdown-hit`)!
 
-function optionLabel(svg: SVGSVGElement, value: string): SVGTextElement {
-    return svg.querySelector(`.sliding-dropdown-option-group[data-value="${value}"] text`)! as SVGTextElement
-}
+const optionLabel = (svg: SVGSVGElement, value: string): SVGTextElement => svg.querySelector(`.sliding-dropdown-option-group[data-value="${value}"] text`)! as SVGTextElement
 
-function surfaceWidth(svg: SVGSVGElement): number {
-    return Number(svg.querySelector('.sliding-dropdown-track')?.getAttribute('width'))
-}
+const surfaceWidth = (svg: SVGSVGElement): number => Number(svg.querySelector('.sliding-dropdown-track')?.getAttribute('width'))
 
-function translationX(element: Element): number {
+const translationX = (element: Element): number => {
     const transform = element.getAttribute('transform') ?? ''
     const match = /translate\(([-\d.]+)/.exec(transform)
+
     return Number(match?.[1])
 }
 
-function resetTransitionInspection(): void {
+const resetTransitionInspection = (): void => {
     transitionTweenProgresses.splice(0, transitionTweenProgresses.length, 1)
     transitionTweenObserver = null
 }
 
 let originalSlidingDropdownStyles: typeof uiKitSettings.slidingDropdown.styles
 
-beforeEach(() => {
-    originalSlidingDropdownStyles = structuredClone(uiKitSettings.slidingDropdown.styles)
-})
+beforeEach(() => void (originalSlidingDropdownStyles = structuredClone(uiKitSettings.slidingDropdown.styles)))
 
-afterEach(() => {
-    uiKitSettings.slidingDropdown.styles = originalSlidingDropdownStyles
-})
+afterEach(() => void (uiKitSettings.slidingDropdown.styles = originalSlidingDropdownStyles))
 
-function renderedSvgTop(svg: SVGSVGElement): number {
+const renderedSvgTop = (svg: SVGSVGElement): number => {
     const scrollPortal = svg.closest('.sliding-dropdown-scroll-portal') as HTMLDivElement | null
     const svgTop = Number.parseFloat(svg.style.top)
-    if (!scrollPortal) return svgTop
+
+    if (!scrollPortal)
+        return svgTop
+
     return Number.parseFloat(scrollPortal.style.top) + svgTop - scrollPortal.scrollTop
 }
 
-function dispatchPointerClick(target: Element): void {
+const dispatchPointerClick = (target: Element): void => {
     target.dispatchEvent(
         new PointerEvent('pointerdown', {
             bubbles: true,
@@ -208,7 +245,10 @@ function dispatchPointerClick(target: Element): void {
             pointerId: 7,
         }),
     )
-    target.dispatchEvent(new MouseEvent('click', { bubbles: true, button: 0 }))
+    target.dispatchEvent(new MouseEvent('click', {
+        bubbles: true,
+        button: 0,
+    }))
 }
 
 // =============================================================================
@@ -224,7 +264,10 @@ describe('createSlidingDropdown — pointer selection', () => {
         shadowTransitionEasings.length = 0
         resetTransitionInspection()
         vi.useFakeTimers()
-        Object.defineProperty(window, 'innerHeight', { configurable: true, value: 1200 })
+        Object.defineProperty(window, 'innerHeight', {
+            configurable: true,
+            value: 1200,
+        })
     })
 
     afterEach(() => {
@@ -233,7 +276,11 @@ describe('createSlidingDropdown — pointer selection', () => {
     })
 
     it('opens from the selected hit target and applies a clicked option', () => {
-        const { svg, slidingDropdown, onChange } = mount('square')
+        const {
+            svg,
+            slidingDropdown,
+            onChange,
+        } = mount('square')
 
         expect(optionHit(svg, 'square').getAttribute('pointer-events')).toBe('all')
         dispatchPointerClick(optionHit(svg, 'square'))
@@ -258,7 +305,10 @@ describe('createSlidingDropdown — pointer selection', () => {
         const svg = document.createElementNS(SVG_NS, 'svg') as unknown as SVGSVGElement
         host.appendChild(svg)
         document.body.appendChild(host)
-        setRect(host, { width: WIDTH * 2, height: HEIGHT * 2 })
+        setRect(host, {
+            width: WIDTH * 2,
+            height: HEIGHT * 2,
+        })
         const slidingDropdown = createSlidingDropdown<Value>(select(svg), {
             id: 'custom-colors',
             x: 0,
@@ -302,7 +352,10 @@ describe('createSlidingDropdown — intrinsic width and chevron', () => {
         shadowTransitionEasings.length = 0
         resetTransitionInspection()
         vi.useFakeTimers()
-        Object.defineProperty(window, 'innerHeight', { configurable: true, value: 1200 })
+        Object.defineProperty(window, 'innerHeight', {
+            configurable: true,
+            value: 1200,
+        })
     })
 
     afterEach(() => {
@@ -311,9 +364,18 @@ describe('createSlidingDropdown — intrinsic width and chevron', () => {
     })
 
     it('remeasures an unchanged selected value after hidden content becomes measurable', () => {
-        const { svg, slidingDropdown } = mountWithOptions([
-            { label: '1K', value: '1K' },
-            { label: '2K', value: '2K' },
+        const {
+            svg,
+            slidingDropdown,
+        } = mountWithOptions([
+            {
+                label: '1K',
+                value: '1K',
+            },
+            {
+                label: '2K',
+                value: '2K',
+            },
         ], '1K')
         const initialSurfaceWidth = surfaceWidth(svg)
         const selectedContent = svg.querySelector(
@@ -339,19 +401,34 @@ describe('createSlidingDropdown — intrinsic width and chevron', () => {
 
     it('keeps a short selected value anchored while the wider option tape opens and closes', () => {
         const options = [
-            { label: '1:1', value: 'short' },
-            { label: 'Ultra wide cinematic ratio', value: 'long' },
+            {
+                label: '1:1',
+                value: 'short',
+            },
+            {
+                label: 'Ultra wide cinematic ratio',
+                value: 'long',
+            },
         ]
-        const { host, svg, slidingDropdown } = mountWithOptions(options, 'short', null)
+        const {
+            host,
+            svg,
+            slidingDropdown,
+        } = mountWithOptions(options, 'short', null)
         const shortLabel = optionLabel(svg, 'short')
         const closedSurfaceWidth = surfaceWidth(svg)
         const closedHostWidth = host.style.width
         const closedLabelX = shortLabel.getAttribute('x')
-        const widthTweenSnapshots: Array<{ labelX: string | null; hostWidth: string }> = []
+        const widthTweenSnapshots: Array<{
+            labelX: string | null
+            hostWidth: string
+        }> = []
 
         transitionTweenProgresses.splice(0, transitionTweenProgresses.length, 0, 0.5, 1)
         transitionTweenObserver = (name) => {
-            if (name !== 'sliding-dropdown-width') return
+            if (name !== 'sliding-dropdown-width')
+                return
+
             widthTweenSnapshots.push({
                 labelX: shortLabel.getAttribute('x'),
                 hostWidth: host.style.width,
@@ -383,7 +460,10 @@ describe('createSlidingDropdown — intrinsic width and chevron', () => {
     })
 
     it('keeps the chevron outside the row, portals it while scrolling, and restores it when closed', () => {
-        const { svg, slidingDropdown } = mount('square')
+        const {
+            svg,
+            slidingDropdown,
+        } = mount('square')
         const chevronControl = svg.querySelector('.sliding-dropdown-chevron-control') as SVGGElement
         const chevronIcon = svg.querySelector('.sliding-dropdown-chevron-icon') as SVGGElement
         const indicator = svg.querySelector('.sliding-dropdown-indicator') as SVGRectElement
@@ -418,7 +498,10 @@ describe('createSlidingDropdown — intrinsic width and chevron', () => {
     })
 
     it('layers its open portal below help tooltips', () => {
-        const { svg, slidingDropdown } = mount('square')
+        const {
+            svg,
+            slidingDropdown,
+        } = mount('square')
 
         slidingDropdown.setOpen(true)
         vi.runAllTimers()
@@ -432,7 +515,10 @@ describe('createSlidingDropdown — intrinsic width and chevron', () => {
     it('keeps content padding and the chevron gap when the selected border is enabled', () => {
         uiKitSettings.slidingDropdown.styles.indicator.closedBorderWidth = 4
         uiKitSettings.slidingDropdown.styles.indicator.openBorderWidth = 4
-        const { svg } = mountWithOptions([{ label: 'Bordered', value: 'bordered' }], 'bordered')
+        const { svg } = mountWithOptions([{
+            label: 'Bordered',
+            value: 'bordered',
+        }], 'bordered')
         const label = optionLabel(svg, 'bordered')
         const chevronControl = svg.querySelector('.sliding-dropdown-chevron-control') as SVGGElement
         const indicator = svg.querySelector('.sliding-dropdown-indicator') as SVGRectElement
@@ -459,7 +545,10 @@ describe('createSlidingDropdown — portaled viewport geometry', () => {
         shadowTransitionEasings.length = 0
         resetTransitionInspection()
         vi.useFakeTimers()
-        Object.defineProperty(window, 'innerHeight', { configurable: true, value: 1200 })
+        Object.defineProperty(window, 'innerHeight', {
+            configurable: true,
+            value: 1200,
+        })
         Object.defineProperty(window, 'visualViewport', {
             configurable: true,
             value: {
@@ -476,7 +565,10 @@ describe('createSlidingDropdown — portaled viewport geometry', () => {
 
     for (const selectedValue of OPTIONS.map(option => option.value)) {
         it(`shows the complete ordered tape when ${selectedValue} is initially selected`, () => {
-            const { svg, slidingDropdown } = mount(selectedValue)
+            const {
+                svg,
+                slidingDropdown,
+            } = mount(selectedValue)
             const selectedIndex = OPTIONS.findIndex(option => option.value === selectedValue)
 
             slidingDropdown.setOpen(true)
@@ -504,11 +596,17 @@ describe('createSlidingDropdown — portaled viewport geometry', () => {
     }
 
     it('preserves row height and corner radius while content exceeds the requested width', () => {
-        const { svg, slidingDropdown } = mount(
+        const {
+            svg,
+            slidingDropdown,
+        } = mount(
             'landscape',
             vi.fn(),
             IMMEDIATE_TRANSITION,
-            { width: HEIGHT, height: HEIGHT },
+            {
+                width: HEIGHT,
+                height: HEIGHT,
+            },
         )
         const indicator = svg.querySelector('.sliding-dropdown-indicator')!
         const viewportClip = svg.querySelector('clipPath rect')!
@@ -528,6 +626,7 @@ describe('createSlidingDropdown — portaled viewport geometry', () => {
         expect(indicator.getAttribute('width')).toBe(String(expandedSurfaceWidth - 4))
         expect(indicator.getAttribute('height')).toBe(String(HEIGHT - 4))
         expect(indicator.getAttribute('rx')).toBe(String((HEIGHT - 4) / 2))
+
         for (const option of svg.querySelectorAll('.sliding-dropdown-hit')) {
             expect(option.getAttribute('width')).toBe(String(expandedSurfaceWidth - 4))
             expect(option.getAttribute('height')).toBe(String(HEIGHT - 4))
@@ -536,7 +635,10 @@ describe('createSlidingDropdown — portaled viewport geometry', () => {
     })
 
     it('uses configured surface, indicator, border, and option styles for each state', () => {
-        const { svg, slidingDropdown } = mount('landscape')
+        const {
+            svg,
+            slidingDropdown,
+        } = mount('landscape')
         const styles = uiKitSettings.slidingDropdown.styles
         const track = svg.querySelector('.sliding-dropdown-track')!
         const indicator = svg.querySelector('.sliding-dropdown-indicator')!
@@ -567,7 +669,10 @@ describe('createSlidingDropdown — portaled viewport geometry', () => {
     })
 
     it('starts its separate shadow with opening and removes it on the first closing frame', () => {
-        const { svg, slidingDropdown } = mount('landscape', vi.fn(), null)
+        const {
+            svg,
+            slidingDropdown,
+        } = mount('landscape', vi.fn(), null)
         const openShadow = svg.querySelector('.sliding-dropdown-open-shadow') as SVGRectElement
         const shadowFilter = svg.querySelector('.sliding-dropdown-open-shadow-filter') as SVGFilterElement
         const shadowStyle = uiKitSettings.slidingDropdown.styles.openShadow
@@ -615,7 +720,10 @@ describe('createSlidingDropdown — motion and snap timing', () => {
         shadowTransitionEasings.length = 0
         resetTransitionInspection()
         vi.useFakeTimers()
-        Object.defineProperty(window, 'innerHeight', { configurable: true, value: 1200 })
+        Object.defineProperty(window, 'innerHeight', {
+            configurable: true,
+            value: 1200,
+        })
     })
 
     afterEach(() => {
@@ -624,7 +732,11 @@ describe('createSlidingDropdown — motion and snap timing', () => {
     })
 
     it('slides and collapses concurrently with doubled click motion duration', () => {
-        const { svg, slidingDropdown, onChange } = mount('landscape', vi.fn(), null)
+        const {
+            svg,
+            slidingDropdown,
+            onChange,
+        } = mount('landscape', vi.fn(), null)
 
         slidingDropdown.setOpen(true)
         vi.advanceTimersByTime(100)
@@ -668,7 +780,11 @@ describe('createSlidingDropdown — motion and snap timing', () => {
     })
 
     it('keeps the current value fixed while an outside press closes the viewport', () => {
-        const { svg, slidingDropdown, onChange } = mount('portrait', vi.fn(), null)
+        const {
+            svg,
+            slidingDropdown,
+            onChange,
+        } = mount('portrait', vi.fn(), null)
 
         slidingDropdown.setOpen(true)
         vi.advanceTimersByTime(100)
@@ -697,7 +813,11 @@ describe('createSlidingDropdown — motion and snap timing', () => {
     })
 
     it('waits for native scrollend before snapping while keeping the entire tape visible', () => {
-        const { svg, slidingDropdown, onChange } = mount('square', vi.fn(), null)
+        const {
+            svg,
+            slidingDropdown,
+            onChange,
+        } = mount('square', vi.fn(), null)
         slidingDropdown.setOpen(true)
         vi.runAllTimers()
         const scrollPortal = svg.closest('.sliding-dropdown-scroll-portal') as HTMLDivElement
@@ -707,9 +827,7 @@ describe('createSlidingDropdown — motion and snap timing', () => {
         Object.defineProperty(scrollPortal, 'scrollTop', {
             configurable: true,
             get: () => scrollTop,
-            set: value => {
-                scrollTop = value
-            },
+            set: value => void (scrollTop = value),
         })
         expect(scrollPortal.scrollTop).toBe(HEIGHT * 0.6 * 2)
         scrollPortal.dispatchEvent(new Event('scroll'))

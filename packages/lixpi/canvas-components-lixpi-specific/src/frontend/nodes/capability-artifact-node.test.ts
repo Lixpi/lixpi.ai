@@ -26,21 +26,50 @@ import {
 const owners: WorkspaceNodeShells[] = []
 afterEach(() => {
     for (const owner of owners.splice(0)) owner.destroy()
+
     vi.unstubAllGlobals()
     vi.restoreAllMocks()
     document.body.replaceChildren()
 })
-const node: CapabilityArtifactCanvasNode = { nodeId: 'artifact', type: 'capabilityArtifact', assetId: 'asset', artifactTypeId: 'test-artifact', position: { x: 0, y: 0 }, dimensions: { width: 300, height: 200 } }
-const asset = { assetId: 'asset', organizationId: 'organization' } as Asset
-const snapshot = { doc: { type: 'doc' }, version: 3 }
+const node: CapabilityArtifactCanvasNode = {
+    nodeId: 'artifact',
+    type: 'capabilityArtifact',
+    assetId: 'asset',
+    artifactTypeId: 'test-artifact',
+    position: {
+        x: 0,
+        y: 0,
+    },
+    dimensions: {
+        width: 300,
+        height: 200,
+    },
+}
+const asset = {
+    assetId: 'asset',
+    organizationId: 'organization',
+} as Asset
+const snapshot = {
+    doc: { type: 'doc' },
+    version: 3,
+}
 
-function fixture() {
+const fixture = () => {
     const shells = new WorkspaceNodeShells({
         document,
-        getBounds: node => ({ ...node.position, ...node.dimensions }),
+        getBounds: node => ({
+            ...node.position,
+            ...node.dimensions,
+        }),
         getLayer: () => 1,
         getZoom: () => 1,
-        getResizeSettings: () => ({ useZoomCompensatedScaling: false, size: 10, offset: 0, minSize: 5, zoomScaling: { minZoom: 0.4 } }),
+        getResizeSettings: () => ({
+            useZoomCompensatedScaling: false,
+            size: 10,
+            offset: 0,
+            minSize: 5,
+            zoomScaling: { minZoom: 0.4 },
+        }),
         consumeSuppressedClick: () => false,
         select: vi.fn(),
         toggleSelection: vi.fn(),
@@ -50,15 +79,28 @@ function fixture() {
         togglePlayback: vi.fn(),
     })
     owners.push(shells)
-    const views: Array<{ destroy: ReturnType<typeof vi.fn>; updateDocument: ReturnType<typeof vi.fn> }> = []
-    const editors: Array<{ destroy: ReturnType<typeof vi.fn>; updateDocument: ReturnType<typeof vi.fn> }> = []
+    const views: Array<{
+        destroy: ReturnType<typeof vi.fn>
+        updateDocument: ReturnType<typeof vi.fn>
+    }> = []
+    const editors: Array<{
+        destroy: ReturnType<typeof vi.fn>
+        updateDocument: ReturnType<typeof vi.fn>
+    }> = []
     const createCanvasNodeView = vi.fn<CapabilityArtifactFrontendDefinition['createCanvasNodeView']>(() => {
-        const view = { destroy: vi.fn(), updateDocument: vi.fn() }
+        const view = {
+            destroy: vi.fn(),
+            updateDocument: vi.fn(),
+        }
         views.push(view)
+
         return view
     })
     const collectReferencedAssetIds = vi.fn(() => [] as string[])
-    const shared = { assertInitialDocument: vi.fn(), collectReferencedAssetIds } as unknown as CapabilityArtifactSharedDefinition
+    const shared = {
+        assertInitialDocument: vi.fn(),
+        collectReferencedAssetIds,
+    } as unknown as CapabilityArtifactSharedDefinition
     const frontend = { createCanvasNodeView } as unknown as CapabilityArtifactFrontendDefinition
     const ports = {
         ensureStyles: vi.fn(),
@@ -66,11 +108,18 @@ function fixture() {
         getDocument: vi.fn<WorkspaceCapabilityNodePorts['getDocument']>(() => snapshot),
         refreshAsset: vi.fn<WorkspaceCapabilityNodePorts['refreshAsset']>(async () => asset),
         ensureAssetsLoaded: vi.fn<WorkspaceCapabilityNodePorts['ensureAssetsLoaded']>(async () => []),
-        getDefinitions: vi.fn(() => ({ shared, frontend })),
+        getDefinitions: vi.fn(() => ({
+            shared,
+            frontend,
+        })),
         createAssetReferenceView: vi.fn<WorkspaceCapabilityNodePorts['createAssetReferenceView']>(),
         mountEditor: vi.fn<WorkspaceCapabilityNodePorts['mountEditor']>(() => {
-            const editor = { destroy: vi.fn(), updateDocument: vi.fn() }
+            const editor = {
+                destroy: vi.fn(),
+                updateDocument: vi.fn(),
+            }
             editors.push(editor)
+
             return editor
         }),
         onHeightChange: vi.fn(),
@@ -79,13 +128,29 @@ function fixture() {
     const mount = () => {
         const view = new WorkspaceCapabilityNode(node, shells, ports)
         document.body.append(view.element)
+
         return view
     }
-    return { shells, ports, mount, createCanvasNodeView, shared, collectReferencedAssetIds, views, editors }
+
+    return {
+        shells,
+        ports,
+        mount,
+        createCanvasNodeView,
+        shared,
+        collectReferencedAssetIds,
+        views,
+        editors,
+    }
 }
 
-function mountEditor(host: CapabilityArtifactCanvasHost) {
-    return host.mountEditor!({ container: host.container, document: host.document, schema: {} as never, plugins: [] })
+const mountEditor = (host: CapabilityArtifactCanvasHost) => {
+    return host.mountEditor!({
+        container: host.container,
+        document: host.document,
+        schema: {} as never,
+        plugins: [],
+    })
 }
 
 describe('WorkspaceCapabilityNode', () => {
@@ -95,7 +160,10 @@ describe('WorkspaceCapabilityNode', () => {
         expect(test.ports.ensureStyles).toHaveBeenCalledWith(document)
         expect(test.ports.getDefinitions).toHaveBeenCalledWith('test-artifact')
         expect(test.shared.assertInitialDocument).toHaveBeenCalledWith(snapshot.doc)
-        expect(test.createCanvasNodeView).toHaveBeenCalledWith(expect.objectContaining({ node, document: snapshot.doc }))
+        expect(test.createCanvasNodeView).toHaveBeenCalledWith(expect.objectContaining({
+            node,
+            document: snapshot.doc,
+        }))
         test.shells.clear()
         expect(test.views[0]!.destroy).toHaveBeenCalledOnce()
     })
@@ -103,7 +171,10 @@ describe('WorkspaceCapabilityNode', () => {
     it('loads missing metadata and lineage references before mounting', async () => {
         const test = fixture()
         test.ports.getAsset.mockReturnValueOnce(undefined)
-        test.ports.refreshAsset.mockResolvedValue({ ...asset, lineage: { sourceAssetIds: ['source'] } } as Asset)
+        test.ports.refreshAsset.mockResolvedValue({
+            ...asset,
+            lineage: { sourceAssetIds: ['source'] },
+        } as Asset)
         const view = test.mount()
         expect(view.element.querySelector('[role="status"]')).not.toBeNull()
         await vi.waitFor(() => expect(test.createCanvasNodeView).toHaveBeenCalledOnce())
@@ -126,11 +197,18 @@ describe('WorkspaceCapabilityNode', () => {
 
     it('disposes editors and references exactly once even when the factory also owns them', () => {
         const test = fixture()
-        const reference = { dom: document.createElement('span'), destroy: vi.fn() }
+        const reference = {
+            dom: document.createElement('span'),
+            destroy: vi.fn(),
+        }
         test.ports.createAssetReferenceView.mockReturnValue(reference)
         test.createCanvasNodeView.mockImplementation(host => {
             const editor = mountEditor(host)
-            const ref = host.createAssetReferenceView({ assetId: 'reference', variant: 'inline' })!
+            const ref = host.createAssetReferenceView({
+                assetId: 'reference',
+                variant: 'inline',
+            })!
+
             return {
                 destroy: () => {
                     editor.destroy()
@@ -156,6 +234,7 @@ describe('WorkspaceCapabilityNode', () => {
         const test = fixture()
         test.createCanvasNodeView.mockImplementationOnce(host => {
             mountEditor(host)
+
             throw new Error('Factory failed')
         })
         const view = test.mount()
@@ -172,6 +251,7 @@ describe('WorkspaceCapabilityNode', () => {
             'requestAnimationFrame',
             vi.fn((callback: FrameRequestCallback) => {
                 frames.push(callback)
+
                 return frames.length
             }),
         )

@@ -18,6 +18,7 @@ const runProcessMock = vi.fn()
 
 vi.mock('./run-process.ts', async () => {
     const actual = await vi.importActual<typeof import('./run-process.ts')>('./run-process.ts')
+
     return {
         ...actual,
         runProcess: (...args: Parameters<typeof runProcessMock>) => runProcessMock(...args),
@@ -30,15 +31,14 @@ vi.mock('@lixpi/debug-tools', () => ({
 
 const parseShOutputPath = (command: string): string => {
     const match = />\s+"([^"]+)"$/.exec(command)
-    if (!match) {
+
+    if (!match)
         throw new Error(`cannot parse sh output path: ${command}`)
-    }
+
     return match[1]
 }
 
-beforeEach(() => {
-    runProcessMock.mockReset()
-})
+beforeEach(() => void runProcessMock.mockReset())
 
 describe('transcodeAudioVideo', () => {
     it('builds expected ffmpeg args for MP3', async () => {
@@ -136,8 +136,16 @@ describe('probeMedia', () => {
                 JSON.stringify({
                     format: { duration: '12.34' },
                     streams: [
-                        { codec_type: 'video', width: 1280, height: 720, duration: '10' },
-                        { codec_type: 'audio', duration: '12.34' },
+                        {
+                            codec_type: 'video',
+                            width: 1280,
+                            height: 720,
+                            duration: '10',
+                        },
+                        {
+                            codec_type: 'audio',
+                            duration: '12.34',
+                        },
                     ],
                 }),
             )

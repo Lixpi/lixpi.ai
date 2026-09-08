@@ -84,10 +84,10 @@ export const createActionTimelineGrid = (
     )
 }
 
-export function assertTimelineTiming(
+export const assertTimelineTiming = (
     durationMs: number,
     precisionMs: number,
-): void {
+): void => {
     if (
         !Number.isSafeInteger(durationMs)
         || durationMs <= 0
@@ -130,10 +130,10 @@ export const parseActionTimelineTiming = (text: string): ActionTimelineTimingInp
     }
 }
 
-function hasPrecisionContext(
+const hasPrecisionContext = (
     text: string,
     match: RegExpMatchArray,
-): boolean {
+): boolean => {
     const index = match.index ?? 0
     const before = text.slice(
         Math.max(0, index - 40),
@@ -148,10 +148,10 @@ function hasPrecisionContext(
     )
 }
 
-function hasDurationContext(
+const hasDurationContext = (
     text: string,
     match: RegExpMatchArray,
-): boolean {
+): boolean => {
     const index = match.index ?? 0
     const before = text.slice(
         Math.max(0, index - 32),
@@ -175,10 +175,10 @@ export const secondsTextToMilliseconds = (
     )
 }
 
-function timingMatchToMilliseconds(
+const timingMatchToMilliseconds = (
     match: RegExpMatchArray,
     minimumMs: number,
-): number | undefined {
+): number | undefined => {
     if (
         !match[1]
         || !match[2]
@@ -192,11 +192,11 @@ function timingMatchToMilliseconds(
     )
 }
 
-function timeTextToMilliseconds(
+const timeTextToMilliseconds = (
     raw: string,
     rawUnit: string,
     minimumMs: number,
-): number | undefined {
+): number | undefined => {
     const normalized = raw.trim()
 
     if (!/^\d+(?:\.\d{1,3})?$/u.test(normalized))
@@ -424,23 +424,7 @@ export const createActionTimelineDocumentSchema = (): Schema => {
     })
 }
 
-export const actionTimelineArtifactDefinition: CapabilityArtifactSharedDefinition = {
-    artifactTypeId: ACTION_TIMELINE_ARTIFACT_TYPE_ID,
-    displayName: 'Action Timeline',
-    schemaVersion: ACTION_TIMELINE_SCHEMA_VERSION,
-    allowedEmbeddedReferenceTypes: ['media'],
-    createDocumentSchema: createActionTimelineDocumentSchema,
-    assertInitialDocument: assertActionTimelineDocument,
-    assertEditableMutation: assertActionTimelineEditableMutation,
-    collectReferencedAssetIds: collectActionTimelineReferencedAssetIds,
-    serializeForModel: serializeActionTimelineForModel,
-    buildCatalogMetadata: buildActionTimelineCatalogMetadata,
-}
-
-export const registerActionTimelineSharedDefinition = (registry: CapabilityArtifactSharedRegistry): void =>
-    void registry.register(actionTimelineArtifactDefinition)
-
-export function assertActionTimelineDocument(input: object): void {
+export const assertActionTimelineDocument = (input: object): void => {
     const doc = asNode(input, 'doc')
     const attrs = doc.attrs ?? {}
 
@@ -486,10 +470,10 @@ export function assertActionTimelineDocument(input: object): void {
     createActionTimelineDocumentSchema().nodeFromJSON(input).check()
 }
 
-export function assertActionTimelineEditableMutation(
+export const assertActionTimelineEditableMutation = (
     previousInput: object,
     proposedInput: object,
-): void {
+): void => {
     assertActionTimelineDocument(previousInput)
     const previous = asNode(previousInput, 'doc')
     const proposed = asNode(proposedInput, 'doc')
@@ -517,7 +501,7 @@ export function assertActionTimelineEditableMutation(
     assertActionTimelineDocument(proposedInput)
 }
 
-export function collectActionTimelineReferencedAssetIds(input: object): string[] {
+export const collectActionTimelineReferencedAssetIds = (input: object): string[] => {
     const doc = asNode(input, 'doc')
     const assetIds: string[] = []
     const seen = new Set<string>()
@@ -543,13 +527,13 @@ export function collectActionTimelineReferencedAssetIds(input: object): string[]
     return assetIds
 }
 
-export function serializeActionTimelineForModel(
+export const serializeActionTimelineForModel = (
     input: object,
     labels: ReadonlyMap<string, string>,
 ): {
     text: string
     referencedAssetIds: string[]
-} {
+} => {
     assertActionTimelineDocument(input)
     const doc = asNode(input, 'doc')
     const referencedAssetIds = collectActionTimelineReferencedAssetIds(input)
@@ -567,7 +551,7 @@ export function serializeActionTimelineForModel(
     }
 }
 
-export function buildActionTimelineCatalogMetadata(input: object): Record<string, CapabilityJsonValue> {
+export const buildActionTimelineCatalogMetadata = (input: object): Record<string, CapabilityJsonValue> => {
     assertActionTimelineDocument(input)
     const doc = asNode(input, 'doc')
 
@@ -579,7 +563,7 @@ export function buildActionTimelineCatalogMetadata(input: object): Record<string
     }
 }
 
-export function formatTimelineTime(milliseconds: number): string {
+export const formatTimelineTime = (milliseconds: number): string => {
     const totalSeconds = milliseconds / 1000
     const minutes = Math.floor(totalSeconds / 60)
     const seconds = totalSeconds - minutes * 60
@@ -590,10 +574,10 @@ export function formatTimelineTime(milliseconds: number): string {
     return `${minutes}:${formattedSeconds}`
 }
 
-function assertRuns(
+const assertRuns = (
     runs: readonly ActionTimelineRun[],
     authorizedReferenceAssetIds: ReadonlySet<string>,
-): void {
+): void => {
     if (
         !Array.isArray(runs)
         || runs.length === 0
@@ -625,10 +609,10 @@ function assertRuns(
         throw new Error('ACTION_TIMELINE_RUNS_EMPTY')
 }
 
-function asNode(
+const asNode = (
     input: object,
     expectedType: string,
-): ProseMirrorJsonNode {
+): ProseMirrorJsonNode => {
     const candidate = input as ProseMirrorJsonNode
 
     if (candidate.type !== expectedType)
@@ -637,20 +621,20 @@ function asNode(
     return candidate
 }
 
-function walkNodes(
+const walkNodes = (
     node: ProseMirrorJsonNode,
     visitor: (node: ProseMirrorJsonNode) => void,
-): void {
+): void => {
     visitor(node)
 
     for (const child of node.content ?? [])
         walkNodes(child, visitor)
 }
 
-function collectInlineText(
+const collectInlineText = (
     node: ProseMirrorJsonNode,
     labels: ReadonlyMap<string, string>,
-): string {
+): string => {
     const parts: string[] = []
     walkNodes(node, child => {
         if (
@@ -678,28 +662,44 @@ function collectInlineText(
     return parts.join('').trim()
 }
 
-function sameTimingAttrs(
+const sameTimingAttrs = (
     previous: Record<string, unknown> | undefined,
     proposed: Record<string, unknown> | undefined,
-): boolean {
+): boolean => {
     return previous?.schemaVersion === proposed?.schemaVersion
         && previous?.durationMs === proposed?.durationMs
         && previous?.precisionMs === proposed?.precisionMs
 }
 
-function readInteger(
+const readInteger = (
     value: unknown,
     errorCode: string,
-): number {
+): number => {
     if (!Number.isSafeInteger(value))
         throw new Error(errorCode)
 
     return value as number
 }
 
-function readNonEmptyString(value: unknown): string | undefined {
+const readNonEmptyString = (value: unknown): string | undefined => {
     return typeof value === 'string'
         && value.trim()
         ? value.trim()
         : undefined
 }
+
+export const actionTimelineArtifactDefinition: CapabilityArtifactSharedDefinition = {
+    artifactTypeId: ACTION_TIMELINE_ARTIFACT_TYPE_ID,
+    displayName: 'Action Timeline',
+    schemaVersion: ACTION_TIMELINE_SCHEMA_VERSION,
+    allowedEmbeddedReferenceTypes: ['media'],
+    createDocumentSchema: createActionTimelineDocumentSchema,
+    assertInitialDocument: assertActionTimelineDocument,
+    assertEditableMutation: assertActionTimelineEditableMutation,
+    collectReferencedAssetIds: collectActionTimelineReferencedAssetIds,
+    serializeForModel: serializeActionTimelineForModel,
+    buildCatalogMetadata: buildActionTimelineCatalogMetadata,
+}
+
+export const registerActionTimelineSharedDefinition = (registry: CapabilityArtifactSharedRegistry): void =>
+    void registry.register(actionTimelineArtifactDefinition)

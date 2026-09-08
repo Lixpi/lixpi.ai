@@ -35,7 +35,10 @@ const createVideoCallbacks = () => ({
     onVideoBranchResolvedToCanvas: vi.fn(),
 })
 
-const generationRun = { generationRequestId: 'request-1', mediaRunId: 'media-1' } as any
+const generationRun = {
+    generationRequestId: 'request-1',
+    mediaRunId: 'media-1',
+} as any
 const canvasGeometry = {
     layoutRevision: 42,
     nodes: [],
@@ -61,7 +64,10 @@ describe('routeSegmentEventToCanvas', () => {
     })
 
     it('ignores events without a conversation Asset id', () => {
-        routeSegmentEventToCanvas({ type: 'image_partial', assetId: 'asset-1' } as any)
+        routeSegmentEventToCanvas({
+            type: 'image_partial',
+            assetId: 'asset-1',
+        } as any)
 
         expect(imageCallbacks.onImagePartialToCanvas).not.toHaveBeenCalled()
         expect(videoCallbacks.onVideoPendingToCanvas).not.toHaveBeenCalled()
@@ -98,7 +104,10 @@ describe('routeSegmentEventToCanvas', () => {
             conversationAssetId: 'thread',
             canvasGeometry,
             generationRequestId: 'request',
-            ...(type === 'stream_failure' ? { status: 'ERROR', error: 'stream failed' } : {}),
+            ...(type === 'stream_failure' ? {
+                status: 'ERROR',
+                error: 'stream failed',
+            } : {}),
         }
         routeSegmentEventToCanvas(event)
         const callback = type === 'image_partial'
@@ -110,7 +119,10 @@ describe('routeSegmentEventToCanvas', () => {
             : type === 'media_generation_request_complete'
             ? imageCallbacks.onMediaGenerationRequestCompleteToCanvas
             : imageCallbacks.onImageErrorToCanvas
-        expect(callback).toHaveBeenCalledWith(expect.objectContaining({ workspaceId: 'originating-workspace', threadId: 'thread' }))
+        expect(callback).toHaveBeenCalledWith(expect.objectContaining({
+            workspaceId: 'originating-workspace',
+            threadId: 'thread',
+        }))
     })
 
     it('forwards API geometry for VIDEO_PENDING rather than asking the canvas to synthesize a placeholder', () => {
@@ -245,7 +257,11 @@ describe('canvas generation subscription lifetime', () => {
         first.subscribeImages({ onImageErrorToCanvas: firstListener })
         second.subscribeImages({ onImageErrorToCanvas: secondListener })
         first.destroy()
-        const event = { type: 'image_error', threadId: 'conversation', error: 'failed' }
+        const event = {
+            type: 'image_error',
+            threadId: 'conversation',
+            error: 'failed',
+        }
         first.route(event)
         second.route(event)
         expect(firstListener).not.toHaveBeenCalled()
@@ -260,10 +276,16 @@ describe('canvas generation subscription lifetime', () => {
         const second = vi.fn()
         const release = owner.subscribeVideos({ onVideoErrorToCanvas: first })
         owner.subscribeVideos({ onVideoErrorToCanvas: second })
-        owner.route({ type: 'video_error', threadId: 'conversation' })
+        owner.route({
+            type: 'video_error',
+            threadId: 'conversation',
+        })
         release()
         release()
-        owner.route({ type: 'video_error', threadId: 'conversation' })
+        owner.route({
+            type: 'video_error',
+            threadId: 'conversation',
+        })
         expect(first).toHaveBeenCalledTimes(1)
         expect(second).toHaveBeenCalledTimes(2)
         owner.destroy()
@@ -275,7 +297,10 @@ describe('canvas generation subscription lifetime', () => {
         let release = () => {}
         owner.subscribeImages({ onImageErrorToCanvas: () => release() })
         release = owner.subscribeImages({ onImageErrorToCanvas: second })
-        owner.route({ type: 'image_error', threadId: 'conversation' })
+        owner.route({
+            type: 'image_error',
+            threadId: 'conversation',
+        })
         expect(second).not.toHaveBeenCalled()
         owner.destroy()
     })
@@ -284,9 +309,7 @@ describe('canvas generation subscription lifetime', () => {
         const owner = new CanvasGenerationEvents(vi.fn())
         const second = vi.fn()
         owner.subscribeImages({
-            onCanvasGeometryResolvedToCanvas: payload => {
-                payload.canvasGeometry.nodes.length = 0
-            },
+            onCanvasGeometryResolvedToCanvas: payload => void (payload.canvasGeometry.nodes.length = 0),
         })
         owner.subscribeImages({ onCanvasGeometryResolvedToCanvas: second })
         const event = {
@@ -294,7 +317,17 @@ describe('canvas generation subscription lifetime', () => {
             threadId: 'conversation',
             canvasGeometry: {
                 layoutRevision: 2,
-                nodes: [{ nodeId: 'node', position: { x: 1, y: 2 }, dimensions: { width: 20, height: 30 } }],
+                nodes: [{
+                    nodeId: 'node',
+                    position: {
+                        x: 1,
+                        y: 2,
+                    },
+                    dimensions: {
+                        width: 20,
+                        height: 30,
+                    },
+                }],
             },
         }
         owner.route(event)
@@ -318,7 +351,10 @@ describe('canvas generation subscription lifetime', () => {
             },
         })
         owner.subscribeImages({ onImageErrorToCanvas: received })
-        owner.route({ type: 'image_error', threadId: 'conversation' })
+        owner.route({
+            type: 'image_error',
+            threadId: 'conversation',
+        })
         await Promise.resolve()
         expect(received).toHaveBeenCalledTimes(1)
         expect(reportError.mock.calls.map(([error]) => error.message)).toEqual(['sync', 'async'])
@@ -329,8 +365,16 @@ describe('canvas generation subscription lifetime', () => {
         const owner = new CanvasGenerationEvents(vi.fn())
         const failed = vi.fn()
         owner.subscribeImages({ onImageErrorToCanvas: failed })
-        owner.route({ status: 'ERROR', conversationAssetId: 'conversation', error: 'request failed' })
-        expect(failed).toHaveBeenCalledWith({ threadId: 'conversation', error: 'request failed', generationRun: undefined })
+        owner.route({
+            status: 'ERROR',
+            conversationAssetId: 'conversation',
+            error: 'request failed',
+        })
+        expect(failed).toHaveBeenCalledWith({
+            threadId: 'conversation',
+            error: 'request failed',
+            generationRun: undefined,
+        })
         owner.destroy()
     })
 
@@ -341,7 +385,10 @@ describe('canvas generation subscription lifetime', () => {
             onMediaBranchResolutionErrorToCanvas: () => owner.destroy(),
             onImageErrorToCanvas: failed,
         })
-        owner.route({ type: 'image_branch_resolution_error', threadId: 'conversation' })
+        owner.route({
+            type: 'image_branch_resolution_error',
+            threadId: 'conversation',
+        })
         expect(failed).not.toHaveBeenCalled()
     })
 })

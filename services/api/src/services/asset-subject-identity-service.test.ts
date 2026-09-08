@@ -80,7 +80,10 @@ const makeAsset = ({
 describe('Asset subject identity derivation', () => {
     it('derives visual medium without inventing subject identity', () => {
         expect(deriveDepictionMedium({
-            media: makeAsset({ assetId: 'painting', classification: 'unknown' }).media,
+            media: makeAsset({
+                assetId: 'painting',
+                classification: 'unknown',
+            }).media,
             descriptor: {
                 status: 'ready',
                 summary: 'watercolor portrait of a traveler',
@@ -92,14 +95,21 @@ describe('Asset subject identity derivation', () => {
             },
         })).toBe('painting')
         expect(deriveDepictionMedium({
-            media: makeAsset({ assetId: 'video', classification: 'unknown', mediaKind: 'video' }).media,
+            media: makeAsset({
+                assetId: 'video',
+                classification: 'unknown',
+                mediaKind: 'video',
+            }).media,
             descriptor: undefined,
         })).toBe('unknown')
     })
 
     it('ignores no-person inputs and derives fictional output when no person-bearing source remains', () => {
         const result = deriveSubjectIdentityFromLineage([
-            makeAsset({ assetId: 'room', classification: 'no-person' }),
+            makeAsset({
+                assetId: 'room',
+                classification: 'no-person',
+            }),
         ], { generatedOutput: true })
 
         expect(result).toEqual({
@@ -141,20 +151,39 @@ describe('Asset subject identity derivation', () => {
 
     it.each([
         ['unknown ancestry', [
-            makeAsset({ assetId: 'known', classification: 'fictional' }),
-            makeAsset({ assetId: 'unknown', classification: 'unknown' }),
+            makeAsset({
+                assetId: 'known',
+                classification: 'fictional',
+            }),
+            makeAsset({
+                assetId: 'unknown',
+                classification: 'unknown',
+            }),
         ]],
         ['fictional/real mixture', [
-            makeAsset({ assetId: 'fictional', classification: 'fictional' }),
-            makeAsset({ assetId: 'real', classification: 'self', identityGroupId: 'subject-1' }),
+            makeAsset({
+                assetId: 'fictional',
+                classification: 'fictional',
+            }),
+            makeAsset({
+                assetId: 'real',
+                classification: 'self',
+                identityGroupId: 'subject-1',
+            }),
         ]],
         ['different real-person groups', [
-            makeAsset({ assetId: 'real-1', classification: 'self', identityGroupId: 'subject-1' }),
-            makeAsset({ assetId: 'real-2', classification: 'self', identityGroupId: 'subject-2' }),
+            makeAsset({
+                assetId: 'real-1',
+                classification: 'self',
+                identityGroupId: 'subject-1',
+            }),
+            makeAsset({
+                assetId: 'real-2',
+                classification: 'self',
+                identityGroupId: 'subject-2',
+            }),
         ]],
-    ])('resolves %s conservatively', (_case, sources) => {
-        expect(deriveSubjectIdentityFromLineage(sources, { generatedOutput: true }).classification).toBe('unknown')
-    })
+    ])('resolves %s conservatively', (_case, sources) => void expect(deriveSubjectIdentityFromLineage(sources, { generatedOutput: true }).classification).toBe('unknown'))
 
     it('does not inherit expired or non-reusable provider handles', () => {
         vi.spyOn(Date, 'now').mockReturnValue(100)
@@ -165,7 +194,10 @@ describe('Asset subject identity derivation', () => {
                 identityGroupId: 'subject-1',
                 providerVerifications: [
                     verification({ expiresAt: 99 }),
-                    verification({ subjectHandle: 'non-reusable', derivativeReuse: 'same-provider-account' }),
+                    verification({
+                        subjectHandle: 'non-reusable',
+                        derivativeReuse: 'same-provider-account',
+                    }),
                 ],
             }),
         ], { generatedOutput: true })

@@ -7,24 +7,24 @@ import {
 } from 'vitest'
 import { withoutLayout } from '@lixpi/test-utils'
 
-function extractFlatRule(source: string, selector: string): string {
+const extractFlatRule = (source: string, selector: string): string => {
     const start = source.indexOf(`${selector} {`)
     const end = source.indexOf('\n}', start)
-    if (start === -1 || end === -1) throw new Error(`Missing flat SCSS rule: ${selector}`)
+
+    if (
+        start === -1
+        || end === -1
+    )
+        throw new Error(`Missing flat SCSS rule: ${selector}`)
+
     return source.slice(start, end)
 }
 
-function expectRuleToContain(rule: string, declaration: string): void {
-    expect(withoutLayout(rule).includes(withoutLayout(declaration)), `rule should contain: ${declaration}`).toBe(true)
-}
+const expectRuleToContain = (rule: string, declaration: string): void => void expect(withoutLayout(rule).includes(withoutLayout(declaration)), `rule should contain: ${declaration}`).toBe(true)
 
-function expectRuleNotToContain(rule: string, declaration: string): void {
-    expect(withoutLayout(rule).includes(withoutLayout(declaration)), `rule should not contain: ${declaration}`).toBe(false)
-}
+const expectRuleNotToContain = (rule: string, declaration: string): void => void expect(withoutLayout(rule).includes(withoutLayout(declaration)), `rule should not contain: ${declaration}`).toBe(false)
 
-function expectSourceToContain(source: string, snippet: string, label = 'source excerpt'): void {
-    expect(withoutLayout(source).includes(withoutLayout(snippet)), `${label} should contain:\n${snippet}`).toBe(true)
-}
+const expectSourceToContain = (source: string, snippet: string, label = 'source excerpt'): void => void expect(withoutLayout(source).includes(withoutLayout(snippet)), `${label} should contain:\n${snippet}`).toBe(true)
 
 describe('prompt-reference-picker.scss', () => {
     const scss = readFileSync(resolve(import.meta.dirname, 'prompt-reference-picker.scss'), 'utf-8')
@@ -104,6 +104,7 @@ describe('prompt-reference-picker.scss', () => {
             resolve(import.meta.dirname, '../../../../sass/_prompt-reference-chip.scss'),
             'utf-8',
         )
+
         for (
             const declaration of [
                 '--prompt-reference-color: #3d649c;',

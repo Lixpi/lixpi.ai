@@ -22,9 +22,42 @@ import {
 } from './media-library-panel.ts'
 
 const owners: MediaLibraryPanelInstance[] = []
-function fixture() {
-    const meta = { assetId: 'a', title: 'Reference.png', scope: 'workspace', scopeOwnerId: 'w', scopeAndOwner: 'workspace#w', primaryCategory: 'image', updatedAt: 1, thumbnailBlobHash: 'hash', byteSize: 2048 } as AssetMeta
-    const asset = { ...meta, organizationId: 'org', revision: 3, documents: { content: {}, provenance: {} }, states: { lifecycle: 'active', media: 'ready', provenance: 'generated' }, subjectIdentity: { classification: 'unknown' }, media: { kind: 'image', renditions: {} }, lineage: { sourceConversationAssetId: 'conversation', sourceAssetIds: [], generationSeed: 0 } } as Asset
+const fixture = () => {
+    const meta = {
+        assetId: 'a',
+        title: 'Reference.png',
+        scope: 'workspace',
+        scopeOwnerId: 'w',
+        scopeAndOwner: 'workspace#w',
+        primaryCategory: 'image',
+        updatedAt: 1,
+        thumbnailBlobHash: 'hash',
+        byteSize: 2048,
+    } as AssetMeta
+    const asset = {
+        ...meta,
+        organizationId: 'org',
+        revision: 3,
+        documents: {
+            content: {},
+            provenance: {},
+        },
+        states: {
+            lifecycle: 'active',
+            media: 'ready',
+            provenance: 'generated',
+        },
+        subjectIdentity: { classification: 'unknown' },
+        media: {
+            kind: 'image',
+            renditions: {},
+        },
+        lineage: {
+            sourceConversationAssetId: 'conversation',
+            sourceAssetIds: [],
+            generationSeed: 0,
+        },
+    } as Asset
     const editors: WorkspaceAssetEditorRequest[] = []
     const disposers: ReturnType<typeof vi.fn>[] = []
     const options: MediaLibraryPanelOptions = {
@@ -40,18 +73,26 @@ function fixture() {
             updateMetadata: vi.fn(async () => asset),
             changeScope: vi.fn(async () => asset),
             resumeDocument: vi.fn(async () => {}),
-            getDocument: vi.fn(() => ({ doc: { type: 'doc', content: [] }, version: 9 })),
+            getDocument: vi.fn(() => ({
+                doc: {
+                    type: 'doc',
+                    content: [],
+                },
+                version: 9,
+            })),
         },
         prepareRenditionUrls: vi.fn(async () => (id, rendition) => `https://media.test/${id}/${rendition}?token=encoded`),
         mountHistory: vi.fn(() => {
             const destroy = vi.fn()
             disposers.push(destroy)
+
             return { destroy }
         }),
         mountEditor: vi.fn(request => {
             editors.push(request)
             const destroy = vi.fn()
             disposers.push(destroy)
+
             return { destroy }
         }),
         attestSubjectIdentity: vi.fn(async () => asset),
@@ -63,24 +104,50 @@ function fixture() {
     const host = document.createElement('div')
     document.body.appendChild(host)
     const mount = () => panel.mountInto(host)
-    const ready = async () => {
-        await vi.waitFor(() => expect(panel.rootEl.querySelector('.capability-library-row')).not.toBeNull())
-    }
+    const ready = async () => void (await vi.waitFor(() => expect(panel.rootEl.querySelector('.capability-library-row')).not.toBeNull()))
     const inspect = async () => {
         panel.showAsset('a')
         await vi.waitFor(() => expect(options.mountHistory).toHaveBeenCalled())
     }
-    return { options, panel, host, meta, asset, editors, disposers, mount, ready, inspect }
+
+    return {
+        options,
+        panel,
+        host,
+        meta,
+        asset,
+        editors,
+        disposers,
+        mount,
+        ready,
+        inspect,
+    }
 }
 afterEach(() => {
     for (const owner of owners.splice(0)) owner.destroy()
+
     document.body.replaceChildren()
 })
 
 describe('Media library ownership', () => {
     it('deduplicates catalog pages, excludes foreign and non-media Assets and uses the authorized rendition port', async () => {
         const f = fixture()
-        vi.mocked(f.options.assets.list).mockResolvedValueOnce({ items: [f.meta], cursor: 'next' }).mockResolvedValueOnce({ items: [f.meta, { ...f.meta, assetId: 'foreign', scopeOwnerId: 'other' }, { ...f.meta, assetId: 'conversation', primaryCategory: 'conversation' }, { ...f.meta, assetId: 'artifact', primaryCategory: 'capabilityArtifact' }] })
+        vi.mocked(f.options.assets.list).mockResolvedValueOnce({
+            items: [f.meta],
+            cursor: 'next',
+        }).mockResolvedValueOnce({ items: [f.meta, {
+            ...f.meta,
+            assetId: 'foreign',
+            scopeOwnerId: 'other',
+        }, {
+            ...f.meta,
+            assetId: 'conversation',
+            primaryCategory: 'conversation',
+        }, {
+            ...f.meta,
+            assetId: 'artifact',
+            primaryCategory: 'capabilityArtifact',
+        }] })
         f.mount()
         await f.ready()
         expect(f.panel.rootEl.querySelectorAll('.capability-library-row')).toHaveLength(1)
@@ -98,15 +165,31 @@ describe('Media library ownership', () => {
         f.mount()
         await f.ready()
         await f.inspect()
-        expect(f.editors[0]?.authority).toMatchObject({ workspaceId: 'w', assetId: 'a', role: 'content', baseVersion: 9 })
-        expect(f.options.mountHistory).toHaveBeenCalledWith(expect.objectContaining({ asset: f.asset, content: { type: 'doc', content: [] } }))
+        expect(f.editors[0]?.authority).toMatchObject({
+            workspaceId: 'w',
+            assetId: 'a',
+            role: 'content',
+            baseVersion: 9,
+        })
+        expect(f.options.mountHistory).toHaveBeenCalledWith(expect.objectContaining({
+            asset: f.asset,
+            content: {
+                type: 'doc',
+                content: [],
+            },
+        }))
         expect(f.panel.rootEl.querySelector('.media-library-detail-seed')?.textContent).toContain('Seed: 0')
         const host = f.editors[0]!.host
-        f.editors[0]!.authority!.onLeaseStateChange({ readOnly: true, holderWorkspaceId: 'other' })
+        f.editors[0]!.authority!.onLeaseStateChange({
+            readOnly: true,
+            holderWorkspaceId: 'other',
+        })
         expect(host.getAttribute('aria-description')).toContain('other')
         f.panel.unmount()
         expect(f.editors[0]!.signal.aborted).toBe(true)
+
         for (const dispose of f.disposers) expect(dispose).toHaveBeenCalledOnce()
+
         f.editors[0]!.authority!.onLeaseStateChange({ readOnly: false })
         expect(host.getAttribute('aria-description')).toContain('other')
         f.mount()
@@ -161,7 +244,10 @@ describe('Media library ownership', () => {
         select.value = 'user'
         select.dispatchEvent(new Event('change'))
         select.value = 'organization'
-        read.resolve({ ...f.asset, revision: 8 })
+        read.resolve({
+            ...f.asset,
+            revision: 8,
+        })
         await vi.waitFor(() => expect(f.options.assets.changeScope).toHaveBeenCalledWith('a', 8, 'user', 'u'))
         const nextRead = Promise.withResolvers<Asset>()
         vi.mocked(f.options.assets.get).mockReturnValueOnce(nextRead.promise)

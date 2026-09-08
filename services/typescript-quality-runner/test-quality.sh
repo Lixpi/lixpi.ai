@@ -1,5 +1,7 @@
 #!/bin/sh
 
+# This fixture suite exercises the container's public check and fix commands against known
+# valid and invalid sources. Every mutation happens in a disposable directory.
 set -eu
 
 repository_dir="/usr/src/repository"
@@ -10,18 +12,21 @@ oxlint_bin="$tool_dir/node_modules/.bin/oxlint"
 import_order_checker="$runner_dir/import-specifier-order.ts"
 typescript_format_runner="$runner_dir/typescript-format-runner.ts"
 stylelint_runner="$tool_dir/stylelint-runner.ts"
-# dprint now formats stylesheets only. TypeScript goes through the oxfmt-backed
-# typescript-format-runner, so a .ts path handed to dprint matches no plugin at all.
+# dprint formats stylesheets only. TypeScript goes through the Oxfmt-backed formatter, so a
+# TypeScript path passed to dprint intentionally matches no plugin.
 dprint_config="$tool_dir/dprint.json"
 oxlint_config="$repository_dir/.oxlintrc.json"
 fixture_dir="$runner_dir/fixtures"
 temporary_dir=$(mktemp -d)
 
+# Always remove copied and fixed fixtures, including when an expected failure does not occur.
 cleanup() {
     rm -rf "$temporary_dir"
 }
 trap cleanup EXIT
 
+# Prove that invalid import layout fails, fixes to the exact expected text, then passes both
+# the formatter and the dedicated import-order checker without another change.
 cp "$fixture_dir/import-layout-input.txt" "$temporary_dir/import-layout.ts"
 if node "$typescript_format_runner" check "$temporary_dir/import-layout.ts" >/dev/null 2>&1 \
     && node "$import_order_checker" check "$temporary_dir/import-layout.ts" >/dev/null 2>&1; then
@@ -40,6 +45,7 @@ fi
 node "$typescript_format_runner" check "$temporary_dir/import-layout.ts" >/dev/null
 node "$import_order_checker" check "$temporary_dir/import-layout.ts" >/dev/null
 
+# Exercise the complete Oxlint rule set with one negative fixture and one accepted fixture.
 cp "$fixture_dir/lint-invalid.txt" "$temporary_dir/lint-invalid.ts"
 if "$oxlint_bin" --config "$oxlint_config" "$temporary_dir/lint-invalid.ts" >/dev/null 2>&1; then
     echo "Expected Oxlint to reject the invalid lint fixture" >&2
@@ -49,6 +55,7 @@ fi
 cp "$fixture_dir/lint-valid.txt" "$temporary_dir/lint-valid.ts"
 "$oxlint_bin" --config "$oxlint_config" "$temporary_dir/lint-valid.ts" >/dev/null
 
+# Top-level `import type` must fail while the equivalent inline type specifier remains valid.
 cp "$fixture_dir/type-import-invalid.txt" "$temporary_dir/type-import-invalid.ts"
 if "$oxlint_bin" --config "$oxlint_config" "$temporary_dir/type-import-invalid.ts" >/dev/null 2>&1; then
     echo "Expected Oxlint to reject a top-level type import" >&2
@@ -58,6 +65,7 @@ fi
 cp "$fixture_dir/type-import-valid.txt" "$temporary_dir/type-import-valid.ts"
 "$oxlint_bin" --config "$oxlint_config" "$temporary_dir/type-import-valid.ts" >/dev/null
 
+# The import fixer must keep value specifiers first and move type specifiers behind them.
 cp "$fixture_dir/type-import-order-invalid.txt" "$temporary_dir/type-import-order.ts"
 if node "$import_order_checker" check "$temporary_dir/type-import-order.ts" >/dev/null 2>&1; then
     echo "Expected the import-order checker to reject interleaved type imports" >&2
@@ -72,6 +80,7 @@ if ! cmp -s "$fixture_dir/type-import-order-valid.txt" "$temporary_dir/type-impo
 fi
 node "$import_order_checker" check "$temporary_dir/type-import-order.ts" >/dev/null
 
+# Both JSX-bearing source extensions are rejected before any TypeScript formatting begins.
 touch "$temporary_dir/react-component.tsx"
 if node "$import_order_checker" check "$temporary_dir" >/dev/null 2>&1; then
     echo "Expected the quality runner to reject a .tsx file" >&2
@@ -85,12 +94,15 @@ if node "$import_order_checker" check "$temporary_dir" >/dev/null 2>&1; then
     exit 1
 fi
 
+# A React import in a `.ts` file is rejected separately from the extension checks above.
 cp "$fixture_dir/react-import-invalid.txt" "$temporary_dir/react-import-invalid.ts"
 if "$oxlint_bin" --config "$oxlint_config" "$temporary_dir/react-import-invalid.ts" >/dev/null 2>&1; then
     echo "Expected Oxlint to reject a React import" >&2
     exit 1
 fi
 
+# Sass formatting must reject the input, produce the checked-in expected output, and remain
+# stable when checked again.
 cp "$fixture_dir/sass-format-input.txt" "$temporary_dir/sass-format.scss"
 if "$dprint_bin" check --config "$dprint_config" "$temporary_dir/sass-format.scss" >/dev/null 2>&1; then
     echo "Expected dprint to reject the invalid Sass formatting fixture" >&2
@@ -105,6 +117,8 @@ if ! cmp -s "$fixture_dir/sass-format-expected.txt" "$temporary_dir/sass-format.
 fi
 "$dprint_bin" check --config "$dprint_config" "$temporary_dir/sass-format.scss" >/dev/null
 
+# Stylelint's invalid fixture covers naming, transition, nesting, and syntax rules; the valid
+# fixture proves those rules accept the repository's intended Sass forms.
 cp "$fixture_dir/sass-lint-invalid.txt" "$temporary_dir/sass-lint-invalid.scss"
 if node "$stylelint_runner" check "$temporary_dir/sass-lint-invalid.scss" >/dev/null 2>&1; then
     echo "Expected Stylelint to reject invalid Sass naming, transitions, nesting, and syntax" >&2

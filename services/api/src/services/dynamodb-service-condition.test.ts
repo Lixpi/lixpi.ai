@@ -8,7 +8,7 @@ import { withoutLayout } from '@lixpi/test-utils'
 
 const workspaceModelSource = (): string => readFileSync(new URL('../models/workspace.ts', import.meta.url), 'utf8')
 
-function expectSourceToContain(source: string, snippet: string, label = 'source'): void {
+const expectSourceToContain = (source: string, snippet: string, label = 'source'): void => {
     expect(
         withoutLayout(source).includes(
             withoutLayout(snippet),
@@ -17,7 +17,7 @@ function expectSourceToContain(source: string, snippet: string, label = 'source'
     ).toBe(true)
 }
 
-function expectSourceNotToContain(source: string, snippet: string, label = 'source'): void {
+const expectSourceNotToContain = (source: string, snippet: string, label = 'source'): void => {
     expect(
         withoutLayout(source).includes(
             withoutLayout(snippet),

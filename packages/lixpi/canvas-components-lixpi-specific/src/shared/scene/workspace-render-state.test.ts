@@ -17,18 +17,24 @@ import {
     updatePendingCanvasVisualCommitViewport,
 } from './workspace-render-state.ts'
 
-function makeAiChatThread(overrides: Partial<AiChatThreadCanvasNode> & { nodeId: string }): AiChatThreadCanvasNode {
+const makeAiChatThread = (overrides: Partial<AiChatThreadCanvasNode> & { nodeId: string }): AiChatThreadCanvasNode => {
     return {
         nodeId: overrides.nodeId,
         type: 'aiChatThread',
         referenceId: overrides.referenceId ?? `thread-${overrides.nodeId}`,
-        position: overrides.position ?? { x: 0, y: 0 },
-        dimensions: overrides.dimensions ?? { width: 320, height: 240 },
+        position: overrides.position ?? {
+            x: 0,
+            y: 0,
+        },
+        dimensions: overrides.dimensions ?? {
+            width: 320,
+            height: 240,
+        },
         ...overrides,
     }
 }
 
-function makeImage(overrides: Partial<ImageCanvasNode> & { nodeId: string }): ImageCanvasNode {
+const makeImage = (overrides: Partial<ImageCanvasNode> & { nodeId: string }): ImageCanvasNode => {
     return {
         nodeId: overrides.nodeId,
         type: 'image',
@@ -36,13 +42,19 @@ function makeImage(overrides: Partial<ImageCanvasNode> & { nodeId: string }): Im
         workspaceId: overrides.workspaceId ?? 'workspace-1',
         src: overrides.src ?? `/api/images/workspace-1/file-${overrides.nodeId}`,
         aspectRatio: overrides.aspectRatio ?? 1,
-        position: overrides.position ?? { x: 0, y: 0 },
-        dimensions: overrides.dimensions ?? { width: 120, height: 120 },
+        position: overrides.position ?? {
+            x: 0,
+            y: 0,
+        },
+        dimensions: overrides.dimensions ?? {
+            width: 120,
+            height: 120,
+        },
         ...overrides,
     }
 }
 
-function makeEdge(sourceNodeId: string, targetNodeId: string): WorkspaceEdge {
+const makeEdge = (sourceNodeId: string, targetNodeId: string): WorkspaceEdge => {
     return {
         edgeId: `edge-${sourceNodeId}-${targetNodeId}`,
         sourceNodeId,
@@ -53,7 +65,7 @@ function makeEdge(sourceNodeId: string, targetNodeId: string): WorkspaceEdge {
     }
 }
 
-function makeCanvasState(overrides: Partial<CanvasState>): CanvasState {
+const makeCanvasState = (overrides: Partial<CanvasState>): CanvasState => {
     return {
         sourceContext: 'workspace' as any,
         nodes: [],
@@ -64,11 +76,27 @@ function makeCanvasState(overrides: Partial<CanvasState>): CanvasState {
 
 describe('workspace render state plan', () => {
     it('preserves a local active-thread drag commit when a stale active-panel metadata render arrives', () => {
-        const oldThread = makeAiChatThread({ nodeId: 'thread-node-active', referenceId: 'thread-active', position: { x: 100, y: 100 } })
-        const movedThread = makeAiChatThread({ ...oldThread, position: { x: 360, y: 140 } })
+        const oldThread = makeAiChatThread({
+            nodeId: 'thread-node-active',
+            referenceId: 'thread-active',
+            position: {
+                x: 100,
+                y: 100,
+            },
+        })
+        const movedThread = makeAiChatThread({
+            ...oldThread,
+            position: {
+                x: 360,
+                y: 140,
+            },
+        })
         const connectedImage = makeImage({
             nodeId: 'connected-image',
-            position: { x: 520, y: 120 },
+            position: {
+                x: 520,
+                y: 120,
+            },
             generatedBy: {
                 aiChatThreadId: 'thread-active',
                 responseId: 'response-1',
@@ -99,14 +127,33 @@ describe('workspace render state plan', () => {
         expect(result.usedPendingVisualState).toBe(true)
         expect(result.pendingVisualCommit).not.toBeNull()
         expect(result.state?.activeAiChatSidebarTabId).toBe('chat:thread-active')
-        expect(result.state?.nodes.find((node) => node.nodeId === 'thread-node-active')?.position).toEqual({ x: 360, y: 140 })
-        expect(result.state?.nodes.find((node) => node.nodeId === 'connected-image')?.position).toEqual({ x: 520, y: 120 })
+        expect(result.state?.nodes.find((node) => node.nodeId === 'thread-node-active')?.position).toEqual({
+            x: 360,
+            y: 140,
+        })
+        expect(result.state?.nodes.find((node) => node.nodeId === 'connected-image')?.position).toEqual({
+            x: 520,
+            y: 120,
+        })
     })
 
     it('clears the pending visual commit when the store acknowledges the same visual state', () => {
-        const thread = makeAiChatThread({ nodeId: 'thread-node-active', position: { x: 360, y: 140 } })
-        const committed = makeCanvasState({ nodes: [thread], edges: [] })
-        const acknowledged = makeCanvasState({ nodes: [thread], edges: [], lastActiveAiChatThreadId: 'thread-active' })
+        const thread = makeAiChatThread({
+            nodeId: 'thread-node-active',
+            position: {
+                x: 360,
+                y: 140,
+            },
+        })
+        const committed = makeCanvasState({
+            nodes: [thread],
+            edges: [],
+        })
+        const acknowledged = makeCanvasState({
+            nodes: [thread],
+            edges: [],
+            lastActiveAiChatThreadId: 'thread-active',
+        })
 
         const result = mergeIncomingCanvasStateWithPendingVisualCommit({
             incomingState: acknowledged,
@@ -119,10 +166,25 @@ describe('workspace render state plan', () => {
     })
 
     it('accepts an incoming structural change instead of masking it with a pending commit', () => {
-        const thread = makeAiChatThread({ nodeId: 'thread-node-active', position: { x: 360, y: 140 } })
-        const committed = makeCanvasState({ nodes: [thread], edges: [] })
+        const thread = makeAiChatThread({
+            nodeId: 'thread-node-active',
+            position: {
+                x: 360,
+                y: 140,
+            },
+        })
+        const committed = makeCanvasState({
+            nodes: [thread],
+            edges: [],
+        })
         const incomingNewImage = makeCanvasState({
-            nodes: [thread, makeImage({ nodeId: 'new-image', position: { x: 700, y: 100 } })],
+            nodes: [thread, makeImage({
+                nodeId: 'new-image',
+                position: {
+                    x: 700,
+                    y: 100,
+                },
+            })],
             edges: [],
         })
 
@@ -137,8 +199,21 @@ describe('workspace render state plan', () => {
     })
 
     it('preserves API-applied connector edges while the incoming store canvas is stale', () => {
-        const fork = makeAiChatThread({ nodeId: 'fork-node', referenceId: 'thread-lineage', position: { x: 0, y: 0 } })
-        const generated = makeImage({ nodeId: 'pending-image-1', position: { x: 500, y: 0 } })
+        const fork = makeAiChatThread({
+            nodeId: 'fork-node',
+            referenceId: 'thread-lineage',
+            position: {
+                x: 0,
+                y: 0,
+            },
+        })
+        const generated = makeImage({
+            nodeId: 'pending-image-1',
+            position: {
+                x: 500,
+                y: 0,
+            },
+        })
         const edge = makeEdge('fork-node', 'pending-image-1')
         const apiAppliedState = makeCanvasState({
             nodes: [fork, generated],
@@ -163,7 +238,14 @@ describe('workspace render state plan', () => {
     })
 
     it('preserves API-completed generated media when the incoming store still has pending placeholders', () => {
-        const fork = makeAiChatThread({ nodeId: 'fork-node', referenceId: 'thread-lineage', position: { x: 0, y: 0 } })
+        const fork = makeAiChatThread({
+            nodeId: 'fork-node',
+            referenceId: 'thread-lineage',
+            position: {
+                x: 0,
+                y: 0,
+            },
+        })
         const generatedByBase = {
             aiChatThreadId: 'thread-lineage',
             responseId: 'response-1',
@@ -179,7 +261,10 @@ describe('workspace render state plan', () => {
             nodeId: 'pending-image-request-1-reasoning-0-image-0',
             fileId: '',
             src: '',
-            position: { x: 500, y: -140 },
+            position: {
+                x: 500,
+                y: -140,
+            },
             generatedBy: {
                 ...generatedByBase,
                 mediaRunId: 'request-1:reasoning:0:image:0',
@@ -190,7 +275,10 @@ describe('workspace render state plan', () => {
             nodeId: 'pending-image-request-1-reasoning-0-image-1',
             fileId: '',
             src: '',
-            position: { x: 500, y: 140 },
+            position: {
+                x: 500,
+                y: 140,
+            },
             generatedBy: {
                 ...generatedByBase,
                 mediaRunId: 'request-1:reasoning:0:image:1',
@@ -201,14 +289,20 @@ describe('workspace render state plan', () => {
             nodeId: 'node-hash-final-0',
             fileId: 'hash-final-0',
             src: '/api/files/workspace-1/hash-final-0',
-            position: { x: 500, y: -140 },
+            position: {
+                x: 500,
+                y: -140,
+            },
             generatedBy: pendingImage0.generatedBy,
         })
         const finalImage1 = makeImage({
             nodeId: 'node-hash-final-1',
             fileId: 'hash-final-1',
             src: '/api/files/workspace-1/hash-final-1',
-            position: { x: 500, y: 140 },
+            position: {
+                x: 500,
+                y: 140,
+            },
             generatedBy: pendingImage1.generatedBy,
         })
         const apiCompletedState = makeCanvasState({
@@ -238,14 +332,28 @@ describe('workspace render state plan', () => {
     })
 
     it('updates a pending visual commit viewport without changing its visual acknowledgement key', () => {
-        const thread = makeAiChatThread({ nodeId: 'thread-node-active', position: { x: 360, y: 140 } })
+        const thread = makeAiChatThread({
+            nodeId: 'thread-node-active',
+            position: {
+                x: 360,
+                y: 140,
+            },
+        })
         const committed = makeCanvasState({
-            viewport: { x: 663.8041612129193, y: -425.70182866034156, zoom: 0.1 },
+            viewport: {
+                x: 663.8041612129193,
+                y: -425.70182866034156,
+                zoom: 0.1,
+            },
             nodes: [thread],
             edges: [],
         })
         const pendingCommit = createPendingCanvasVisualCommit(committed)
-        const liveViewport = { x: 672.8041612129193, y: -733.7018286603416, zoom: 0.1 }
+        const liveViewport = {
+            x: 672.8041612129193,
+            y: -733.7018286603416,
+            zoom: 0.1,
+        }
 
         const updatedCommit = updatePendingCanvasVisualCommitViewport(pendingCommit, liveViewport)
 

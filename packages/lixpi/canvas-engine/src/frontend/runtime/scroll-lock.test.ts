@@ -6,9 +6,10 @@ import {
 } from 'vitest'
 import { lockCanvasScrollLayers } from './scroll-lock.ts'
 
-function createScrollableLayer(): HTMLElement {
+const createScrollableLayer = (): HTMLElement => {
     const layer = document.createElement('div')
     document.body.appendChild(layer)
+
     return layer
 }
 

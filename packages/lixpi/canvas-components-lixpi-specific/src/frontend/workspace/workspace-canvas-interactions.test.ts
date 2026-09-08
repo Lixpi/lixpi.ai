@@ -21,9 +21,16 @@ describe('WorkspaceCanvasInteractions', () => {
         const owner = new WorkspaceCanvasInteractions({
             pane,
             viewport,
-            gestures: { draggingNodeId: null, resizingNodeId: null, consumePaneClick: () => false },
+            gestures: {
+                draggingNodeId: null,
+                resizingNodeId: null,
+                consumePaneClick: () => false,
+            },
             selection: {
-                marquee: { active: false, start: vi.fn() },
+                marquee: {
+                    active: false,
+                    start: vi.fn(),
+                },
                 isCanvasBackgroundTarget: target => target === viewport,
                 clearNodes,
                 clearEdgeSelection,
@@ -35,7 +42,10 @@ describe('WorkspaceCanvasInteractions', () => {
             getConnections: () => null,
             getWorldRect: vi.fn(),
             getPendingCircle: () => null,
-            clientToWorld: () => ({ x: 0, y: 0 }),
+            clientToWorld: () => ({
+                x: 0,
+                y: 0,
+            }),
             cancelInteraction: vi.fn(),
             suspendPanZoom: vi.fn(),
             startDrag: vi.fn(),

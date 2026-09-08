@@ -22,21 +22,19 @@ import {
     stabilityIcon,
 } from '@lixpi/ui-kit/svg'
 
-function setMockModels(models: Array<{ provider?: string; model?: string; title?: string; providerTitle?: string; colorIconName?: string }>): void {
-    aiModelsStore.setAiModels(models as any)
-}
+const setMockModels = (models: Array<{
+    provider?: string
+    model?: string
+    title?: string
+    providerTitle?: string
+    colorIconName?: string
+}>): void => void aiModelsStore.setAiModels(models as any)
 
-function createHost(): HTMLElement {
-    return document.createElement('div')
-}
+const createHost = (): HTMLElement => document.createElement('div')
 
-function createMediaModelBadge(config: MediaModelBadgeConfig): HTMLElement | null {
-    return createSharedMediaModelBadge(resolveMediaModelBadgeConfig(config))
-}
+const createMediaModelBadge = (config: MediaModelBadgeConfig): HTMLElement | null => createSharedMediaModelBadge(resolveMediaModelBadgeConfig(config))
 
-function renderMediaModelBadge(host: HTMLElement, config: MediaModelBadgeConfig): void {
-    renderSharedMediaModelBadge(host, resolveMediaModelBadgeConfig(config))
-}
+const renderMediaModelBadge = (host: HTMLElement, config: MediaModelBadgeConfig): void => void renderSharedMediaModelBadge(host, resolveMediaModelBadgeConfig(config))
 
 afterEach(() => {
     aiModelsStore.resetStore()
@@ -72,7 +70,10 @@ describe('getMediaModelBadgeMeta', () => {
             },
         ])
 
-        const meta = getMediaModelBadgeMeta({ modelId: 'OPENAI:GPT-4O-MINI', modelProvider: 'OpenAI' })
+        const meta = getMediaModelBadgeMeta({
+            modelId: 'OPENAI:GPT-4O-MINI',
+            modelProvider: 'OpenAI',
+        })
 
         expect(meta.providerTitle).toBe('OPENAI')
         expect(meta.modelTitle).toBe('Case Fold')
@@ -81,7 +82,10 @@ describe('getMediaModelBadgeMeta', () => {
     })
 
     it('falls back to provider-based labels and icons when no catalog match exists', () => {
-        const meta = getMediaModelBadgeMeta({ modelId: 'not-in-catalog-model', modelProvider: 'Anthropic' })
+        const meta = getMediaModelBadgeMeta({
+            modelId: 'not-in-catalog-model',
+            modelProvider: 'Anthropic',
+        })
 
         expect(meta.providerTitle).toBe('Anthropic')
         expect(meta.modelTitle).toBe('not-in-catalog-model')
@@ -90,7 +94,10 @@ describe('getMediaModelBadgeMeta', () => {
     })
 
     it('returns empty values when model and provider cannot be resolved', () => {
-        const meta = getMediaModelBadgeMeta({ modelId: '', modelProvider: '' })
+        const meta = getMediaModelBadgeMeta({
+            modelId: '',
+            modelProvider: '',
+        })
 
         expect(meta.providerTitle).toBe('')
         expect(meta.modelTitle).toBe('')
@@ -109,7 +116,10 @@ describe('getMediaModelBadgeMeta', () => {
             },
         ])
 
-        const meta = getMediaModelBadgeMeta({ modelId: 'openai:gpt-4o-mini', modelProvider: 'Anthropic' })
+        const meta = getMediaModelBadgeMeta({
+            modelId: 'openai:gpt-4o-mini',
+            modelProvider: 'Anthropic',
+        })
 
         expect(meta.providerTitle).toBe('OpenAI')
         expect(meta.modelTitle).toBe('GPT-4o mini')
@@ -128,7 +138,10 @@ describe('getMediaModelBadgeMeta', () => {
             },
         ])
 
-        const meta = getMediaModelBadgeMeta({ modelId: 'openai:gemini-pro', modelProvider: 'google' })
+        const meta = getMediaModelBadgeMeta({
+            modelId: 'openai:gemini-pro',
+            modelProvider: 'google',
+        })
 
         expect(meta.providerTitle).toBe('openai')
         expect(meta.modelTitle).toBe('gemini-pro')
@@ -146,7 +159,10 @@ describe('getMediaModelBadgeMeta', () => {
             },
         ])
 
-        const meta = getMediaModelBadgeMeta({ modelId: 'google:gemini:2.5', modelProvider: '' })
+        const meta = getMediaModelBadgeMeta({
+            modelId: 'google:gemini:2.5',
+            modelProvider: '',
+        })
 
         expect(meta.providerTitle).toBe('Google')
         expect(meta.modelTitle).toBe('Gemini 2.5')
@@ -185,7 +201,10 @@ describe('getMediaModelBadgeMeta', () => {
             },
         ])
 
-        const meta = getMediaModelBadgeMeta({ modelId: 'openai:gpt-4o', monochromeIcon: true })
+        const meta = getMediaModelBadgeMeta({
+            modelId: 'openai:gpt-4o',
+            monochromeIcon: true,
+        })
 
         expect(meta.icon).toBe(gptAvatarIcon)
         expect(meta.icon).not.toBe(geminiIcon)
@@ -195,9 +214,10 @@ describe('getMediaModelBadgeMeta', () => {
 })
 
 describe('createMediaModelBadge', () => {
-    it('returns null when there is no icon and no label', () => {
-        expect(createMediaModelBadge({ modelId: '', modelProvider: '' })).toBeNull()
-    })
+    it('returns null when there is no icon and no label', () => void expect(createMediaModelBadge({
+        modelId: '',
+        modelProvider: '',
+    })).toBeNull())
 
     it('renders provider and model labels with icon when metadata exists', () => {
         setMockModels([
@@ -208,7 +228,10 @@ describe('createMediaModelBadge', () => {
             },
         ])
 
-        const badge = createMediaModelBadge({ modelId: 'google:gemini-pro', modelProvider: 'google' })
+        const badge = createMediaModelBadge({
+            modelId: 'google:gemini-pro',
+            modelProvider: 'google',
+        })
 
         expect(badge).not.toBeNull()
         expect(badge?.className).toContain('media-model-badge')
@@ -230,7 +253,10 @@ describe('createMediaModelBadge', () => {
             },
         ])
 
-        const badge = createMediaModelBadge({ modelId: 'openai:gpt-4o', iconOnly: true })
+        const badge = createMediaModelBadge({
+            modelId: 'openai:gpt-4o',
+            iconOnly: true,
+        })
 
         expect(badge?.className).toContain('media-model-badge-icon-only')
         expect(badge?.querySelector('.media-model-badge-icon')).not.toBeNull()
@@ -240,7 +266,10 @@ describe('createMediaModelBadge', () => {
     })
 
     it('keeps only provider text for provider-only metadata and no model value', () => {
-        const badge = createMediaModelBadge({ modelId: '', modelProvider: 'Anthropic' })
+        const badge = createMediaModelBadge({
+            modelId: '',
+            modelProvider: 'Anthropic',
+        })
 
         expect(badge).not.toBeNull()
         expect(badge?.querySelector('.media-model-badge-provider')?.textContent).toBe('Anthropic')
@@ -259,7 +288,11 @@ describe('createMediaModelBadge', () => {
             },
         ])
 
-        const badge = createMediaModelBadge({ modelId: 'openai:gpt-4o-mini', iconOnly: true, monochromeIcon: true })
+        const badge = createMediaModelBadge({
+            modelId: 'openai:gpt-4o-mini',
+            iconOnly: true,
+            monochromeIcon: true,
+        })
         const expectedIconContainer = document.createElement('div')
         expectedIconContainer.innerHTML = gptAvatarIcon
         const expectedIconPath = expectedIconContainer.querySelector('path')?.getAttribute('d')
@@ -271,7 +304,10 @@ describe('createMediaModelBadge', () => {
     })
 
     it('returns null for resolved providers that resolve to no label and no icon', () => {
-        const badge = createMediaModelBadge({ modelId: '', modelProvider: '' })
+        const badge = createMediaModelBadge({
+            modelId: '',
+            modelProvider: '',
+        })
 
         expect(badge).toBeNull()
     })
@@ -302,7 +338,10 @@ describe('renderMediaModelBadge', () => {
         const host = createHost()
         host.innerHTML = '<span>old</span>'
 
-        renderMediaModelBadge(host, { modelId: '', modelProvider: '' })
+        renderMediaModelBadge(host, {
+            modelId: '',
+            modelProvider: '',
+        })
 
         expect(host.hidden).toBe(true)
         expect(host.children).toHaveLength(0)
@@ -318,7 +357,10 @@ describe('renderMediaModelBadge', () => {
         ])
 
         const host = createHost()
-        renderMediaModelBadge(host, { modelId: 'stability:sdxl', iconOnly: true })
+        renderMediaModelBadge(host, {
+            modelId: 'stability:sdxl',
+            iconOnly: true,
+        })
 
         expect(host.hidden).toBe(false)
         expect(host.querySelector('.media-model-badge-icon')).not.toBeNull()
@@ -339,7 +381,11 @@ describe('renderMediaModelBadge', () => {
         expect(host.querySelector('.media-model-badge-provider')?.textContent).toBe('openai')
 
         host.innerHTML = '<span>old</span>'
-        renderMediaModelBadge(host, { modelId: '', modelProvider: 'Anthropic', iconOnly: true })
+        renderMediaModelBadge(host, {
+            modelId: '',
+            modelProvider: 'Anthropic',
+            iconOnly: true,
+        })
         expect(host.hidden).toBe(false)
         expect(host.querySelector('.media-model-badge-provider')).toBeNull()
         expect(host.querySelector('.media-model-badge-name')).toBeNull()

@@ -16,9 +16,7 @@ describe('InteractivePreviewPopover', () => {
         document.body.innerHTML = ''
     })
 
-    afterEach(() => {
-        vi.useRealTimers()
-    })
+    afterEach(() => void vi.useRealTimers())
 
     it('opens for pointer and focus, stays open in interactive content, and closes outside', () => {
         const trigger = document.createElement('button')
@@ -28,12 +26,22 @@ describe('InteractivePreviewPopover', () => {
         const root = document.createElement('div')
         root.append(trigger, popover)
         document.body.append(root)
-        new InteractivePreviewPopover({ root, trigger, popover })
+        new InteractivePreviewPopover({
+            root,
+            trigger,
+            popover,
+        })
 
         root.dispatchEvent(new PointerEvent('pointerenter'))
         expect(root.classList.contains('is-open')).toBe(true)
-        popover.dispatchEvent(new FocusEvent('focusin', { bubbles: true, relatedTarget: trigger }))
-        root.dispatchEvent(new FocusEvent('focusout', { bubbles: true, relatedTarget: action }))
+        popover.dispatchEvent(new FocusEvent('focusin', {
+            bubbles: true,
+            relatedTarget: trigger,
+        }))
+        root.dispatchEvent(new FocusEvent('focusout', {
+            bubbles: true,
+            relatedTarget: action,
+        }))
         vi.advanceTimersByTime(100)
         expect(root.classList.contains('is-open')).toBe(true)
         document.body.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }))
@@ -48,11 +56,18 @@ describe('InteractivePreviewPopover', () => {
         const root = document.createElement('div')
         root.append(trigger, popover)
         document.body.append(root)
-        new InteractivePreviewPopover({ root, trigger, popover })
+        new InteractivePreviewPopover({
+            root,
+            trigger,
+            popover,
+        })
 
         action.focus()
         expect(root.classList.contains('is-open')).toBe(true)
-        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+        document.dispatchEvent(new KeyboardEvent('keydown', {
+            key: 'Escape',
+            bubbles: true,
+        }))
         expect(root.classList.contains('is-open')).toBe(false)
         expect(document.activeElement).toBe(trigger)
     })

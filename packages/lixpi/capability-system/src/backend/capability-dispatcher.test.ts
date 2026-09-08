@@ -17,7 +17,7 @@ import { CapabilityActionRegistry } from './capability-action-registry.ts'
 import { CapabilityDispatcher } from './capability-dispatcher.ts'
 import { SealedResolvedCapabilityPlan } from './capability-resolver.ts'
 
-function makePlan(): SealedResolvedCapabilityPlan {
+const makePlan = (): SealedResolvedCapabilityPlan => {
     const inputRef: CapabilityResourceRef = {
         resourceId: 'input',
         blobHash: 'input',
@@ -59,20 +59,36 @@ function makePlan(): SealedResolvedCapabilityPlan {
                     input: {},
                     progress: {},
                 }],
-                outputs: { ok: { source: 'step', stepId: 'wait', path: ['ok'] } },
+                outputs: { ok: {
+                    source: 'step',
+                    stepId: 'wait',
+                    path: ['ok'],
+                } },
             },
         },
     }
     const serializable: ResolvedCapabilityPlan = {
         rootCapabilityIds: ['detached-tool'],
-        capabilities: [{ capabilityId: 'detached-tool', kind: 'tool', manifestBlobHash: 'hash', manifest }],
-        resolvedManifests: [{ capabilityId: 'detached-tool', manifestBlobHash: 'hash' }],
+        capabilities: [{
+            capabilityId: 'detached-tool',
+            kind: 'tool',
+            manifestBlobHash: 'hash',
+            manifest,
+        }],
+        resolvedManifests: [{
+            capabilityId: 'detached-tool',
+            manifestBlobHash: 'hash',
+        }],
     }
+
     return new SealedResolvedCapabilityPlan(serializable, [
         {
             capabilityId: 'detached-tool',
             ref: inputRef,
-            bytes: new TextEncoder().encode(JSON.stringify({ type: 'object', additionalProperties: false })),
+            bytes: new TextEncoder().encode(JSON.stringify({
+                type: 'object',
+                additionalProperties: false,
+            })),
         },
         {
             capabilityId: 'detached-tool',
@@ -97,32 +113,26 @@ describe('CapabilityDispatcher detached runs', () => {
             validateOutput: () => ({ valid: true }),
             authorize: () => true,
             execute: async (_input, context) =>
-                await new Promise((_resolve, reject) => {
-                    context.signal.addEventListener('abort', () => reject(context.signal.reason), { once: true })
-                }),
+                await new Promise((_resolve, reject) => void context.signal.addEventListener('abort', () => reject(context.signal.reason), { once: true })),
             classifyRetry: () => 'terminal',
         })
         const runs: CapabilityRun[] = []
         const events: CapabilityRunEvent[] = []
         let cancelled: (() => void) | undefined
-        const cancellation = new Promise<void>(resolve => {
-            cancelled = resolve
-        })
+        const cancellation = new Promise<void>(resolve => void (cancelled = resolve))
         const dispatcher = new CapabilityDispatcher({
             store: {} as never,
             registry,
             search: async () => ({ items: [] }),
             createEventStreamName: run => `capability-run-${run.workspaceId}-${run.runId}`,
             createPersistence: () => ({
-                createRun: async run => {
-                    runs.push(structuredClone(run))
-                },
-                updateRun: async run => {
-                    runs.push(structuredClone(run))
-                },
+                createRun: async run => void runs.push(structuredClone(run)),
+                updateRun: async run => void runs.push(structuredClone(run)),
                 appendEvent: async event => {
                     events.push(structuredClone(event))
-                    if (event.eventType === 'RUN_CANCELLED') cancelled?.()
+
+                    if (event.eventType === 'RUN_CANCELLED')
+                        cancelled?.()
                 },
             }),
         })
@@ -131,7 +141,11 @@ describe('CapabilityDispatcher detached runs', () => {
         const created = await dispatcher.startDetached({
             capabilityId: 'detached-tool',
             arguments: {},
-            requester: { userId: 'user-1', workspaceId: 'workspace-1', organizationId: 'organization-1' },
+            requester: {
+                userId: 'user-1',
+                workspaceId: 'workspace-1',
+                organizationId: 'organization-1',
+            },
             origin: 'panel',
         })
 

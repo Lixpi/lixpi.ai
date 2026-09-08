@@ -27,7 +27,10 @@ describe('Capability run persistence', () => {
         })
 
         expect(updateItem).toHaveBeenCalledWith(expect.objectContaining({
-            key: { runId: 'run-1', workspaceId: 'workspace-1' },
+            key: {
+                runId: 'run-1',
+                workspaceId: 'workspace-1',
+            },
             conditionExpression: '#status IN (:expectedStatus0, :expectedStatus1)',
             expressionAttributeNames: { '#status': 'status' },
             expressionAttributeValues: {

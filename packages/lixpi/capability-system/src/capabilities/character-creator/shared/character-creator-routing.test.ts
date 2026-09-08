@@ -16,37 +16,48 @@ import {
 } from './character-creator-routing.ts'
 
 describe('isCharacterCreatorCapabilitySelected', () => {
-    it('returns false when references is undefined', () => {
-        expect(isCharacterCreatorCapabilitySelected(undefined)).toBe(false)
-    })
+    it('returns false when references is undefined', () => void expect(isCharacterCreatorCapabilitySelected(undefined)).toBe(false))
 
-    it('returns false when references is empty', () => {
-        expect(isCharacterCreatorCapabilitySelected([])).toBe(false)
-    })
+    it('returns false when references is empty', () => void expect(isCharacterCreatorCapabilitySelected([])).toBe(false))
 
     it('returns true when a tool reference matches the character creator tool id', () => {
-        const references: CapabilityPromptReference[] = [{ capabilityId: CHARACTER_CREATOR_TOOL_ID, kind: 'tool' }]
+        const references: CapabilityPromptReference[] = [{
+            capabilityId: CHARACTER_CREATOR_TOOL_ID,
+            kind: 'tool',
+        }]
         expect(isCharacterCreatorCapabilitySelected(references)).toBe(true)
     })
 
     it('ignores a skill reference with a matching id (kind must be tool)', () => {
-        const references: CapabilityPromptReference[] = [{ capabilityId: CHARACTER_CREATOR_TOOL_ID, kind: 'skill' }]
+        const references: CapabilityPromptReference[] = [{
+            capabilityId: CHARACTER_CREATOR_TOOL_ID,
+            kind: 'skill',
+        }]
         expect(isCharacterCreatorCapabilitySelected(references)).toBe(false)
     })
 
     it('ignores a tool reference with a different capability id', () => {
-        const references: CapabilityPromptReference[] = [{ capabilityId: 'global.style-extraction', kind: 'tool' }]
+        const references: CapabilityPromptReference[] = [{
+            capabilityId: 'global.style-extraction',
+            kind: 'tool',
+        }]
         expect(isCharacterCreatorCapabilitySelected(references)).toBe(false)
     })
 })
 
 describe('resolveCharacterCreatorRouting — explicit selection', () => {
     it('keeps the exact reference list untouched when the tool is already explicitly selected', () => {
-        const references: CapabilityPromptReference[] = [{ capabilityId: CHARACTER_CREATOR_TOOL_ID, kind: 'tool' }]
+        const references: CapabilityPromptReference[] = [{
+            capabilityId: CHARACTER_CREATOR_TOOL_ID,
+            kind: 'tool',
+        }]
 
         const result = resolveCharacterCreatorRouting('draw a goat', references)
 
-        expect(result).toEqual({ isCharacterCreator: true, capabilityReferences: references })
+        expect(result).toEqual({
+            isCharacterCreator: true,
+            capabilityReferences: references,
+        })
         expect(result.capabilityReferences).toBe(references)
     })
 })
@@ -72,29 +83,47 @@ describe('resolveCharacterCreatorRouting — prompt-pattern detection', () => {
         'illustrate a chair',
     ])('does not detect character-creation intent in %j', (prompt) => {
         const result = resolveCharacterCreatorRouting(prompt, undefined)
-        expect(result).toEqual({ isCharacterCreator: false, capabilityReferences: undefined })
+        expect(result).toEqual({
+            isCharacterCreator: false,
+            capabilityReferences: undefined,
+        })
     })
 
     it('appends the character creator tool reference when detected implicitly, preserving existing references', () => {
-        const references: CapabilityPromptReference[] = [{ capabilityId: 'global.style-extraction', kind: 'tool' }]
+        const references: CapabilityPromptReference[] = [{
+            capabilityId: 'global.style-extraction',
+            kind: 'tool',
+        }]
 
         const result = resolveCharacterCreatorRouting('create a character', references)
 
         expect(result).toEqual({
             isCharacterCreator: true,
             capabilityReferences: [
-                { capabilityId: 'global.style-extraction', kind: 'tool' },
-                { capabilityId: CHARACTER_CREATOR_TOOL_ID, kind: 'tool' },
+                {
+                    capabilityId: 'global.style-extraction',
+                    kind: 'tool',
+                },
+                {
+                    capabilityId: CHARACTER_CREATOR_TOOL_ID,
+                    kind: 'tool',
+                },
             ],
         })
     })
 
     it('does not mutate the input references array', () => {
-        const references: CapabilityPromptReference[] = [{ capabilityId: 'global.style-extraction', kind: 'tool' }]
+        const references: CapabilityPromptReference[] = [{
+            capabilityId: 'global.style-extraction',
+            kind: 'tool',
+        }]
 
         resolveCharacterCreatorRouting('create a character', references)
 
-        expect(references).toEqual([{ capabilityId: 'global.style-extraction', kind: 'tool' }])
+        expect(references).toEqual([{
+            capabilityId: 'global.style-extraction',
+            kind: 'tool',
+        }])
     })
 
     it('passes references through unchanged when no capability is detected and none were provided', () => {
@@ -104,7 +133,7 @@ describe('resolveCharacterCreatorRouting — prompt-pattern detection', () => {
 })
 
 describe('restrictMediaRequestToCharacterImages', () => {
-    function makeRequest(overrides: Partial<AiInteractionMediaGenerationRequest> = {}): AiInteractionMediaGenerationRequest {
+    const makeRequest = (overrides: Partial<AiInteractionMediaGenerationRequest> = {}): AiInteractionMediaGenerationRequest => {
         return {
             imageModelIds: ['OpenAI:gpt-image-1'],
             videoModelIds: ['Google:veo-3'],
@@ -138,8 +167,14 @@ describe('restrictMediaRequestToCharacterImages', () => {
             regeneration: {
                 mode: 'existing-prompt',
                 replayPrompts: [
-                    { mediaType: 'image', promptText: 'a' },
-                    { mediaType: 'video', promptText: 'b' },
+                    {
+                        mediaType: 'image',
+                        promptText: 'a',
+                    },
+                    {
+                        mediaType: 'video',
+                        promptText: 'b',
+                    },
                 ],
             },
         } as Partial<AiInteractionMediaGenerationRequest>)
@@ -148,7 +183,10 @@ describe('restrictMediaRequestToCharacterImages', () => {
 
         expect(result.regeneration).toMatchObject({
             mode: 'existing-prompt',
-            replayPrompts: [{ mediaType: 'image', promptText: 'a' }],
+            replayPrompts: [{
+                mediaType: 'image',
+                promptText: 'a',
+            }],
         })
     })
 

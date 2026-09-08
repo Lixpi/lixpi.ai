@@ -39,6 +39,7 @@ const noopDeps = {} as any
 
 vi.mock('./byteplus-video-types.ts', async () => {
     const actual = await vi.importActual<typeof import('./byteplus-video-types.ts')>('./byteplus-video-types.ts')
+
     return {
         ...actual,
         createVideoGenerationTask: byteplusMocks.createVideoGenerationTask,
@@ -70,14 +71,23 @@ const setProviderPublishers = (provider: BytePlusProvider) => {
         error,
     }
     ;(provider as any).abortController = new AbortController()
-    return { pending, generating, complete, error }
+
+    return {
+        pending,
+        generating,
+        complete,
+        error,
+    }
 }
 
 const makeState = (overrides: Record<string, any> = {}) => ({
     workspaceId: 'ws-1',
     aiChatThreadId: 'thread-1',
     modelVersion: 'dreamina-seedance-2-0-260128',
-    messages: [{ role: 'user', content: 'A cat riding a motorcycle through a city at night.' }],
+    messages: [{
+        role: 'user',
+        content: 'A cat riding a motorcycle through a city at night.',
+    }],
     enableVideoGeneration: true,
     videoResolution: '1080p',
     videoAspectRatio: '16:9',
@@ -101,10 +111,15 @@ describe('BytePlusProvider', () => {
     })
 
     afterEach(() => {
-        if (prevByteplus === undefined) delete process.env.BYTEPLUS_ARK_API_KEY
-        else process.env.BYTEPLUS_ARK_API_KEY = prevByteplus
-        if (prevArk === undefined) delete process.env.ARK_API_KEY
-        else process.env.ARK_API_KEY = prevArk
+        if (prevByteplus === undefined)
+            delete process.env.BYTEPLUS_ARK_API_KEY
+        else
+            process.env.BYTEPLUS_ARK_API_KEY = prevByteplus
+
+        if (prevArk === undefined)
+            delete process.env.ARK_API_KEY
+        else
+            process.env.ARK_API_KEY = prevArk
     })
 
     it('constructs with BYTEPLUS_ARK_API_KEY and reports providerName BytePlus', () => {
@@ -119,9 +134,7 @@ describe('BytePlusProvider', () => {
         expect(provider.providerName).toBe('BytePlus')
     })
 
-    it('throws a clear error when no API key is configured', () => {
-        expect(() => new BytePlusProvider('ws:thread:video', noopDeps)).toThrow(/ARK_API_KEY/)
-    })
+    it('throws a clear error when no API key is configured', () => void expect(() => new BytePlusProvider('ws:thread:video', noopDeps)).toThrow(/ARK_API_KEY/))
 
     it('streams Seedance video lifecycle through pending/generating and completes with usage metadata', async () => {
         process.env.BYTEPLUS_ARK_API_KEY = 'test-key'
@@ -134,7 +147,10 @@ describe('BytePlusProvider', () => {
             id: 'seedance-task-1',
             status: 'succeeded',
             content: { video_url: 'https://byteplus.local/video.mp4' },
-            usage: { completion_tokens: 111, total_tokens: 222 },
+            usage: {
+                completion_tokens: 111,
+                total_tokens: 222,
+            },
             duration: 6,
             resolution: '1080p',
             ratio: '16:9',
@@ -254,7 +270,10 @@ describe('BytePlusProvider', () => {
         process.env.BYTEPLUS_ARK_API_KEY = 'test-key'
         const provider = new BytePlusProvider('ws-1:thread-1:video', makeDeps())
         setProviderPublishers(provider)
-        const state = makeState({ modelVersion: 'gpt-like-video', enableVideoGeneration: true })
+        const state = makeState({
+            modelVersion: 'gpt-like-video',
+            enableVideoGeneration: true,
+        })
 
         await expect((provider as any).streamImpl(state)).rejects.toThrow(
             'BytePlus provider supports Seedance video generation only',
@@ -304,7 +323,10 @@ describe('BytePlusProvider', () => {
         setProviderPublishers(provider)
 
         await expect((provider as any).streamImpl(makeState({
-            messages: [{ role: 'user', content: { message: 'not a string' } }],
+            messages: [{
+                role: 'user',
+                content: { message: 'not a string' },
+            }],
         }))).rejects.toThrow('Seedance: missing prompt in user message')
         expect(byteplusMocks.createVideoGenerationTask).not.toHaveBeenCalled()
     })
@@ -319,7 +341,10 @@ describe('BytePlusProvider', () => {
             id: 'seedance-task-3',
             status: 'succeeded',
             content: {},
-            usage: { completion_tokens: 77, total_tokens: 155 },
+            usage: {
+                completion_tokens: 77,
+                total_tokens: 155,
+            },
             duration: 6,
             resolution: '1080p',
             ratio: '16:9',
@@ -342,7 +367,10 @@ describe('BytePlusProvider', () => {
             id: 'seedance-task-4',
             status: 'succeeded',
             content: { video_url: 'https://byteplus.local/video.mp4' },
-            usage: { completion_tokens: 77, total_tokens: 155 },
+            usage: {
+                completion_tokens: 77,
+                total_tokens: 155,
+            },
             duration: 6,
             resolution: '1080p',
             ratio: '16:9',

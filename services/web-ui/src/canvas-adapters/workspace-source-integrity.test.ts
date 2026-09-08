@@ -8,10 +8,13 @@ import {
     it,
 } from 'vitest'
 
-function typescriptFiles(directory: string): string[] {
+const typescriptFiles = (directory: string): string[] => {
     return readdirSync(directory, { withFileTypes: true }).flatMap(entry => {
         const path = resolve(directory, entry.name)
-        if (entry.isDirectory()) return typescriptFiles(path)
+
+        if (entry.isDirectory())
+            return typescriptFiles(path)
+
         return entry.name.endsWith('.ts') ? [path] : []
     })
 }
@@ -35,11 +38,15 @@ describe('canvas source integrity', () => {
             resolve(import.meta.dirname, '../services/asset-service.ts'),
         ].filter(file => !file.endsWith('.test.ts'))
         const api = new API()
+
         try {
             const snapshot = api.updateSnapshot({ openFiles: files })
             const diagnostics = files.flatMap(file => {
                 const project = snapshot.getDefaultProjectForFile(file)
-                if (!project) return [`No TypeScript project for ${file}`]
+
+                if (!project)
+                    return [`No TypeScript project for ${file}`]
+
                 return project.program.getSemanticDiagnostics(file)
                     .map(diagnostic => `${diagnostic.fileName}:${diagnostic.pos}: ${diagnostic.text}`)
             })
@@ -58,11 +65,15 @@ describe('canvas source integrity', () => {
             ...['canvas-engine', 'canvas-components', 'canvas-components-lixpi-specific', 'ui-primitives'].flatMap(name => typescriptFiles(resolve(import.meta.dirname, '../../packages/lixpi', name, 'src'))),
         ]
         const api = new API()
+
         try {
             const snapshot = api.updateSnapshot({ openFiles: files })
             const diagnostics = files.flatMap(file => {
                 const project = snapshot.getDefaultProjectForFile(file)
-                if (!project) return [`No TypeScript project for ${file}`]
+
+                if (!project)
+                    return [`No TypeScript project for ${file}`]
+
                 return [...project.program.getSyntacticDiagnostics(file), ...project.program.getBindDiagnostics(file)]
                     .map(diagnostic => `${diagnostic.fileName}:${diagnostic.pos}: ${diagnostic.text}`)
             })

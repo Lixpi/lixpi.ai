@@ -12,18 +12,20 @@ import {
     shouldAcceptGeneratedMediaEvent,
 } from './event-workspace-guard.ts'
 
-function makeCanvasState(overrides: Partial<CanvasState> = {}): CanvasState {
+const makeCanvasState = (overrides: Partial<CanvasState> = {}): CanvasState => {
     return {
-        viewport: { x: 0, y: 0, zoom: 1 },
+        viewport: {
+            x: 0,
+            y: 0,
+            zoom: 1,
+        },
         nodes: [],
         edges: [],
         ...overrides,
     } as CanvasState
 }
 
-function makeThread(threadId: string): Pick<AiChatThread, 'threadId'> {
-    return { threadId }
-}
+const makeThread = (threadId: string): Pick<AiChatThread, 'threadId'> => ({ threadId })
 
 // =============================================================================
 // GENERATED MEDIA EVENT WORKSPACE GUARD
@@ -46,7 +48,12 @@ describe('generated media event workspace guard', () => {
                 aiChatPanel: {
                     isOpen: true,
                     isSessionHistoryOpen: false,
-                    tabs: [{ tabId: 'tab-1', type: 'thread', refId: 'thread-tab', title: 'Thread' }],
+                    tabs: [{
+                        tabId: 'tab-1',
+                        type: 'thread',
+                        refId: 'thread-tab',
+                        title: 'Thread',
+                    }],
                     contextChips: [],
                 },
             }),
@@ -62,7 +69,10 @@ describe('generated media event workspace guard', () => {
                 nodes: [{
                     nodeId: 'marker-1',
                     type: 'branchOrigin',
-                    position: { x: 0, y: 0 },
+                    position: {
+                        x: 0,
+                        y: 0,
+                    },
                     width: 240,
                     height: 72,
                     conversationAssetId: 'thread-detached',

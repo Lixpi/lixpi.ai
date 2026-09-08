@@ -123,7 +123,7 @@ export const createStyleExtractionRuntimePort = (dependencies: StyleExtractionRu
     }
 }
 
-function resolveStages(dependencies: StyleExtractionRuntimeDependencies) {
+const resolveStages = (dependencies: StyleExtractionRuntimeDependencies) => {
     return {
         runRouter: dependencies.runRouter ?? runRouter,
         runExtractorAxis: dependencies.runExtractorAxis ?? runExtractorAxis,
@@ -134,10 +134,10 @@ function resolveStages(dependencies: StyleExtractionRuntimeDependencies) {
     }
 }
 
-function loggerFor(
+const loggerFor = (
     dependencies: StyleExtractionRuntimeDependencies,
     state: StyleExtractionState,
-): StageLogger {
+): StageLogger => {
     if (dependencies.createLogger)
         return dependencies.createLogger(state)
 
@@ -146,6 +146,4 @@ function loggerFor(
     })
 }
 
-function asStyleExtractionState(state: StyleExtractionRuntimeState): StyleExtractionState {
-    return state as unknown as StyleExtractionState
-}
+const asStyleExtractionState = (state: StyleExtractionRuntimeState): StyleExtractionState => state as unknown as StyleExtractionState

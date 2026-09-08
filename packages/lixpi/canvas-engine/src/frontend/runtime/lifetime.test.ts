@@ -45,6 +45,7 @@ describe('canvas lifetime', () => {
         lifetime.own(() => calls.push(1))
         lifetime.own(() => {
             calls.push(2)
+
             throw new Error('release failed')
         })
         lifetime.own(() => calls.push(3))

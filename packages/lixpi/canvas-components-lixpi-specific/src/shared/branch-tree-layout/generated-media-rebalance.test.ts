@@ -12,14 +12,7 @@ import {
 } from '@lixpi/constants'
 import { getGeneratedMediaPreFrameLayoutRect } from '../canvas-node/generated-media-node.ts'
 
-import {
-    GeneratedMediaRebalancePipeline,
-    reflowStackedBranchMarkers,
-    type BranchMarkerNode,
-    type GeneratedMediaRebalancePipelineConfig,
-    type Point,
-    type Rect,
-} from './generated-media-rebalance.ts'
+import { GeneratedMediaRebalancePipeline, reflowStackedBranchMarkers, type GeneratedMediaRebalancePipelineConfig, type Point, type Rect } from './generated-media-rebalance.ts'
 
 // =============================================================================
 // HELPERS
@@ -27,7 +20,7 @@ import {
 
 type ImageGeneratedByOverrides = Partial<NonNullable<ImageCanvasNode['generatedBy']>>
 
-function generatedBy(overrides: ImageGeneratedByOverrides = {}): NonNullable<ImageCanvasNode['generatedBy']> {
+const generatedBy = (overrides: ImageGeneratedByOverrides = {}): NonNullable<ImageCanvasNode['generatedBy']> => {
     return {
         aiChatThreadId: 'thread-1',
         responseId: 'response-1',
@@ -40,13 +33,17 @@ function generatedBy(overrides: ImageGeneratedByOverrides = {}): NonNullable<Ima
     }
 }
 
-function image(
+const image = (
     overrides: Partial<ImageCanvasNode> & {
         nodeId: string
         generatedBy?: ImageGeneratedByOverrides | null
     },
-): ImageCanvasNode {
-    const { generatedBy: generatedByOverrides, ...rest } = overrides
+): ImageCanvasNode => {
+    const {
+        generatedBy: generatedByOverrides,
+        ...rest
+    } = overrides
+
     return {
         nodeId: rest.nodeId,
         type: 'image',
@@ -54,8 +51,14 @@ function image(
         workspaceId: rest.workspaceId ?? 'workspace-1',
         src: rest.src ?? `/image/${rest.nodeId}`,
         aspectRatio: rest.aspectRatio ?? 1,
-        position: rest.position ?? { x: 0, y: 0 },
-        dimensions: rest.dimensions ?? { width: 100, height: 100 },
+        position: rest.position ?? {
+            x: 0,
+            y: 0,
+        },
+        dimensions: rest.dimensions ?? {
+            width: 100,
+            height: 100,
+        },
         ...(generatedByOverrides === null
             ? {}
             : { generatedBy: generatedBy(generatedByOverrides) }),
@@ -63,7 +66,7 @@ function image(
     }
 }
 
-function pendingState(reasoningIndex = 0): NonNullable<BranchForkCanvasNode['pendingState']> {
+const pendingState = (reasoningIndex = 0): NonNullable<BranchForkCanvasNode['pendingState']> => {
     return {
         phase: 'planned',
         promptText: `prompt-${reasoningIndex}`,
@@ -75,20 +78,26 @@ function pendingState(reasoningIndex = 0): NonNullable<BranchForkCanvasNode['pen
     }
 }
 
-function branchOrigin(overrides: Partial<BranchOriginCanvasNode> & { nodeId: string }): BranchOriginCanvasNode {
+const branchOrigin = (overrides: Partial<BranchOriginCanvasNode> & { nodeId: string }): BranchOriginCanvasNode => {
     return {
         nodeId: overrides.nodeId,
         type: 'branchOrigin',
         branchId: overrides.branchId ?? 'branch-1',
         generationRequestId: overrides.generationRequestId ?? 'request-1',
-        position: overrides.position ?? { x: 0, y: 0 },
-        dimensions: overrides.dimensions ?? { width: 80, height: 40 },
+        position: overrides.position ?? {
+            x: 0,
+            y: 0,
+        },
+        dimensions: overrides.dimensions ?? {
+            width: 80,
+            height: 40,
+        },
         temporary: true,
         ...overrides,
     }
 }
 
-function branchFork(overrides: Partial<BranchForkCanvasNode> & { nodeId: string }): BranchForkCanvasNode {
+const branchFork = (overrides: Partial<BranchForkCanvasNode> & { nodeId: string }): BranchForkCanvasNode => {
     return {
         nodeId: overrides.nodeId,
         type: 'branchFork',
@@ -98,14 +107,20 @@ function branchFork(overrides: Partial<BranchForkCanvasNode> & { nodeId: string 
         reasoningModelId: overrides.reasoningModelId ?? 'reasoning-model' as any,
         reasoningIndex: overrides.reasoningIndex ?? 0,
         parentBranchNodeId: overrides.parentBranchNodeId,
-        position: overrides.position ?? { x: 0, y: 0 },
-        dimensions: overrides.dimensions ?? { width: 80, height: 32 },
+        position: overrides.position ?? {
+            x: 0,
+            y: 0,
+        },
+        dimensions: overrides.dimensions ?? {
+            width: 80,
+            height: 32,
+        },
         temporary: true,
         ...overrides,
     }
 }
 
-function branchLine(overrides: Partial<BranchLineCanvasNode> & { nodeId: string }): BranchLineCanvasNode {
+const branchLine = (overrides: Partial<BranchLineCanvasNode> & { nodeId: string }): BranchLineCanvasNode => {
     return {
         nodeId: overrides.nodeId,
         type: 'branchLine',
@@ -115,22 +130,24 @@ function branchLine(overrides: Partial<BranchLineCanvasNode> & { nodeId: string 
         reasoningModelId: overrides.reasoningModelId ?? 'reasoning-model' as any,
         reasoningIndex: overrides.reasoningIndex ?? 0,
         parentBranchNodeId: overrides.parentBranchNodeId,
-        position: overrides.position ?? { x: 0, y: 0 },
-        dimensions: overrides.dimensions ?? { width: 80, height: 32 },
+        position: overrides.position ?? {
+            x: 0,
+            y: 0,
+        },
+        dimensions: overrides.dimensions ?? {
+            width: 80,
+            height: 32,
+        },
         temporary: true,
         ...overrides,
     }
 }
 
-function nodesById(nodes: CanvasNode[]): Map<string, CanvasNode> {
-    return new Map(nodes.map((node: CanvasNode) => [node.nodeId, node]))
-}
+const nodesById = (nodes: CanvasNode[]): Map<string, CanvasNode> => new Map(nodes.map((node: CanvasNode) => [node.nodeId, node]))
 
-function worldPosition(node: CanvasNode): Point {
-    return node.position
-}
+const worldPosition = (node: CanvasNode): Point => node.position
 
-function worldRect(node: CanvasNode): Rect {
+const worldRect = (node: CanvasNode): Rect => {
     return {
         x: node.position.x,
         y: node.position.y,
@@ -139,12 +156,14 @@ function worldRect(node: CanvasNode): Rect {
     }
 }
 
-function isPendingGeneratedMediaBeforeFrame(node: CanvasNode): boolean {
-    if (node.type !== 'image') return false
+const isPendingGeneratedMediaBeforeFrame = (node: CanvasNode): boolean => {
+    if (node.type !== 'image')
+        return false
+
     return Boolean(node.generatedBy) && !node.fileId?.trim() && !node.src?.trim()
 }
 
-function connectorAnchorRect(node: CanvasNode, position: Point, preFrameScale: number): Rect {
+const connectorAnchorRect = (node: CanvasNode, position: Point, preFrameScale: number): Rect => {
     if (!isPendingGeneratedMediaBeforeFrame(node)) {
         return {
             x: position.x,
@@ -153,7 +172,9 @@ function connectorAnchorRect(node: CanvasNode, position: Point, preFrameScale: n
             height: node.dimensions.height,
         }
     }
+
     const size = Math.min(node.dimensions.width, node.dimensions.height) * preFrameScale
+
     return {
         x: position.x + (node.dimensions.width - size) / 2,
         y: position.y + (node.dimensions.height - size) / 2,
@@ -162,15 +183,17 @@ function connectorAnchorRect(node: CanvasNode, position: Point, preFrameScale: n
     }
 }
 
-function collisionRect(node: CanvasNode, position: Point, preFrameScale: number): Rect {
+const collisionRect = (node: CanvasNode, position: Point, preFrameScale: number): Rect => {
     const visualRect = connectorAnchorRect(node, position, preFrameScale)
+
     return isPendingGeneratedMediaBeforeFrame(node)
         ? getGeneratedMediaPreFrameLayoutRect(position, node.dimensions, preFrameScale)
         : visualRect
 }
 
-function config(overrides: Partial<GeneratedMediaRebalancePipelineConfig> = {}): GeneratedMediaRebalancePipelineConfig {
+const config = (overrides: Partial<GeneratedMediaRebalancePipelineConfig> = {}): GeneratedMediaRebalancePipelineConfig => {
     const pendingMediaPreFrameScale = overrides.pendingMediaPreFrameScale ?? 1 / 3
+
     return {
         workspaceId: 'workspace-1',
         mediaSize: 100,
@@ -202,16 +225,28 @@ describe('GeneratedMediaRebalancePipeline', () => {
     it('lays out pending media with their compact pre-frame footprint', () => {
         const root = image({
             nodeId: 'root',
-            position: { x: 0, y: 0 },
-            dimensions: { width: 100, height: 100 },
+            position: {
+                x: 0,
+                y: 0,
+            },
+            dimensions: {
+                width: 100,
+                height: 100,
+            },
             generatedBy: { createdAt: 1 },
         })
         const pending = image({
             nodeId: 'pending',
             fileId: '',
             src: '',
-            position: { x: 1000, y: 1000 },
-            dimensions: { width: 100, height: 100 },
+            position: {
+                x: 1000,
+                y: 1000,
+            },
+            dimensions: {
+                width: 100,
+                height: 100,
+            },
             generatedBy: {
                 parentMediaNodeId: 'root',
                 createdAt: 2,
@@ -223,8 +258,14 @@ describe('GeneratedMediaRebalancePipeline', () => {
         const out = nodesById(result.nodes)
         const resolvedPending = out.get('pending')!
 
-        expect(out.get('root')!.position).toEqual({ x: 0, y: 0 })
-        expect(resolvedPending.dimensions).toEqual({ width: 100, height: 100 })
+        expect(out.get('root')!.position).toEqual({
+            x: 0,
+            y: 0,
+        })
+        expect(resolvedPending.dimensions).toEqual({
+            width: 100,
+            height: 100,
+        })
         expect(collisionRect(resolvedPending, resolvedPending.position, 1 / 3).x).toBeCloseTo(150, 6)
         expect(collisionRect(resolvedPending, resolvedPending.position, 1 / 3).y + collisionRect(resolvedPending, resolvedPending.position, 1 / 3).height / 2)
             .toBeCloseTo(50, 6)
@@ -234,22 +275,40 @@ describe('GeneratedMediaRebalancePipeline', () => {
     it('keeps a single pending branch-line continuation straight through the compact pre-frame box', () => {
         const parent = image({
             nodeId: 'parent',
-            position: { x: 0, y: 0 },
-            dimensions: { width: 100, height: 100 },
+            position: {
+                x: 0,
+                y: 0,
+            },
+            dimensions: {
+                width: 100,
+                height: 100,
+            },
             generatedBy: { createdAt: 1 },
         })
         const marker = branchLine({
             nodeId: 'line',
             parentBranchNodeId: 'parent',
-            position: { x: 20, y: 500 },
-            dimensions: { width: 50, height: 20 },
+            position: {
+                x: 20,
+                y: 500,
+            },
+            dimensions: {
+                width: 50,
+                height: 20,
+            },
         })
         const pending = image({
             nodeId: 'pending',
             fileId: '',
             src: '',
-            position: { x: 1000, y: 1000 },
-            dimensions: { width: 100, height: 100 },
+            position: {
+                x: 1000,
+                y: 1000,
+            },
+            dimensions: {
+                width: 100,
+                height: 100,
+            },
             generatedBy: {
                 parentMediaNodeId: 'parent',
                 branchLineNodeId: 'line',
@@ -276,23 +335,41 @@ describe('GeneratedMediaRebalancePipeline', () => {
     it('applies the configured sibling-count fanout gap before pending frames arrive', () => {
         const parent = image({
             nodeId: 'parent',
-            position: { x: 0, y: 0 },
-            dimensions: { width: 100, height: 100 },
+            position: {
+                x: 0,
+                y: 0,
+            },
+            dimensions: {
+                width: 100,
+                height: 100,
+            },
             generatedBy: { createdAt: 1 },
         })
         const marker = branchFork({
             nodeId: 'fork',
             parentBranchNodeId: 'parent',
-            position: { x: 500, y: 500 },
-            dimensions: { width: 50, height: 20 },
+            position: {
+                x: 500,
+                y: 500,
+            },
+            dimensions: {
+                width: 50,
+                height: 20,
+            },
         })
         const pending = [0, 1].map(index =>
             image({
                 nodeId: `pending-${index}`,
                 fileId: '',
                 src: '',
-                position: { x: 1000, y: 1000 },
-                dimensions: { width: 100, height: 100 },
+                position: {
+                    x: 1000,
+                    y: 1000,
+                },
+                dimensions: {
+                    width: 100,
+                    height: 100,
+                },
                 generatedBy: {
                     parentMediaNodeId: 'parent',
                     branchForkNodeId: 'fork',
@@ -316,16 +393,28 @@ describe('GeneratedMediaRebalancePipeline', () => {
     it('keeps pending and resolved siblings in the same stable media column', () => {
         const parent = image({
             nodeId: 'parent',
-            position: { x: 0, y: 0 },
-            dimensions: { width: 100, height: 100 },
+            position: {
+                x: 0,
+                y: 0,
+            },
+            dimensions: {
+                width: 100,
+                height: 100,
+            },
             generatedBy: { createdAt: 1 },
         })
         const pending = image({
             nodeId: 'pending',
             fileId: '',
             src: '',
-            position: { x: 1000, y: 1000 },
-            dimensions: { width: 100, height: 100 },
+            position: {
+                x: 1000,
+                y: 1000,
+            },
+            dimensions: {
+                width: 100,
+                height: 100,
+            },
             generatedBy: {
                 parentMediaNodeId: 'parent',
                 mediaIndex: 0,
@@ -336,8 +425,14 @@ describe('GeneratedMediaRebalancePipeline', () => {
             nodeId: 'resolved',
             fileId: 'resolved-file',
             src: '/resolved.png',
-            position: { x: 2000, y: 2000 },
-            dimensions: { width: 100, height: 100 },
+            position: {
+                x: 2000,
+                y: 2000,
+            },
+            dimensions: {
+                width: 100,
+                height: 100,
+            },
             generatedBy: {
                 parentMediaNodeId: 'parent',
                 mediaIndex: 1,
@@ -355,30 +450,54 @@ describe('GeneratedMediaRebalancePipeline', () => {
     it('uses planned media proxies to place not-yet-started sibling markers and removes proxy nodes afterward', () => {
         const origin = branchOrigin({
             nodeId: 'origin',
-            position: { x: 0, y: 0 },
-            dimensions: { width: 80, height: 40 },
+            position: {
+                x: 0,
+                y: 0,
+            },
+            dimensions: {
+                width: 80,
+                height: 40,
+            },
         })
         const startedMarker = branchFork({
             nodeId: 'started-fork',
             parentBranchNodeId: 'origin',
             reasoningIndex: 0,
-            position: { x: -400, y: -400 },
-            dimensions: { width: 60, height: 24 },
+            position: {
+                x: -400,
+                y: -400,
+            },
+            dimensions: {
+                width: 60,
+                height: 24,
+            },
         })
         const plannedMarker = branchLine({
             nodeId: 'planned-line',
             parentBranchNodeId: 'origin',
             reasoningIndex: 1,
             pendingState: pendingState(1),
-            position: { x: -500, y: -500 },
-            dimensions: { width: 60, height: 24 },
+            position: {
+                x: -500,
+                y: -500,
+            },
+            dimensions: {
+                width: 60,
+                height: 24,
+            },
         })
         const startedMedia = image({
             nodeId: 'started-media',
             fileId: '',
             src: '',
-            position: { x: 900, y: 900 },
-            dimensions: { width: 100, height: 100 },
+            position: {
+                x: 900,
+                y: 900,
+            },
+            dimensions: {
+                width: 100,
+                height: 100,
+            },
             generatedBy: {
                 branchOriginNodeId: 'origin',
                 branchForkNodeId: 'started-fork',
@@ -393,8 +512,14 @@ describe('GeneratedMediaRebalancePipeline', () => {
         const out = nodesById(result.nodes)
 
         expect(result.nodes.some((node: CanvasNode) => node.nodeId.includes(':planned-media-layout-proxy'))).toBe(false)
-        expect(result.startedMarkerNodeIds).toEqual(new Set(['origin', 'started-fork']))
-        expect(out.get('planned-line')!.position).not.toEqual({ x: -500, y: -500 })
+        expect(result.startedMarkerNodeIds).toEqual(new Set([
+            'origin',
+            'started-fork',
+        ]))
+        expect(out.get('planned-line')!.position).not.toEqual({
+            x: -500,
+            y: -500,
+        })
         expect(out.get('planned-line')!.position.y).toBeGreaterThanOrEqual(
             out.get('origin')!.position.y + out.get('origin')!.dimensions.height + 8,
         )
@@ -409,32 +534,56 @@ describe('reflowStackedBranchMarkers', () => {
     it('reflows only pending markers that do not already own generated media children', () => {
         const origin = branchOrigin({
             nodeId: 'origin',
-            position: { x: 100, y: 200 },
-            dimensions: { width: 80, height: 40 },
+            position: {
+                x: 100,
+                y: 200,
+            },
+            dimensions: {
+                width: 80,
+                height: 40,
+            },
         })
         const firstPending = branchFork({
             nodeId: 'first-pending',
             parentBranchNodeId: 'origin',
             reasoningIndex: 0,
             pendingState: pendingState(0),
-            position: { x: 300, y: 20 },
-            dimensions: { width: 90, height: 20 },
+            position: {
+                x: 300,
+                y: 20,
+            },
+            dimensions: {
+                width: 90,
+                height: 20,
+            },
         })
         const started = branchFork({
             nodeId: 'started',
             parentBranchNodeId: 'origin',
             reasoningIndex: 1,
             pendingState: pendingState(1),
-            position: { x: 300, y: 40 },
-            dimensions: { width: 90, height: 20 },
+            position: {
+                x: 300,
+                y: 40,
+            },
+            dimensions: {
+                width: 90,
+                height: 20,
+            },
         })
         const secondPending = branchFork({
             nodeId: 'second-pending',
             parentBranchNodeId: 'origin',
             reasoningIndex: 2,
             pendingState: pendingState(2),
-            position: { x: 300, y: 60 },
-            dimensions: { width: 90, height: 20 },
+            position: {
+                x: 300,
+                y: 60,
+            },
+            dimensions: {
+                width: 90,
+                height: 20,
+            },
         })
         const startedMedia = image({
             nodeId: 'started-media',
@@ -452,8 +601,14 @@ describe('reflowStackedBranchMarkers', () => {
         })
 
         expect(reflowed.has('started')).toBe(false)
-        expect(reflowed.get('first-pending')!.position).toEqual({ x: 300, y: 248 })
-        expect(reflowed.get('second-pending')!.position).toEqual({ x: 300, y: 276 })
+        expect(reflowed.get('first-pending')!.position).toEqual({
+            x: 300,
+            y: 248,
+        })
+        expect(reflowed.get('second-pending')!.position).toEqual({
+            x: 300,
+            y: 276,
+        })
     })
 
     it('does not reflow a stack after the user manually positions any marker in that stack', () => {

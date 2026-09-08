@@ -37,15 +37,26 @@ const workspace = {
     workspaceId: 'workspace-1',
     organizationId: 'organization-1',
     canvasState: {
-        viewport: { x: 0, y: 0, zoom: 1 },
-        nodes: [{ nodeId: 'node-1', type: 'image', assetId: 'asset-1' }],
+        viewport: {
+            x: 0,
+            y: 0,
+            zoom: 1,
+        },
+        nodes: [{
+            nodeId: 'node-1',
+            type: 'image',
+            assetId: 'asset-1',
+        }],
         edges: [],
     },
 }
 const moduleCatalog = {
     resolveEntry: vi.fn((moduleId: string) =>
         moduleId === 'character-creator'
-            ? { capabilityId: 'global.character-creator', kind: 'tool' as const }
+            ? {
+                capabilityId: 'global.character-creator',
+                kind: 'tool' as const,
+            }
             : undefined
     ),
 }
@@ -69,7 +80,12 @@ const imageAsset = {
             },
         },
     },
-    states: { lifecycle: 'active', media: 'ready', conversation: 'none', provenance: 'none' },
+    states: {
+        lifecycle: 'active',
+        media: 'ready',
+        conversation: 'none',
+        provenance: 'none',
+    },
     referenceCount: 1,
     revision: 1,
     createdAt: 1,
@@ -79,7 +95,10 @@ const imageAsset = {
 beforeEach(() => {
     vi.clearAllMocks()
     mocks.getAsset.mockResolvedValue(imageAsset)
-    mocks.getBlob.mockResolvedValue({ bucketName: 'org-assets', objectKey: 'portrait.png' })
+    mocks.getBlob.mockResolvedValue({
+        bucketName: 'org-assets',
+        objectKey: 'portrait.png',
+    })
     mocks.getObject.mockResolvedValue(Uint8Array.from([0x89, 0x50, 0x4e, 0x47]))
     mocks.authorizeCapability.mockImplementation(async ({ capabilityId }: { capabilityId: string }) => {
         if (capabilityId === 'global.character-creator') {
@@ -91,6 +110,7 @@ beforeEach(() => {
                 status: 'active',
             }
         }
+
         return {
             capabilityId,
             kind: capabilityId.startsWith('skill') ? 'skill' : 'tool',
@@ -104,8 +124,14 @@ describe('authorizePromptReferences', () => {
     it('maps modules to internal entry packages and accepts only standalone package references', async () => {
         const result = await authorizePromptReferences({
             references: [
-                { referenceType: 'capability-module', moduleId: 'character-creator' },
-                { referenceType: 'skill', capabilityId: 'skill-shot-language' },
+                {
+                    referenceType: 'capability-module',
+                    moduleId: 'character-creator',
+                },
+                {
+                    referenceType: 'skill',
+                    capabilityId: 'skill-shot-language',
+                },
             ],
             requester,
             workspace: workspace as any,
@@ -113,8 +139,14 @@ describe('authorizePromptReferences', () => {
         })
 
         expect(result.capabilityReferences).toEqual([
-            { capabilityId: 'global.character-creator', kind: 'tool' },
-            { capabilityId: 'skill-shot-language', kind: 'skill' },
+            {
+                capabilityId: 'global.character-creator',
+                kind: 'tool',
+            },
+            {
+                capabilityId: 'skill-shot-language',
+                kind: 'skill',
+            },
         ])
 
         mocks.authorizeCapability.mockResolvedValueOnce({
@@ -125,7 +157,10 @@ describe('authorizePromptReferences', () => {
             status: 'active',
         })
         await expect(authorizePromptReferences({
-            references: [{ referenceType: 'tool', capabilityId: 'tool-internal' }],
+            references: [{
+                referenceType: 'tool',
+                capabilityId: 'tool-internal',
+            }],
             requester,
             workspace: workspace as any,
             moduleCatalog: moduleCatalog as any,
@@ -134,7 +169,11 @@ describe('authorizePromptReferences', () => {
 
     it('materializes a global Asset reference without inventing a canvas node', async () => {
         const result = await authorizePromptReferences({
-            references: [{ referenceType: 'media', assetId: 'asset-1', mediaKind: 'image' }],
+            references: [{
+                referenceType: 'media',
+                assetId: 'asset-1',
+                mediaKind: 'image',
+            }],
             requester,
             workspace: workspace as any,
             moduleCatalog: moduleCatalog as any,
@@ -169,11 +208,21 @@ describe('authorizePromptReferences', () => {
         mocks.loadSnapshot.mockResolvedValue({
             doc: {
                 type: 'doc',
-                content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Use a warm desert palette.' }] }],
+                content: [{
+                    type: 'paragraph',
+                    content: [{
+                        type: 'text',
+                        text: 'Use a warm desert palette.',
+                    }],
+                }],
             },
         })
         const documentResult = await authorizePromptReferences({
-            references: [{ referenceType: 'media', assetId: 'document-1', mediaKind: 'document' }],
+            references: [{
+                referenceType: 'media',
+                assetId: 'document-1',
+                mediaKind: 'document',
+            }],
             requester,
             workspace: workspace as any,
             moduleCatalog: moduleCatalog as any,
@@ -199,7 +248,11 @@ describe('authorizePromptReferences', () => {
             },
         })
         const videoResult = await authorizePromptReferences({
-            references: [{ referenceType: 'media', assetId: 'video-1', mediaKind: 'video' }],
+            references: [{
+                referenceType: 'media',
+                assetId: 'video-1',
+                mediaKind: 'video',
+            }],
             requester,
             workspace: workspace as any,
             moduleCatalog: moduleCatalog as any,
@@ -226,13 +279,21 @@ describe('authorizePromptReferences', () => {
         })
         mocks.getObject.mockResolvedValueOnce(Uint8Array.from([0x52, 0x49, 0x46, 0x46]))
         const audioResult = await authorizePromptReferences({
-            references: [{ referenceType: 'media', assetId: 'audio-1', mediaKind: 'audio' }],
+            references: [{
+                referenceType: 'media',
+                assetId: 'audio-1',
+                mediaKind: 'audio',
+            }],
             requester,
             workspace: workspace as any,
             moduleCatalog: moduleCatalog as any,
         })
         expect(audioResult.modelInputs).toEqual([
-            expect.objectContaining({ kind: 'audio', assetId: 'audio-1', mimeType: 'audio/wav' }),
+            expect.objectContaining({
+                kind: 'audio',
+                assetId: 'audio-1',
+                mimeType: 'audio/wav',
+            }),
         ])
     })
 
@@ -243,9 +304,15 @@ describe('authorizePromptReferences', () => {
             assetId: 'timeline-1',
             title: 'Action Timeline',
             media: undefined,
-            artifact: { artifactTypeId: 'action-timeline', schemaVersion: 'action-timeline-v1' },
+            artifact: {
+                artifactTypeId: 'action-timeline',
+                schemaVersion: 'action-timeline-v1',
+            },
             documents: { capabilityArtifact: { role: 'capabilityArtifact' } },
-            states: { ...imageAsset.states, media: 'none' },
+            states: {
+                ...imageAsset.states,
+                media: 'none',
+            },
         }
         mocks.getAsset.mockImplementation(async ({ assetId }: { assetId: string }) => (
             assetId === 'timeline-1' ? artifactAsset : imageAsset
@@ -253,15 +320,31 @@ describe('authorizePromptReferences', () => {
         mocks.loadSnapshot.mockResolvedValue({
             doc: {
                 type: 'doc',
-                attrs: { schemaVersion: 'action-timeline-v1', durationMs: 1000, precisionMs: 1000 },
+                attrs: {
+                    schemaVersion: 'action-timeline-v1',
+                    durationMs: 1000,
+                    precisionMs: 1000,
+                },
                 content: [{
                     type: 'actionTimelineSegment',
-                    attrs: { startMs: 0, endMs: 1000 },
+                    attrs: {
+                        startMs: 0,
+                        endMs: 1000,
+                    },
                     content: [{
                         type: 'paragraph',
                         content: [
-                            { type: 'text', text: longText },
-                            { type: 'prompt_reference', attrs: { referenceType: 'media', assetId: 'asset-1' } },
+                            {
+                                type: 'text',
+                                text: longText,
+                            },
+                            {
+                                type: 'prompt_reference',
+                                attrs: {
+                                    referenceType: 'media',
+                                    assetId: 'asset-1',
+                                },
+                            },
                         ],
                     }],
                 }],
@@ -281,19 +364,31 @@ describe('authorizePromptReferences', () => {
 
         expect(result.documentContext.join('\n')).toContain(longText)
         expect(result.assetIds).toEqual(['timeline-1', 'asset-1'])
-        expect(result.modelInputs).toEqual([expect.objectContaining({ kind: 'image', assetId: 'asset-1' })])
+        expect(result.modelInputs).toEqual([expect.objectContaining({
+            kind: 'image',
+            assetId: 'asset-1',
+        })])
     })
 
     it('rejects forged node/Asset pairs and stale media-kind claims', async () => {
         await expect(authorizePromptReferences({
-            references: [{ referenceType: 'media', assetId: 'asset-1', nodeId: 'missing-node', mediaKind: 'image' }],
+            references: [{
+                referenceType: 'media',
+                assetId: 'asset-1',
+                nodeId: 'missing-node',
+                mediaKind: 'image',
+            }],
             requester,
             workspace: workspace as any,
             moduleCatalog: moduleCatalog as any,
         })).rejects.toThrow('PROMPT_REFERENCE_NODE_ASSET_MISMATCH:missing-node')
 
         await expect(authorizePromptReferences({
-            references: [{ referenceType: 'media', assetId: 'asset-1', mediaKind: 'video' }],
+            references: [{
+                referenceType: 'media',
+                assetId: 'asset-1',
+                mediaKind: 'video',
+            }],
             requester,
             workspace: workspace as any,
             moduleCatalog: moduleCatalog as any,
@@ -305,9 +400,18 @@ describe('addPromptReferenceMediaToLatestUserMessage', () => {
     it('attaches authorized media only to the latest user turn for text-only reasoning', () => {
         const messages = addPromptReferenceMediaToLatestUserMessage(
             [
-                { role: 'user', content: 'Earlier request' },
-                { role: 'assistant', content: 'Earlier response' },
-                { role: 'user', content: 'Use this portrait' },
+                {
+                    role: 'user',
+                    content: 'Earlier request',
+                },
+                {
+                    role: 'assistant',
+                    content: 'Earlier response',
+                },
+                {
+                    role: 'user',
+                    content: 'Use this portrait',
+                },
             ],
             [{
                 candidateId: 'asset:asset-1',
@@ -324,7 +428,10 @@ describe('addPromptReferenceMediaToLatestUserMessage', () => {
 
         expect(messages[0]?.content).toBe('Earlier request')
         expect(messages[2]?.content).toEqual([
-            { type: 'input_text', text: 'Use this portrait' },
+            {
+                type: 'input_text',
+                text: 'Use this portrait',
+            },
             {
                 type: 'input_text',
                 text: JSON.stringify({
@@ -334,7 +441,11 @@ describe('addPromptReferenceMediaToLatestUserMessage', () => {
                     mediaKind: 'image',
                 }),
             },
-            { type: 'input_image', image_url: 'nats-obj://org-assets/portrait.png', detail: 'high' },
+            {
+                type: 'input_image',
+                image_url: 'nats-obj://org-assets/portrait.png',
+                detail: 'high',
+            },
         ])
     })
 })

@@ -98,6 +98,16 @@ type AiPromptInputControllerOptions = {
     ) => void
 }
 
+const createId = (): string => {
+    if (
+        typeof crypto !== 'undefined'
+        && 'randomUUID' in crypto
+    )
+        return crypto.randomUUID()
+
+    return `${Date.now()}-${Math.random().toString(16).slice(2)}`
+}
+
 export class AiPromptInputController {
     private workspaceId: string
     private target: TargetNode | null = null
@@ -593,14 +603,4 @@ export class AiPromptInputController {
         this.pendingMessages.clear()
         this.receivingThreadIds.clear()
     }
-}
-
-function createId(): string {
-    if (
-        typeof crypto !== 'undefined'
-        && 'randomUUID' in crypto
-    )
-        return crypto.randomUUID()
-
-    return `${Date.now()}-${Math.random().toString(16).slice(2)}`
 }

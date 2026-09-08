@@ -11,35 +11,57 @@ import { resolveRigidCanvasNodeGroupCollisions } from './rigid-group-collisions.
 
 type CanvasNode = CanvasGeometryNode & { label: string }
 
-function makeImageNode(
+const makeImageNode = (
     nodeId: string,
     x: number,
     y: number,
-): CanvasNode {
+): CanvasNode => {
     return {
         nodeId,
         label: `Card ${nodeId}`,
-        position: { x, y },
-        dimensions: { width: 100, height: 100 },
+        position: {
+            x,
+            y,
+        },
+        dimensions: {
+            width: 100,
+            height: 100,
+        },
     }
 }
 
-function rectsOverlap(
-    a: { x: number; y: number; width: number; height: number },
-    b: { x: number; y: number; width: number; height: number },
-): boolean {
+const rectsOverlap = (
+    a: {
+        x: number
+        y: number
+        width: number
+        height: number
+    },
+    b: {
+        x: number
+        y: number
+        width: number
+        height: number
+    },
+): boolean => {
     return a.x < b.x + b.width
         && a.x + a.width > b.x
         && a.y < b.y + b.height
         && a.y + a.height > b.y
 }
 
-function getGroupRect(nodes: CanvasNode[], nodeIds: string[]): { x: number; y: number; width: number; height: number } {
+const getGroupRect = (nodes: CanvasNode[], nodeIds: string[]): {
+    x: number
+    y: number
+    width: number
+    height: number
+} => {
     const groupNodes = nodes.filter(node => nodeIds.includes(node.nodeId))
     const minX = Math.min(...groupNodes.map(node => node.position.x))
     const minY = Math.min(...groupNodes.map(node => node.position.y))
     const maxX = Math.max(...groupNodes.map(node => node.position.x + node.dimensions.width))
     const maxY = Math.max(...groupNodes.map(node => node.position.y + node.dimensions.height))
+
     return {
         x: minX,
         y: minY,
@@ -60,7 +82,12 @@ describe('resolveRigidCanvasNodeGroupCollisions', () => {
             {
                 id: 'group:1',
                 nodeIds: ['node-1'],
-                rect: { x: 0, y: 0, width: 100, height: 100 },
+                rect: {
+                    x: 0,
+                    y: 0,
+                    width: 100,
+                    height: 100,
+                },
             },
         ])
 
@@ -94,12 +121,22 @@ describe('resolveRigidCanvasNodeGroupCollisions', () => {
             {
                 id: 'group:a',
                 nodeIds: ['a'],
-                rect: { x: 0, y: 0, width: 100, height: 100 },
+                rect: {
+                    x: 0,
+                    y: 0,
+                    width: 100,
+                    height: 100,
+                },
             },
             {
                 id: 'group:b',
                 nodeIds: ['b'],
-                rect: { x: 500, y: 0, width: 100, height: 100 },
+                rect: {
+                    x: 500,
+                    y: 0,
+                    width: 100,
+                    height: 100,
+                },
             },
         ])
 
@@ -119,12 +156,22 @@ describe('resolveRigidCanvasNodeGroupCollisions', () => {
             {
                 id: 'group:a',
                 nodeIds: ['a'],
-                rect: { x: 0, y: 0, width: 100, height: 100 },
+                rect: {
+                    x: 0,
+                    y: 0,
+                    width: 100,
+                    height: 100,
+                },
             },
             {
                 id: 'group:b',
                 nodeIds: ['b'],
-                rect: { x: 20, y: 0, width: 100, height: 100 },
+                rect: {
+                    x: 20,
+                    y: 0,
+                    width: 100,
+                    height: 100,
+                },
             },
         ], {
             margin: 0,
@@ -149,12 +196,22 @@ describe('resolveRigidCanvasNodeGroupCollisions', () => {
             {
                 id: 'group:left',
                 nodeIds: ['a', 'b'],
-                rect: { x: 0, y: 0, width: 100, height: 100 },
+                rect: {
+                    x: 0,
+                    y: 0,
+                    width: 100,
+                    height: 100,
+                },
             },
             {
                 id: 'group:right',
                 nodeIds: ['c'],
-                rect: { x: 40, y: 0, width: 100, height: 100 },
+                rect: {
+                    x: 40,
+                    y: 0,
+                    width: 100,
+                    height: 100,
+                },
             },
         ], {
             iterations: 1,
@@ -165,9 +222,27 @@ describe('resolveRigidCanvasNodeGroupCollisions', () => {
         expect(result.movedNodeCount).toBe(3)
         expect(result.collisionIterations).toBe(1)
         expect(result.nodes).toEqual([
-            { ...nodeA, position: { x: -50, y: 0 } },
-            { ...nodeB, position: { x: -30, y: 0 } },
-            { ...nodeC, position: { x: 90, y: 0 } },
+            {
+                ...nodeA,
+                position: {
+                    x: -50,
+                    y: 0,
+                },
+            },
+            {
+                ...nodeB,
+                position: {
+                    x: -30,
+                    y: 0,
+                },
+            },
+            {
+                ...nodeC,
+                position: {
+                    x: 90,
+                    y: 0,
+                },
+            },
             nodeD,
         ])
     })
@@ -182,13 +257,23 @@ describe('resolveRigidCanvasNodeGroupCollisions', () => {
             {
                 id: 'group:a',
                 nodeIds: ['a'],
-                rect: { x: 0, y: 0, width: 100, height: 100 },
+                rect: {
+                    x: 0,
+                    y: 0,
+                    width: 100,
+                    height: 100,
+                },
                 margin: 0,
             },
             {
                 id: 'group:b',
                 nodeIds: ['b'],
-                rect: { x: 130, y: 0, width: 100, height: 100 },
+                rect: {
+                    x: 130,
+                    y: 0,
+                    width: 100,
+                    height: 100,
+                },
                 margin: 0,
             },
         ], {
@@ -202,34 +287,84 @@ describe('resolveRigidCanvasNodeGroupCollisions', () => {
 
     it('respects shouldResolvePair filtering and leaves nodes untouched when rejected', () => {
         const nodes = [makeImageNode('a', 0, 0), makeImageNode('b', 80, 0)]
-        const seen: Array<{ a: { id: string; x: number; y: number; width: number; height: number }; b: { id: string; x: number; y: number; width: number; height: number } }> = []
+        const seen: Array<{
+            a: {
+                id: string
+                x: number
+                y: number
+                width: number
+                height: number
+            }
+            b: {
+                id: string
+                x: number
+                y: number
+                width: number
+                height: number
+            }
+        }> = []
 
         const result = resolveRigidCanvasNodeGroupCollisions(nodes, [
             {
                 id: 'group:a',
                 nodeIds: ['a'],
-                rect: { x: 0, y: 0, width: 100, height: 100 },
+                rect: {
+                    x: 0,
+                    y: 0,
+                    width: 100,
+                    height: 100,
+                },
             },
             {
                 id: 'group:b',
                 nodeIds: ['b'],
-                rect: { x: 80, y: 0, width: 100, height: 100 },
+                rect: {
+                    x: 80,
+                    y: 0,
+                    width: 100,
+                    height: 100,
+                },
             },
         ], {
             margin: 0,
             shouldResolvePair: (a, b) => {
                 seen.push({
-                    a: { id: a.id, x: a.x, y: a.y, width: a.width, height: a.height },
-                    b: { id: b.id, x: b.x, y: b.y, width: b.width, height: b.height },
+                    a: {
+                        id: a.id,
+                        x: a.x,
+                        y: a.y,
+                        width: a.width,
+                        height: a.height,
+                    },
+                    b: {
+                        id: b.id,
+                        x: b.x,
+                        y: b.y,
+                        width: b.width,
+                        height: b.height,
+                    },
                 })
+
                 return false
             },
         })
 
         expect(seen).toEqual([
             {
-                a: { id: 'group:a', x: 0, y: 0, width: 100, height: 100 },
-                b: { id: 'group:b', x: 80, y: 0, width: 100, height: 100 },
+                a: {
+                    id: 'group:a',
+                    x: 0,
+                    y: 0,
+                    width: 100,
+                    height: 100,
+                },
+                b: {
+                    id: 'group:b',
+                    x: 80,
+                    y: 0,
+                    width: 100,
+                    height: 100,
+                },
             },
         ])
         expect(result.changed).toBe(false)
@@ -248,12 +383,22 @@ describe('resolveRigidCanvasNodeGroupCollisions', () => {
             {
                 id: 'group:a',
                 nodeIds: ['a-1', 'a-2'],
-                rect: { x: 0, y: 0, width: 100, height: 240 },
+                rect: {
+                    x: 0,
+                    y: 0,
+                    width: 100,
+                    height: 240,
+                },
             },
             {
                 id: 'group:b',
                 nodeIds: ['b-1', 'b-2'],
-                rect: { x: 40, y: 40, width: 100, height: 240 },
+                rect: {
+                    x: 40,
+                    y: 40,
+                    width: 100,
+                    height: 240,
+                },
             },
         ], {
             margin: 0,

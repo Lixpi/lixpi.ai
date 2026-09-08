@@ -26,7 +26,10 @@ beforeEach(() => {
 
 describe('PromptReferenceCatalogClient', () => {
     it('normalizes category queries and preserves opaque pagination', async () => {
-        const request = vi.fn().mockResolvedValue({ items: [], cursor: 'next-page' })
+        const request = vi.fn().mockResolvedValue({
+            items: [],
+            cursor: 'next-page',
+        })
         getData.mockReturnValue({ request })
         const client = createPromptReferenceCatalogClient('workspace-1', 'organization-1')
 
@@ -66,14 +69,20 @@ describe('PromptReferenceCatalogClient', () => {
             .mockResolvedValueOnce({ items: [{ moduleId: 'character-creator' }] })
             .mockResolvedValueOnce({
                 meta: { moduleId: 'character-creator' },
-                entry: { capabilityId: 'global.character-creator', kind: 'tool' },
+                entry: {
+                    capabilityId: 'global.character-creator',
+                    kind: 'tool',
+                },
             })
         getData.mockReturnValue({ request })
         const client = createPromptReferenceCatalogClient('workspace-1', 'organization-1')
 
         await expect(client.listModules('  CHARACTER  ')).resolves.toEqual([{ moduleId: 'character-creator' }])
         await expect(client.getModule('character-creator')).resolves.toMatchObject({
-            entry: { capabilityId: 'global.character-creator', kind: 'tool' },
+            entry: {
+                capabilityId: 'global.character-creator',
+                kind: 'tool',
+            },
         })
         expect(request).toHaveBeenNthCalledWith(
             1,

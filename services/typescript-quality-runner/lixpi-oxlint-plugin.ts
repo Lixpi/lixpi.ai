@@ -4,12 +4,16 @@ import {
 } from '@oxlint/plugins'
 import { parseSync } from 'oxc-parser'
 
+// This plugin contains repository rules that need AST-aware fixes or cross-rule behavior
+// beyond Oxlint's built-in rule set.
 const isAstNode = (value: unknown): boolean => Boolean(
     value
     && typeof value === 'object'
     && typeof (value as { type?: unknown }).type === 'string',
 )
 
+// Collect identifiers from parsed comment fragments so references used in examples or
+// suppression explanations do not cause their imports to be removed automatically.
 const collectIdentifierNames = (
     node,
     names: Set<string>,
@@ -30,6 +34,8 @@ const collectIdentifierNames = (
     }
 }
 
+// Consecutive line comments are parsed together as code when possible. Parsing each line
+// as well also recovers identifiers from comment prose that is not a valid module.
 const getCommentReferencedIdentifierNames = (sourceCode): Set<string> => {
     const names = new Set<string>()
     const commentBlocks: string[] = []
@@ -87,6 +93,8 @@ const getCommentReferencedIdentifierNames = (sourceCode): Set<string> => {
     return names
 }
 
+// Remove import bindings with no code or comment references. Rebuilding the declaration
+// in one fix preserves default, namespace, and remaining named specifiers as one import.
 const noUnusedImports = defineRule({
     meta: {
         type: 'problem',
@@ -208,7 +216,11 @@ const noUnusedImports = defineRule({
     },
 })
 
-const hasReferenceBeforeDeclaration = (
+// A declaration called above its own definition still has to become an arrow
+// function, but rewriting it in place would leave the call in the temporal dead
+// zone. The rule reports it and withholds the fix, so a person moves the definition
+// above its first use instead of the formatter breaking the file.
+const isCalledBeforeItIsDeclared = (
     context,
     node,
 ): boolean =>
@@ -222,20 +234,23 @@ const hasReferenceBeforeDeclaration = (
             ),
     )
 
+// Replace declarations with `const` arrow functions while withholding the fix when the
+// declaration relied on function hoisting and must first be moved by a developer.
 const preferArrowFunctionDeclaration = defineRule({
     meta: {
         type: 'suggestion',
         fixable: 'code',
         messages: {
             preferArrowFunction: 'Use an arrow function instead of a plain function declaration.',
+            preferArrowFunctionMoveDefinition: 'Use an arrow function instead of a plain function declaration. It is called above its definition, so move the definition above its first use.',
         },
         schema: [],
     },
     create(context) {
-        const { sourceCode } = context
-
         return {
             FunctionDeclaration(node) {
+                // Arrow functions require a name and implementation body, cannot represent
+                // generators, and cannot directly follow `export default` as a const.
                 if (
                     !node.id
                     || !node.body
@@ -244,27 +259,30 @@ const preferArrowFunctionDeclaration = defineRule({
                 )
                     return
 
-                if (sourceCode.getCommentsInside(node).some(comment => comment.range[1] <= node.id.range[1]))
-                    return
-
-                if (hasReferenceBeforeDeclaration(context, node))
-                    return
-
                 const replacement = `const ${node.id.name} = ${node.async ? 'async ' : ''}`
+                const hoisted = isCalledBeforeItIsDeclared(context, node)
 
                 context.report({
                     node,
-                    messageId: 'preferArrowFunction',
-                    fix: fixer => [
-                        fixer.replaceTextRange([node.range[0], node.id.range[1]], replacement),
-                        fixer.insertTextBefore(node.body, '=> '),
-                    ],
+                    messageId: hoisted
+                        ? 'preferArrowFunctionMoveDefinition'
+                        : 'preferArrowFunction',
+                    ...(hoisted
+                        ? {}
+                        : {
+                            fix: fixer => [
+                                fixer.replaceTextRange([node.range[0], node.id.range[1]], replacement),
+                                fixer.insertTextBefore(node.body, '=> '),
+                            ],
+                        }),
                 })
             },
         }
     },
 })
 
+// These statement categories drive the compact-body and blank-line layout rules below.
+// They are centralized so both rules classify control flow in the same way.
 const compactIfStatementTypes = new Set([
     'BreakStatement',
     'ContinueStatement',
@@ -292,12 +310,17 @@ const separatedControlFlowStatementTypes = new Set([
 ])
 const isSeparatedStatementType = (type: string): boolean => separatedBlockStatementTypes.has(type)
     || separatedControlFlowStatementTypes.has(type)
+
+// Collection constructors with list-like initializers use repository-specific multiline
+// layout instead of the generic constructor argument layout.
 const collectionConstructorNames = new Set([
     'Map',
     'Set',
     'WeakMap',
     'WeakSet',
 ])
+
+// Native console methods map to debug-tools exports and collision-safe local aliases.
 const debugLoggingMethods = new Map([
     ['error', {
         importedName: 'err',
@@ -316,6 +339,9 @@ const debugLoggingMethods = new Map([
         preferredLocalName: 'debugWarn',
     }],
 ])
+
+// The quality runner must reason from parsed syntax. These raw-string methods are banned
+// when they inspect variables that conventionally hold source or formatted code.
 const rawSyntaxInspectionMethods = new Set([
     'match',
     'matchAll',
@@ -331,6 +357,8 @@ const syntaxSourceNames = new Set([
     'text',
 ])
 
+// Return the exact indentation prefix of the line containing an offset so fixes inherit
+// local tabs or spaces without reformatting unrelated code.
 const getLineIndentation = (
     source: string,
     offset: number,
@@ -347,6 +375,8 @@ const getLineIndentation = (
     return source.slice(lineStart, cursor)
 }
 
+// Normalize every AST container that owns an ordered statement list. Switch cases store
+// theirs under `consequent`; block-like containers store theirs under `body`.
 const getStatementList = node => {
     if (
         node.type !== 'BlockStatement'
@@ -359,6 +389,8 @@ const getStatementList = node => {
     return node.body
 }
 
+// Find the whitespace range a spacing fix may replace without consuming comments or other
+// syntax. A leading comment stays attached to the following statement.
 const getStatementGap = (
     sourceCode,
     previousEnd: number,
@@ -392,8 +424,12 @@ const getStatementGap = (
     return [gapStart, nextStart]
 }
 
+// Block-comment conversion strips horizontal decoration while treating line breaks as
+// meaningful boundaries for the generated `//` lines.
 const isHorizontalWhitespace = (character: string | undefined): boolean => character === ' ' || character === '\t' || character === '\r'
 
+// Remove block-comment padding and conventional leading stars, but preserve the words and
+// intentional empty lines inside the comment.
 const normalizeCommentLine = (line: string): string => {
     let start = 0
     let end = line.length
@@ -420,6 +456,8 @@ const normalizeCommentLine = (line: string): string => {
     return line.slice(start, end)
 }
 
+// Build line comments at the original indentation. Syntax that followed the closing block
+// marker on the same line moves to its own correctly indented line.
 const getLineCommentReplacement = (
     comment,
     sourceCode,
@@ -449,6 +487,7 @@ const getLineCommentReplacement = (
     return replacement
 }
 
+// Enforce the repository's line-comment convention with a source-preserving autofix.
 const noBlockComments = defineRule({
     meta: {
         type: 'suggestion',
@@ -481,6 +520,8 @@ const noBlockComments = defineRule({
     },
 })
 
+// Return a static property name for dot access and string-literal bracket access. Dynamic
+// computed members cannot be classified safely by syntax rules.
 const getMemberPropertyName = (member): string | null => {
     if (
         !member.computed
@@ -498,6 +539,8 @@ const getMemberPropertyName = (member): string | null => {
     return null
 }
 
+// Walk through calls and member access to identify the source variable being inspected by
+// a chained raw-string operation.
 const getRootIdentifierName = (node): string | null => {
     let current = node
 
@@ -566,6 +609,8 @@ const noNestedTernary = defineRule({
     },
 })
 
+// Prevent quality-runner rules from searching source strings for syntax. AST inspection is
+// stable across whitespace and comments, while regex and substring checks are not.
 const requireAstFormatterRules = defineRule({
     meta: {
         type: 'problem',
@@ -648,6 +693,8 @@ const requireAstFormatterRules = defineRule({
     },
 })
 
+// Count leaf operands rather than operators so `a && b && c` has three logical evaluations
+// regardless of how the parser associates the binary tree.
 const countLogicalEvaluations = (node): number => {
     if (node.type === 'ParenthesizedExpression')
         return countLogicalEvaluations(node.expression)
@@ -658,6 +705,7 @@ const countLogicalEvaluations = (node): number => {
     return countLogicalEvaluations(node.left) + countLogicalEvaluations(node.right)
 }
 
+// Parentheses affect emitted text but not the logical chain being classified.
 const unwrapParenthesizedExpression = node => {
     let current = node
 
@@ -667,6 +715,8 @@ const unwrapParenthesizedExpression = node => {
     return current
 }
 
+// Reconstruct logical expressions recursively from AST nodes so condition formatting never
+// depends on searching raw source for operators.
 const getAstExpressionText = (
     node,
     sourceCode,
@@ -680,6 +730,8 @@ const getAstExpressionText = (
     return sourceCode.getText(node).trim()
 }
 
+// Flatten one homogeneous logical chain into ordered operands and operators. Nested chains
+// using a different operator remain a single operand so their grouping is preserved.
 const getLogicalConditionParts = (node): {
     operands: unknown[]
     operators: string[]
@@ -799,6 +851,8 @@ const getBranchPunctuator = (
     return token
 }
 
+// Lay out compound conditions with one logical operand per line across control-flow tests,
+// `for` clauses, and conditional expressions. Commented conditions are not auto-fixed.
 const preferMultilineCondition = defineRule({
     meta: {
         type: 'layout',
@@ -1017,6 +1071,8 @@ const preferMultilineCondition = defineRule({
     },
 })
 
+// Split a multi-declarator statement while keeping comments attached to the declaration
+// they precede or trail. Export and ambient prefixes are repeated for each new statement.
 const getSeparatedVariableDeclarationText = (
     node,
     sourceCode,
@@ -1062,6 +1118,8 @@ const getSeparatedVariableDeclarationText = (
     return declarationLines.join(`\n${indentation}`)
 }
 
+// Require one declaration or side-effect expression per statement. Sequence expressions
+// are fixed only when they are standalone, where splitting cannot change expression value.
 const noCommaSeparatedStatements = defineRule({
     meta: {
         type: 'suggestion',
@@ -1128,6 +1186,8 @@ const noCommaSeparatedStatements = defineRule({
     },
 })
 
+// Move a trailing comma back beside the final item when a formatter left it on its own
+// line. A comment between the item and comma blocks the fix to preserve attachment.
 const preferAttachedTrailingComma = defineRule({
     meta: {
         type: 'layout',
@@ -1223,6 +1283,8 @@ const preferMultilineObject = defineRule({
     },
 })
 
+// Give multi-property destructuring the same one-property-per-line shape as object literals.
+// Only the pattern braces are replaced so a following type annotation remains untouched.
 const preferMultilineObjectPattern = defineRule({
     meta: {
         type: 'layout',
@@ -1277,6 +1339,8 @@ const preferMultilineObjectPattern = defineRule({
     },
 })
 
+// Render each member of a multi-member inline type on its own line and remove separators
+// that are unnecessary under the repository's line-based type style.
 const preferMultilineTypeLiteral = defineRule({
     meta: {
         type: 'layout',
@@ -1335,6 +1399,8 @@ const preferMultilineTypeLiteral = defineRule({
     },
 })
 
+// Format list initializers passed to Map, Set, WeakMap, and WeakSet as one value per line.
+// Sparse arrays and commented lists are left alone because a rewrite could lose structure.
 const preferMultilineCollection = defineRule({
     meta: {
         type: 'layout',
@@ -1385,9 +1451,13 @@ const preferMultilineCollection = defineRule({
     },
 })
 
+// Only the outermost call owns a complete chain replacement. Visiting nested links as well
+// would produce overlapping fixes for the same member chain.
 const isNestedCallChain = (node): boolean =>
     node.parent?.type === 'MemberExpression' && node.parent.object === node && node.parent.parent?.type === 'CallExpression' && node.parent.parent.callee === node.parent
 
+// Decompose a fluent call into its base expression and source-preserving member segments,
+// while counting `.attr()` calls that trigger the D3 and SVG layout rule.
 const getCallChain = (
     node,
     sourceCode,
@@ -1422,6 +1492,8 @@ const getCallChain = (
     }
 }
 
+// Put D3 and SVG chains with several `.attr()` calls on separate lines. A chain used as a
+// sole argument receives the extra indentation and surrounding commas of argument layout.
 const preferMultilineAttrChain = defineRule({
     meta: {
         type: 'layout',
@@ -1491,6 +1563,8 @@ const preferMultilineAttrChain = defineRule({
     },
 })
 
+// Remove braces around a single simple `if` or `else` statement and normalize direct compact
+// bodies onto the following indented line. Comments and multiline statements keep braces.
 const preferCompactIf = defineRule({
     meta: {
         type: 'suggestion',
@@ -1585,6 +1659,8 @@ const preferCompactIf = defineRule({
     },
 })
 
+// Keep a blank line around block and terminating control-flow statements, while keeping
+// adjacent switch labels together. Gap detection prevents comments from being displaced.
 const preferSeparatedStatements = defineRule({
     meta: {
         type: 'layout',
@@ -1686,12 +1762,16 @@ const preferSeparatedStatements = defineRule({
     },
 })
 
+// Calls, constructors, and tagged templates can take a leading `void` directly. Other
+// expressions need parentheses so `void` applies to the complete expression.
 const directVoidExpressionTypes = new Set([
     'CallExpression',
     'NewExpression',
     'TaggedTemplateExpression',
 ])
 
+// Preserve an existing `void`, otherwise add the least syntax needed to discard a value
+// without changing evaluation order.
 const getVoidExpressionText = (
     expressionNode,
     sourceCode,
@@ -1709,6 +1789,8 @@ const getVoidExpressionText = (
         : `void (${expression})`
 }
 
+// Convert the only statement in an arrow block into a concise body. Expression statements
+// are made explicitly void, and returned object literals keep grouping parentheses.
 const getConciseArrowBodyText = (
     statement,
     sourceCode,
@@ -1723,6 +1805,8 @@ const getConciseArrowBodyText = (
     return expressionNode.type === 'ObjectExpression' ? `(${expression})` : expression
 }
 
+// `window.open()` is effect-oriented even though browsers return a Window handle, so a
+// concise callback must explicitly discard that value.
 const isWindowOpenCall = (node): boolean => node.type === 'CallExpression'
     && node.callee.type === 'MemberExpression'
     && !node.callee.computed
@@ -1731,6 +1815,8 @@ const isWindowOpenCall = (node): boolean => node.type === 'CallExpression'
     && node.callee.property.type === 'Identifier'
     && node.callee.property.name === 'open'
 
+// Ensure concise arrows declared as void, plus known effect-only concise arrows, cannot
+// accidentally expose the value of an assignment, update, or `window.open()` call.
 const preferVoidArrowBody = defineRule({
     meta: {
         type: 'problem',
@@ -1780,6 +1866,8 @@ const preferVoidArrowBody = defineRule({
     },
 })
 
+// Collapse a one-statement arrow block into an expression body when doing so preserves its
+// return contract and no comment or multiline expression would be displaced.
 const preferExpressionArrowBody = defineRule({
     meta: {
         type: 'suggestion',
@@ -1835,6 +1923,8 @@ const preferExpressionArrowBody = defineRule({
     },
 })
 
+// Replace backend `console` calls with debug-tools functions. The rule reuses existing
+// imports, creates collision-safe aliases, and batches all call and import edits per file.
 const noNativeConsoleLogging = defineRule({
     meta: {
         type: 'problem',
@@ -1968,6 +2058,7 @@ const noNativeConsoleLogging = defineRule({
     },
 })
 
+// Register the rules under the names consumed by the repository's Oxlint configuration.
 export default definePlugin({
     meta: {
         name: 'lixpi',

@@ -11,9 +11,7 @@ import {
     renderMediaModelBadge,
 } from './mediaModelBadge.ts'
 
-afterEach(() => {
-    document.body.innerHTML = ''
-})
+afterEach(() => void (document.body.innerHTML = ''))
 
 describe('createMediaModelBadge', () => {
     it('renders the provider icon, provider name, separator, and model name as one badge', () => {
@@ -35,9 +33,7 @@ describe('createMediaModelBadge', () => {
         expect(badge?.querySelector('.media-model-badge-name')?.textContent).toBe('Google : Nano Banana Pro')
     })
 
-    it('returns null without an icon or visible label', () => {
-        expect(createMediaModelBadge({})).toBeNull()
-    })
+    it('returns null without an icon or visible label', () => void expect(createMediaModelBadge({})).toBeNull())
 
     it('keeps the accessible label when configured as icon-only', () => {
         const badge = createMediaModelBadge({
@@ -58,7 +54,10 @@ describe('renderMediaModelBadge', () => {
         const host = document.createElement('div')
         host.appendChild(document.createElement('span'))
 
-        renderMediaModelBadge(host, { providerTitle: 'OpenAI', modelTitle: 'GPT Image 2' })
+        renderMediaModelBadge(host, {
+            providerTitle: 'OpenAI',
+            modelTitle: 'GPT Image 2',
+        })
         expect(host.hidden).toBe(false)
         expect(host.querySelector('.media-model-badge-name')?.textContent).toBe('OpenAI : GPT Image 2')
 

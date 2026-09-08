@@ -33,6 +33,7 @@ describe('workspace canvas composition', () => {
         ]
 
         for (const owner of owners) expect(source).toContain(`new ${owner}(`)
+
         expect(source).toContain('applyWorkspaceCanvasTheme(')
         expect(source).toContain('getWorkspaceRightPanelCssProperties(')
         expect(source).toContain('destroyWorkspaceCanvasResources([')

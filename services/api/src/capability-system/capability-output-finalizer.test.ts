@@ -28,7 +28,11 @@ const pendingOutput = {
     capabilityId: 'global.action-timeline',
     capabilityRunId: 'run-1',
     assetId: 'artifact-1',
-    input: { prompt: 'Create a timeline', durationMs: 15000, precisionMs: 2000 },
+    input: {
+        prompt: 'Create a timeline',
+        durationMs: 15000,
+        precisionMs: 2000,
+    },
     variant: {
         axis: 'reasoning-model' as const,
         variantKey: 'reasoning:0:Anthropic:claude',
@@ -51,14 +55,20 @@ const pendingOutput = {
 const state = (): ProviderState => ({
     workspaceId: 'workspace-1',
     aiChatThreadId: 'conversation-1',
-    eventMeta: { userId: 'user-1', organizationId: 'organization-1' },
+    eventMeta: {
+        userId: 'user-1',
+        organizationId: 'organization-1',
+    },
     pendingCapabilityOutputFinalizations: [pendingOutput],
 } as ProviderState)
 
 beforeEach(() => {
     vi.clearAllMocks()
     mocks.finalizeActionTimelineArtifact.mockResolvedValue({
-        canvasGeometry: { layoutRevision: 2, nodes: [] },
+        canvasGeometry: {
+            layoutRevision: 2,
+            nodes: [],
+        },
         generationRun: {
             ...pendingOutput.generationRun,
             lineageAssignment: { assetId: 'artifact-1' },
@@ -70,7 +80,10 @@ beforeEach(() => {
 describe('Capability output finalization', () => {
     it('routes a staged Action Timeline through its finalizer with authoritative run identity', async () => {
         await expect(finalizePendingCapabilityOutputsForState(state())).resolves.toEqual([{
-            canvasGeometry: { layoutRevision: 2, nodes: [] },
+            canvasGeometry: {
+                layoutRevision: 2,
+                nodes: [],
+            },
             generationRun: expect.objectContaining({
                 lineageAssignment: { assetId: 'artifact-1' },
             }),

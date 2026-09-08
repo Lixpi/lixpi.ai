@@ -34,7 +34,10 @@ describe('aiMediaGenerationProgressNodeView', () => {
         })
         const element = document.createElement('section')
         const destroy = vi.fn()
-        const render = vi.fn(() => ({ element, destroy }))
+        const render = vi.fn(() => ({
+            element,
+            destroy,
+        }))
 
         const nodeView = aiMediaGenerationProgressNodeView(node, render)
 

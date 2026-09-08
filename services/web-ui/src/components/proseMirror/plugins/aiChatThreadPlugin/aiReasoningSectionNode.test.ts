@@ -11,6 +11,7 @@ import {
 
 const createReasoningSection = (attrs: Record<string, any>, withText = false) => {
     const textNode = withText ? [testSchema.nodes.paragraph.create(null, [testSchema.text('analysis')])] : []
+
     return testSchema.nodes.aiReasoningSection.create({
         generationRequestId: '',
         reasoningRunId: '',

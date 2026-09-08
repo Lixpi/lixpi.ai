@@ -21,7 +21,7 @@ vi.mock('$src/services/auth-service.ts', () => ({
     },
 }))
 
-function createTrace(overrides: Partial<ImageGenerationTrace> = {}): ImageGenerationTrace {
+const createTrace = (overrides: Partial<ImageGenerationTrace> = {}): ImageGenerationTrace => {
     return {
         traceVersion: 'image-generation-trace-v1',
         chatModelProvider: 'Anthropic',
@@ -84,12 +84,17 @@ function createTrace(overrides: Partial<ImageGenerationTrace> = {}): ImageGenera
     }
 }
 
-function createCollapsibleNodeView(
+const createCollapsibleNodeView = (
     attrs: Record<string, unknown> = {},
     options: AiCollapsibleBlockNodeViewOptions = {},
-) {
+) => {
     const node = schema.nodes.aiCollapsibleBlock.create(
-        { title: 'Image generation prompt', isOpen: false, isStreaming: false, ...attrs },
+        {
+            title: 'Image generation prompt',
+            isOpen: false,
+            isStreaming: false,
+            ...attrs,
+        },
         schema.nodes.paragraph.create(null, schema.text('Prompt body')),
     )
 
@@ -111,7 +116,12 @@ function createCollapsibleNodeView(
     const getPos = vi.fn(() => 3)
     const nodeView = aiCollapsibleBlockNodeView(node, mockView, getPos, options)
 
-    return { nodeView, mockView, transaction, getPos }
+    return {
+        nodeView,
+        mockView,
+        transaction,
+        getPos,
+    }
 }
 
 describe('aiCollapsibleBlockNodeView', () => {
@@ -151,7 +161,12 @@ describe('aiCollapsibleBlockNodeView', () => {
     it('updates streaming state through the trace wrapper class', () => {
         const { nodeView } = createCollapsibleNodeView()
         const updatedNode = schema.nodes.aiCollapsibleBlock.create(
-            { title: 'Revised prompt', isOpen: true, isStreaming: true, imageGenerationTrace: createTrace() },
+            {
+                title: 'Revised prompt',
+                isOpen: true,
+                isStreaming: true,
+                imageGenerationTrace: createTrace(),
+            },
             schema.nodes.paragraph.create(null, schema.text('Updated prompt body')),
         )
 

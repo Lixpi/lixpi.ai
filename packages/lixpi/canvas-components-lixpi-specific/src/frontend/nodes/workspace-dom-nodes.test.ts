@@ -15,19 +15,42 @@ import { WorkspaceNodeShells } from './workspace-node-shells.ts'
 
 afterEach(() => document.body.replaceChildren())
 
-function node(type: CanvasNode['type']): CanvasNode {
-    return { nodeId: type, type, assetId: 'first', position: { x: 10, y: 20 }, dimensions: { width: 100, height: 80 }, status: 'in-progress', operation: 'upload' } as CanvasNode
+const node = (type: CanvasNode['type']): CanvasNode => {
+    return {
+        nodeId: type,
+        type,
+        assetId: 'first',
+        position: {
+            x: 10,
+            y: 20,
+        },
+        dimensions: {
+            width: 100,
+            height: 80,
+        },
+        status: 'in-progress',
+        operation: 'upload',
+    } as CanvasNode
 }
 
-function fixture() {
+const fixture = () => {
     const disposed: string[] = []
     const select = vi.fn()
     const shells = new WorkspaceNodeShells({
         document,
-        getBounds: node => ({ ...node.position, ...node.dimensions }),
+        getBounds: node => ({
+            ...node.position,
+            ...node.dimensions,
+        }),
         getLayer: () => 1,
         getZoom: () => 1,
-        getResizeSettings: () => ({ size: 24, offset: 12, minSize: 12, useZoomCompensatedScaling: false, zoomScaling: {} }),
+        getResizeSettings: () => ({
+            size: 24,
+            offset: 12,
+            minSize: 12,
+            useZoomCompensatedScaling: false,
+            zoomScaling: {},
+        }),
         consumeSuppressedClick: () => false,
         select,
         toggleSelection() {},
@@ -37,16 +60,33 @@ function fixture() {
         togglePlayback() {},
     })
     const mount = vi.fn((node: CanvasNode) => {
-        const { nodeEl, own } = shells.create(node)
-        own(() => {
-            disposed.push(node.nodeId)
-        })
+        const {
+            nodeEl,
+            own,
+        } = shells.create(node)
+        own(() => void disposed.push(node.nodeId))
         nodeEl.appendChild(document.createElement('input'))
+
         return nodeEl
     })
     const updateBranch = vi.fn()
-    const dom = new WorkspaceDomNodes({ shells, document: mount, capability: mount, operation: mount, branch: mount, updateBranch })
-    return { dom, shells, mount, select, disposed, updateBranch }
+    const dom = new WorkspaceDomNodes({
+        shells,
+        document: mount,
+        capability: mount,
+        operation: mount,
+        branch: mount,
+        updateBranch,
+    })
+
+    return {
+        dom,
+        shells,
+        mount,
+        select,
+        disposed,
+        updateBranch,
+    }
 }
 
 describe('WorkspaceDomNodes', () => {
@@ -57,11 +97,24 @@ describe('WorkspaceDomNodes', () => {
         document.body.appendChild(view.element)
         const editor = view.element.querySelector('input')!
         editor.value = 'unsaved local edit'
-        view.update({ ...original, position: { x: 300, y: 400 }, dimensions: { width: 200, height: 150 } })
+        view.update({
+            ...original,
+            position: {
+                x: 300,
+                y: 400,
+            },
+            dimensions: {
+                width: 200,
+                height: 150,
+            },
+        })
         expect(test.mount).toHaveBeenCalledOnce()
         expect(view.element.querySelector('input')).toBe(editor)
         expect(editor.value).toBe('unsaved local edit')
-        view.update({ ...original, assetId: 'second' } as CanvasNode)
+        view.update({
+            ...original,
+            assetId: 'second',
+        } as CanvasNode)
         expect(view.element.querySelector('input')).not.toBe(editor)
         expect(editor.isConnected).toBe(false)
         expect(test.disposed).toEqual([type])
@@ -77,9 +130,19 @@ describe('WorkspaceDomNodes', () => {
         const view = test.dom.mount(original)
         document.body.appendChild(view.element)
         const firstElement = view.element
-        view.update({ ...original, position: { x: 500, y: 600 } })
+        view.update({
+            ...original,
+            position: {
+                x: 500,
+                y: 600,
+            },
+        })
         expect(view.element).toBe(firstElement)
-        view.update({ ...original, status: 'failed', message: 'Upload failed' })
+        view.update({
+            ...original,
+            status: 'failed',
+            message: 'Upload failed',
+        })
         expect(view.element).not.toBe(firstElement)
         expect(view.element.isConnected).toBe(true)
         expect(test.disposed).toEqual(['operationStatus'])
@@ -93,18 +156,26 @@ describe('WorkspaceDomNodes', () => {
         const test = fixture()
         const marker = node('branchLine')
         const branch = test.dom.mount(marker)
-        const updated = { ...marker, generationRequestId: 'next' } as CanvasNode
+        const updated = {
+            ...marker,
+            generationRequestId: 'next',
+        } as CanvasNode
         branch.update(updated)
         expect(test.updateBranch).toHaveBeenCalledWith(updated, branch.element)
+
         for (const type of ['image', 'video', 'audio', 'mediaDocument'] as const) {
             const media = node(type)
             const view = test.dom.mount(media)
             const element = view.element
-            view.update({ ...media, assetId: 'second' } as CanvasNode)
+            view.update({
+                ...media,
+                assetId: 'second',
+            } as CanvasNode)
             expect(view.element).toBe(element)
             expect(element.dataset.assetId).toBe('second')
             view.destroy()
         }
+
         branch.destroy()
         test.shells.destroy()
     })
@@ -115,6 +186,7 @@ describe('WorkspaceDomNodes', () => {
         test.mount.mockImplementationOnce(node => {
             partial = test.shells.create(node).nodeEl
             document.body.appendChild(partial)
+
             throw new Error('Editor failed')
         })
         expect(() => test.dom.mount(node('document'))).toThrow('Editor failed')

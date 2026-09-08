@@ -17,14 +17,30 @@ describe('CanvasKeyboardController', () => {
         document.body.append(first, second)
         const aDelete = vi.fn(() => true)
         const bDelete = vi.fn(() => true)
-        const a = new CanvasKeyboardController({ root: first, onEscape: vi.fn(), onDelete: aDelete })
-        const b = new CanvasKeyboardController({ root: second, onEscape: vi.fn(), onDelete: bDelete })
+        const a = new CanvasKeyboardController({
+            root: first,
+            onEscape: vi.fn(),
+            onDelete: aDelete,
+        })
+        const b = new CanvasKeyboardController({
+            root: second,
+            onEscape: vi.fn(),
+            onDelete: bDelete,
+        })
         first.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }))
-        document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'Delete', bubbles: true, cancelable: true }))
+        document.body.dispatchEvent(new KeyboardEvent('keydown', {
+            key: 'Delete',
+            bubbles: true,
+            cancelable: true,
+        }))
         expect(aDelete).toHaveBeenCalledOnce()
         expect(bDelete).not.toHaveBeenCalled()
         second.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }))
-        document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'Backspace', bubbles: true, cancelable: true }))
+        document.body.dispatchEvent(new KeyboardEvent('keydown', {
+            key: 'Backspace',
+            bubbles: true,
+            cancelable: true,
+        }))
         expect(aDelete).toHaveBeenCalledOnce()
         expect(bDelete).toHaveBeenCalledOnce()
         a.destroy()
@@ -41,15 +57,30 @@ describe('CanvasKeyboardController', () => {
         document.body.append(root)
         const onDelete = vi.fn(() => true)
         const onEscape = vi.fn()
-        const controller = new CanvasKeyboardController({ root, onDelete, onEscape })
-        text.dispatchEvent(new KeyboardEvent('keydown', { key: 'Delete', bubbles: true, cancelable: true }))
+        const controller = new CanvasKeyboardController({
+            root,
+            onDelete,
+            onEscape,
+        })
+        text.dispatchEvent(new KeyboardEvent('keydown', {
+            key: 'Delete',
+            bubbles: true,
+            cancelable: true,
+        }))
         expect(onDelete).not.toHaveBeenCalled()
-        const handled = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true })
+        const handled = new KeyboardEvent('keydown', {
+            key: 'Escape',
+            bubbles: true,
+            cancelable: true,
+        })
         handled.preventDefault()
         root.dispatchEvent(handled)
         expect(onEscape).not.toHaveBeenCalled()
         controller.destroy()
-        root.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+        root.dispatchEvent(new KeyboardEvent('keydown', {
+            key: 'Escape',
+            bubbles: true,
+        }))
         expect(onEscape).not.toHaveBeenCalled()
     })
 })

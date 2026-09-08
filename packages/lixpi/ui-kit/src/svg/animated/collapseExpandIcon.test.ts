@@ -6,9 +6,7 @@ import {
 
 import { createCollapseExpandIcon } from './collapseExpandIcon.ts'
 
-function getPartTransform(icon: HTMLElement, partId: string): string {
-    return icon.querySelector<SVGGElement>(`[data-icon-part="${partId}"]`)?.getAttribute('transform') ?? ''
-}
+const getPartTransform = (icon: HTMLElement, partId: string): string => icon.querySelector<SVGGElement>(`[data-icon-part="${partId}"]`)?.getAttribute('transform') ?? ''
 
 describe('collapse/expand icon', () => {
     it('shows outward chevrons for the expand action and inward chevrons for collapse', () => {

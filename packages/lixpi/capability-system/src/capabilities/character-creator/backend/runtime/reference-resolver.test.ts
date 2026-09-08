@@ -19,8 +19,16 @@ const readyAsset = (overrides: Record<string, unknown> = {}) => ({
     organizationId: 'org-1',
     media: {
         renditions: {
-            canonical: { status: 'ready', blobHash: 'canonical-hash', mimeType: 'image/png' },
-            original: { status: 'ready', blobHash: 'original-hash', mimeType: 'image/jpeg' },
+            canonical: {
+                status: 'ready',
+                blobHash: 'canonical-hash',
+                mimeType: 'image/png',
+            },
+            original: {
+                status: 'ready',
+                blobHash: 'original-hash',
+                mimeType: 'image/jpeg',
+            },
         },
     },
     ...overrides,
@@ -53,7 +61,12 @@ describe('resolveCharacterReferences', () => {
         vi.mocked(assets.getAuthorizedAsset).mockResolvedValue(readyAsset())
         vi.mocked(assets.readBlob).mockResolvedValue(
             await sharp({
-                create: { width: 640, height: 480, channels: 3, background: '#446688' },
+                create: {
+                    width: 640,
+                    height: 480,
+                    channels: 3,
+                    background: '#446688',
+                },
             }).png().toBuffer(),
         )
     })
@@ -67,7 +80,10 @@ describe('resolveCharacterReferences', () => {
             workspaceId: 'workspace-1',
             organizationId: 'org-1',
         })
-        expect(assets.readBlob).toHaveBeenCalledWith({ organizationId: 'org-1', blobHash: 'canonical-hash' })
+        expect(assets.readBlob).toHaveBeenCalledWith({
+            organizationId: 'org-1',
+            blobHash: 'canonical-hash',
+        })
         expect(result[0]).toMatchObject({
             assetId: 'asset-1',
             rendition: 'canonical',
@@ -83,7 +99,11 @@ describe('resolveCharacterReferences', () => {
             media: {
                 renditions: {
                     canonical: { status: 'processing' },
-                    original: { status: 'ready', blobHash: 'original-hash', mimeType: 'image/png' },
+                    original: {
+                        status: 'ready',
+                        blobHash: 'original-hash',
+                        mimeType: 'image/png',
+                    },
                 },
             },
         }))
@@ -91,7 +111,10 @@ describe('resolveCharacterReferences', () => {
         const result = await resolve()
 
         expect(result[0]?.rendition).toBe('original')
-        expect(assets.readBlob).toHaveBeenCalledWith({ organizationId: 'org-1', blobHash: 'original-hash' })
+        expect(assets.readBlob).toHaveBeenCalledWith({
+            organizationId: 'org-1',
+            blobHash: 'original-hash',
+        })
 
         vi.mocked(assets.getAuthorizedAsset).mockResolvedValue(readyAsset({
             media: {
@@ -208,6 +231,7 @@ describe('resolveCharacterReferences', () => {
             const scaledCellHeight = Math.round(cell.height * height / layout.height)
             const blockWidth = Math.max(20, Math.round(scaledCellWidth * 0.2))
             const blockHeight = Math.max(40, Math.round(scaledCellHeight * 0.65))
+
             return {
                 input: await sharp({
                     create: {
@@ -222,7 +246,12 @@ describe('resolveCharacterReferences', () => {
             }
         }))
         const flattenedSheet = await sharp({
-            create: { width, height, channels: 3, background: '#ffffff' },
+            create: {
+                width,
+                height,
+                channels: 3,
+                background: '#ffffff',
+            },
         }).composite(overlays).png().toBuffer()
         vi.mocked(assets.readBlob).mockResolvedValue(flattenedSheet)
 
@@ -245,7 +274,12 @@ describe('resolveCharacterReferences', () => {
     it('does not split an arbitrary blank 3:2 source', async () => {
         vi.mocked(assets.readBlob).mockResolvedValue(
             await sharp({
-                create: { width: 1200, height: 800, channels: 3, background: '#ffffff' },
+                create: {
+                    width: 1200,
+                    height: 800,
+                    channels: 3,
+                    background: '#ffffff',
+                },
             }).png().toBuffer(),
         )
         const panels = buildCharacterSheetRenderPlan({
@@ -264,7 +298,10 @@ describe('resolveCharacterReferences', () => {
         })
 
         expect(result).toEqual([
-            expect.objectContaining({ sourceKind: 'asset-rendition', assetId: 'asset-1' }),
+            expect.objectContaining({
+                sourceKind: 'asset-rendition',
+                assetId: 'asset-1',
+            }),
         ])
     })
 })

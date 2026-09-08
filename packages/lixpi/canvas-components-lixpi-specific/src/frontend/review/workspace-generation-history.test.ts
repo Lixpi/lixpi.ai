@@ -24,20 +24,48 @@ import {
     type WorkspaceHistoryEditorRequest,
 } from './workspace-generation-history.ts'
 
-const progressViews = vi.hoisted(() => [] as { options: MediaGenerationProgressOptions; instance: MediaGenerationProgressInstance }[])
+const progressViews = vi.hoisted(() => [] as {
+    options: MediaGenerationProgressOptions
+    instance: MediaGenerationProgressInstance
+}[])
 vi.mock('../progress/index.ts', () => ({
     createMediaGenerationProgress: (options: MediaGenerationProgressOptions) => {
-        const instance = { element: document.createElement('div'), update: vi.fn(), destroy: vi.fn() }
-        progressViews.push({ options, instance })
+        const instance = {
+            element: document.createElement('div'),
+            update: vi.fn(),
+            destroy: vi.fn(),
+        }
+        progressViews.push({
+            options,
+            instance,
+        })
+
         return instance
     },
 }))
 
 const owners: WorkspaceGenerationHistory[] = []
-const node = { nodeId: 'node', type: 'image', assetId: 'asset', position: { x: 0, y: 0 }, dimensions: { width: 400, height: 240 }, generatedBy: { conversationAssetId: 'thread', responseMessageId: 'response', reasoningModelId: 'reasoning:model' } } as ImageCanvasNode
+const node = {
+    nodeId: 'node',
+    type: 'image',
+    assetId: 'asset',
+    position: {
+        x: 0,
+        y: 0,
+    },
+    dimensions: {
+        width: 400,
+        height: 240,
+    },
+    generatedBy: {
+        conversationAssetId: 'thread',
+        responseMessageId: 'response',
+        reasoningModelId: 'reasoning:model',
+    },
+} as ImageCanvasNode
 const reference = (nodeId: string) => ({ nodeId } as ImageGenerationTraceReference)
 
-function fixture(media = true) {
+const fixture = (media = true) => {
     const host = document.createElement('div')
     document.body.appendChild(host)
     const editor = { destroy: vi.fn() }
@@ -59,6 +87,7 @@ function fixture(media = true) {
             initialRenditionUrl: () => '',
             resolveRenditionUrl: (_asset, _rendition, signal) => {
                 hydration.push(signal)
+
                 return new Promise(() => {})
             },
             onError: vi.fn(),
@@ -71,13 +100,20 @@ function fixture(media = true) {
                 content: [{
                     type: 'aiResponseMessage',
                     attrs: { id: 'response' },
-                    content: [{ type: 'aiGeneratedImage', attrs: { assetId: 'asset' } }],
+                    content: [{
+                        type: 'aiGeneratedImage',
+                        attrs: { assetId: 'asset' },
+                    }],
                 }],
             }],
         })),
-        getProgress: () => ({ mediaRunId: 'live-run', status: 'running' } as MediaGenerationProgressState),
+        getProgress: () => ({
+            mediaRunId: 'live-run',
+            status: 'running',
+        } as MediaGenerationProgressState),
         mountEditor: vi.fn(input => {
             request = input
+
             return editor
         }),
         createReasoningBadge: vi.fn(() => document.createElement('span')),
@@ -86,10 +122,27 @@ function fixture(media = true) {
         onError: vi.fn(),
     }
     const mount = () => {
-        const owner = new WorkspaceGenerationHistory({ host, projection: { threadId: 'thread', content: { type: 'doc', content: [] } }, signal: abort.signal, ...(media ? { media: { node, limitToSelectedMedia: false, onProgress } } : {}) }, ports)
+        const owner = new WorkspaceGenerationHistory({
+            host,
+            projection: {
+                threadId: 'thread',
+                content: {
+                    type: 'doc',
+                    content: [],
+                },
+            },
+            signal: abort.signal,
+            ...(media ? { media: {
+                node,
+                limitToSelectedMedia: false,
+                onProgress,
+            } } : {}),
+        }, ports)
         owners.push(owner)
+
         return owner
     }
+
     return {
         host,
         ports,
@@ -104,11 +157,10 @@ function fixture(media = true) {
         },
     }
 }
-beforeEach(() => {
-    progressViews.length = 0
-})
+beforeEach(() => void (progressViews.length = 0))
 afterEach(() => {
     for (const owner of owners.splice(0)) owner.destroy()
+
     document.body.replaceChildren()
     vi.restoreAllMocks()
 })
@@ -116,7 +168,13 @@ afterEach(() => {
 describe('WorkspaceGenerationHistory', () => {
     it('mounts sealed media content through the editor port with a reasoning badge', () => {
         const f = fixture()
-        const owner = mountWorkspaceMediaHistory({ host: f.host, node, lineageProjectionScope: 'media-run', limitToSelectedMedia: true, onProgress: f.onProgress }, f.ports)
+        const owner = mountWorkspaceMediaHistory({
+            host: f.host,
+            node,
+            lineageProjectionScope: 'media-run',
+            limitToSelectedMedia: true,
+            onProgress: f.onProgress,
+        }, f.ports)
         expect(owner).not.toBeNull()
         owners.push(owner!)
         expect(f.request.threadId).toBe('thread')
@@ -137,7 +195,12 @@ describe('WorkspaceGenerationHistory', () => {
 
     it('resolves image and video reference renditions through the supplied path port', () => {
         const f = fixture(false)
-        f.nodeMap.set('video', { ...node, type: 'video', nodeId: 'video', assetId: 'video-asset' } as CanvasNode)
+        f.nodeMap.set('video', {
+            ...node,
+            type: 'video',
+            nodeId: 'video',
+            assetId: 'video-asset',
+        } as CanvasNode)
         f.mount()
         expect(f.request.traceDetailsOptions.getAdditionalReferenceImageSources(reference('node'))).toEqual(['/assets/asset/preview'])
         expect(f.request.traceDetailsOptions.getAdditionalReferenceImageSources(reference('video'))).toEqual(['/assets/video-asset/representativeFrame', '/assets/video-asset/poster'])
@@ -157,7 +220,11 @@ describe('WorkspaceGenerationHistory', () => {
         expect(f.host.childElementCount).toBe(0)
         expect(f.request.traceDetailsOptions.renderReferenceTile(reference('node'))).toBeNull()
         expect(f.request.traceDetailsOptions.getAdditionalReferenceImageSources(reference('node'))).toEqual([])
-        expect(() => f.request.mediaGenerationProgress!({ id: 'late', state: { status: 'running' } as MediaGenerationProgressState, showSummaryWhenCollapsedItemIds: [] })).toThrow('disposed')
+        expect(() => f.request.mediaGenerationProgress!({
+            id: 'late',
+            state: { status: 'running' } as MediaGenerationProgressState,
+            showSummaryWhenCollapsedItemIds: [],
+        })).toThrow('disposed')
         expect(progressViews).toHaveLength(0)
     })
 
@@ -165,11 +232,25 @@ describe('WorkspaceGenerationHistory', () => {
         const f = fixture()
         const owner = f.mount()
         const create = f.request.mediaGenerationProgress!
-        const otherState = { mediaRunId: 'other-run', status: 'completed' } as MediaGenerationProgressState
-        create({ id: 'other', state: otherState, showSummaryWhenCollapsedItemIds: [] })
+        const otherState = {
+            mediaRunId: 'other-run',
+            status: 'completed',
+        } as MediaGenerationProgressState
+        create({
+            id: 'other',
+            state: otherState,
+            showSummaryWhenCollapsedItemIds: [],
+        })
         expect(progressViews[0].options.state).toBe(otherState)
         expect(f.onProgress).not.toHaveBeenCalled()
-        const view = create({ id: 'live', state: { mediaRunId: 'live-run', status: 'pending' } as MediaGenerationProgressState, showSummaryWhenCollapsedItemIds: ['reasoning'] })
+        const view = create({
+            id: 'live',
+            state: {
+                mediaRunId: 'live-run',
+                status: 'pending',
+            } as MediaGenerationProgressState,
+            showSummaryWhenCollapsedItemIds: ['reasoning'],
+        })
         expect(progressViews[1].options.state.status).toBe('running')
         expect(f.onProgress).toHaveBeenCalledWith(view)
         view.destroy()
@@ -181,7 +262,12 @@ describe('WorkspaceGenerationHistory', () => {
     it('releases progress created during an editor mount that subsequently fails', () => {
         const f = fixture()
         f.ports.mountEditor = request => {
-            request.mediaGenerationProgress!({ id: 'run', state: { status: 'running' } as MediaGenerationProgressState, showSummaryWhenCollapsedItemIds: [] })
+            request.mediaGenerationProgress!({
+                id: 'run',
+                state: { status: 'running' } as MediaGenerationProgressState,
+                showSummaryWhenCollapsedItemIds: [],
+            })
+
             throw new Error('editor failed')
         }
         expect(() => f.mount()).toThrow('editor failed')
@@ -192,8 +278,24 @@ describe('WorkspaceGenerationHistory', () => {
     it('skips aborted or non-generated requests before reading history', () => {
         const f = fixture()
         f.abort.abort()
-        expect(mountWorkspaceMediaHistory({ host: f.host, node, signal: f.abort.signal, lineageProjectionScope: 'media-run', limitToSelectedMedia: true, onProgress: f.onProgress }, f.ports)).toBeNull()
-        expect(mountWorkspaceMediaHistory({ host: f.host, node: { ...node, generatedBy: undefined }, lineageProjectionScope: 'media-run', limitToSelectedMedia: true, onProgress: f.onProgress }, f.ports)).toBeNull()
+        expect(mountWorkspaceMediaHistory({
+            host: f.host,
+            node,
+            signal: f.abort.signal,
+            lineageProjectionScope: 'media-run',
+            limitToSelectedMedia: true,
+            onProgress: f.onProgress,
+        }, f.ports)).toBeNull()
+        expect(mountWorkspaceMediaHistory({
+            host: f.host,
+            node: {
+                ...node,
+                generatedBy: undefined,
+            },
+            lineageProjectionScope: 'media-run',
+            limitToSelectedMedia: true,
+            onProgress: f.onProgress,
+        }, f.ports)).toBeNull()
         expect(f.ports.getMediaContent).not.toHaveBeenCalled()
     })
 

@@ -11,7 +11,10 @@ import {
     type CapabilityMeta,
 } from '@lixpi/constants'
 
-vi.mock('./blob.ts', () => ({ default: {}, buildBlobReferenceBatchOperations: vi.fn() }))
+vi.mock('./blob.ts', () => ({
+    default: {},
+    buildBlobReferenceBatchOperations: vi.fn(),
+}))
 vi.mock('../services/blob-storage.ts', () => ({ getContentAddressedBlob: vi.fn() }))
 
 import {
@@ -95,6 +98,7 @@ describe('disabled Capability catalog visibility', () => {
                         }
                         : undefined
                 }
+
                 return record
             }),
         }
@@ -102,7 +106,10 @@ describe('disabled Capability catalog visibility', () => {
 
     it('keeps a disabled definition discoverable to its authoritative owner', async () => {
         const result = await listAuthorizedCapabilities({
-            requester: { userId: 'owner-1', organizationIds: ['org-1'] },
+            requester: {
+                userId: 'owner-1',
+                organizationIds: ['org-1'],
+            },
         })
 
         expect(result.items).toEqual([meta])
@@ -112,7 +119,10 @@ describe('disabled Capability catalog visibility', () => {
         accessLevel = 'editor'
 
         const result = await listAuthorizedCapabilities({
-            requester: { userId: 'editor-1', organizationIds: ['org-1'] },
+            requester: {
+                userId: 'editor-1',
+                organizationIds: ['org-1'],
+            },
         })
 
         expect(result.items).toEqual([meta])
@@ -122,7 +132,10 @@ describe('disabled Capability catalog visibility', () => {
         accessLevel = 'viewer'
 
         const result = await listAuthorizedCapabilities({
-            requester: { userId: 'viewer-1', organizationIds: ['org-1'] },
+            requester: {
+                userId: 'viewer-1',
+                organizationIds: ['org-1'],
+            },
         })
 
         expect(result.items).toEqual([])
@@ -130,7 +143,10 @@ describe('disabled Capability catalog visibility', () => {
 
     it('hides internal bundle dependencies from every catalog search', async () => {
         const result = await listAuthorizedCapabilities({
-            requester: { userId: 'owner-1', organizationIds: ['org-1'] },
+            requester: {
+                userId: 'owner-1',
+                organizationIds: ['org-1'],
+            },
         })
 
         expect(result.items).toEqual([meta])
@@ -155,20 +171,29 @@ describe('disabled Capability catalog visibility', () => {
         )
 
         const first = await listAuthorizedCapabilities({
-            requester: { userId: 'owner-1', organizationIds: ['org-1'] },
+            requester: {
+                userId: 'owner-1',
+                organizationIds: ['org-1'],
+            },
             query: 'disabled',
             kinds: ['tool'],
             limit: 1,
         })
 
         await expect(listAuthorizedCapabilities({
-            requester: { userId: 'owner-1', organizationIds: ['org-1'] },
+            requester: {
+                userId: 'owner-1',
+                organizationIds: ['org-1'],
+            },
             query: 'different',
             kinds: ['tool'],
             cursor: first.cursor,
         })).rejects.toThrow('INVALID_CURSOR')
         await expect(listAuthorizedCapabilities({
-            requester: { userId: 'owner-1', organizationIds: ['org-1'] },
+            requester: {
+                userId: 'owner-1',
+                organizationIds: ['org-1'],
+            },
             query: 'disabled',
             kinds: ['skill'],
             cursor: first.cursor,
@@ -185,7 +210,10 @@ describe('disabled Capability catalog visibility', () => {
 
         await expect(authorizeCapability({
             capabilityId: legacyListed.capabilityId,
-            requester: { userId: 'owner-1', organizationIds: ['org-1'] },
+            requester: {
+                userId: 'owner-1',
+                organizationIds: ['org-1'],
+            },
         })).resolves.toEqual(expect.objectContaining({
             catalogExposure: 'standalone',
         }))

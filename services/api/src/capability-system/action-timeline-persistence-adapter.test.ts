@@ -92,10 +92,21 @@ beforeEach(() => {
     mocks.getWorkspace.mockResolvedValue({
         workspaceId: 'workspace-1',
         organizationId: 'organization-1',
-        accessList: [{ userId: 'user-1', accessLevel: 'owner' }],
+        accessList: [{
+            userId: 'user-1',
+            accessLevel: 'owner',
+        }],
         updatedAt: 5,
         canvasStateUpdatedAt: 5,
-        canvasState: { viewport: { x: 0, y: 0, zoom: 1 }, nodes: [], edges: [] },
+        canvasState: {
+            viewport: {
+                x: 0,
+                y: 0,
+                zoom: 1,
+            },
+            nodes: [],
+            edges: [],
+        },
     })
     mocks.getOrganization.mockResolvedValue({ organizationId: 'organization-1' })
     mocks.blobStore
@@ -168,17 +179,39 @@ describe('Action Timeline Artifact publication', () => {
         mocks.getWorkspace.mockResolvedValue({
             workspaceId: 'workspace-1',
             organizationId: 'organization-1',
-            accessList: [{ userId: 'user-1', accessLevel: 'owner' }],
+            accessList: [{
+                userId: 'user-1',
+                accessLevel: 'owner',
+            }],
             updatedAt: 5,
             canvasStateUpdatedAt: 5,
-            canvasState: { viewport: { x: 0, y: 0, zoom: 1 }, nodes: [], edges: [] },
+            canvasState: {
+                viewport: {
+                    x: 0,
+                    y: 0,
+                    zoom: 1,
+                },
+                nodes: [],
+                edges: [],
+            },
         })
         mocks.projectGeneratedArtifactNode.mockReturnValue({
-            canvasState: { viewport: { x: 0, y: 0, zoom: 1 }, nodes: [], edges: [] },
+            canvasState: {
+                viewport: {
+                    x: 0,
+                    y: 0,
+                    zoom: 1,
+                },
+                nodes: [],
+                edges: [],
+            },
             nodeId: 'capability-artifact-artifact-1',
             geometryNodes: [],
         })
-        mocks.buildAssetCanvasGeometryUpdate.mockReturnValue({ layoutRevision: 6, nodes: [] })
+        mocks.buildAssetCanvasGeometryUpdate.mockReturnValue({
+            layoutRevision: 6,
+            nodes: [],
+        })
 
         await expect(finalizeActionTimelineArtifact({
             assetId: 'artifact-1',
@@ -191,7 +224,10 @@ describe('Action Timeline Artifact publication', () => {
             organizationId: 'organization-1',
             conversationAssetId: 'conversation-1',
         })).resolves.toEqual({
-            canvasGeometry: { layoutRevision: 6, nodes: [] },
+            canvasGeometry: {
+                layoutRevision: 6,
+                nodes: [],
+            },
             generationRun: expect.objectContaining({
                 requestKind: 'capability-output',
                 lineageAssignment: expect.objectContaining({

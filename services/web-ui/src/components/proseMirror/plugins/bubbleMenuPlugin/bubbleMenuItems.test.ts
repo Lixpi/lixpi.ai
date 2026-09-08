@@ -23,8 +23,17 @@ import { createMockEditorView } from '$src/components/proseMirror/plugins/testUt
 
 // Both image and aiGeneratedImage should behave the same for selection context
 const imageNodeCases = [
-    { name: 'image', createNode: () => img({ src: 'test.jpg', alt: 'test' }) },
-    { name: 'aiGeneratedImage', createNode: () => aiImg({ imageData: 'data:image/png;base64,abc' }) },
+    {
+        name: 'image',
+        createNode: () => img({
+            src: 'test.jpg',
+            alt: 'test',
+        }),
+    },
+    {
+        name: 'aiGeneratedImage',
+        createNode: () => aiImg({ imageData: 'data:image/png;base64,abc' }),
+    },
 ] as const
 
 // =============================================================================
@@ -73,7 +82,10 @@ describe('getSelectionContext', () => {
     })
 
     describe('returns "image" for image node selection (parameterized)', () => {
-        imageNodeCases.forEach(({ name, createNode }) => {
+        imageNodeCases.forEach(({
+            name,
+            createNode,
+        }) => {
             it(`returns "image" when ${name} is selected`, () => {
                 const imageNode = createNode()
                 const state = createStateWithNodeSelection(doc(p('Before'), imageNode, p('After')), 8)
@@ -83,7 +95,10 @@ describe('getSelectionContext', () => {
             })
         })
 
-        imageNodeCases.forEach(({ name, createNode }) => {
+        imageNodeCases.forEach(({
+            name,
+            createNode,
+        }) => {
             it(`returns "image" when ${name} is the only content`, () => {
                 const imageNode = createNode()
                 const state = createStateWithNodeSelection(doc(imageNode), 0)

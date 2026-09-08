@@ -14,10 +14,18 @@ import {
     type ProviderState,
 } from '../graph/state.ts'
 
-function createState(overrides: Partial<ProviderState> = {}): ProviderState {
+const createState = (overrides: Partial<ProviderState> = {}): ProviderState => {
     return {
-        messages: [{ role: 'user', content: 'animate this' }],
-        aiModelMetaInfo: { provider: 'Anthropic', model: 'Claude', modelVersion: 'claude-sonnet-4-6', maxCompletionSize: 4096 },
+        messages: [{
+            role: 'user',
+            content: 'animate this',
+        }],
+        aiModelMetaInfo: {
+            provider: 'Anthropic',
+            model: 'Claude',
+            modelVersion: 'claude-sonnet-4-6',
+            maxCompletionSize: 4096,
+        },
         eventMeta: {},
         workspaceId: 'workspace-1',
         aiChatThreadId: 'thread-1',
@@ -27,7 +35,11 @@ function createState(overrides: Partial<ProviderState> = {}): ProviderState {
         temperature: 0.7,
         streamActive: false,
         aiRequestReceivedAt: 1,
-        videoModelMetaInfo: { provider: 'Google', model: 'VEO', modelVersion: 'veo-3.1-generate-preview' },
+        videoModelMetaInfo: {
+            provider: 'Google',
+            model: 'VEO',
+            modelVersion: 'veo-3.1-generate-preview',
+        },
         videoModelVersion: 'veo-3.1-generate-preview',
         videoProviderName: 'Google',
         videoAspectRatio: '16:9',
@@ -48,7 +60,12 @@ const createRouter = (processResult: {
     const process = vi.fn(async () => processResult)
     const createTransient = vi.fn(() => ({ process }))
     const router = new VideoRouter({ createTransient } as any)
-    return { router, createTransient, process }
+
+    return {
+        router,
+        createTransient,
+        process,
+    }
 }
 
 let debugInfoSpy: ReturnType<typeof vi.spyOn> | null = null
@@ -72,7 +89,10 @@ afterEach(() => {
 
 describe('VideoRouter', () => {
     it('returns empty object when required routing inputs are missing', async () => {
-        const { router, process } = createRouter()
+        const {
+            router,
+            process,
+        } = createRouter()
 
         const result = await router.execute(createState({
             videoProviderName: undefined,
@@ -83,7 +103,10 @@ describe('VideoRouter', () => {
     })
 
     it('passes onProseMirrorContent through to the transient video provider request', async () => {
-        const { router, process } = createRouter()
+        const {
+            router,
+            process,
+        } = createRouter()
         const state = createState()
         const onProseMirrorContent = vi.fn()
 
@@ -96,7 +119,11 @@ describe('VideoRouter', () => {
     })
 
     it('routes the final VEO prompt and attaches capability references when reference images are allowed', async () => {
-        const { router, createTransient, process } = createRouter()
+        const {
+            router,
+            createTransient,
+            process,
+        } = createRouter()
 
         const result = await router.execute(createState({ eventMeta: { organizationId: 'organization-1' } }))
 
@@ -111,7 +138,10 @@ describe('VideoRouter', () => {
     })
 
     it('merges the reasoning model negative prompt into the internal provider config', async () => {
-        const { router, process } = createRouter()
+        const {
+            router,
+            process,
+        } = createRouter()
 
         await router.execute(createState({
             videoGenerationConfig: { generateAudio: 'false' },
@@ -126,7 +156,10 @@ describe('VideoRouter', () => {
     })
 
     it('omits videoReferenceImages when no source or first-frame references are available', async () => {
-        const { router, process } = createRouter()
+        const {
+            router,
+            process,
+        } = createRouter()
 
         await router.execute(createState({
             videoReferenceImages: [],
@@ -140,7 +173,10 @@ describe('VideoRouter', () => {
     })
 
     it('keeps capability references in the prompt only when VEO first-frame mode is active', async () => {
-        const { router, process } = createRouter()
+        const {
+            router,
+            process,
+        } = createRouter()
 
         await router.execute(createState({
             videoFirstFrameImage: 'data:image/png;base64,first-frame',
@@ -153,7 +189,10 @@ describe('VideoRouter', () => {
     })
 
     it('caps routed reference images at 3 for VEO (default cap when metadata is absent)', async () => {
-        const { router, process } = createRouter()
+        const {
+            router,
+            process,
+        } = createRouter()
         const refs = Array.from({ length: 5 }, (_, i) => `data:image/png;base64,ref-${i}`)
 
         await router.execute(createState({
@@ -167,11 +206,19 @@ describe('VideoRouter', () => {
     })
 
     it('allows up to the Seedance 9-image cap when the model metadata sets videoMaxReferenceImages', async () => {
-        const { router, process } = createRouter()
+        const {
+            router,
+            process,
+        } = createRouter()
         const refs = Array.from({ length: 12 }, (_, i) => `data:image/png;base64,ref-${i}`)
 
         await router.execute(createState({
-            videoModelMetaInfo: { provider: 'Google', model: 'Seedance', modelVersion: 'dreamina-seedance-2-0-260128', videoMaxReferenceImages: 9 },
+            videoModelMetaInfo: {
+                provider: 'Google',
+                model: 'Seedance',
+                modelVersion: 'dreamina-seedance-2-0-260128',
+                videoMaxReferenceImages: 9,
+            },
             videoModelVersion: 'dreamina-seedance-2-0-260128',
             videoReferenceImages: refs,
             capabilityReferenceImages: [],
@@ -198,7 +245,10 @@ describe('VideoRouter', () => {
     })
 
     it('does not leak capability reference images into media references when videoSourceForExtension is present', async () => {
-        const { router, process } = createRouter()
+        const {
+            router,
+            process,
+        } = createRouter()
         const refs = ['data:image/png;base64,ref-0', 'data:image/png;base64,ref-1']
         const capabilityRefs = ['data:image/png;base64,capability-0', 'data:image/png;base64,capability-1']
 
@@ -219,7 +269,10 @@ describe('VideoRouter', () => {
             throw new Error('video provider crash')
         })
         const createTransient = vi.fn(() => ({ process }))
-        const router = new VideoRouter({ createTransient, remove } as any)
+        const router = new VideoRouter({
+            createTransient,
+            remove,
+        } as any)
 
         const result = await router.execute(createState())
 

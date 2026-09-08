@@ -7,9 +7,7 @@ import {
 } from 'vitest'
 
 import Workspace from './workspace.ts'
-import {
-    type ContentDescriptor,
-} from '@lixpi/constants'
+
 
 const dynamo = {
     getItem: vi.fn(),
@@ -35,7 +33,10 @@ describe('Workspace.getWorkspace', () => {
     it('normalizes missing workspaces into NOT_FOUND', async () => {
         dynamo.getItem.mockResolvedValueOnce(undefined)
 
-        await expect(Workspace.getWorkspace({ workspaceId: 'workspace-1', userId: 'user-1' })).resolves.toEqual(
+        await expect(Workspace.getWorkspace({
+            workspaceId: 'workspace-1',
+            userId: 'user-1',
+        })).resolves.toEqual(
             { error: 'NOT_FOUND' },
         )
         expect(dynamo.getItem).toHaveBeenCalledWith(expect.objectContaining({
@@ -47,10 +48,21 @@ describe('Workspace.getWorkspace', () => {
         dynamo.getItem.mockResolvedValueOnce({
             workspaceId: 'workspace-1',
             accessList: [{ userId: 'other-user' }],
-            canvasState: { viewport: { x: 0, y: 0, zoom: 1 }, nodes: [], edges: [] },
+            canvasState: {
+                viewport: {
+                    x: 0,
+                    y: 0,
+                    zoom: 1,
+                },
+                nodes: [],
+                edges: [],
+            },
         })
 
-        await expect(Workspace.getWorkspace({ workspaceId: 'workspace-1', userId: 'user-1' })).resolves.toEqual(
+        await expect(Workspace.getWorkspace({
+            workspaceId: 'workspace-1',
+            userId: 'user-1',
+        })).resolves.toEqual(
             { error: 'PERMISSION_DENIED' },
         )
     })
@@ -60,17 +72,37 @@ describe('Workspace.getWorkspace', () => {
             workspaceId: 'workspace-1',
             accessList: [{ userId: 'user-1' }],
             updatedAt: 10,
-            canvasState: { viewport: { x: 1, y: 2, zoom: 1 }, nodes: [{ nodeId: 'n-1', type: 'image' }] },
+            canvasState: {
+                viewport: {
+                    x: 1,
+                    y: 2,
+                    zoom: 1,
+                },
+                nodes: [{
+                    nodeId: 'n-1',
+                    type: 'image',
+                }],
+            },
         })
 
-        const result = await Workspace.getWorkspace({ workspaceId: 'workspace-1', userId: 'user-1' })
+        const result = await Workspace.getWorkspace({
+            workspaceId: 'workspace-1',
+            userId: 'user-1',
+        })
 
         expect(result).toMatchObject({
             workspaceId: 'workspace-1',
             canvasStateUpdatedAt: 10,
             canvasState: {
-                viewport: { x: 1, y: 2, zoom: 1 },
-                nodes: [{ nodeId: 'n-1', type: 'image' }],
+                viewport: {
+                    x: 1,
+                    y: 2,
+                    zoom: 1,
+                },
+                nodes: [{
+                    nodeId: 'n-1',
+                    type: 'image',
+                }],
                 edges: [],
             },
         })
@@ -89,7 +121,11 @@ describe('Workspace.mutateCanvasState', () => {
             updatedAt: 1000,
             canvasStateUpdatedAt: 1000,
             canvasState: {
-                viewport: { x: 0, y: 0, zoom: 1 },
+                viewport: {
+                    x: 0,
+                    y: 0,
+                    zoom: 1,
+                },
                 nodes: [],
                 edges: [],
             },
@@ -102,7 +138,10 @@ describe('Workspace.mutateCanvasState', () => {
                 changed: true,
                 canvasState: {
                     ...canvasState,
-                    nodes: [{ nodeId: 'node-1', type: 'branchOrigin' } as any],
+                    nodes: [{
+                        nodeId: 'node-1',
+                        type: 'branchOrigin',
+                    } as any],
                 },
             }),
         })
@@ -119,7 +158,11 @@ describe('Workspace.mutateCanvasState', () => {
             updatedAt: 10,
             canvasStateUpdatedAt: 7,
             canvasState: {
-                viewport: { x: 1, y: 2, zoom: 3 },
+                viewport: {
+                    x: 1,
+                    y: 2,
+                    zoom: 3,
+                },
                 nodes: [],
                 edges: [],
             },
@@ -133,7 +176,10 @@ describe('Workspace.mutateCanvasState', () => {
                 changed: true,
                 canvasState: {
                     ...canvasState,
-                    nodes: [{ nodeId: 'node-1', type: 'branchOrigin' } as any],
+                    nodes: [{
+                        nodeId: 'node-1',
+                        type: 'branchOrigin',
+                    } as any],
                 },
             }),
         })
@@ -141,7 +187,10 @@ describe('Workspace.mutateCanvasState', () => {
         expect(changed.changed).toBe(true)
         expect(changed.canvasStateUpdatedAt).toBeGreaterThan(0)
         expect(dynamo.transactWrite).toHaveBeenCalledTimes(1)
-        const { operations, origin } = dynamo.transactWrite.mock.calls[0][0]
+        const {
+            operations,
+            origin,
+        } = dynamo.transactWrite.mock.calls[0][0]
         expect(origin).toBe('testCanvasMutation')
         expect(operations[0]).toEqual(expect.objectContaining({
             type: 'update',
@@ -157,7 +206,11 @@ describe('Workspace.mutateCanvasState', () => {
             },
             expressionAttributeValues: expect.objectContaining({
                 ':canvasState': expect.objectContaining({
-                    viewport: { x: 1, y: 2, zoom: 3 },
+                    viewport: {
+                        x: 1,
+                        y: 2,
+                        zoom: 3,
+                    },
                     nodes: [expect.objectContaining({ nodeId: 'node-1' })],
                     edges: [],
                 }),
@@ -178,7 +231,11 @@ describe('Workspace.mutateCanvasState', () => {
         dynamo.getItem.mockResolvedValue({
             updatedAt: 10,
             canvasState: {
-                viewport: { x: 0, y: 0, zoom: 1 },
+                viewport: {
+                    x: 0,
+                    y: 0,
+                    zoom: 1,
+                },
                 nodes: [],
                 edges: [],
             },
@@ -186,7 +243,10 @@ describe('Workspace.mutateCanvasState', () => {
 
         const changed = await Workspace.mutateCanvasState({
             workspaceId: 'workspace-1',
-            mutate: (canvasState) => ({ changed: false, canvasState }),
+            mutate: (canvasState) => ({
+                changed: false,
+                canvasState,
+            }),
         })
 
         expect(changed.changed).toBe(false)
@@ -197,7 +257,11 @@ describe('Workspace.mutateCanvasState', () => {
         dynamo.getItem.mockResolvedValue({
             updatedAt: 10,
             canvasState: {
-                viewport: { x: 0, y: 0, zoom: 1 },
+                viewport: {
+                    x: 0,
+                    y: 0,
+                    zoom: 1,
+                },
                 nodes: [],
                 edges: [],
             },
@@ -210,7 +274,11 @@ describe('Workspace.mutateCanvasState', () => {
                 changed: true,
                 canvasState: {
                     ...canvasState,
-                    edges: [{ edgeId: 'edge-1', sourceNodeId: 'a', targetNodeId: 'b' }],
+                    edges: [{
+                        edgeId: 'edge-1',
+                        sourceNodeId: 'a',
+                        targetNodeId: 'b',
+                    }],
                 },
             }),
         })
@@ -226,7 +294,11 @@ describe('Workspace.mutateCanvasState', () => {
     it('guards rows without any canvas token using attribute_not_exists', async () => {
         dynamo.getItem.mockResolvedValue({
             canvasState: {
-                viewport: { x: 0, y: 0, zoom: 1 },
+                viewport: {
+                    x: 0,
+                    y: 0,
+                    zoom: 1,
+                },
                 nodes: [],
                 edges: [],
             },
@@ -239,7 +311,11 @@ describe('Workspace.mutateCanvasState', () => {
                 changed: true,
                 canvasState: {
                     ...canvasState,
-                    edges: [{ edgeId: 'edge-1', sourceNodeId: 'a', targetNodeId: 'b' }],
+                    edges: [{
+                        edgeId: 'edge-1',
+                        sourceNodeId: 'a',
+                        targetNodeId: 'b',
+                    }],
                 },
             }),
         })
@@ -259,7 +335,11 @@ describe('Workspace.mutateCanvasState', () => {
                 updatedAt: 10,
                 canvasStateUpdatedAt: 5,
                 canvasState: {
-                    viewport: { x: 0, y: 0, zoom: 1 },
+                    viewport: {
+                        x: 0,
+                        y: 0,
+                        zoom: 1,
+                    },
                     nodes: [],
                     edges: [],
                 },
@@ -268,8 +348,15 @@ describe('Workspace.mutateCanvasState', () => {
                 updatedAt: 11,
                 canvasStateUpdatedAt: 6,
                 canvasState: {
-                    viewport: { x: 0, y: 0, zoom: 1 },
-                    nodes: [{ nodeId: 'concurrent-node', type: 'branchOrigin' }],
+                    viewport: {
+                        x: 0,
+                        y: 0,
+                        zoom: 1,
+                    },
+                    nodes: [{
+                        nodeId: 'concurrent-node',
+                        type: 'branchOrigin',
+                    }],
                     edges: [],
                 },
             })
@@ -286,7 +373,10 @@ describe('Workspace.mutateCanvasState', () => {
                     ...canvasState,
                     nodes: [
                         ...canvasState.nodes,
-                        { nodeId: 'projection-node', type: 'branchFork' } as any,
+                        {
+                            nodeId: 'projection-node',
+                            type: 'branchFork',
+                        } as any,
                     ],
                 },
             }),
@@ -311,7 +401,11 @@ describe('Workspace.mutateCanvasState', () => {
             updatedAt: 12,
             canvasStateUpdatedAt: 12,
             canvasState: {
-                viewport: { x: 0, y: 0, zoom: 1 },
+                viewport: {
+                    x: 0,
+                    y: 0,
+                    zoom: 1,
+                },
                 nodes: [],
                 edges: [],
             },
@@ -323,8 +417,15 @@ describe('Workspace.mutateCanvasState', () => {
             mutate: () => ({
                 changed: true,
                 canvasState: {
-                    viewport: { x: 0, y: 0, zoom: 1 },
-                    nodes: [{ nodeId: 'retry-node', type: 'branchOrigin' } as any],
+                    viewport: {
+                        x: 0,
+                        y: 0,
+                        zoom: 1,
+                    },
+                    nodes: [{
+                        nodeId: 'retry-node',
+                        type: 'branchOrigin',
+                    } as any],
                     edges: [],
                 },
             }),
@@ -347,7 +448,11 @@ describe('Workspace.updateCanvasState', () => {
             updatedAt: 1000,
             canvasStateUpdatedAt: 1000,
             canvasState: {
-                viewport: { x: 0, y: 0, zoom: 1 },
+                viewport: {
+                    x: 0,
+                    y: 0,
+                    zoom: 1,
+                },
                 nodes: [],
                 edges: [],
             },
@@ -359,13 +464,20 @@ describe('Workspace.updateCanvasState', () => {
             workspaceId: 'workspace-1',
             expectedCanvasStateUpdatedAt: 1000,
             canvasState: {
-                viewport: { x: 0, y: 0, zoom: 1 },
+                viewport: {
+                    x: 0,
+                    y: 0,
+                    zoom: 1,
+                },
                 nodes: [],
                 edges: [],
             },
         })
 
-        expect(result).toMatchObject({ updatedAt: 1001, canvasStateUpdatedAt: 1001 })
+        expect(result).toMatchObject({
+            updatedAt: 1001,
+            canvasStateUpdatedAt: 1001,
+        })
         expect(dynamo.transactWrite.mock.calls[0][0].operations[0].expressionAttributeValues)
             .toMatchObject({ ':canvasStateUpdatedAt': 1001 })
     })
@@ -375,8 +487,16 @@ describe('Workspace.updateCanvasState', () => {
             updatedAt: 10,
             canvasStateUpdatedAt: 10,
             canvasState: {
-                viewport: { x: 0, y: 0, zoom: 1 },
-                nodes: [{ nodeId: 'node-1', type: 'image', assetId: 'asset-1' }],
+                viewport: {
+                    x: 0,
+                    y: 0,
+                    zoom: 1,
+                },
+                nodes: [{
+                    nodeId: 'node-1',
+                    type: 'image',
+                    assetId: 'asset-1',
+                }],
                 edges: [],
             },
         })
@@ -387,8 +507,16 @@ describe('Workspace.updateCanvasState', () => {
             workspaceId: 'workspace-1',
             expectedCanvasStateUpdatedAt: 10,
             canvasState: {
-                viewport: { x: 1, y: 2, zoom: 1 },
-                nodes: [{ nodeId: 'node-1', type: 'image', assetId: 'asset-1' } as any],
+                viewport: {
+                    x: 1,
+                    y: 2,
+                    zoom: 1,
+                },
+                nodes: [{
+                    nodeId: 'node-1',
+                    type: 'image',
+                    assetId: 'asset-1',
+                } as any],
                 edges: [],
             },
         })
@@ -400,7 +528,10 @@ describe('Workspace.updateCanvasState', () => {
             canvasStateUpdatedAt: expect.any(Number),
         })
         expect(dynamo.transactWrite).toHaveBeenCalledTimes(1)
-        const { operations, origin } = dynamo.transactWrite.mock.calls[0][0]
+        const {
+            operations,
+            origin,
+        } = dynamo.transactWrite.mock.calls[0][0]
         expect(origin).toBe('updateWorkspaceCanvasState')
         expect(operations[0]).toEqual(expect.objectContaining({
             type: 'update',
@@ -435,16 +566,31 @@ describe('Workspace.updateCanvasState', () => {
             .mockResolvedValueOnce({
                 updatedAt: 12,
                 canvasStateUpdatedAt: 12,
-                canvasState: { viewport: { x: 0, y: 0, zoom: 1 }, nodes: [], edges: [] },
+                canvasState: {
+                    viewport: {
+                        x: 0,
+                        y: 0,
+                        zoom: 1,
+                    },
+                    nodes: [],
+                    edges: [],
+                },
             })
-            .mockResolvedValueOnce({ updatedAt: 22, canvasStateUpdatedAt: 18 })
+            .mockResolvedValueOnce({
+                updatedAt: 22,
+                canvasStateUpdatedAt: 18,
+            })
 
         const result = await Workspace.updateCanvasState({
             userId: 'user-1',
             workspaceId: 'workspace-1',
             expectedCanvasStateUpdatedAt: 10,
             canvasState: {
-                viewport: { x: 0, y: 0, zoom: 1 },
+                viewport: {
+                    x: 0,
+                    y: 0,
+                    zoom: 1,
+                },
                 nodes: [],
                 edges: [],
             },
@@ -471,7 +617,11 @@ describe('Workspace.updateCanvasState', () => {
             userId: 'user-1',
             workspaceId: 'workspace-1',
             canvasState: {
-                viewport: { x: 0, y: 0, zoom: 1 },
+                viewport: {
+                    x: 0,
+                    y: 0,
+                    zoom: 1,
+                },
                 nodes: [],
                 edges: [],
             },
@@ -493,8 +643,16 @@ describe('Workspace.updateCanvasState', () => {
             workspaceId: 'workspace-1',
             expectedCanvasStateUpdatedAt: 10,
             canvasState: {
-                viewport: { x: 0, y: 0, zoom: 1 },
-                nodes: [{ nodeId: 'node-1', type: 'image', fileId: 'legacy-file' } as any],
+                viewport: {
+                    x: 0,
+                    y: 0,
+                    zoom: 1,
+                },
+                nodes: [{
+                    nodeId: 'node-1',
+                    type: 'image',
+                    fileId: 'legacy-file',
+                } as any],
                 edges: [],
             },
         })).rejects.toThrow('LEGACY_CANVAS_STORAGE_FIELD_REJECTED:fileId')
@@ -510,8 +668,15 @@ describe('Workspace.updateCanvasState', () => {
             workspaceId: 'workspace-1',
             expectedCanvasStateUpdatedAt: 10,
             canvasState: {
-                viewport: { x: 0, y: 0, zoom: 1 },
-                nodes: [{ nodeId: 'node-1', type: 'image' } as any],
+                viewport: {
+                    x: 0,
+                    y: 0,
+                    zoom: 1,
+                },
+                nodes: [{
+                    nodeId: 'node-1',
+                    type: 'image',
+                } as any],
                 edges: [],
             },
         })).rejects.toThrow('CANVAS_ASSET_ID_REQUIRED')
@@ -524,8 +689,16 @@ describe('Workspace.updateCanvasState', () => {
             updatedAt: 10,
             canvasStateUpdatedAt: 10,
             canvasState: {
-                viewport: { x: 0, y: 0, zoom: 1 },
-                nodes: [{ nodeId: 'node-1', type: 'image', assetId: 'asset-1' }],
+                viewport: {
+                    x: 0,
+                    y: 0,
+                    zoom: 1,
+                },
+                nodes: [{
+                    nodeId: 'node-1',
+                    type: 'image',
+                    assetId: 'asset-1',
+                }],
                 edges: [],
             },
         })
@@ -536,8 +709,16 @@ describe('Workspace.updateCanvasState', () => {
             workspaceId: 'workspace-1',
             expectedCanvasStateUpdatedAt: 10,
             canvasState: {
-                viewport: { x: 0, y: 0, zoom: 1 },
-                nodes: [{ nodeId: 'node-2', type: 'image', assetId: 'asset-2' } as any],
+                viewport: {
+                    x: 0,
+                    y: 0,
+                    zoom: 1,
+                },
+                nodes: [{
+                    nodeId: 'node-2',
+                    type: 'image',
+                    assetId: 'asset-2',
+                } as any],
                 edges: [],
             },
         })).rejects.toThrow('CANVAS_ASSET_MEMBERSHIP_MUTATION_REJECTED')
@@ -560,7 +741,10 @@ describe('Workspace.markDeleting', () => {
             key: { workspaceId: 'workspace-1' },
             updateExpression: 'SET #deletingAt = if_not_exists(#deletingAt, :deletingAt)',
             conditionExpression: 'attribute_exists(#workspaceId)',
-            expressionAttributeNames: { '#workspaceId': 'workspaceId', '#deletingAt': 'deletingAt' },
+            expressionAttributeNames: {
+                '#workspaceId': 'workspaceId',
+                '#deletingAt': 'deletingAt',
+            },
             expressionAttributeValues: { ':deletingAt': expect.any(Number) },
             origin: 'Workspace.markDeleting',
         }))
@@ -571,35 +755,59 @@ describe('Workspace.delete', () => {
     it('deletes the workspace, its meta record, and every access-list entry in one transaction', async () => {
         dynamo.getItem.mockResolvedValueOnce({
             workspaceId: 'workspace-1',
-            accessList: [{ userId: 'user-1', accessLevel: 'owner' }, { userId: 'user-2', accessLevel: 'editor' }],
+            accessList: [{
+                userId: 'user-1',
+                accessLevel: 'owner',
+            }, {
+                userId: 'user-2',
+                accessLevel: 'editor',
+            }],
         })
         dynamo.transactWrite.mockResolvedValue(undefined)
 
-        await expect(Workspace.delete({ workspaceId: 'workspace-1', userId: 'user-1' })).resolves.toEqual({
+        await expect(Workspace.delete({
+            workspaceId: 'workspace-1',
+            userId: 'user-1',
+        })).resolves.toEqual({
             status: 'deleted',
             workspaceId: 'workspace-1',
         })
 
         const { operations } = dynamo.transactWrite.mock.calls[0][0]
         expect(operations).toHaveLength(4)
-        expect(operations[0]).toEqual(expect.objectContaining({ type: 'delete', key: { workspaceId: 'workspace-1' } }))
+        expect(operations[0]).toEqual(expect.objectContaining({
+            type: 'delete',
+            key: { workspaceId: 'workspace-1' },
+        }))
         expect(operations[2]).toEqual(expect.objectContaining({
             type: 'delete',
-            key: { userId: 'user-1', workspaceId: 'workspace-1' },
+            key: {
+                userId: 'user-1',
+                workspaceId: 'workspace-1',
+            },
         }))
         expect(operations[3]).toEqual(expect.objectContaining({
             type: 'delete',
-            key: { userId: 'user-2', workspaceId: 'workspace-1' },
+            key: {
+                userId: 'user-2',
+                workspaceId: 'workspace-1',
+            },
         }))
     })
 
     it('refuses to delete a workspace whose access list has grown unreasonably large', async () => {
         dynamo.getItem.mockResolvedValueOnce({
             workspaceId: 'workspace-1',
-            accessList: Array.from({ length: 99 }, (_, index) => ({ userId: `user-${index}`, accessLevel: 'viewer' })),
+            accessList: Array.from({ length: 99 }, (_, index) => ({
+                userId: `user-${index}`,
+                accessLevel: 'viewer',
+            })),
         })
 
-        await expect(Workspace.delete({ workspaceId: 'workspace-1', userId: 'user-1' }))
+        await expect(Workspace.delete({
+            workspaceId: 'workspace-1',
+            userId: 'user-1',
+        }))
             .rejects.toThrow('WORKSPACE_ACCESS_LIST_TOO_LARGE')
 
         expect(dynamo.transactWrite).not.toHaveBeenCalled()
@@ -614,7 +822,10 @@ describe('Workspace.getWorkspaceInternal', () => {
     })
 
     it('returns the raw workspace record without an access check', async () => {
-        dynamo.getItem.mockResolvedValueOnce({ workspaceId: 'workspace-1', accessList: [] })
+        dynamo.getItem.mockResolvedValueOnce({
+            workspaceId: 'workspace-1',
+            accessList: [],
+        })
 
         await expect(Workspace.getWorkspaceInternal({ workspaceId: 'workspace-1' })).resolves.toEqual({
             workspaceId: 'workspace-1',
@@ -629,8 +840,16 @@ describe('Workspace.replaceWorkspaceContent', () => {
             workspaceId: 'workspace-1',
             expectedCanvasStateUpdatedAt: 10,
             canvasState: {
-                viewport: { x: 0, y: 0, zoom: 1 },
-                nodes: [{ nodeId: 'node-1', type: 'image', fileId: 'legacy-file' } as any],
+                viewport: {
+                    x: 0,
+                    y: 0,
+                    zoom: 1,
+                },
+                nodes: [{
+                    nodeId: 'node-1',
+                    type: 'image',
+                    fileId: 'legacy-file',
+                } as any],
                 edges: [],
             },
         })).rejects.toThrow('LEGACY_CANVAS_STORAGE_FIELD_REJECTED:fileId')
@@ -645,8 +864,16 @@ describe('Workspace.replaceWorkspaceContent', () => {
             workspaceId: 'workspace-1',
             expectedCanvasStateUpdatedAt: 10,
             canvasState: {
-                viewport: { x: 0, y: 0, zoom: 1 },
-                nodes: [{ nodeId: 'node-1', type: 'image', assetId: 'asset-1' } as any],
+                viewport: {
+                    x: 0,
+                    y: 0,
+                    zoom: 1,
+                },
+                nodes: [{
+                    nodeId: 'node-1',
+                    type: 'image',
+                    assetId: 'asset-1',
+                } as any],
                 edges: [],
             },
         })

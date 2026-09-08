@@ -13,9 +13,9 @@ import {
     createHelpTooltipProvider,
 } from './index.ts'
 
-function createTooltip(
+const createTooltip = (
     override: Partial<Parameters<typeof createHelpTooltip>[0]> = {},
-) {
+) => {
     const tooltip = createHelpTooltip({
         label: 'Model settings',
         text: 'Choose the model and output size',
@@ -24,11 +24,15 @@ function createTooltip(
 
     const trigger = tooltip.dom.querySelector('.help-tooltip-trigger') as HTMLButtonElement
 
-    return { tooltip, trigger }
+    return {
+        tooltip,
+        trigger,
+    }
 }
 
-function getTooltipContent(tooltip: { dom: HTMLElement }): HTMLElement {
+const getTooltipContent = (tooltip: { dom: HTMLElement }): HTMLElement => {
     const content = tooltip.dom.querySelector('.help-tooltip-content')
+
     return content as HTMLElement
 }
 
@@ -46,8 +50,16 @@ describe('helpTooltip', () => {
         firstRoot.append(firstTrigger)
         secondRoot.append(secondTrigger)
         document.body.append(firstRoot, secondRoot, firstPortal, secondPortal)
-        const first = createHelpTooltipProvider({ root: firstRoot, portalRoot: firstPortal, showDelayMs: 0 })
-        const second = createHelpTooltipProvider({ root: secondRoot, portalRoot: secondPortal, showDelayMs: 250 })
+        const first = createHelpTooltipProvider({
+            root: firstRoot,
+            portalRoot: firstPortal,
+            showDelayMs: 0,
+        })
+        const second = createHelpTooltipProvider({
+            root: secondRoot,
+            portalRoot: secondPortal,
+            showDelayMs: 250,
+        })
         firstTrigger.dispatchEvent(new PointerEvent('pointerover', { bubbles: true }))
         secondTrigger.dispatchEvent(new PointerEvent('pointerover', { bubbles: true }))
         expect(firstPortal.querySelector('.help-tooltip-content')).not.toBeNull()
@@ -68,9 +80,7 @@ describe('helpTooltip', () => {
         document.body.innerHTML = ''
     })
 
-    afterEach(() => {
-        document.body.innerHTML = bodyHtml
-    })
+    afterEach(() => void (document.body.innerHTML = bodyHtml))
 
     it('renders trigger, content id, and aria attributes', () => {
         const { trigger } = createTooltip()
@@ -85,7 +95,10 @@ describe('helpTooltip', () => {
 
     it('uses proportional default icon sizing and supports trigger-size overrides', () => {
         const { tooltip: defaultTooltip } = createTooltip()
-        const { tooltip: customTooltip } = createTooltip({ triggerSize: 18, iconSize: 14 })
+        const { tooltip: customTooltip } = createTooltip({
+            triggerSize: 18,
+            iconSize: 14,
+        })
 
         expect(defaultTooltip.dom.style.getPropertyValue('--help-tooltip-trigger-size')).toBe('14px')
         expect(defaultTooltip.dom.style.getPropertyValue('--help-tooltip-icon-size')).toBe('12px')
@@ -94,7 +107,10 @@ describe('helpTooltip', () => {
     })
 
     it('adds tooltip content on pointer enter and removes it on pointer leave', () => {
-        const { tooltip, trigger } = createTooltip()
+        const {
+            tooltip,
+            trigger,
+        } = createTooltip()
         document.body.appendChild(tooltip.dom)
 
         trigger.getBoundingClientRect = () =>
@@ -134,7 +150,10 @@ describe('helpTooltip', () => {
     })
 
     it('opens on focus and closes on blur', () => {
-        const { tooltip, trigger } = createTooltip()
+        const {
+            tooltip,
+            trigger,
+        } = createTooltip()
         document.body.appendChild(tooltip.dom)
 
         trigger.focus()
@@ -146,7 +165,10 @@ describe('helpTooltip', () => {
     })
 
     it('hides immediately on pointer leave for non-interactive tooltips', () => {
-        const { tooltip, trigger } = createTooltip()
+        const {
+            tooltip,
+            trigger,
+        } = createTooltip()
         document.body.appendChild(tooltip.dom)
 
         trigger.getBoundingClientRect = () =>
@@ -211,7 +233,10 @@ describe('helpTooltip', () => {
     })
 
     it('destroys tooltip DOM and detached listeners cleanly', () => {
-        const { tooltip, trigger } = createTooltip({
+        const {
+            tooltip,
+            trigger,
+        } = createTooltip({
             interactive: true,
             content: 'Cleanup test',
         })
@@ -253,7 +278,10 @@ describe('helpTooltip', () => {
     })
 
     it('keeps preferred placement as the authoritative placement choice', () => {
-        const { tooltip, trigger } = createTooltip({ preferredPlacement: 'top' })
+        const {
+            tooltip,
+            trigger,
+        } = createTooltip({ preferredPlacement: 'top' })
         document.body.appendChild(tooltip.dom)
 
         trigger.getBoundingClientRect = () =>
@@ -288,7 +316,10 @@ describe('helpTooltip', () => {
     })
 
     it('syncs a max-height CSS var only when using top placement', () => {
-        const { tooltip, trigger } = createTooltip({ preferredPlacement: 'top' })
+        const {
+            tooltip,
+            trigger,
+        } = createTooltip({ preferredPlacement: 'top' })
         document.body.appendChild(tooltip.dom)
 
         trigger.getBoundingClientRect = () =>
@@ -324,7 +355,10 @@ describe('helpTooltip', () => {
     })
 
     it('removes top-placement max-height CSS var when not using top placement', () => {
-        const { tooltip, trigger } = createTooltip()
+        const {
+            tooltip,
+            trigger,
+        } = createTooltip()
         document.body.appendChild(tooltip.dom)
 
         trigger.getBoundingClientRect = () =>
@@ -372,7 +406,10 @@ describe('helpTooltip', () => {
         global.ResizeObserver = MockResizeObserver as any
 
         try {
-            const { tooltip, trigger } = createTooltip()
+            const {
+                tooltip,
+                trigger,
+            } = createTooltip()
             document.body.appendChild(tooltip.dom)
 
             trigger.dispatchEvent(new PointerEvent('pointerenter', { bubbles: true }))
@@ -403,7 +440,10 @@ describe('helpTooltip', () => {
         global.ResizeObserver = MockResizeObserver as any
 
         try {
-            const { tooltip, trigger } = createTooltip()
+            const {
+                tooltip,
+                trigger,
+            } = createTooltip()
             const content = getTooltipContent(tooltip)
             document.body.appendChild(tooltip.dom)
 
@@ -475,14 +515,23 @@ describe('helpTooltip', () => {
     })
 
     it('forwards pointer/keyboard suppression events from trigger', () => {
-        const { tooltip, trigger } = createTooltip()
+        const {
+            tooltip,
+            trigger,
+        } = createTooltip()
 
-        const pointerEvent = new MouseEvent('mousedown', { bubbles: true, cancelable: true })
+        const pointerEvent = new MouseEvent('mousedown', {
+            bubbles: true,
+            cancelable: true,
+        })
         trigger.dispatchEvent(pointerEvent)
 
         expect(pointerEvent.defaultPrevented).toBe(true)
 
-        const clickEvent = new MouseEvent('click', { bubbles: true, cancelable: true })
+        const clickEvent = new MouseEvent('click', {
+            bubbles: true,
+            cancelable: true,
+        })
         trigger.dispatchEvent(clickEvent)
 
         expect(clickEvent.defaultPrevented).toBe(true)
@@ -499,16 +548,17 @@ describe('helpTooltip', () => {
             if (node.classList?.contains('help-tooltip')) {
                 return {
                     ...originalGetComputedStyle(node),
-                    getPropertyValue: (name: string) => {
-                        return variables[name as keyof typeof variables] || ''
-                    },
+                    getPropertyValue: (name: string) => variables[name as keyof typeof variables] || '',
                 } as CSSStyleDeclaration
             }
 
             return originalGetComputedStyle(node)
         })
 
-        const { tooltip, trigger } = createTooltip()
+        const {
+            tooltip,
+            trigger,
+        } = createTooltip()
         document.body.appendChild(tooltip.dom)
 
         trigger.getBoundingClientRect = () =>
@@ -553,16 +603,17 @@ describe('helpTooltip', () => {
             if (node.classList?.contains('help-tooltip')) {
                 return {
                     ...originalGetComputedStyle(node),
-                    getPropertyValue: (name: string) => {
-                        return name === '--help-tooltip-custom-extra' ? '24px' : ''
-                    },
+                    getPropertyValue: (name: string) => name === '--help-tooltip-custom-extra' ? '24px' : '',
                 } as CSSStyleDeclaration
             }
 
             return originalGetComputedStyle(node)
         })
 
-        const { tooltip, trigger } = createTooltip({
+        const {
+            tooltip,
+            trigger,
+        } = createTooltip({
             text: 'Extra variable test',
             contentCssVariableNames: ['--help-tooltip-custom-extra'],
         })
@@ -604,7 +655,10 @@ describe('helpTooltip', () => {
         vi.useFakeTimers()
 
         try {
-            const { tooltip, trigger } = createTooltip({
+            const {
+                tooltip,
+                trigger,
+            } = createTooltip({
                 text: 'Interactive content',
                 interactive: true,
             })
@@ -660,7 +714,10 @@ describe('helpTooltip', () => {
         const documentRemoveSpy = vi.spyOn(document, 'removeEventListener')
 
         try {
-            const { tooltip, trigger } = createTooltip()
+            const {
+                tooltip,
+                trigger,
+            } = createTooltip()
             document.body.appendChild(tooltip.dom)
 
             trigger.getBoundingClientRect = () =>

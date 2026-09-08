@@ -10,7 +10,10 @@ describe('ElementStyleLease', () => {
     it('preserves overlapping owners and restores the original inline priority', () => {
         const element = document.createElement('div')
         element.style.setProperty('cursor', 'auto', 'important')
-        const first = new ElementStyleLease(element, { cursor: 'ew-resize', 'user-select': 'none' })
+        const first = new ElementStyleLease(element, {
+            cursor: 'ew-resize',
+            'user-select': 'none',
+        })
         const second = new ElementStyleLease(element, { cursor: 'grabbing' })
         first.destroy()
         expect(element.style.cursor).toBe('grabbing')

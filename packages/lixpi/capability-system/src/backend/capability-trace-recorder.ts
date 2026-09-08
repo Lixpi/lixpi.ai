@@ -81,7 +81,7 @@ export const createCapabilityTraceRecorder = (): CapabilityTraceRecorder => {
     }
 }
 
-export function hasTraceContent(trace: ExecutionTrace): boolean {
+export const hasTraceContent = (trace: ExecutionTrace): boolean => {
     return Boolean(
         trace.reasoning
             || trace.handles?.length

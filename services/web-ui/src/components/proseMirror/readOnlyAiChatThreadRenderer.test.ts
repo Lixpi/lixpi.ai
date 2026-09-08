@@ -36,18 +36,20 @@ import { mountReadOnlyAiChatThreadProjection } from '$src/components/proseMirror
 
 const getMockEditorState = (): MockEditorState => (globalThis as any)[editorMockStateKey] as MockEditorState
 
-const makeContent = () => ({ type: 'doc', content: [] }) as const
+const makeContent = () => ({
+    type: 'doc',
+    content: [],
+}) as const
 
 const makeMount = (): HTMLElement => {
     const mount = document.createElement('div')
     mount.className = 'read-only-test-mount'
+
     return mount
 }
 
 describe('mountReadOnlyAiChatThreadProjection', () => {
-    beforeEach(() => {
-        getMockEditorState().instances.length = 0
-    })
+    beforeEach(() => void (getMockEditorState().instances.length = 0))
 
     it('mounts a projected read-only chat thread editor with host classes and options', () => {
         const mount = makeMount()

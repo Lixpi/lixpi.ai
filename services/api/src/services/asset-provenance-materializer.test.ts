@@ -14,7 +14,7 @@ import {
     includeLineageProgressInAssetProvenance,
 } from './asset-provenance-materializer.ts'
 
-function makeProgress(): MediaGenerationProgressState {
+const makeProgress = (): MediaGenerationProgressState => {
     return {
         generationRequestId: 'request-1',
         mediaRunId: 'media-1',
@@ -25,13 +25,17 @@ function makeProgress(): MediaGenerationProgressState {
             completedSteps: 2,
             totalSteps: 2,
             message: 'Done.',
-            items: [{ id: 'generation', title: 'Generate media', status: 'completed' }],
+            items: [{
+                id: 'generation',
+                title: 'Generate media',
+                status: 'completed',
+            }],
         },
         updatedAt: 10,
     }
 }
 
-function makeGenerationRun(overrides: Partial<MediaGenerationRunMeta> = {}): MediaGenerationRunMeta {
+const makeGenerationRun = (overrides: Partial<MediaGenerationRunMeta> = {}): MediaGenerationRunMeta => {
     return {
         generationRequestId: 'request-1',
         reasoningRunId: 'reasoning-1',
@@ -56,8 +60,16 @@ describe('asset provenance generation progress', () => {
                 totalSteps: 2,
                 message: 'Done.',
                 items: [
-                    { id: 'provider', title: 'Prepare provider run', status: 'completed' },
-                    { id: 'generation', title: 'Generate media', status: 'completed' },
+                    {
+                        id: 'provider',
+                        title: 'Prepare provider run',
+                        status: 'completed',
+                    },
+                    {
+                        id: 'generation',
+                        title: 'Generate media',
+                        status: 'completed',
+                    },
                 ],
             },
             updatedAt: 10,
@@ -85,12 +97,21 @@ describe('asset provenance generation progress', () => {
                     reasoningRunId: 'reasoning-1',
                 },
                 content: [
-                    { type: 'paragraph', content: [{ type: 'text', text: 'I will build the requested character.' }] },
+                    {
+                        type: 'paragraph',
+                        content: [{
+                            type: 'text',
+                            text: 'I will build the requested character.',
+                        }],
+                    },
                     {
                         type: 'aiCollapsibleBlock',
                         content: [{
                             type: 'paragraph',
-                            content: [{ type: 'text', text: 'Long media-generation prompt must not leak into the preamble.' }],
+                            content: [{
+                                type: 'text',
+                                text: 'Long media-generation prompt must not leak into the preamble.',
+                            }],
                         }],
                     },
                 ],
@@ -116,13 +137,22 @@ describe('asset provenance generation progress', () => {
                     {
                         type: 'paragraph',
                         content: [
-                            { type: 'text', text: 'I inspected the references.' },
-                            { type: 'text', text: 'The visual direction is clear.' },
+                            {
+                                type: 'text',
+                                text: 'I inspected the references.',
+                            },
+                            {
+                                type: 'text',
+                                text: 'The visual direction is clear.',
+                            },
                         ],
                     },
                     {
                         type: 'paragraph',
-                        content: [{ type: 'text', text: 'I will now generate the media.' }],
+                        content: [{
+                            type: 'text',
+                            text: 'I will now generate the media.',
+                        }],
                     },
                 ],
             }],
@@ -235,11 +265,26 @@ describe('asset provenance lineage traces', () => {
 
         const lineage = items.find(item => item.id === 'lineage:resolve-branch-lineage')
         expect(lineage?.trace?.facts).toEqual([
-            { label: 'Generation request', value: 'request-1' },
-            { label: 'Reasoning run', value: 'reasoning-1' },
-            { label: 'Media run', value: 'media-1' },
-            { label: 'Media model', value: 'openai:gpt-image-1' },
-            { label: 'Branch', value: 'branch-1' },
+            {
+                label: 'Generation request',
+                value: 'request-1',
+            },
+            {
+                label: 'Reasoning run',
+                value: 'reasoning-1',
+            },
+            {
+                label: 'Media run',
+                value: 'media-1',
+            },
+            {
+                label: 'Media model',
+                value: 'openai:gpt-image-1',
+            },
+            {
+                label: 'Branch',
+                value: 'branch-1',
+            },
         ])
     })
 
@@ -251,7 +296,12 @@ describe('asset provenance lineage traces', () => {
             status: 'completed',
             trace: {
                 traceVersion: 'execution-trace-v1',
-                modelCalls: [{ id: 'render', role: 'media', provider: 'openai', modelId: 'openai:gpt-image-1' }],
+                modelCalls: [{
+                    id: 'render',
+                    role: 'media',
+                    provider: 'openai',
+                    modelId: 'openai:gpt-image-1',
+                }],
             },
         }]
 

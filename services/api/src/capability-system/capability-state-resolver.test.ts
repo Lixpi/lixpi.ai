@@ -24,11 +24,11 @@ import {
     requiredCapabilityProducedOutput,
 } from './capability-state-resolver.ts'
 
-function makePlan(
+const makePlan = (
     properties: Record<string, unknown>,
     executionPolicy: 'required' | 'model-required' = 'required',
     capabilityIds: readonly string[] = ['tool'],
-): SealedResolvedCapabilityPlan {
+): SealedResolvedCapabilityPlan => {
     const ref: CapabilityResourceRef = {
         resourceId: 'input',
         blobHash: 'input-hash',
@@ -55,7 +55,10 @@ function makePlan(
                 video: 'ignore',
                 outputMode: executionPolicy === 'model-required' ? 'capability-only' : 'continue-media-generation',
             },
-            workflow: { steps: [], outputs: {} },
+            workflow: {
+                steps: [],
+                outputs: {},
+            },
         },
     })
     const serializable: ResolvedCapabilityPlan = {
@@ -71,33 +74,58 @@ function makePlan(
             manifestBlobHash: `hash-${capabilityId}`,
         })),
     }
+
     return new SealedResolvedCapabilityPlan(
         serializable,
         capabilityIds.map(capabilityId => ({
             capabilityId,
             ref,
-            bytes: new TextEncoder().encode(JSON.stringify({ type: 'object', properties })),
+            bytes: new TextEncoder().encode(JSON.stringify({
+                type: 'object',
+                properties,
+            })),
         })),
     )
 }
 
-function makeState(plan: SealedResolvedCapabilityPlan): ProviderState {
+const makeState = (plan: SealedResolvedCapabilityPlan): ProviderState => {
     return {
         messages: [{
             role: 'user',
             content: [
-                { type: 'input_text', text: 'Make' },
-                { type: 'input_image', image_url: 'asset://asset-1' },
-                { type: 'input_text', text: 'a courier' },
+                {
+                    type: 'input_text',
+                    text: 'Make',
+                },
+                {
+                    type: 'input_image',
+                    image_url: 'asset://asset-1',
+                },
+                {
+                    type: 'input_text',
+                    text: 'a courier',
+                },
             ],
         }],
         resolvedCapabilityPlan: plan,
         workspaceContextSnapshot: {
             nodes: [
-                { assetId: 'asset-2', isExplicitChip: true },
-                { assetId: 'asset-1', isExplicitChip: true },
-                { assetId: 'asset-2', isExplicitChip: true },
-                { assetId: 'ignored', isExplicitChip: false },
+                {
+                    assetId: 'asset-2',
+                    isExplicitChip: true,
+                },
+                {
+                    assetId: 'asset-1',
+                    isExplicitChip: true,
+                },
+                {
+                    assetId: 'asset-2',
+                    isExplicitChip: true,
+                },
+                {
+                    assetId: 'ignored',
+                    isExplicitChip: false,
+                },
             ],
         },
     } as ProviderState
@@ -128,7 +156,10 @@ describe('Capability state resolver inputs', () => {
             ...makeState(makePlan({ prompt: { type: 'string' } })),
             workspaceId: 'workspace-1',
             aiChatThreadId: 'thread-1',
-            eventMeta: { userId: 'user-1', organizationId: 'organization-1' },
+            eventMeta: {
+                userId: 'user-1',
+                organizationId: 'organization-1',
+            },
             enableImageGeneration: true,
             enableVideoGeneration: true,
         } as ProviderState
@@ -138,7 +169,10 @@ describe('Capability state resolver inputs', () => {
                     runId: 'run-1',
                     outputAssetIds: ['asset-output', 'asset-output'],
                 },
-                output: { outputKind: 'capabilityArtifact', assetId: 'asset-output' },
+                output: {
+                    outputKind: 'capabilityArtifact',
+                    assetId: 'asset-output',
+                },
             })),
         }
 
@@ -154,8 +188,14 @@ describe('Capability state resolver inputs', () => {
             enableImageGeneration: false,
             enableVideoGeneration: false,
         })
-        expect(requiredCapabilityProducedOutput({ ...state, ...update })).toBe(true)
-        expect(requiredCapabilityProducedCapabilityOnlyOutput({ ...state, ...update })).toBe(true)
+        expect(requiredCapabilityProducedOutput({
+            ...state,
+            ...update,
+        })).toBe(true)
+        expect(requiredCapabilityProducedCapabilityOnlyOutput({
+            ...state,
+            ...update,
+        })).toBe(true)
     })
 
     it('does not classify media-producing Capability output as capability-only', () => {
@@ -175,7 +215,11 @@ describe('Capability state resolver inputs', () => {
         } as ProviderState)).toBe(true)
         expect(hasPendingModelRequiredCapabilityOnlyOutput({
             resolvedCapabilityPlan: plan,
-            capabilityToolResults: [{ capabilityId: 'tool', runId: 'run-1', output: {} }],
+            capabilityToolResults: [{
+                capabilityId: 'tool',
+                runId: 'run-1',
+                output: {},
+            }],
         } as ProviderState)).toBe(false)
     })
 
@@ -184,11 +228,17 @@ describe('Capability state resolver inputs', () => {
             ...makeState(makePlan({ prompt: { type: 'string' } })),
             workspaceId: 'workspace-1',
             aiChatThreadId: 'thread-1',
-            eventMeta: { userId: 'user-1', organizationId: 'organization-1' },
+            eventMeta: {
+                userId: 'user-1',
+                organizationId: 'organization-1',
+            },
         } as ProviderState
         const dispatcher = {
             use: vi.fn(async () => ({
-                run: { runId: 'run-1', outputAssetIds: [] },
+                run: {
+                    runId: 'run-1',
+                    outputAssetIds: [],
+                },
                 output: {
                     mediaGenerationMode: 'character-creator',
                     preserveUserPrompt: true,
@@ -223,11 +273,17 @@ describe('Capability state resolver inputs', () => {
             )),
             workspaceId: 'workspace-1',
             aiChatThreadId: 'thread-1',
-            eventMeta: { userId: 'user-1', organizationId: 'organization-1' },
+            eventMeta: {
+                userId: 'user-1',
+                organizationId: 'organization-1',
+            },
         } as ProviderState
         const dispatcher = {
             use: vi.fn(async ({ capabilityId }: { capabilityId: string }) => ({
-                run: { runId: `run-${capabilityId}`, outputAssetIds: [] },
+                run: {
+                    runId: `run-${capabilityId}`,
+                    outputAssetIds: [],
+                },
                 output: {
                     mediaGenerationMode: 'visual-style',
                     preserveUserPrompt: true,

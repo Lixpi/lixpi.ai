@@ -20,7 +20,7 @@ import {
 } from './capability-model-tools.ts'
 import { SealedResolvedCapabilityPlan } from './capability-resolver.ts'
 
-function makePlan(): SealedResolvedCapabilityPlan {
+const makePlan = (): SealedResolvedCapabilityPlan => {
     const schemaBytes = new TextEncoder().encode(JSON.stringify({
         type: 'object',
         required: ['prompt'],
@@ -53,7 +53,10 @@ function makePlan(): SealedResolvedCapabilityPlan {
                 video: 'ignore',
                 outputMode: 'capability-only',
             },
-            workflow: { steps: [], outputs: {} },
+            workflow: {
+                steps: [],
+                outputs: {},
+            },
         },
     }
     const serializable: ResolvedCapabilityPlan = {
@@ -64,8 +67,12 @@ function makePlan(): SealedResolvedCapabilityPlan {
             manifestBlobHash: 'manifest-hash',
             manifest,
         }],
-        resolvedManifests: [{ capabilityId: manifest.capabilityId, manifestBlobHash: 'manifest-hash' }],
+        resolvedManifests: [{
+            capabilityId: manifest.capabilityId,
+            manifestBlobHash: 'manifest-hash',
+        }],
     }
+
     return new SealedResolvedCapabilityPlan(serializable, [{
         capabilityId: manifest.capabilityId,
         ref: schemaRef,

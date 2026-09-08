@@ -1454,10 +1454,10 @@ export class GoogleProvider extends BaseProvider {
     }
 }
 
-function mergeGoogleUsageMetadata(
+const mergeGoogleUsageMetadata = (
     first: any,
     second: any,
-): any {
+): any => {
     if (!first)
         return second
 

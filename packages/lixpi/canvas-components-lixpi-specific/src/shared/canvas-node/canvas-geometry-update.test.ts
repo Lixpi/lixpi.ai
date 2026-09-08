@@ -11,7 +11,7 @@ import {
 
 import { applyCanvasGeometryUpdateToState } from './canvas-geometry-update.ts'
 
-function makeForkNode(nodeId: string): CanvasNode {
+const makeForkNode = (nodeId: string): CanvasNode => {
     return {
         nodeId,
         type: 'branchFork',
@@ -20,13 +20,19 @@ function makeForkNode(nodeId: string): CanvasNode {
         reasoningRunId: 'reasoning-1',
         reasoningModelId: 'Anthropic:claude-sonnet-4-6',
         reasoningIndex: 0,
-        position: { x: 0, y: 0 },
-        dimensions: { width: 300, height: 64 },
+        position: {
+            x: 0,
+            y: 0,
+        },
+        dimensions: {
+            width: 300,
+            height: 64,
+        },
         temporary: true,
     }
 }
 
-function makeImageNode(nodeId: string, src = '', overrides: Partial<Extract<CanvasNode, { type: 'image' }>> = {}): CanvasNode {
+const makeImageNode = (nodeId: string, src = '', overrides: Partial<Extract<CanvasNode, { type: 'image' }>> = {}): CanvasNode => {
     return {
         nodeId,
         type: 'image',
@@ -34,8 +40,14 @@ function makeImageNode(nodeId: string, src = '', overrides: Partial<Extract<Canv
         workspaceId: 'workspace-1',
         src,
         aspectRatio: 1,
-        position: { x: 0, y: 0 },
-        dimensions: { width: 800, height: 800 },
+        position: {
+            x: 0,
+            y: 0,
+        },
+        dimensions: {
+            width: 800,
+            height: 800,
+        },
         generatedBy: {
             aiChatThreadId: 'thread-1',
             responseId: '',
@@ -55,7 +67,7 @@ function makeImageNode(nodeId: string, src = '', overrides: Partial<Extract<Canv
     }
 }
 
-function makeVideoNode(nodeId: string): CanvasNode {
+const makeVideoNode = (nodeId: string): CanvasNode => {
     return {
         nodeId,
         type: 'video',
@@ -67,8 +79,14 @@ function makeVideoNode(nodeId: string): CanvasNode {
         aspectRatio: 1,
         durationSeconds: 0,
         hasAudio: false,
-        position: { x: 0, y: 0 },
-        dimensions: { width: 800, height: 800 },
+        position: {
+            x: 0,
+            y: 0,
+        },
+        dimensions: {
+            width: 800,
+            height: 800,
+        },
         generatedBy: {
             aiChatThreadId: 'thread-1',
             responseId: '',
@@ -86,7 +104,7 @@ function makeVideoNode(nodeId: string): CanvasNode {
     }
 }
 
-function makeEdge(edgeId: string, sourceNodeId: string, targetNodeId: string): WorkspaceEdge {
+const makeEdge = (edgeId: string, sourceNodeId: string, targetNodeId: string): WorkspaceEdge => {
     return {
         edgeId,
         sourceNodeId,
@@ -97,7 +115,10 @@ function makeEdge(edgeId: string, sourceNodeId: string, targetNodeId: string): W
 }
 
 const canvasState = (nodes: CanvasNode[], edges: WorkspaceEdge[] = []): CanvasState => ({
-    sourceContext: { extractionRunId: 'extraction-1', sourceWorkspaceId: 'workspace-1' },
+    sourceContext: {
+        extractionRunId: 'extraction-1',
+        sourceWorkspaceId: 'workspace-1',
+    },
     nodes,
     edges,
 })
@@ -112,10 +133,50 @@ describe('applyCanvasGeometryUpdateToState', () => {
         const result = applyCanvasGeometryUpdateToState(canvasState([fork]), {
             layoutRevision: 200,
             nodes: [
-                { nodeId: 'fork-1', position: { x: 100, y: 300 }, dimensions: { width: 298, height: 64 } },
-                { nodeId: 'pending-image-0', position: { x: 650, y: -700 }, dimensions: { width: 800, height: 800 } },
-                { nodeId: 'pending-image-1', position: { x: 650, y: 200 }, dimensions: { width: 800, height: 800 } },
-                { nodeId: 'pending-video-0', position: { x: 650, y: 1100 }, dimensions: { width: 800, height: 800 } },
+                {
+                    nodeId: 'fork-1',
+                    position: {
+                        x: 100,
+                        y: 300,
+                    },
+                    dimensions: {
+                        width: 298,
+                        height: 64,
+                    },
+                },
+                {
+                    nodeId: 'pending-image-0',
+                    position: {
+                        x: 650,
+                        y: -700,
+                    },
+                    dimensions: {
+                        width: 800,
+                        height: 800,
+                    },
+                },
+                {
+                    nodeId: 'pending-image-1',
+                    position: {
+                        x: 650,
+                        y: 200,
+                    },
+                    dimensions: {
+                        width: 800,
+                        height: 800,
+                    },
+                },
+                {
+                    nodeId: 'pending-video-0',
+                    position: {
+                        x: 650,
+                        y: 1100,
+                    },
+                    dimensions: {
+                        width: 800,
+                        height: 800,
+                    },
+                },
             ],
             nodeSnapshots: [image0, image1, video0],
             edgeSnapshots: [
@@ -133,13 +194,32 @@ describe('applyCanvasGeometryUpdateToState', () => {
         expect(result.upsertedEdgeIds).toEqual(['edge-fork-image-0', 'edge-fork-image-1', 'edge-fork-video-0'])
         expect(result.fullyApplied).toBe(true)
         expect(result.state.nodes).toEqual(expect.arrayContaining([
-            expect.objectContaining({ nodeId: 'fork-1', position: { x: 100, y: 300 }, dimensions: { width: 298, height: 64 } }),
+            expect.objectContaining({
+                nodeId: 'fork-1',
+                position: {
+                    x: 100,
+                    y: 300,
+                },
+                dimensions: {
+                    width: 298,
+                    height: 64,
+                },
+            }),
             expect.objectContaining({
                 nodeId: 'pending-image-0',
-                position: { x: 650, y: -700 },
+                position: {
+                    x: 650,
+                    y: -700,
+                },
                 mediaGenerationPhase: 'pending-before-first-frame',
             }),
-            expect.objectContaining({ nodeId: 'pending-video-0', position: { x: 650, y: 1100 } }),
+            expect.objectContaining({
+                nodeId: 'pending-video-0',
+                position: {
+                    x: 650,
+                    y: 1100,
+                },
+            }),
         ]))
         expect(result.state.edges).toEqual([
             makeEdge('edge-fork-image-0', 'fork-1', 'pending-image-0'),
@@ -155,7 +235,17 @@ describe('applyCanvasGeometryUpdateToState', () => {
         const result = applyCanvasGeometryUpdateToState(canvasState([localImage]), {
             layoutRevision: 201,
             nodes: [
-                { nodeId: 'pending-image-0', position: { x: 400, y: 500 }, dimensions: { width: 640, height: 640 } },
+                {
+                    nodeId: 'pending-image-0',
+                    position: {
+                        x: 400,
+                        y: 500,
+                    },
+                    dimensions: {
+                        width: 640,
+                        height: 640,
+                    },
+                },
             ],
             nodeSnapshots: [staleSnapshot],
         })
@@ -165,8 +255,14 @@ describe('applyCanvasGeometryUpdateToState', () => {
         expect(result.state.nodes[0]).toMatchObject({
             nodeId: 'pending-image-0',
             src: 'blob:partial-frame',
-            position: { x: 400, y: 500 },
-            dimensions: { width: 640, height: 640 },
+            position: {
+                x: 400,
+                y: 500,
+            },
+            dimensions: {
+                width: 640,
+                height: 640,
+            },
         })
     })
 
@@ -176,7 +272,11 @@ describe('applyCanvasGeometryUpdateToState', () => {
         const state: CanvasState = {
             ...canvasState([makeForkNode('fork-1'), pending]),
             edges: [
-                { edgeId: 'edge-fork-pending', sourceNodeId: 'fork-1', targetNodeId: 'pending-image-0' },
+                {
+                    edgeId: 'edge-fork-pending',
+                    sourceNodeId: 'fork-1',
+                    targetNodeId: 'pending-image-0',
+                },
             ],
         }
 
@@ -185,10 +285,24 @@ describe('applyCanvasGeometryUpdateToState', () => {
             removedNodeIds: ['pending-image-0'],
             nodeSnapshots: [final],
             edgeSnapshots: [
-                { edgeId: 'edge-fork-final', sourceNodeId: 'fork-1', targetNodeId: 'node-file-1' },
+                {
+                    edgeId: 'edge-fork-final',
+                    sourceNodeId: 'fork-1',
+                    targetNodeId: 'node-file-1',
+                },
             ],
             nodes: [
-                { nodeId: 'node-file-1', position: { x: 500, y: 600 }, dimensions: { width: 800, height: 800 } },
+                {
+                    nodeId: 'node-file-1',
+                    position: {
+                        x: 500,
+                        y: 600,
+                    },
+                    dimensions: {
+                        width: 800,
+                        height: 800,
+                    },
+                },
             ],
         })
 
@@ -198,7 +312,11 @@ describe('applyCanvasGeometryUpdateToState', () => {
         expect(result.upsertedEdgeIds).toEqual(['edge-fork-final'])
         expect(result.state.nodes.map(node => node.nodeId)).toEqual(['fork-1', 'node-file-1'])
         expect(result.state.edges).toEqual([
-            { edgeId: 'edge-fork-final', sourceNodeId: 'fork-1', targetNodeId: 'node-file-1' },
+            {
+                edgeId: 'edge-fork-final',
+                sourceNodeId: 'fork-1',
+                targetNodeId: 'node-file-1',
+            },
         ])
     })
 
@@ -227,8 +345,28 @@ describe('applyCanvasGeometryUpdateToState', () => {
             {
                 layoutRevision: 204,
                 nodes: [
-                    { nodeId: 'fork-1', position: { x: 100, y: 300 }, dimensions: { width: 298, height: 64 } },
-                    { nodeId: 'pending-image-0', position: { x: 650, y: -700 }, dimensions: { width: 800, height: 800 } },
+                    {
+                        nodeId: 'fork-1',
+                        position: {
+                            x: 100,
+                            y: 300,
+                        },
+                        dimensions: {
+                            width: 298,
+                            height: 64,
+                        },
+                    },
+                    {
+                        nodeId: 'pending-image-0',
+                        position: {
+                            x: 650,
+                            y: -700,
+                        },
+                        dimensions: {
+                            width: 800,
+                            height: 800,
+                        },
+                    },
                 ],
                 nodeSnapshots: [pending],
                 edgeSnapshots: [
@@ -250,7 +388,17 @@ describe('applyCanvasGeometryUpdateToState', () => {
         const result = applyCanvasGeometryUpdateToState(canvasState([makeForkNode('fork-1')]), {
             layoutRevision: 203,
             nodes: [
-                { nodeId: 'fork-1', position: { x: 100, y: 200 }, dimensions: { width: 298, height: 64 } },
+                {
+                    nodeId: 'fork-1',
+                    position: {
+                        x: 100,
+                        y: 200,
+                    },
+                    dimensions: {
+                        width: 298,
+                        height: 64,
+                    },
+                },
             ],
             edgeSnapshots: [
                 makeEdge('edge-fork-missing-image', 'fork-1', 'pending-image-0'),

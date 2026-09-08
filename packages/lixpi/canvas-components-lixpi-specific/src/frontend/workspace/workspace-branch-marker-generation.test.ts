@@ -20,8 +20,14 @@ const marker = (overrides: Partial<BranchOriginCanvasNode> = {}): BranchOriginCa
     branchId: 'branch-1',
     generationRequestId: 'request-1',
     conversationAssetId: 'thread-1',
-    position: { x: 0, y: 0 },
-    dimensions: { width: 320, height: 80 },
+    position: {
+        x: 0,
+        y: 0,
+    },
+    dimensions: {
+        width: 320,
+        height: 80,
+    },
     temporary: true,
     ...overrides,
 })
@@ -31,8 +37,14 @@ const pendingImage = (): ImageCanvasNode => ({
     type: 'image',
     assetId: 'asset-image-1',
     mediaGenerationPhase: 'pending-before-first-frame',
-    position: { x: 400, y: 0 },
-    dimensions: { width: 300, height: 300 },
+    position: {
+        x: 400,
+        y: 0,
+    },
+    dimensions: {
+        width: 300,
+        height: 300,
+    },
     generatedBy: {
         conversationAssetId: 'thread-1',
         responseId: 'response-1',
@@ -44,18 +56,31 @@ const pendingImage = (): ImageCanvasNode => ({
     },
 })
 
-function setup(overrides: Partial<WorkspaceBranchMarkerGenerationPorts> = {}) {
+const setup = (overrides: Partial<WorkspaceBranchMarkerGenerationPorts> = {}) => {
     const source = marker()
     const image = pendingImage()
     let state: CanvasState = {
         nodes: [source, image],
-        edges: [{ edgeId: 'edge-1', sourceNodeId: source.nodeId, targetNodeId: image.nodeId, sourceT: 0.5, targetT: 0.5 }],
-        viewport: { x: 0, y: 0, zoom: 1 },
+        edges: [{
+            edgeId: 'edge-1',
+            sourceNodeId: source.nodeId,
+            targetNodeId: image.nodeId,
+            sourceT: 0.5,
+            targetT: 0.5,
+        }],
+        viewport: {
+            x: 0,
+            y: 0,
+            zoom: 1,
+        },
     }
     const ports: WorkspaceBranchMarkerGenerationPorts = {
         canAct: () => true,
         getState: () => state,
-        getScene: () => ({ workspaceId: 'workspace-1', sceneKey: 'scene-1' }),
+        getScene: () => ({
+            workspaceId: 'workspace-1',
+            sceneKey: 'scene-1',
+        }),
         isCurrentScene: () => true,
         imageTrackers: new Map([['run-1', {
             nodeId: image.nodeId,
@@ -68,9 +93,7 @@ function setup(overrides: Partial<WorkspaceBranchMarkerGenerationPorts> = {}) {
         isWaitingForFrame: node => node.nodeId === image.nodeId,
         pruneTrackers: vi.fn(),
         removeSelection: vi.fn(),
-        commit: vi.fn((nextState) => {
-            state = nextState
-        }),
+        commit: vi.fn((nextState) => void (state = nextState)),
         removeNodes: vi.fn(),
         syncConnections: vi.fn(),
         cancelledRequests: new Set(),
@@ -82,14 +105,24 @@ function setup(overrides: Partial<WorkspaceBranchMarkerGenerationPorts> = {}) {
         refreshMarkers: vi.fn(),
         stopConversation: vi.fn(async () => ({
             status: 'stopped' as const,
-            canvasGeometry: { layoutRevision: 4, nodes: [] },
+            canvasGeometry: {
+                layoutRevision: 4,
+                nodes: [],
+            },
         })),
         applyGeometry: vi.fn(),
         refreshConversation: vi.fn(async () => undefined),
         reportError: vi.fn(),
         ...overrides,
     }
-    return { owner: new WorkspaceBranchMarkerGeneration(ports), ports, source, image, getState: () => state }
+
+    return {
+        owner: new WorkspaceBranchMarkerGeneration(ports),
+        ports,
+        source,
+        image,
+        getState: () => state,
+    }
 }
 
 describe('WorkspaceBranchMarkerGeneration', () => {
@@ -111,12 +144,18 @@ describe('WorkspaceBranchMarkerGeneration', () => {
             conversationAssetId: 'thread-1',
             generationRequestId: 'request-1',
         })
-        expect(fixture.ports.applyGeometry).toHaveBeenCalledWith({ layoutRevision: 4, nodes: [] })
+        expect(fixture.ports.applyGeometry).toHaveBeenCalledWith({
+            layoutRevision: 4,
+            nodes: [],
+        })
         expect(fixture.ports.refreshConversation).toHaveBeenCalledWith('thread-1')
     })
 
     it('settles temporary canvas request state without treating its local id as durable', async () => {
-        const fixture = setup({ imageTrackers: new Map(), isWaitingForFrame: () => false })
+        const fixture = setup({
+            imageTrackers: new Map(),
+            isWaitingForFrame: () => false,
+        })
         const source = marker({ generationRequestId: 'canvas-local-1' })
 
         await fixture.owner.stop(source)
@@ -130,7 +169,13 @@ describe('WorkspaceBranchMarkerGeneration', () => {
     })
 
     it('drops late geometry and refresh work after the originating scene is replaced', async () => {
-        const result = Promise.withResolvers<{ status: 'stopped'; canvasGeometry: { layoutRevision: number; nodes: [] } }>()
+        const result = Promise.withResolvers<{
+            status: 'stopped'
+            canvasGeometry: {
+                layoutRevision: number
+                nodes: []
+            }
+        }>()
         let current = true
         const fixture = setup({
             stopConversation: () => result.promise,
@@ -139,7 +184,13 @@ describe('WorkspaceBranchMarkerGeneration', () => {
 
         const pending = fixture.owner.stop(fixture.source)
         current = false
-        result.resolve({ status: 'stopped', canvasGeometry: { layoutRevision: 5, nodes: [] } })
+        result.resolve({
+            status: 'stopped',
+            canvasGeometry: {
+                layoutRevision: 5,
+                nodes: [],
+            },
+        })
         await pending
 
         expect(fixture.ports.applyGeometry).not.toHaveBeenCalled()
@@ -159,7 +210,11 @@ describe('WorkspaceBranchMarkerGeneration', () => {
         expect(fixture.getState().nodes.map(node => node.nodeId)).toEqual(['marker-1'])
         expect(fixture.ports.reportError).toHaveBeenCalledWith(
             '[CANVAS] failed to stop branch-marker generation',
-            { nodeId: 'marker-1', threadId: 'thread-1', error },
+            {
+                nodeId: 'marker-1',
+                threadId: 'thread-1',
+                error,
+            },
         )
     })
 })

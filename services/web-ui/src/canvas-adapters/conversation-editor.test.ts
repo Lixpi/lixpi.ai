@@ -30,18 +30,29 @@ vi.mock('$src/components/proseMirror/components/editor.ts', () => ({
 }))
 vi.mock('$src/services/ai-interaction-service.ts', () => ({ default: class {} }))
 
-function setup(version = 7) {
+const setup = (version = 7) => {
     const state = createEditorState(doc(p('prefix'), thread({ threadId: 'conversation' }, p('request'))))
     const dispatch = vi.fn()
-    const view = { state, dispatch } as unknown as EditorView
+    const view = {
+        state,
+        dispatch,
+    } as unknown as EditorView
     const destroy = vi.fn()
-    mocks.mount.mockReturnValue({ editorView: view, destroy })
+    mocks.mount.mockReturnValue({
+        editorView: view,
+        destroy,
+    })
     const unregister = vi.fn()
     const register = vi.fn(() => unregister)
     const request: CanvasConversationEditorMount = {
         container: document.createElement('div'),
         workspaceId: 'workspace',
-        thread: { threadId: 'conversation', organizationId: 'org', proseMirrorVersion: version, content: state.doc.toJSON() },
+        thread: {
+            threadId: 'conversation',
+            organizationId: 'org',
+            proseMirrorVersion: version,
+            content: state.doc.toJSON(),
+        },
         onChange: vi.fn(),
         onStreaming: vi.fn(),
         onSubmit: vi.fn(async () => {}),
@@ -50,7 +61,16 @@ function setup(version = 7) {
         onSegment: vi.fn(),
     }
     const editor = createCanvasConversationEditorPort({ register })(request)
-    return { editor, view, dispatch, destroy, register, unregister, request }
+
+    return {
+        editor,
+        view,
+        dispatch,
+        destroy,
+        register,
+        unregister,
+        request,
+    }
 }
 
 beforeEach(() => vi.resetAllMocks())
@@ -82,7 +102,10 @@ describe('canvas conversation editor adapter', () => {
         const transaction = fixture.dispatch.mock.calls[0][0]
         expect(transaction.docChanged).toBe(false)
         const position = fixture.view.state.doc.child(0).nodeSize
-        expect(transaction.getMeta(USE_AI_CHAT_META)).toEqual({ threadId: 'conversation', nodePos: position })
+        expect(transaction.getMeta(USE_AI_CHAT_META)).toEqual({
+            threadId: 'conversation',
+            nodePos: position,
+        })
         expect(fixture.editor.readContent()).toEqual(fixture.view.state.doc.toJSON())
         fixture.editor.destroy()
         fixture.editor.submitPersisted()
@@ -94,6 +117,7 @@ describe('canvas conversation editor adapter', () => {
         const fixture = setup()
         fixture.register.mockImplementation(() => {
             fixture.editor.destroy()
+
             return fixture.unregister
         })
         fixture.editor.activate()

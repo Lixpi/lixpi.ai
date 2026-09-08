@@ -47,12 +47,12 @@ export const selectCharacterPanelsForRegeneration = (args: {
     )
 }
 
-function selectedPanels(
+const selectedPanels = (
     panelIds: readonly string[],
     availablePanelIds: ReadonlySet<string>,
     requestedPanelIds: readonly string[],
     reason: string,
-): CharacterPanelRegenerationDecision {
+): CharacterPanelRegenerationDecision => {
     const requested = new Set(requestedPanelIds)
     const regeneratePanelIds = panelIds.filter(panelId => requested.has(panelId))
 
@@ -70,10 +70,10 @@ function selectedPanels(
     }
 }
 
-function fullSheet(
+const fullSheet = (
     panelIds: readonly string[],
     reason: string,
-): CharacterPanelRegenerationDecision {
+): CharacterPanelRegenerationDecision => {
     return {
         mode: 'full-sheet',
         regeneratePanelIds: [...panelIds],

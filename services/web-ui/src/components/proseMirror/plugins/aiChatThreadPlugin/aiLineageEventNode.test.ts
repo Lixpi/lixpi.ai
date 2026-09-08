@@ -86,7 +86,5 @@ describe('aiLineageEventNodeView', () => {
         expect(view.update({ type: { name: 'doc' } } as any)).toBe(false)
     })
 
-    it('uses the canonical node type constant', () => {
-        expect(aiLineageEventNodeType).toBe('aiLineageEvent')
-    })
+    it('uses the canonical node type constant', () => void expect(aiLineageEventNodeType).toBe('aiLineageEvent'))
 })

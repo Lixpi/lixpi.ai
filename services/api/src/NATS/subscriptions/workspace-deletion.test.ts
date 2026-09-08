@@ -26,7 +26,11 @@ const mocks = vi.hoisted(() => ({
     },
 }))
 
-vi.mock('@lixpi/debug-tools', () => ({ info: vi.fn(), err: vi.fn(), warn: vi.fn() }))
+vi.mock('@lixpi/debug-tools', () => ({
+    info: vi.fn(),
+    err: vi.fn(),
+    warn: vi.fn(),
+}))
 vi.mock('../../models/workspace.ts', () => ({ default: mocks.workspace }))
 vi.mock('../../models/organization.ts', () => ({ default: mocks.organization }))
 vi.mock('../../models/asset.ts', () => ({ default: mocks.asset }))
@@ -45,9 +49,15 @@ describe('Workspace deletion cleans up workspace Asset references', () => {
         vi.clearAllMocks()
         mocks.workspace.getWorkspace.mockResolvedValue({
             workspaceId: 'ws-1',
-            accessList: [{ userId: 'user-1', accessLevel: 'owner' }],
+            accessList: [{
+                userId: 'user-1',
+                accessLevel: 'owner',
+            }],
         })
-        mocks.workspace.delete.mockResolvedValue({ status: 'deleted', workspaceId: 'ws-1' })
+        mocks.workspace.delete.mockResolvedValue({
+            status: 'deleted',
+            workspaceId: 'ws-1',
+        })
         mocks.workspace.markDeleting.mockResolvedValue(undefined)
         mocks.workspace.getUserWorkspaces.mockResolvedValue([{ workspaceId: 'ws-1' }])
         mocks.organization.getUserOrganizations.mockResolvedValue([{ organizationId: 'organization-1' }])
@@ -67,8 +77,14 @@ describe('Workspace deletion cleans up workspace Asset references', () => {
             workspaceId: 'ws-1',
             requester: expect.objectContaining({ userId: 'user-1' }),
         })
-        expect(mocks.workspace.delete).toHaveBeenCalledWith({ userId: 'user-1', workspaceId: 'ws-1' })
-        expect(result).toEqual({ success: true, workspaceId: 'ws-1' })
+        expect(mocks.workspace.delete).toHaveBeenCalledWith({
+            userId: 'user-1',
+            workspaceId: 'ws-1',
+        })
+        expect(result).toEqual({
+            success: true,
+            workspaceId: 'ws-1',
+        })
     })
 
     it('returns a cleanup-failure error and does not remove the workspace when dependency cleanup throws', async () => {

@@ -23,26 +23,44 @@ import {
     TagAwareStream,
 } from './stream-publisher.ts'
 
-type Published = { subject: string; payload: any }
-type JetStreamPublished = { subject: string; payload: any; options: any }
+type Published = {
+    subject: string
+    payload: any
+}
+type JetStreamPublished = {
+    subject: string
+    payload: any
+    options: any
+}
 
 const makeFakeNats = () => {
     const published: Published[] = []
     const jetStreamPublished: JetStreamPublished[] = []
     let nextStreamSeq = 0
     const fake = {
-        publish: (subject: string, payload: any) => {
-            published.push({ subject, payload })
-        },
+        publish: (subject: string, payload: any) => void published.push({
+            subject,
+            payload,
+        }),
         ensureJetStreamStream: vi.fn(async () => undefined),
         publishJetStream: vi.fn(async (subject: string, payload: any, options: any) => {
             nextStreamSeq += 1
-            jetStreamPublished.push({ subject, payload, options })
+            jetStreamPublished.push({
+                subject,
+                payload,
+                options,
+            })
+
             return { seq: nextStreamSeq }
         }),
         purgeJetStreamSubject: vi.fn(async () => undefined),
     } as any
-    return { fake, published, jetStreamPublished }
+
+    return {
+        fake,
+        published,
+        jetStreamPublished,
+    }
 }
 
 const makeTagAwareStream = () => {
@@ -50,9 +68,16 @@ const makeTagAwareStream = () => {
     const stream = new TagAwareStream(
         'OpenAI',
         undefined,
-        content => published.push({ subject: 'tag-aware', payload: { content } }),
+        content => published.push({
+            subject: 'tag-aware',
+            payload: { content },
+        }),
     )
-    return { stream, published }
+
+    return {
+        stream,
+        published,
+    }
 }
 
 const flushPipelinePublishes = async (): Promise<void> => {
@@ -67,7 +92,12 @@ const createDeferred = <T>() => {
         resolve = resolvePromise
         reject = rejectPromise
     })
-    return { promise, resolve, reject }
+
+    return {
+        promise,
+        resolve,
+        reject,
+    }
 }
 
 const flatTexts = (published: Published[]): string =>
@@ -355,9 +385,16 @@ describe('StreamPublisher extraction progress', () => {
             capabilityRunId: 'timeline-run',
             chatModelProvider: 'Anthropic',
             chatModelId: 'Anthropic:claude-sonnet-4-6',
-            input: { durationMs: 15000, precisionMs: 2000 },
+            input: {
+                durationMs: 15000,
+                precisionMs: 2000,
+            },
             outputAssetIds: ['timeline-asset'],
-            steps: [{ stepId: 'persist', title: 'Persist timeline', status: 'completed' }],
+            steps: [{
+                stepId: 'persist',
+                title: 'Persist timeline',
+                status: 'completed',
+            }],
         })
         await flushPipelinePublishes()
 
@@ -411,7 +448,10 @@ describe('StreamPublisher extraction progress', () => {
         const blockedAck = createDeferred<{ seq: number }>()
         nats.fake.publishJetStream = vi.fn(async (_subject: string, payload: any) => {
             const mediaRunId = payload.payload.content.generationRun?.mediaRunId
-            if (mediaRunId === 'reasoning-1:image:0') return blockedAck.promise
+
+            if (mediaRunId === 'reasoning-1:image:0')
+                return blockedAck.promise
+
             return { seq: 2 }
         })
         const publisher = new StreamPublisher(nats.fake, 'ws1', 'thread1', 'Anthropic')
@@ -475,10 +515,11 @@ describe('StreamPublisher extraction progress', () => {
         const blockedAck = createDeferred<{ seq: number }>()
         let publishedCount = 0
         nats.fake.publishJetStream = vi.fn(async (_subject: string, payload: any) => {
-            if (payload.payload.content.status === STREAM_STATUS.IMAGE_PARTIAL) {
+            if (payload.payload.content.status === STREAM_STATUS.IMAGE_PARTIAL)
                 return blockedAck.promise
-            }
+
             publishedCount += 1
+
             return { seq: publishedCount + 1 }
         })
         const publisher = new StreamPublisher(nats.fake, 'ws1', 'thread1', 'Anthropic')
@@ -527,7 +568,10 @@ describe('StreamPublisher extraction progress', () => {
         const publisher = new StreamPublisher(nats.fake, 'ws1', 'thread1', 'OpenAI')
         const resolution = {
             resolverVersion: 'workspace-context-v1',
-            selections: [{ nodeId: 'doc-1', role: 'forced-chip' as const }],
+            selections: [{
+                nodeId: 'doc-1',
+                role: 'forced-chip' as const,
+            }],
             narrowedMediaNodeIds: [],
         }
 
@@ -770,6 +814,7 @@ describe('StreamPublisher extraction progress', () => {
             callOrder.push('response-write-start')
             await new Promise(resolve => setTimeout(resolve, 0))
             callOrder.push('response-write-end')
+
             return { seq: 1 }
         })
         canvasProjectionMocks.upsertMediaLineagePlanToCanvas.mockResolvedValue(undefined)
@@ -905,7 +950,10 @@ describe('StreamPublisher trace payloads', () => {
         ;(publisher as any).proseMirrorAssembler = {
             handleContent: vi.fn(),
             flushPendingWork: vi.fn(async () => undefined),
-            snapshotForProjection: vi.fn(() => ({ type: 'doc', content: [] })),
+            snapshotForProjection: vi.fn(() => ({
+                type: 'doc',
+                content: [],
+            })),
         }
 
         publisher.mediaLineagePlanned({ generationRequestId: 'request-1' } as any, generationRun)

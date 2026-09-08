@@ -19,7 +19,10 @@ import {
     type RetrieveVideoGenerationTaskResponse,
 } from './byteplus-video-types.ts'
 
-const config: BytePlusClientConfig = { baseUrl: 'https://ark.example/api/v3', apiKey: 'secret-key' }
+const config: BytePlusClientConfig = {
+    baseUrl: 'https://ark.example/api/v3',
+    apiKey: 'secret-key',
+}
 
 afterEach(() => {
     vi.unstubAllGlobals()
@@ -29,15 +32,25 @@ afterEach(() => {
 describe('buildSeedanceContent', () => {
     it('produces a text-only content array for text-to-video', () => {
         expect(buildSeedanceContent('a paper fox walking', {})).toEqual([
-            { type: 'text', text: 'a paper fox walking' },
+            {
+                type: 'text',
+                text: 'a paper fox walking',
+            },
         ])
     })
 
     it('adds one first_frame image for image-to-video', () => {
         const content = buildSeedanceContent('move', { videoFirstFrameImage: 'data:image/png;base64,AAA' })
         expect(content).toEqual([
-            { type: 'text', text: 'move' },
-            { type: 'image_url', image_url: { url: 'data:image/png;base64,AAA' }, role: 'first_frame' },
+            {
+                type: 'text',
+                text: 'move',
+            },
+            {
+                type: 'image_url',
+                image_url: { url: 'data:image/png;base64,AAA' },
+                role: 'first_frame',
+            },
         ])
     })
 
@@ -46,10 +59,21 @@ describe('buildSeedanceContent', () => {
         const content = buildSeedanceContent('move', {
             videoReferenceImages: ['data:image/png;base64,A', 'data:image/png;base64,B'],
         })
-        expect(content[0]).toEqual({ type: 'text', text: 'move' })
+        expect(content[0]).toEqual({
+            type: 'text',
+            text: 'move',
+        })
         expect(content.slice(1)).toEqual([
-            { type: 'image_url', image_url: { url: 'data:image/png;base64,A' }, role: 'reference_image' },
-            { type: 'image_url', image_url: { url: 'data:image/png;base64,B' }, role: 'reference_image' },
+            {
+                type: 'image_url',
+                image_url: { url: 'data:image/png;base64,A' },
+                role: 'reference_image',
+            },
+            {
+                type: 'image_url',
+                image_url: { url: 'data:image/png;base64,B' },
+                role: 'reference_image',
+            },
         ])
     })
 
@@ -80,7 +104,10 @@ describe('createVideoGenerationTask', () => {
     it('POSTs the payload to the tasks endpoint with bearer auth and parses the task id', async () => {
         const fetchMock = vi.fn(async () =>
             new Response(
-                JSON.stringify({ id: 'task_abc', status: 'queued' }),
+                JSON.stringify({
+                    id: 'task_abc',
+                    status: 'queued',
+                }),
                 { status: 200 },
             )
         )
@@ -88,7 +115,10 @@ describe('createVideoGenerationTask', () => {
 
         const payload: CreateVideoGenerationTaskPayload = {
             model: 'dreamina-seedance-2-0-260128',
-            content: [{ type: 'text', text: 'hello' }],
+            content: [{
+                type: 'text',
+                text: 'hello',
+            }],
             resolution: '720p',
             ratio: '16:9',
             duration: 5,
@@ -116,14 +146,24 @@ describe('createVideoGenerationTask', () => {
     it('throws a BytePlusModelArkError preserving error.code and HTTP status on failure', async () => {
         const fetchMock = vi.fn(async () =>
             new Response(
-                JSON.stringify({ error: { code: 'InvalidParameter', message: 'bad ratio' } }),
+                JSON.stringify({ error: {
+                    code: 'InvalidParameter',
+                    message: 'bad ratio',
+                } }),
                 { status: 400 },
             )
         )
         vi.stubGlobal('fetch', fetchMock)
 
-        await expect(createVideoGenerationTask(config, { model: 'm', content: [] }))
-            .rejects.toMatchObject({ name: 'BytePlusModelArkError', code: 'InvalidParameter', httpStatus: 400 })
+        await expect(createVideoGenerationTask(config, {
+            model: 'm',
+            content: [],
+        }))
+            .rejects.toMatchObject({
+                name: 'BytePlusModelArkError',
+                code: 'InvalidParameter',
+                httpStatus: 400,
+            })
     })
 })
 
@@ -131,7 +171,12 @@ describe('retrieveVideoGenerationTask', () => {
     it('GETs the task by id with bearer auth and returns the status + content', async () => {
         const fetchMock = vi.fn(async () =>
             new Response(
-                JSON.stringify({ id: 'task_abc', status: 'succeeded', content: { video_url: 'https://cdn/x.mp4' }, usage: { total_tokens: 184320 } }),
+                JSON.stringify({
+                    id: 'task_abc',
+                    status: 'succeeded',
+                    content: { video_url: 'https://cdn/x.mp4' },
+                    usage: { total_tokens: 184320 },
+                }),
                 { status: 200 },
             )
         )
@@ -164,7 +209,10 @@ describe('downloadVideo', () => {
         vi.stubGlobal('fetch', fetchMock)
 
         await expect(downloadVideo('https://cdn/expired.mp4'))
-            .rejects.toMatchObject({ name: 'BytePlusModelArkError', httpStatus: 404 })
+            .rejects.toMatchObject({
+                name: 'BytePlusModelArkError',
+                httpStatus: 404,
+            })
     })
 })
 
@@ -181,7 +229,10 @@ describe('downloadLastFrame', () => {
 })
 
 describe('pollVideoGenerationTask', () => {
-    const statusTask = (status: string): RetrieveVideoGenerationTaskResponse => ({ id: 'task_abc', status: status as any })
+    const statusTask = (status: string): RetrieveVideoGenerationTaskResponse => ({
+        id: 'task_abc',
+        status: status as any,
+    })
 
     it('polls until succeeded, emitting a keepalive on each non-terminal poll', async () => {
         const statuses = ['queued', 'running', 'succeeded']
@@ -190,7 +241,12 @@ describe('pollVideoGenerationTask', () => {
         const onKeepalive = vi.fn()
         const sleep = vi.fn(async () => {})
 
-        const task = await pollVideoGenerationTask(config, 'task_abc', { pollIntervalMs: 10, retrieve, onKeepalive, sleep })
+        const task = await pollVideoGenerationTask(config, 'task_abc', {
+            pollIntervalMs: 10,
+            retrieve,
+            onKeepalive,
+            sleep,
+        })
 
         expect(task.status).toBe('succeeded')
         expect(retrieve).toHaveBeenCalledTimes(3)
@@ -199,15 +255,29 @@ describe('pollVideoGenerationTask', () => {
     })
 
     it('returns a failed task without throwing (caller decides how to react)', async () => {
-        const retrieve = vi.fn(async () => ({ id: 'task_abc', status: 'failed', error: { code: 'X', message: 'bad' } } as RetrieveVideoGenerationTaskResponse))
-        const task = await pollVideoGenerationTask(config, 'task_abc', { pollIntervalMs: 10, retrieve })
+        const retrieve = vi.fn(async () => ({
+            id: 'task_abc',
+            status: 'failed',
+            error: {
+                code: 'X',
+                message: 'bad',
+            },
+        } as RetrieveVideoGenerationTaskResponse))
+        const task = await pollVideoGenerationTask(config, 'task_abc', {
+            pollIntervalMs: 10,
+            retrieve,
+        })
         expect(task.status).toBe('failed')
         expect(task.error?.code).toBe('X')
     })
 
     it('aborts before polling when shouldStop is already true', async () => {
         const retrieve = vi.fn(async () => statusTask('running'))
-        await expect(pollVideoGenerationTask(config, 'task_abc', { pollIntervalMs: 10, retrieve, shouldStop: () => true }))
+        await expect(pollVideoGenerationTask(config, 'task_abc', {
+            pollIntervalMs: 10,
+            retrieve,
+            shouldStop: () => true,
+        }))
             .rejects.toThrow('aborted')
         expect(retrieve).not.toHaveBeenCalled()
     })

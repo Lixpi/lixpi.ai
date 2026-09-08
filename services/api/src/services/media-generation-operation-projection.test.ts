@@ -61,21 +61,38 @@ describe('media generation operation-node projection', () => {
     beforeEach(() => {
         vi.clearAllMocks()
         canvasState = {
-            viewport: { x: 0, y: 0, zoom: 1 },
+            viewport: {
+                x: 0,
+                y: 0,
+                zoom: 1,
+            },
             nodes: [{
                 nodeId: 'source-node',
                 type: 'image',
                 assetId: 'asset-1',
                 mediaGenerationPhase: 'ready',
-                position: { x: 100, y: 200 },
-                dimensions: { width: 400, height: 300 },
+                position: {
+                    x: 100,
+                    y: 200,
+                },
+                dimensions: {
+                    width: 400,
+                    height: 300,
+                },
             }],
             edges: [],
         }
         mutateCanvasState.mockImplementation(async ({ mutate }) => {
             const result = mutate(canvasState)
-            if (result.changed) canvasState = result.canvasState
-            return { ...result, canvasState, canvasStateUpdatedAt: 2 }
+
+            if (result.changed)
+                canvasState = result.canvasState
+
+            return {
+                ...result,
+                canvasState,
+                canvasStateUpdatedAt: 2,
+            }
         })
     })
 
@@ -91,7 +108,10 @@ describe('media generation operation-node projection', () => {
             type: 'operationStatus',
             operation: 'media-generation',
             plannedMediaType: 'video',
-            position: { x: 580, y: 200 },
+            position: {
+                x: 580,
+                y: 200,
+            },
         })]))
         expect(canvasState.edges).toEqual([])
     })
@@ -170,7 +190,11 @@ describe('media generation operation-node projection', () => {
 
     it('stacks unanchored pending media with the compact pre-frame pitch from shared settings', async () => {
         canvasState = {
-            viewport: { x: 0, y: 0, zoom: 1 },
+            viewport: {
+                x: 0,
+                y: 0,
+                zoom: 1,
+            },
             nodes: [],
             edges: [],
         }
@@ -194,7 +218,10 @@ describe('media generation operation-node projection', () => {
             generationRequestId: 'request-1',
             runs: [firstRun, secondRun],
             bindings: [],
-            visibleArea: { width: 1600, height: 1200 },
+            visibleArea: {
+                width: 1600,
+                height: 1200,
+            },
         })
 
         const firstOutput = canvasState.nodes.find(node => node.nodeId === 'output-node-0')!
@@ -240,8 +267,14 @@ describe('media generation operation-node projection', () => {
                     reasoningModelId: 'Anthropic:claude',
                     reasoningIndex: 0,
                 },
-                position: { x: 700, y: 300 },
-                dimensions: { width: 80, height: 80 },
+                position: {
+                    x: 700,
+                    y: 300,
+                },
+                dimensions: {
+                    width: 80,
+                    height: 80,
+                },
                 temporary: true,
             }],
             edges: [{
@@ -279,7 +312,10 @@ describe('media generation operation-node projection', () => {
                 nodeId: 'pending-media-request-1-0',
                 type: 'operationStatus',
                 requestRevision: 3,
-                position: { x: 860, y: 300 },
+                position: {
+                    x: 860,
+                    y: 300,
+                },
             }),
             expect.objectContaining({
                 nodeId: 'pending-media-authoritative',
@@ -326,7 +362,11 @@ describe('media generation operation-node projection', () => {
         expect(operation).not.toHaveProperty('candidateAssetIds')
         expect(operation).not.toHaveProperty('unresolvedBindingId')
         expect(operation).not.toHaveProperty('verificationAssetId')
-        expect(operation).toMatchObject({ status: 'in-progress', message: 'Resuming.', requestRevision: 3 })
+        expect(operation).toMatchObject({
+            status: 'in-progress',
+            message: 'Resuming.',
+            requestRevision: 3,
+        })
     })
 
     it('keeps the provider run pending while the request awaits an Asset reference', async () => {

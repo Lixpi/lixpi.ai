@@ -18,10 +18,11 @@ import {
 const owners: WorkspaceNodeShells[] = []
 afterEach(() => {
     for (const owner of owners.splice(0)) owner.destroy()
+
     document.body.replaceChildren()
 })
 
-function mount(overrides: Partial<OperationStatusCanvasNode> = {}) {
+const mount = (overrides: Partial<OperationStatusCanvasNode> = {}) => {
     const node: OperationStatusCanvasNode = {
         nodeId: 'operation',
         type: 'operationStatus',
@@ -30,18 +31,33 @@ function mount(overrides: Partial<OperationStatusCanvasNode> = {}) {
         title: 'Generating media',
         generationRequestId: 'request',
         requestRevision: 4,
-        position: { x: 10, y: 20 },
-        dimensions: { width: 360, height: 104 },
+        position: {
+            x: 10,
+            y: 20,
+        },
+        dimensions: {
+            width: 360,
+            height: 104,
+        },
         createdAt: 1,
         updatedAt: 2,
         ...overrides,
     }
     const shells = new WorkspaceNodeShells({
         document,
-        getBounds: node => ({ ...node.position, ...node.dimensions }),
+        getBounds: node => ({
+            ...node.position,
+            ...node.dimensions,
+        }),
         getLayer: () => 1,
         getZoom: () => 1,
-        getResizeSettings: () => ({ useZoomCompensatedScaling: false, size: 10, offset: 0, minSize: 5, zoomScaling: { minZoom: 0.4 } }),
+        getResizeSettings: () => ({
+            useZoomCompensatedScaling: false,
+            size: 10,
+            offset: 0,
+            minSize: 5,
+            zoomScaling: { minZoom: 0.4 },
+        }),
         consumeSuppressedClick: () => false,
         select: vi.fn(),
         toggleSelection: vi.fn(),
@@ -60,12 +76,22 @@ function mount(overrides: Partial<OperationStatusCanvasNode> = {}) {
     const view = new OperationStatusNode(node, shells, actions)
     document.body.append(view.element)
     const button = (label: string) => Array.from(view.element.querySelectorAll('button')).find(button => button.textContent === label)!
-    return { node, shells, actions, view, button }
+
+    return {
+        node,
+        shells,
+        actions,
+        view,
+        button,
+    }
 }
 
 describe('OperationStatusNode', () => {
     it('renders loading and failure cards without resize handles', () => {
-        const loading = mount({ operation: 'upload', status: 'in-progress' })
+        const loading = mount({
+            operation: 'upload',
+            status: 'in-progress',
+        })
         expect(loading.view.element.textContent).toContain('Converting upload')
         expect(loading.view.element.querySelector('.ai-response-loading-spinner')).not.toBeNull()
         expect(loading.view.element.querySelector('[data-corner]')).toBeNull()
@@ -77,7 +103,14 @@ describe('OperationStatusNode', () => {
     })
 
     it('renders provider details as text and delegates edit and dismissal', () => {
-        const fixture = mount({ problem: { detail: 'Failed', providerReason: '<img src=x onerror=alert(1)>', providerCode: 'invalid', supportCode: 'support', moderationStage: 'input', moderationCategories: ['person'] } as OperationStatusCanvasNode['problem'] })
+        const fixture = mount({ problem: {
+            detail: 'Failed',
+            providerReason: '<img src=x onerror=alert(1)>',
+            providerCode: 'invalid',
+            supportCode: 'support',
+            moderationStage: 'input',
+            moderationCategories: ['person'],
+        } as OperationStatusCanvasNode['problem'] })
         expect(fixture.view.element.querySelector('img')).toBeNull()
         expect(fixture.view.element.querySelector('.workspace-media-operation-provider-reason')?.textContent).toBe('<img src=x onerror=alert(1)>')
         fixture.button('Edit request').click()
@@ -87,12 +120,20 @@ describe('OperationStatusNode', () => {
     })
 
     it('shows verification only when the request includes a run and verification Asset', () => {
-        const fixture = mount({ status: 'action-required', generationRun: 0, verificationAssetId: 'asset' })
+        const fixture = mount({
+            status: 'action-required',
+            generationRun: 0,
+            verificationAssetId: 'asset',
+        })
         fixture.button('Verify with provider').click()
         expect(fixture.actions.verify).toHaveBeenCalledWith(fixture.node, expect.any(AbortSignal))
         fixture.button('Cancel').click()
         expect(fixture.actions.cancel).toHaveBeenCalledOnce()
-        const reference = mount({ status: 'action-required', unresolvedBindingId: 'binding', candidateAssetIds: ['asset'] })
+        const reference = mount({
+            status: 'action-required',
+            unresolvedBindingId: 'binding',
+            candidateAssetIds: ['asset'],
+        })
         expect(reference.view.element.querySelector('button')).toBeNull()
     })
 

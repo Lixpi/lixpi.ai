@@ -28,28 +28,54 @@ const settings: WorkspaceCanvasChromeSettings & { insertionWidth: number } = {
         defaultDimensions: { width: 500 },
         dimensions: { maxPaneMargin: 30 },
         layout: { contentInset: 12 },
-        typography: { contentFontSize: 14, tagPillFontSize: 12, tagPillFontWeight: 500 },
-        styles: { backdropFill: '#fff', backdropFillOpaque: '#fff', toggleColor: '#111', toggleHoverColor: '#222' },
+        typography: {
+            contentFontSize: 14,
+            tagPillFontSize: 12,
+            tagPillFontWeight: 500,
+        },
+        styles: {
+            backdropFill: '#fff',
+            backdropFillOpaque: '#fff',
+            toggleColor: '#111',
+            toggleHoverColor: '#222',
+        },
     },
     modelMenuHoverBackground: '#abc',
-    palette: { steelBlue: '#5d656d', nightBlue: '#42494f', offWhite: '#f5f3f3' },
+    palette: {
+        steelBlue: '#5d656d',
+        nightBlue: '#42494f',
+        offWhite: '#f5f3f3',
+    },
     insertionWidth: 320,
 }
 
-function canvas(): CanvasState {
-    return { nodes: [], edges: [], viewport: { x: 0, y: 0, zoom: 1 } }
+const canvas = (): CanvasState => {
+    return {
+        nodes: [],
+        edges: [],
+        viewport: {
+            x: 0,
+            y: 0,
+            zoom: 1,
+        },
+    }
 }
 
-function deferred<Value>() {
+const deferred = <Value>() => {
     let resolve!: (value: Value) => void
-    const promise = new Promise<Value>(accept => {
-        resolve = accept
-    })
-    return { promise, resolve }
+    const promise = new Promise<Value>(accept => void (resolve = accept))
+
+    return {
+        promise,
+        resolve,
+    }
 }
 
 const owners: WorkspaceCanvasSurface[] = []
-function setup(options: { snapshot?: Partial<WorkspaceCanvasSurfaceSnapshot>; configure?: (ports: WorkspaceCanvasSurfacePorts, renderer: WorkspaceCanvasRenderer) => void } = {}) {
+const setup = (options: {
+    snapshot?: Partial<WorkspaceCanvasSurfaceSnapshot>
+    configure?: (ports: WorkspaceCanvasSurfacePorts, renderer: WorkspaceCanvasRenderer) => void
+} = {}) => {
     vi.useFakeTimers()
     let snapshot: WorkspaceCanvasSurfaceSnapshot = {
         workspaceId: 'a',
@@ -70,25 +96,48 @@ function setup(options: { snapshot?: Partial<WorkspaceCanvasSurfaceSnapshot>; co
     const stopSynchronization = vi.fn()
     const sessions = new Map<string, WorkspaceCanvasSession>()
     const publish = vi.fn()
-    const save = vi.fn(async (request: { workspaceId: string }) => ({ status: 'saved' as const, workspaceId: request.workspaceId, version: { updatedAt: 20, canvasStateUpdatedAt: 20 } }))
+    const save = vi.fn(async (request: { workspaceId: string }) => ({
+        status: 'saved' as const,
+        workspaceId: request.workspaceId,
+        version: {
+            updatedAt: 20,
+            canvasStateUpdatedAt: 20,
+        },
+    }))
     const renderer: WorkspaceCanvasRenderer = {
         getCanvasState: vi.fn(() => currentState),
-        getViewport: vi.fn(() => currentState?.viewport ?? { x: 0, y: 0, zoom: 1 }),
+        getViewport: vi.fn(() => currentState?.viewport ?? {
+            x: 0,
+            y: 0,
+            zoom: 1,
+        }),
         setViewport: vi.fn(viewport => {
-            if (currentState) currentState = { ...currentState, viewport }
+            if (currentState)
+                currentState = {
+                    ...currentState,
+                    viewport,
+                }
         }),
         insertNodeAtViewportCenter: vi.fn(node => {
-            currentState = { ...(currentState ?? canvas()), nodes: [...(currentState?.nodes ?? []), { ...node, position: { x: 0, y: 0 } }] }
+            currentState = {
+                ...(currentState ?? canvas()),
+                nodes: [...(currentState?.nodes ?? []), {
+                    ...node,
+                    position: {
+                        x: 0,
+                        y: 0,
+                    },
+                }],
+            }
             rendererOptions.onCanvasStateChange(currentState)
+
             return currentState
         }),
         replaceUploadPlaceholder: vi.fn(() => currentState),
         commitTransientCanvasState: vi.fn(),
         commitTransientCanvasNodeInsertion: vi.fn(),
         markUploadPlaceholderFailed: vi.fn(),
-        render: vi.fn(state => {
-            currentState = state
-        }),
+        render: vi.fn(state => void (currentState = state)),
         toggleMediaLibrary: vi.fn(),
         destroy: vi.fn(),
     }
@@ -100,6 +149,7 @@ function setup(options: { snapshot?: Partial<WorkspaceCanvasSurfaceSnapshot>; co
             listeners.add(changed)
             savedListener = changed
             changed()
+
             return () => {
                 listeners.delete(changed)
                 unsubscribe()
@@ -107,35 +157,68 @@ function setup(options: { snapshot?: Partial<WorkspaceCanvasSurfaceSnapshot>; co
         }],
         session: id => {
             let session = sessions.get(id)
+
             if (!session) {
                 session = new WorkspaceCanvasSession(id, {
-                    read: () => ({ canvasState: canvas(), version: { updatedAt: 1, canvasStateUpdatedAt: 1 } }),
+                    read: () => ({
+                        canvasState: canvas(),
+                        version: {
+                            updatedAt: 1,
+                            canvasStateUpdatedAt: 1,
+                        },
+                    }),
                     save,
-                    fetch: vi.fn(async () => ({ canvasState: canvas(), version: { updatedAt: 1, canvasStateUpdatedAt: 1 } })),
+                    fetch: vi.fn(async () => ({
+                        canvasState: canvas(),
+                        version: {
+                            updatedAt: 1,
+                            canvasStateUpdatedAt: 1,
+                        },
+                    })),
                     publish,
                     reportError: vi.fn(),
                 })
                 sessions.set(id, session)
             }
+
             return session
         },
-        membership: { attach: vi.fn(async request => ({ assetId: request.assetId, nodeIds: [request.nodeId] })), detach: vi.fn(async () => ({ success: true })), now: () => 10 },
-        ingest: { createDocument: vi.fn(async () => ({ assetId: 'created' })), uploadFile: vi.fn(async () => null), importUrl: vi.fn(async () => null), refreshAsset: vi.fn(async () => ({})) },
+        membership: {
+            attach: vi.fn(async request => ({
+                assetId: request.assetId,
+                nodeIds: [request.nodeId],
+            })),
+            detach: vi.fn(async () => ({ success: true })),
+            now: () => 10,
+        },
+        ingest: {
+            createDocument: vi.fn(async () => ({ assetId: 'created' })),
+            uploadFile: vi.fn(async () => null),
+            importUrl: vi.fn(async () => null),
+            refreshAsset: vi.fn(async () => ({})),
+        },
         createId: () => 'id',
         now: () => 10,
         publishTransient: vi.fn(),
         synchronizeAssets: vi.fn(() => stopSynchronization),
-        storage: { get: vi.fn(() => null), set: vi.fn(), remove: vi.fn() },
+        storage: {
+            get: vi.fn(() => null),
+            set: vi.fn(),
+            remove: vi.fn(),
+        },
         setTimer: (callback, delay) => {
             const timer = setTimeout(callback, delay)
+
             return () => clearTimeout(timer)
         },
         onPageHide: callback => {
             pageHide = callback
+
             return removePageHide
         },
         createRenderer: config => {
             rendererOptions = config
+
             return renderer
         },
         reportError: vi.fn(),
@@ -144,12 +227,18 @@ function setup(options: { snapshot?: Partial<WorkspaceCanvasSurfaceSnapshot>; co
     const mount = () => {
         const owner = new WorkspaceCanvasSurface(settings, ports)
         owners.push(owner)
+
         return owner
     }
     const change = (patch: Partial<WorkspaceCanvasSurfaceSnapshot>) => {
-        snapshot = { ...snapshot, ...patch }
+        snapshot = {
+            ...snapshot,
+            ...patch,
+        }
+
         for (const listener of listeners) listener()
     }
+
     return {
         mount,
         change,
@@ -164,9 +253,7 @@ function setup(options: { snapshot?: Partial<WorkspaceCanvasSurfaceSnapshot>; co
         callbacks: () => rendererOptions,
         lateStoreChange: () => savedListener(),
         pageHide: () => pageHide(),
-        setRendererState: (state: CanvasState) => {
-            currentState = state
-        },
+        setRendererState: (state: CanvasState) => void (currentState = state),
     }
 }
 
@@ -176,6 +263,7 @@ afterEach(() => {
             owner.destroy()
         } catch {}
     }
+
     vi.useRealTimers()
 })
 
@@ -188,24 +276,50 @@ describe('workspace canvas surface', () => {
         expect(view.renderer.render).toHaveBeenLastCalledWith(null, [], [], 'b')
         expect(view.sessions.get('a')?.viewCount).toBe(0)
         expect(view.stopSynchronization).toHaveBeenCalledOnce()
-        view.change({ loadedWorkspaceId: 'b', canvasState: canvas() })
+        view.change({
+            loadedWorkspaceId: 'b',
+            canvasState: canvas(),
+        })
         expect(view.sessions.get('b')?.viewCount).toBe(1)
         expect(view.ports.synchronizeAssets).toHaveBeenLastCalledWith('b')
     })
 
     it('hydrates document and conversation placements through document ports', () => {
-        const asset = { assetId: 'asset', title: 'Title', organizationId: 'org', revision: 4, createdAt: 1, updatedAt: 2, documents: { content: { version: 5 }, conversation: { version: 7 } }, states: { conversation: 'none' } } as Asset
-        const content = { type: 'doc', content: [] }
+        const asset = {
+            assetId: 'asset',
+            title: 'Title',
+            organizationId: 'org',
+            revision: 4,
+            createdAt: 1,
+            updatedAt: 2,
+            documents: {
+                content: { version: 5 },
+                conversation: { version: 7 },
+            },
+            states: { conversation: 'none' },
+        } as Asset
+        const content = {
+            type: 'doc',
+            content: [],
+        }
         const view = setup({
             snapshot: { assets: [asset] },
-            configure: ports => {
-                ports.readDocument = vi.fn(() => content)
-            },
+            configure: ports => void (ports.readDocument = vi.fn(() => content)),
         })
         view.mount()
         const args = vi.mocked(view.renderer.render).mock.calls.at(-1)!
-        expect(args[1]).toEqual([expect.objectContaining({ documentId: 'asset', content, proseMirrorVersion: 5, revision: 4 })])
-        expect(args[2]).toEqual([expect.objectContaining({ threadId: 'asset', content, proseMirrorVersion: 7, status: 'idle' })])
+        expect(args[1]).toEqual([expect.objectContaining({
+            documentId: 'asset',
+            content,
+            proseMirrorVersion: 5,
+            revision: 4,
+        })])
+        expect(args[2]).toEqual([expect.objectContaining({
+            threadId: 'asset',
+            content,
+            proseMirrorVersion: 7,
+            status: 'idle',
+        })])
         expect(view.ports.readDocument).toHaveBeenCalledWith('asset', 'conversation')
     })
 
@@ -217,10 +331,15 @@ describe('workspace canvas surface', () => {
         let changed = false
         vi.mocked(view.renderer.render).mockImplementation(() => {
             maximumDepth = Math.max(maximumDepth, ++depth)
+
             if (!changed) {
                 changed = true
-                view.change({ canvasState: { ...canvas(), lastActiveConversationAssetId: 'conversation' } })
+                view.change({ canvasState: {
+                    ...canvas(),
+                    lastActiveConversationAssetId: 'conversation',
+                } })
             }
+
             depth -= 1
         })
         view.change({ canvasState: canvas() })
@@ -232,30 +351,40 @@ describe('workspace canvas surface', () => {
         const first = setup()
         const one = first.mount()
         const second = setup({
-            configure: ports => {
-                ports.session = first.ports.session
-            },
+            configure: ports => void (ports.session = first.ports.session),
         })
         second.mount()
         expect(first.sessions.get('a')?.viewCount).toBe(2)
         one.destroy()
         expect(first.sessions.get('a')?.viewCount).toBe(1)
         expect(second.renderer.destroy).not.toHaveBeenCalled()
-        second.change({ canvasState: { ...canvas(), viewport: { x: 20, y: 30, zoom: 2 } } })
-        expect(second.renderer.render).toHaveBeenLastCalledWith(expect.objectContaining({ viewport: { x: 20, y: 30, zoom: 2 } }), [], [], 'a')
+        second.change({ canvasState: {
+            ...canvas(),
+            viewport: {
+                x: 20,
+                y: 30,
+                zoom: 2,
+            },
+        } })
+        expect(second.renderer.render).toHaveBeenLastCalledWith(expect.objectContaining({ viewport: {
+            x: 20,
+            y: 30,
+            zoom: 2,
+        } }), [], [], 'a')
     })
 
     it('discards document creation after the same workspace unloads and reloads', async () => {
         const creation = deferred<{ assetId: string }>()
         const view = setup({
-            configure: ports => {
-                ports.ingest.createDocument = () => creation.promise
-            },
+            configure: ports => void (ports.ingest.createDocument = () => creation.promise),
         })
         const owner = view.mount()
         owner.el.querySelector<HTMLButtonElement>('[aria-label="New Document"]')!.click()
         view.change({ loadingStatus: LoadingStatus.loading })
-        view.change({ loadingStatus: LoadingStatus.success, canvasState: canvas() })
+        view.change({
+            loadingStatus: LoadingStatus.success,
+            canvasState: canvas(),
+        })
         creation.resolve({ assetId: 'late' })
         await vi.advanceTimersByTimeAsync(0)
         expect(view.ports.membership.attach).not.toHaveBeenCalled()
@@ -267,9 +396,16 @@ describe('workspace canvas surface', () => {
         view.mount()
         const release = deferred<void>()
         const lock = view.ports.session('a').persistence.runMembershipMutation(() => release.promise)
-        const attach = view.callbacks().onAssetAttach({ assetId: 'asset', nodeId: 'node', canvasState: canvas() })
+        const attach = view.callbacks().onAssetAttach({
+            assetId: 'asset',
+            nodeId: 'node',
+            canvasState: canvas(),
+        })
         const rejection = expect(attach).rejects.toThrow('WORKSPACE_CHANGED_DURING_CANVAS_MUTATION')
-        view.change({ workspaceId: 'b', loadedWorkspaceId: 'b' })
+        view.change({
+            workspaceId: 'b',
+            loadedWorkspaceId: 'b',
+        })
         release.resolve()
         await lock
         await rejection
@@ -279,17 +415,25 @@ describe('workspace canvas surface', () => {
     it('adopts accepted membership in its originating session after the view closes', async () => {
         const result = deferred<unknown>()
         const view = setup({
-            configure: ports => {
-                ports.membership.attach = vi.fn(() => result.promise)
-            },
+            configure: ports => void (ports.membership.attach = vi.fn(() => result.promise)),
         })
         const owner = view.mount()
-        const attach = view.callbacks().onAssetAttach({ assetId: 'asset', nodeId: 'node', canvasState: canvas() })
+        const attach = view.callbacks().onAssetAttach({
+            assetId: 'asset',
+            nodeId: 'node',
+            canvasState: canvas(),
+        })
         expect(view.ports.membership.attach).toHaveBeenCalledOnce()
         owner.destroy()
-        result.resolve({ assetId: 'asset', nodeIds: ['node'] })
+        result.resolve({
+            assetId: 'asset',
+            nodeIds: ['node'],
+        })
         await attach
-        expect(view.publish).toHaveBeenCalledWith(expect.objectContaining({ workspaceId: 'a', origin: 'authoritative' }))
+        expect(view.publish).toHaveBeenCalledWith(expect.objectContaining({
+            workspaceId: 'a',
+            origin: 'authoritative',
+        }))
         expect(view.renderer.commitTransientCanvasState).not.toHaveBeenCalled()
     })
 
@@ -299,6 +443,7 @@ describe('workspace canvas surface', () => {
             configure: ports => {
                 ports.ingest.uploadFile = async request => {
                     request.onStart()
+
                     return await pending.promise
                 }
             },
@@ -317,20 +462,60 @@ describe('workspace canvas surface', () => {
     it('flushes the trailing viewport with final renderer geometry during disposal', async () => {
         const view = setup()
         const owner = view.mount()
-        view.callbacks().onViewportChange({ x: 10, y: 0, zoom: 1 })
+        view.callbacks().onViewportChange({
+            x: 10,
+            y: 0,
+            zoom: 1,
+        })
         await view.ports.session('a').drain()
-        view.callbacks().onViewportChange({ x: 20, y: 0, zoom: 1 })
-        view.setRendererState({ ...canvas(), nodes: [{ nodeId: 'doc', type: 'document', assetId: 'asset', position: { x: 90, y: 30 }, dimensions: { width: 400, height: 350 } }] })
+        view.callbacks().onViewportChange({
+            x: 20,
+            y: 0,
+            zoom: 1,
+        })
+        view.setRendererState({
+            ...canvas(),
+            nodes: [{
+                nodeId: 'doc',
+                type: 'document',
+                assetId: 'asset',
+                position: {
+                    x: 90,
+                    y: 30,
+                },
+                dimensions: {
+                    width: 400,
+                    height: 350,
+                },
+            }],
+        })
         owner.destroy()
         await view.ports.session('a').drain()
-        expect(view.save).toHaveBeenLastCalledWith(expect.objectContaining({ canvasState: expect.objectContaining({ viewport: { x: 20, y: 0, zoom: 1 }, nodes: [expect.objectContaining({ position: { x: 90, y: 30 } })] }), persistViewport: true }))
+        expect(view.save).toHaveBeenLastCalledWith(expect.objectContaining({
+            canvasState: expect.objectContaining({
+                viewport: {
+                    x: 20,
+                    y: 0,
+                    zoom: 1,
+                },
+                nodes: [expect.objectContaining({ position: {
+                    x: 90,
+                    y: 30,
+                } })],
+            }),
+            persistViewport: true,
+        }))
         expect(vi.getTimerCount()).toBe(0)
     })
 
     it('owns pagehide stashing without accepting callbacks after disposal', () => {
         const view = setup()
         const owner = view.mount()
-        view.callbacks().onViewportChange({ x: 10, y: 20, zoom: 2 })
+        view.callbacks().onViewportChange({
+            x: 10,
+            y: 20,
+            zoom: 2,
+        })
         view.pageHide()
         expect(view.ports.storage.set).toHaveBeenCalledOnce()
         owner.destroy()
@@ -338,8 +523,15 @@ describe('workspace canvas surface', () => {
         const saveCount = view.save.mock.calls.length
         view.lateStoreChange()
         view.callbacks().onCanvasStateChange(canvas())
-        view.callbacks().onAuthoritativeCanvasStateChange({ canvasState: canvas(), layoutRevision: 100 })
-        view.callbacks().onViewportChange({ x: 0, y: 0, zoom: 1 })
+        view.callbacks().onAuthoritativeCanvasStateChange({
+            canvasState: canvas(),
+            layoutRevision: 100,
+        })
+        view.callbacks().onViewportChange({
+            x: 0,
+            y: 0,
+            zoom: 1,
+        })
         expect(view.renderer.render).not.toHaveBeenCalled()
         expect(view.save.mock.calls).toHaveLength(saveCount)
         expect(view.unsubscribe).toHaveBeenCalledOnce()

@@ -25,7 +25,7 @@ vi.mock('../services/registration-service.ts', () => ({
 
 import { authenticateTokenOnRequest } from './auth.ts'
 
-function makeDecodedToken(overrides: Record<string, unknown> = {}) {
+const makeDecodedToken = (overrides: Record<string, unknown> = {}) => {
     return {
         sub: 'google-apps|developers@prima.it',
         stripe_customer_id: 'cus_test',

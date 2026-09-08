@@ -7,13 +7,9 @@ import { readFileSync } from 'fs'
 import { resolve } from 'path'
 import { withoutLayout } from '@lixpi/test-utils'
 
-function expectSourceToContain(source: string, snippet: string): void {
-    expect(withoutLayout(source).includes(withoutLayout(snippet)), `source should contain: ${snippet}`).toBe(true)
-}
+const expectSourceToContain = (source: string, snippet: string): void => void expect(withoutLayout(source).includes(withoutLayout(snippet)), `source should contain: ${snippet}`).toBe(true)
 
-function expectSourceNotToContain(source: string, snippet: string): void {
-    expect(withoutLayout(source).includes(withoutLayout(snippet)), `source should not contain: ${snippet}`).toBe(false)
-}
+const expectSourceNotToContain = (source: string, snippet: string): void => void expect(withoutLayout(source).includes(withoutLayout(snippet)), `source should not contain: ${snippet}`).toBe(false)
 
 describe('ai-prompt-input.scss', () => {
     const scss = readFileSync(resolve(import.meta.dirname, 'ai-prompt-input.scss'), 'utf-8')

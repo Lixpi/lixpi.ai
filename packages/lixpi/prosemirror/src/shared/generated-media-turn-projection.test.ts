@@ -14,20 +14,37 @@ import {
     type ProseMirrorJsonNode,
 } from './thread-doc.ts'
 
-function paragraph(text: string): ProseMirrorJsonNode {
-    return { type: 'paragraph', content: [{ type: 'text', text }] }
+const paragraph = (text: string): ProseMirrorJsonNode => {
+    return {
+        type: 'paragraph',
+        content: [{
+            type: 'text',
+            text,
+        }],
+    }
 }
 
-function userMessage(text: string): ProseMirrorJsonNode {
-    return { type: 'aiUserMessage', content: [paragraph(text)] }
+const userMessage = (text: string): ProseMirrorJsonNode => {
+    return {
+        type: 'aiUserMessage',
+        content: [paragraph(text)],
+    }
 }
 
-function responseMessage(attrs: Record<string, any>, content: ProseMirrorJsonNode[]): ProseMirrorJsonNode {
-    return { type: 'aiResponseMessage', attrs, content }
+const responseMessage = (attrs: Record<string, any>, content: ProseMirrorJsonNode[]): ProseMirrorJsonNode => {
+    return {
+        type: 'aiResponseMessage',
+        attrs,
+        content,
+    }
 }
 
-function reasoningSection(attrs: Record<string, any>, text: string): ProseMirrorJsonNode {
-    return { type: 'aiReasoningSection', attrs, content: [paragraph(text)] }
+const reasoningSection = (attrs: Record<string, any>, text: string): ProseMirrorJsonNode => {
+    return {
+        type: 'aiReasoningSection',
+        attrs,
+        content: [paragraph(text)],
+    }
 }
 
 describe('buildBranchMarkerTurnProjectionFromThreadContent', () => {
@@ -40,7 +57,10 @@ describe('buildBranchMarkerTurnProjectionFromThreadContent', () => {
                 content: [
                     userMessage('draw a goat'),
                     responseMessage(
-                        { id: 'response-1', generationRequestId: 'request-1' },
+                        {
+                            id: 'response-1',
+                            generationRequestId: 'request-1',
+                        },
                         [reasoningSection({
                             generationRequestId: 'request-1',
                             reasoningRunId: 'reasoning-1',
@@ -49,7 +69,10 @@ describe('buildBranchMarkerTurnProjectionFromThreadContent', () => {
                     ),
                     userMessage('draw a boat'),
                     responseMessage(
-                        { id: 'response-2', generationRequestId: 'request-2' },
+                        {
+                            id: 'response-2',
+                            generationRequestId: 'request-2',
+                        },
                         [reasoningSection({
                             generationRequestId: 'request-2',
                             reasoningRunId: 'reasoning-2',
@@ -88,7 +111,10 @@ describe('buildBranchMarkerTurnProjectionFromThreadContent', () => {
                 content: [
                     userMessage('draw a goat'),
                     responseMessage(
-                        { id: 'response-1', generationRequestId: 'request-1' },
+                        {
+                            id: 'response-1',
+                            generationRequestId: 'request-1',
+                        },
                         [reasoningSection({ generationRequestId: 'request-1' }, 'Live response text.')],
                     ),
                 ],
@@ -113,7 +139,10 @@ describe('buildBranchMarkerTurnProjectionFromThreadContent', () => {
             content: [{
                 type: 'paragraph',
                 content: [
-                    { type: 'text', text: 'Create ' },
+                    {
+                        type: 'text',
+                        text: 'Create ',
+                    },
                     {
                         type: 'prompt_reference',
                         attrs: {
@@ -122,7 +151,10 @@ describe('buildBranchMarkerTurnProjectionFromThreadContent', () => {
                             displayName: 'Action Timeline',
                         },
                     },
-                    { type: 'text', text: ' 15s duration with 2s gaps.' },
+                    {
+                        type: 'text',
+                        text: ' 15s duration with 2s gaps.',
+                    },
                 ],
             }],
         }
@@ -134,7 +166,10 @@ describe('buildBranchMarkerTurnProjectionFromThreadContent', () => {
                 content: [
                     submittedUserMessage,
                     responseMessage(
-                        { id: 'response-1', generationRequestId: 'request-1' },
+                        {
+                            id: 'response-1',
+                            generationRequestId: 'request-1',
+                        },
                         [reasoningSection({
                             generationRequestId: 'request-1',
                             reasoningRunId: 'reasoning-1',
@@ -172,7 +207,10 @@ describe('buildBranchMarkerTurnProjectionFromThreadContent', () => {
             content: [{
                 type: 'paragraph',
                 content: [
-                    { type: 'text', text: 'Create ' },
+                    {
+                        type: 'text',
+                        text: 'Create ',
+                    },
                     {
                         type: 'prompt_reference',
                         attrs: {
@@ -181,7 +219,10 @@ describe('buildBranchMarkerTurnProjectionFromThreadContent', () => {
                             displayName: 'Action Timeline',
                         },
                     },
-                    { type: 'text', text: ' 15s duration with 2s gaps.' },
+                    {
+                        type: 'text',
+                        text: ' 15s duration with 2s gaps.',
+                    },
                 ],
             }],
         }
@@ -193,7 +234,10 @@ describe('buildBranchMarkerTurnProjectionFromThreadContent', () => {
                 content: [
                     userMessage('Previous request'),
                     responseMessage(
-                        { id: 'response-previous', generationRequestId: 'request-previous' },
+                        {
+                            id: 'response-previous',
+                            generationRequestId: 'request-previous',
+                        },
                         [paragraph('Previous response that must not appear.')],
                     ),
                     submittedUserMessage,
@@ -229,7 +273,11 @@ describe('buildGeneratedMediaTurnProjectionFromThreadContent', () => {
                 completedSteps: 1,
                 totalSteps: 1,
                 message: 'Done.',
-                items: [{ id: 'generate', title: 'Generate media', status: 'completed' as const }],
+                items: [{
+                    id: 'generate',
+                    title: 'Generate media',
+                    status: 'completed' as const,
+                }],
             },
             updatedAt: 10,
         }
@@ -295,7 +343,11 @@ describe('buildGeneratedMediaTurnProjectionFromThreadContent', () => {
                         title: 'Resolve branch lineage and media runs',
                         status: 'completed',
                     },
-                    { id: 'generate', title: 'Generate media', status: 'completed' },
+                    {
+                        id: 'generate',
+                        title: 'Generate media',
+                        status: 'completed',
+                    },
                 ],
             },
             updatedAt: 10,
@@ -308,7 +360,10 @@ describe('buildGeneratedMediaTurnProjectionFromThreadContent', () => {
                 content: [
                     userMessage('Create a character.'),
                     responseMessage(
-                        { id: 'response-1', generationRequestId: 'request-1' },
+                        {
+                            id: 'response-1',
+                            generationRequestId: 'request-1',
+                        },
                         [{
                             type: 'aiReasoningSection',
                             attrs: {

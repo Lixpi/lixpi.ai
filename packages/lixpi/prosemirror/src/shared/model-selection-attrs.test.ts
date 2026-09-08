@@ -74,7 +74,11 @@ describe('serializeMediaGenerationConfigSelectionAttr', () => {
             },
         ])).toBe('[{"groupId":"size","modelIds":["gpt-image","gpt-video"],"values":{"a":"1","c":"x"}}]')
         expect(serializeMediaGenerationConfigSelectionAttr([
-            { groupId: '', modelIds: ['gpt'], values: {} },
+            {
+                groupId: '',
+                modelIds: ['gpt'],
+                values: {},
+            },
         ])).toBe('')
         expect(serializeMediaGenerationConfigSelectionAttr([])).toBe('')
     })

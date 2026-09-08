@@ -12,16 +12,18 @@ import {
     runOperationWithRetry,
 } from './keyed-operation-coordinator.ts'
 
-afterEach(() => {
-    vi.useRealTimers()
-})
+afterEach(() => void vi.useRealTimers())
 
 describe('KeyedIdleBatchScheduler', () => {
     it('coalesces every request for one key into one idle flush with the latest value', async () => {
         vi.useFakeTimers()
         const onFlush = vi.fn(async () => undefined)
         const onError = vi.fn()
-        const scheduler = new KeyedIdleBatchScheduler<number>({ delayMs: 1000, onFlush, onError })
+        const scheduler = new KeyedIdleBatchScheduler<number>({
+            delayMs: 1000,
+            onFlush,
+            onError,
+        })
 
         for (let request = 1; request <= 601; request += 1) {
             scheduler.schedule('asset-1:conversation', request)
@@ -43,12 +45,14 @@ describe('KeyedIdleBatchScheduler', () => {
 
     it('flushes different keys independently', async () => {
         vi.useFakeTimers()
-        const batches: Array<{ key: string; value: number; coalescedRequestCount: number }> = []
+        const batches: Array<{
+            key: string
+            value: number
+            coalescedRequestCount: number
+        }> = []
         const scheduler = new KeyedIdleBatchScheduler<number>({
             delayMs: 1000,
-            onFlush: async (batch) => {
-                batches.push(batch)
-            },
+            onFlush: async (batch) => void batches.push(batch),
             onError: vi.fn(),
         })
 
@@ -57,8 +61,16 @@ describe('KeyedIdleBatchScheduler', () => {
         await vi.advanceTimersByTimeAsync(1000)
 
         expect(batches).toEqual([
-            { key: 'asset-1:conversation', value: 1, coalescedRequestCount: 1 },
-            { key: 'asset-2:content', value: 2, coalescedRequestCount: 1 },
+            {
+                key: 'asset-1:conversation',
+                value: 1,
+                coalescedRequestCount: 1,
+            },
+            {
+                key: 'asset-2:content',
+                value: 2,
+                coalescedRequestCount: 1,
+            },
         ])
     })
 
@@ -86,9 +98,7 @@ describe('KeyedOperationCoordinator', () => {
         const coordinator = new KeyedOperationCoordinator()
         const order: string[] = []
         let releaseFirst: () => void = () => undefined
-        const firstGate = new Promise<void>((resolve) => {
-            releaseFirst = resolve
-        })
+        const firstGate = new Promise<void>((resolve) => void (releaseFirst = resolve))
 
         const first = coordinator.run('asset-1:conversation', async () => {
             order.push('first:start')

@@ -327,10 +327,10 @@ export const validateCapabilityDependencyGraph = (
     return deduplicateIssues(issues)
 }
 
-function validateReferences(
+const validateReferences = (
     input: unknown,
     issues: CapabilityValidationIssue[],
-): Array<Record<string, unknown>> {
+): Array<Record<string, unknown>> => {
     if (!Array.isArray(input)) {
         addIssue(
             issues,
@@ -379,10 +379,10 @@ function validateReferences(
     })
 }
 
-function validateResources(
+const validateResources = (
     input: unknown,
     issues: CapabilityValidationIssue[],
-): CapabilityResourceRef[] {
+): CapabilityResourceRef[] => {
     if (!Array.isArray(input)) {
         addIssue(
             issues,
@@ -468,12 +468,12 @@ function validateResources(
     return resources
 }
 
-function validateExports(
+const validateExports = (
     input: unknown,
     resources: CapabilityResourceRef[],
     issues: CapabilityValidationIssue[],
     options: CapabilityManifestValidationOptions,
-): void {
+): void => {
     if (input === undefined)
         return
 
@@ -579,12 +579,12 @@ function validateExports(
     }
 }
 
-function validateToolDefinition(
+const validateToolDefinition = (
     input: unknown,
     resources: CapabilityResourceRef[],
     issues: CapabilityValidationIssue[],
     options: CapabilityManifestValidationOptions,
-): void {
+): void => {
     const tool = asRecord(input)
 
     if (!tool) {
@@ -650,10 +650,10 @@ function validateToolDefinition(
     )
 }
 
-function validateModelAxisPolicy(
+const validateModelAxisPolicy = (
     input: unknown,
     issues: CapabilityValidationIssue[],
-): void {
+): void => {
     const policy = asRecord(input)
 
     if (!policy) {
@@ -706,12 +706,12 @@ function validateModelAxisPolicy(
     )
 }
 
-function validateSchemaResource(
+const validateSchemaResource = (
     input: unknown,
     path: string,
     resources: CapabilityResourceRef[],
     issues: CapabilityValidationIssue[],
-): void {
+): void => {
     const schemaRef = asRecord(input)
 
     if (!schemaRef) {
@@ -773,13 +773,13 @@ function validateSchemaResource(
         )
 }
 
-function validateWorkflow(
+const validateWorkflow = (
     input: unknown,
     path: string,
     resources: CapabilityResourceRef[],
     issues: CapabilityValidationIssue[],
     options: CapabilityManifestValidationOptions,
-): void {
+): void => {
     const workflow = asRecord(input)
 
     if (!workflow) {
@@ -922,11 +922,11 @@ function validateWorkflow(
     )
 }
 
-function validateStepGraph(
+const validateStepGraph = (
     steps: CapabilityWorkflowStep[],
     path: string,
     issues: CapabilityValidationIssue[],
-): void {
+): void => {
     const stepIds = new Set(
         steps.map(step => step.stepId),
     )
@@ -980,12 +980,12 @@ function validateStepGraph(
     }
 }
 
-function validateStepBindings(
+const validateStepBindings = (
     steps: CapabilityWorkflowStep[],
     path: string,
     resources: CapabilityResourceRef[],
     issues: CapabilityValidationIssue[],
-): void {
+): void => {
     const stepById = new Map(
         steps.map(step => [step.stepId, step]),
     )
@@ -1026,13 +1026,13 @@ function validateStepBindings(
     }
 }
 
-function validateBindingRecord(
+const validateBindingRecord = (
     input: unknown,
     path: string,
     resources: CapabilityResourceRef[],
     issues: CapabilityValidationIssue[],
     allowedStepIds?: ReadonlySet<string>,
-): void {
+): void => {
     const bindings = asRecord(input)
 
     if (!bindings) {
@@ -1057,13 +1057,13 @@ function validateBindingRecord(
     }
 }
 
-function validateBinding(
+const validateBinding = (
     input: unknown,
     path: string,
     resources: CapabilityResourceRef[],
     issues: CapabilityValidationIssue[],
     allowedStepIds?: ReadonlySet<string>,
-): void {
+): void => {
     const binding = asRecord(input)
 
     if (
@@ -1167,14 +1167,14 @@ function validateBinding(
     )
 }
 
-function validateCondition(
+const validateCondition = (
     input: unknown,
     path: string,
     resources: CapabilityResourceRef[],
     issues: CapabilityValidationIssue[],
     depth: number,
     allowedStepIds?: ReadonlySet<string>,
-): void {
+): void => {
     if (depth > CAPABILITY_LIMITS.maxConditionDepth) {
         addIssue(
             issues,
@@ -1292,11 +1292,11 @@ function validateCondition(
     )
 }
 
-function validateRetry(
+const validateRetry = (
     input: unknown,
     path: string,
     issues: CapabilityValidationIssue[],
-): void {
+): void => {
     if (input === undefined)
         return
 
@@ -1340,11 +1340,11 @@ function validateRetry(
     }
 }
 
-function validateProgress(
+const validateProgress = (
     input: unknown,
     path: string,
     issues: CapabilityValidationIssue[],
-): void {
+): void => {
     const progress = asRecord(input)
 
     if (!progress) {
@@ -1377,12 +1377,12 @@ function validateProgress(
         )
 }
 
-function validateAction(
+const validateAction = (
     input: unknown,
     path: string,
     issues: CapabilityValidationIssue[],
     allowedActions?: ReadonlySet<string>,
-): void {
+): void => {
     if (
         typeof input !== 'string'
         || !ACTION_NAME_PATTERN.test(input)
@@ -1409,11 +1409,11 @@ function validateAction(
         )
 }
 
-function validateResourceMediaType(
+const validateResourceMediaType = (
     input: unknown,
     path: string,
     issues: CapabilityValidationIssue[],
-): void {
+): void => {
     const valid = input === 'application/json'
         || input === 'application/schema+json'
         || input === 'text/markdown'
@@ -1428,11 +1428,11 @@ function validateResourceMediaType(
         )
 }
 
-function validateIdentifier(
+const validateIdentifier = (
     input: unknown,
     path: string,
     issues: CapabilityValidationIssue[],
-): void {
+): void => {
     if (
         typeof input !== 'string'
         || !IDENTIFIER_PATTERN.test(input)
@@ -1445,11 +1445,11 @@ function validateIdentifier(
         )
 }
 
-function validateNonEmptyString(
+const validateNonEmptyString = (
     input: unknown,
     path: string,
     issues: CapabilityValidationIssue[],
-): void {
+): void => {
     if (
         typeof input !== 'string'
         || input.trim().length === 0
@@ -1462,12 +1462,12 @@ function validateNonEmptyString(
         )
 }
 
-function validateStringArray(
+const validateStringArray = (
     input: unknown,
     path: string,
     issues: CapabilityValidationIssue[],
     optional = false,
-): string[] {
+): string[] => {
     if (
         optional
         && input === undefined
@@ -1491,12 +1491,12 @@ function validateStringArray(
     return input as string[]
 }
 
-function validateEnum(
+const validateEnum = (
     input: unknown,
     allowed: ReadonlySet<string>,
     path: string,
     issues: CapabilityValidationIssue[],
-): void {
+): void => {
     if (
         typeof input !== 'string'
         || !allowed.has(input)
@@ -1509,12 +1509,12 @@ function validateEnum(
         )
 }
 
-function validateLiteral(
+const validateLiteral = (
     input: unknown,
     expected: string | number,
     path: string,
     issues: CapabilityValidationIssue[],
-): void {
+): void => {
     if (input !== expected)
         addIssue(
             issues,
@@ -1524,7 +1524,7 @@ function validateLiteral(
         )
 }
 
-function isJsonValue(input: unknown): input is CapabilityJsonValue {
+const isJsonValue = (input: unknown): input is CapabilityJsonValue => {
     if (
         input === null
         || typeof input === 'string'
@@ -1543,7 +1543,7 @@ function isJsonValue(input: unknown): input is CapabilityJsonValue {
     return record !== null && Object.values(record).every(isJsonValue)
 }
 
-function asRecord(input: unknown): Record<string, unknown> | null {
+const asRecord = (input: unknown): Record<string, unknown> | null => {
     if (
         !input
         || typeof input !== 'object'
@@ -1554,12 +1554,12 @@ function asRecord(input: unknown): Record<string, unknown> | null {
     return input as Record<string, unknown>
 }
 
-function addIssue(
+const addIssue = (
     issues: CapabilityValidationIssue[],
     code: CapabilityValidationIssueCode,
     path: string,
     message: string,
-): void {
+): void => {
     issues.push({
         code,
         path,
@@ -1567,7 +1567,7 @@ function addIssue(
     })
 }
 
-function deduplicateIssues(issues: CapabilityValidationIssue[]): CapabilityValidationIssue[] {
+const deduplicateIssues = (issues: CapabilityValidationIssue[]): CapabilityValidationIssue[] => {
     const seen = new Set<string>()
 
     return issues.filter(issue => {

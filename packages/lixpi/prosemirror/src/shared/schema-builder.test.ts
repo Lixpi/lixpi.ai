@@ -39,9 +39,7 @@ describe('createProseMirrorSchema', () => {
         expect(schema.nodes.aiUserMessage).toBeUndefined()
     })
 
-    it('rejects unknown document types', () => {
-        expect(() => createProseMirrorSchema('other')).toThrow('Unsupported ProseMirror document type: other')
-    })
+    it('rejects unknown document types', () => void expect(() => createProseMirrorSchema('other')).toThrow('Unsupported ProseMirror document type: other'))
 
     it('does not serialize native hover-title attributes for images or links', () => {
         const schema = createProseMirrorSchema()

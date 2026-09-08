@@ -5,7 +5,7 @@ import {
 } from 'vitest'
 import { Easing } from './easing.ts'
 
-function expectMonotonic(ease: (progress: number) => number): void {
+const expectMonotonic = (ease: (progress: number) => number): void => {
     let previous = ease(0)
 
     for (let i = 1; i <= 100; i++) {

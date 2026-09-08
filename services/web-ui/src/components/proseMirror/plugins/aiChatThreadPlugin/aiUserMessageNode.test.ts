@@ -15,31 +15,44 @@ import {
 // Helper: instantiate aiUserMessageNodeView with minimal mocks
 // =============================================================================
 
-function createUserMessageNodeView(attrs: Record<string, unknown> = {}, options: any = undefined) {
+const createUserMessageNodeView = (attrs: Record<string, unknown> = {}, options: any = undefined) => {
     const node = schema.nodes.aiUserMessage.create(
-        { id: 'user-msg-test-1', createdAt: 1700000000000, ...attrs },
+        {
+            id: 'user-msg-test-1',
+            createdAt: 1700000000000,
+            ...attrs,
+        },
     )
 
     const mockView = {} as any
     const getPos = vi.fn(() => 0)
 
     const nodeView = aiUserMessageNodeView(node, mockView, getPos, options)
-    return { nodeView, node, mockView, getPos }
+
+    return {
+        nodeView,
+        node,
+        mockView,
+        getPos,
+    }
 }
 
-function createImageCanvasNode(nodeId: string): any {
+const createImageCanvasNode = (nodeId: string): any => {
     return {
         type: 'image',
         nodeId,
         referenceId: nodeId,
         src: `/api/images/${nodeId}.png`,
         posterSrc: `/api/images/${nodeId}-poster.png`,
-        dimensions: { width: 420, height: 560 },
+        dimensions: {
+            width: 420,
+            height: 560,
+        },
         aspectRatio: 0.75,
     }
 }
 
-function createMockContextPreview(nodes: Record<string, any>): any {
+const createMockContextPreview = (nodes: Record<string, any>): any => {
     return {
         getNodeById: (id: string) => nodes[id],
         environment: {
@@ -77,6 +90,7 @@ describe('aiUserMessageNodeView — ignoreMutation', () => {
         const { nodeView } = createUserMessageNodeView()
 
         const cases = ['class', 'data-id', 'data-created-at', 'id']
+
         for (const attributeName of cases) {
             const mutation = {
                 type: 'attributes',
@@ -145,7 +159,10 @@ describe('aiUserMessageNodeView — marginBottom survives update()', () => {
         expect(dom.style.marginBottom).toBe('150px')
 
         const updatedNode = schema.nodes.aiUserMessage.create(
-            { id: 'user-msg-test-1', createdAt: 1700000000001 },
+            {
+                id: 'user-msg-test-1',
+                createdAt: 1700000000001,
+            },
         )
 
         const result = nodeView.update!(updatedNode, [])
@@ -161,7 +178,10 @@ describe('aiUserMessageNodeView — marginBottom survives update()', () => {
 
         for (let i = 0; i < 8; i++) {
             const updatedNode = schema.nodes.aiUserMessage.create(
-                { id: 'user-msg-test-1', createdAt: 1700000000000 + i },
+                {
+                    id: 'user-msg-test-1',
+                    createdAt: 1700000000000 + i,
+                },
             )
             nodeView.update!(updatedNode, [])
         }
@@ -293,7 +313,10 @@ describe('aiUserMessageNodeView — update()', () => {
         const { nodeView } = createUserMessageNodeView()
 
         const updatedNode = schema.nodes.aiUserMessage.create(
-            { id: 'user-msg-test-2', createdAt: 1700000000002 },
+            {
+                id: 'user-msg-test-2',
+                createdAt: 1700000000002,
+            },
         )
         const result = nodeView.update!(updatedNode, [])
 
@@ -329,6 +352,7 @@ describe('aiUserMessageNodeSpec — schema', () => {
                     'data-id': 'parsed-user-msg-1',
                     'data-created-at': '1700000000999',
                 }
+
                 return attrs[attr] ?? null
             },
         }

@@ -24,26 +24,38 @@ import {
     isGeneratedMediaNodeForMediaModelCircles,
 } from './marker-media-ports.ts'
 
-function branchOriginNode(nodeId: string): BranchOriginCanvasNode {
+const branchOriginNode = (nodeId: string): BranchOriginCanvasNode => {
     return {
         nodeId,
         type: 'branchOrigin',
         workspaceId: 'w',
-        dimensions: { width: 120, height: 120 },
-        position: { x: 10, y: 15 },
+        dimensions: {
+            width: 120,
+            height: 120,
+        },
+        position: {
+            x: 10,
+            y: 15,
+        },
         fileId: nodeId,
         branchId: 'branch-a',
         src: '',
     }
 }
 
-function branchForkNode(nodeId: string, parentId: string): BranchForkCanvasNode {
+const branchForkNode = (nodeId: string, parentId: string): BranchForkCanvasNode => {
     return {
         nodeId,
         type: 'branchFork',
         workspaceId: 'w',
-        dimensions: { width: 120, height: 120 },
-        position: { x: 20, y: 25 },
+        dimensions: {
+            width: 120,
+            height: 120,
+        },
+        position: {
+            x: 20,
+            y: 25,
+        },
         fileId: nodeId,
         branchId: 'branch-a',
         parentBranchNodeId: parentId,
@@ -52,13 +64,19 @@ function branchForkNode(nodeId: string, parentId: string): BranchForkCanvasNode 
     }
 }
 
-function branchLineNode(nodeId: string, parentId: string): BranchLineCanvasNode {
+const branchLineNode = (nodeId: string, parentId: string): BranchLineCanvasNode => {
     return {
         nodeId,
         type: 'branchLine',
         workspaceId: 'w',
-        dimensions: { width: 120, height: 120 },
-        position: { x: 30, y: 35 },
+        dimensions: {
+            width: 120,
+            height: 120,
+        },
+        position: {
+            x: 30,
+            y: 35,
+        },
         fileId: nodeId,
         branchId: 'branch-a',
         parentBranchNodeId: parentId,
@@ -67,7 +85,7 @@ function branchLineNode(nodeId: string, parentId: string): BranchLineCanvasNode 
     }
 }
 
-function imageNode(nodeId: string, generatedBy: Record<string, unknown>): ImageCanvasNode {
+const imageNode = (nodeId: string, generatedBy: Record<string, unknown>): ImageCanvasNode => {
     return {
         nodeId,
         type: 'image',
@@ -75,8 +93,14 @@ function imageNode(nodeId: string, generatedBy: Record<string, unknown>): ImageC
         workspaceId: 'w',
         src: `/${nodeId}.png`,
         aspectRatio: 1,
-        dimensions: { width: 256, height: 256 },
-        position: { x: 40, y: 50 },
+        dimensions: {
+            width: 256,
+            height: 256,
+        },
+        position: {
+            x: 40,
+            y: 50,
+        },
         generatedBy: {
             aiChatThreadId: 'thread-1',
             responseId: 'response-1',
@@ -88,7 +112,7 @@ function imageNode(nodeId: string, generatedBy: Record<string, unknown>): ImageC
     } as ImageCanvasNode
 }
 
-function videoNode(nodeId: string, generatedBy: Record<string, unknown>): VideoCanvasNode {
+const videoNode = (nodeId: string, generatedBy: Record<string, unknown>): VideoCanvasNode => {
     return {
         nodeId,
         type: 'video',
@@ -100,8 +124,14 @@ function videoNode(nodeId: string, generatedBy: Record<string, unknown>): VideoC
         aspectRatio: 16 / 9,
         durationSeconds: 12,
         hasAudio: true,
-        dimensions: { width: 320, height: 180 },
-        position: { x: 60, y: 70 },
+        dimensions: {
+            width: 320,
+            height: 180,
+        },
+        position: {
+            x: 60,
+            y: 70,
+        },
         generatedBy: {
             aiChatThreadId: 'thread-1',
             responseId: 'response-1',
@@ -113,8 +143,14 @@ function videoNode(nodeId: string, generatedBy: Record<string, unknown>): VideoC
     } as VideoCanvasNode
 }
 
-function moveMediaNode<T extends ImageCanvasNode | VideoCanvasNode>(node: T, position: { x: number; y: number }): T {
-    return { ...node, position }
+const moveMediaNode = <T extends ImageCanvasNode | VideoCanvasNode>(node: T, position: {
+    x: number
+    y: number
+}): T => {
+    return {
+        ...node,
+        position,
+    }
 }
 
 describe('branchMarkerMediaModelCircles — node collection and shape helpers', () => {
@@ -125,8 +161,14 @@ describe('branchMarkerMediaModelCircles — node collection and shape helpers', 
             nodeId: 'doc-1',
             type: 'document',
             workspaceId: 'w',
-            dimensions: { width: 100, height: 100 },
-            position: { x: 0, y: 0 },
+            dimensions: {
+                width: 100,
+                height: 100,
+            },
+            position: {
+                x: 0,
+                y: 0,
+            },
             fileId: 'document',
             referenceId: 'document-1',
         } as CanvasNode
@@ -139,12 +181,27 @@ describe('branchMarkerMediaModelCircles — node collection and shape helpers', 
 
     it('filters branch lineage nodes and sorts generated media by connector row order', () => {
         const origin = branchOriginNode('origin')
-        const originNodeA = imageNode('origin-a', { branchOriginNodeId: 'origin', createdAt: 40, variantIndex: 2 })
-        const originNodeB = imageNode('origin-b', { branchOriginNodeId: 'origin', createdAt: 10 })
+        const originNodeA = imageNode('origin-a', {
+            branchOriginNodeId: 'origin',
+            createdAt: 40,
+            variantIndex: 2,
+        })
+        const originNodeB = imageNode('origin-b', {
+            branchOriginNodeId: 'origin',
+            createdAt: 10,
+        })
         const forkMarker = branchForkNode('fork', 'origin')
-        const forkNode = videoNode('fork-node', { branchForkNodeId: 'fork', createdAt: 99, variantIndex: 1 })
+        const forkNode = videoNode('fork-node', {
+            branchForkNodeId: 'fork',
+            createdAt: 99,
+            variantIndex: 1,
+        })
         const lineMarker = branchLineNode('line', 'origin')
-        const lineNode = imageNode('line-node', { branchLineNodeId: 'line', createdAt: 50, variantIndex: 0 })
+        const lineNode = imageNode('line-node', {
+            branchLineNodeId: 'line',
+            createdAt: 50,
+            variantIndex: 0,
+        })
         const unrelated = imageNode('other-node', { branchOriginNodeId: 'other' })
 
         const nodes: CanvasNode[] = [unrelated, originNodeA, originNodeB, forkNode, lineNode, forkMarker, lineMarker]
@@ -171,7 +228,10 @@ describe('branchMarkerMediaModelCircles — node collection and shape helpers', 
                 createdAt: 200,
                 variantIndex: 2,
             }),
-            { x: 600, y: 100 },
+            {
+                x: 600,
+                y: 100,
+            },
         )
         const bottomRowNode = moveMediaNode(
             imageNode('bottom-row-node', {
@@ -181,7 +241,10 @@ describe('branchMarkerMediaModelCircles — node collection and shape helpers', 
                 createdAt: 10,
                 variantIndex: 0,
             }),
-            { x: 600, y: 620 },
+            {
+                x: 600,
+                y: 620,
+            },
         )
         const nodes: CanvasNode[] = [bottomRowNode, topRowNode, forkMarker]
 
@@ -200,11 +263,46 @@ describe('branchMarkerMediaModelCircles — node collection and shape helpers', 
     it('dedupes media model circles by media type + model id and normalizes case', () => {
         const origin = branchOriginNode('origin')
         const nodes: CanvasNode[] = [
-            moveMediaNode(imageNode('image-a', { branchOriginNodeId: 'origin', mediaRunId: 'run-a', mediaModelId: 'ProviderA:Model-1' }), { x: 500, y: 100 }),
-            moveMediaNode(imageNode('image-b', { branchOriginNodeId: 'origin', mediaRunId: 'run-b', mediaModelId: 'providera:MODEL-1' }), { x: 500, y: 120 }),
-            moveMediaNode(imageNode('image-c', { branchOriginNodeId: 'origin', mediaRunId: 'run-c', aiModel: 'providerB:Model-2' }), { x: 500, y: 260 }),
-            moveMediaNode(videoNode('video-a', { branchOriginNodeId: 'origin', mediaRunId: 'run-d', videoModel: 'providerC:Model-3' }), { x: 500, y: 420 }),
-            moveMediaNode(videoNode('video-b', { branchOriginNodeId: 'origin', mediaRunId: 'run-e', videoModel: 'providerC:model-3' }), { x: 500, y: 440 }),
+            moveMediaNode(imageNode('image-a', {
+                branchOriginNodeId: 'origin',
+                mediaRunId: 'run-a',
+                mediaModelId: 'ProviderA:Model-1',
+            }), {
+                x: 500,
+                y: 100,
+            }),
+            moveMediaNode(imageNode('image-b', {
+                branchOriginNodeId: 'origin',
+                mediaRunId: 'run-b',
+                mediaModelId: 'providera:MODEL-1',
+            }), {
+                x: 500,
+                y: 120,
+            }),
+            moveMediaNode(imageNode('image-c', {
+                branchOriginNodeId: 'origin',
+                mediaRunId: 'run-c',
+                aiModel: 'providerB:Model-2',
+            }), {
+                x: 500,
+                y: 260,
+            }),
+            moveMediaNode(videoNode('video-a', {
+                branchOriginNodeId: 'origin',
+                mediaRunId: 'run-d',
+                videoModel: 'providerC:Model-3',
+            }), {
+                x: 500,
+                y: 420,
+            }),
+            moveMediaNode(videoNode('video-b', {
+                branchOriginNodeId: 'origin',
+                mediaRunId: 'run-e',
+                videoModel: 'providerC:model-3',
+            }), {
+                x: 500,
+                y: 440,
+            }),
         ]
 
         const descriptors = getBranchMarkerMediaModelCircleDescriptors(origin, nodes)
@@ -271,12 +369,40 @@ describe('branchMarkerMediaModelCircles — node collection and shape helpers', 
     it('maps generated media to the matching media model badge index', () => {
         const origin = branchOriginNode('origin')
         const nodes: CanvasNode[] = [
-            moveMediaNode(imageNode('image-1', { branchOriginNodeId: 'origin', mediaRunId: 'run-a', mediaModelId: 'ProviderA:model-1' }), { x: 500, y: 100 }),
-            moveMediaNode(imageNode('image-2', { branchOriginNodeId: 'origin', mediaRunId: 'run-b', mediaModelId: 'ProviderA:model-2' }), { x: 500, y: 260 }),
-            moveMediaNode(videoNode('video-1', { branchOriginNodeId: 'origin', mediaRunId: 'run-c', videoModel: 'ProviderC:model-3' }), { x: 500, y: 420 }),
+            moveMediaNode(imageNode('image-1', {
+                branchOriginNodeId: 'origin',
+                mediaRunId: 'run-a',
+                mediaModelId: 'ProviderA:model-1',
+            }), {
+                x: 500,
+                y: 100,
+            }),
+            moveMediaNode(imageNode('image-2', {
+                branchOriginNodeId: 'origin',
+                mediaRunId: 'run-b',
+                mediaModelId: 'ProviderA:model-2',
+            }), {
+                x: 500,
+                y: 260,
+            }),
+            moveMediaNode(videoNode('video-1', {
+                branchOriginNodeId: 'origin',
+                mediaRunId: 'run-c',
+                videoModel: 'ProviderC:model-3',
+            }), {
+                x: 500,
+                y: 420,
+            }),
         ]
-        const targetNodeByRun = imageNode('target-run', { branchOriginNodeId: 'origin', mediaRunId: 'run-b', mediaModelId: 'ProviderA:model-2' })
-        const targetNodeFallback = imageNode('target-fallback', { branchOriginNodeId: 'origin', mediaModelId: 'providera:MODEL-1' })
+        const targetNodeByRun = imageNode('target-run', {
+            branchOriginNodeId: 'origin',
+            mediaRunId: 'run-b',
+            mediaModelId: 'ProviderA:model-2',
+        })
+        const targetNodeFallback = imageNode('target-fallback', {
+            branchOriginNodeId: 'origin',
+            mediaModelId: 'providera:MODEL-1',
+        })
         const targetNodeMissing = imageNode('target-missing', { branchOriginNodeId: 'origin' })
 
         expect(getBranchMarkerMediaModelCircleIndexForGeneratedMedia(origin, nodes, targetNodeByRun)).toBe(1)

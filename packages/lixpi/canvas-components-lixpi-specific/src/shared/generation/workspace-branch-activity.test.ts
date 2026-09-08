@@ -22,10 +22,36 @@ import {
     type BranchActivityPlacement,
 } from './workspace-branch-activity.ts'
 
-const marker = { nodeId: 'fork', type: 'branchFork', conversationAssetId: 'thread', generationRequestId: 'request', reasoningRunId: 'reasoning', position: { x: 0, y: 0 }, dimensions: { width: 100, height: 100 } } as BranchForkCanvasNode
-const media = (status = 'running'): ImageCanvasNode => ({ nodeId: 'output', type: 'image', assetId: 'asset', generationProgress: { status, generationRequestId: 'request' } } as ImageCanvasNode)
-const plan = (assignment: Partial<MediaRunLineageAssignment>): MediaBranchLineagePlan => ({ branchForks: [], branchLines: [], runAssignments: [assignment] } as MediaBranchLineagePlan)
-function fixture() {
+const marker = {
+    nodeId: 'fork',
+    type: 'branchFork',
+    conversationAssetId: 'thread',
+    generationRequestId: 'request',
+    reasoningRunId: 'reasoning',
+    position: {
+        x: 0,
+        y: 0,
+    },
+    dimensions: {
+        width: 100,
+        height: 100,
+    },
+} as BranchForkCanvasNode
+const media = (status = 'running'): ImageCanvasNode => ({
+    nodeId: 'output',
+    type: 'image',
+    assetId: 'asset',
+    generationProgress: {
+        status,
+        generationRequestId: 'request',
+    },
+} as ImageCanvasNode)
+const plan = (assignment: Partial<MediaRunLineageAssignment>): MediaBranchLineagePlan => ({
+    branchForks: [],
+    branchLines: [],
+    runAssignments: [assignment],
+} as MediaBranchLineagePlan)
+const fixture = () => {
     const nodes: CanvasNode[] = []
     const outputs: GeneratedOutputCanvasNode[] = []
     const assets = new Map<string, Asset>()
@@ -42,21 +68,16 @@ function fixture() {
         hasStartedMedia: () => started,
         isPending: () => pending,
     })
+
     return {
         activity,
         nodes,
         outputs,
         assets,
         placements,
-        cancel: () => {
-            cancelled = true
-        },
-        start: () => {
-            started = true
-        },
-        pend: () => {
-            pending = true
-        },
+        cancel: () => void (cancelled = true),
+        start: () => void (started = true),
+        pend: () => void (pending = true),
     }
 }
 
@@ -92,17 +113,32 @@ describe('WorkspaceBranchActivity', () => {
     it('matches the active assignment to the marker instead of borrowing an unrelated active run', () => {
         const f = fixture()
         const activeRunKeys = new Set(['other'])
-        f.placements.set('thread:request', { activeRunKeys, lineagePlan: plan({ branchForkNodeId: 'fork', mediaRunId: 'matching' }) })
+        f.placements.set('thread:request', {
+            activeRunKeys,
+            lineagePlan: plan({
+                branchForkNodeId: 'fork',
+                mediaRunId: 'matching',
+            }),
+        })
         expect(f.activity.isBranchMarkerGenerationActive(marker)).toBe(false)
         activeRunKeys.add('matching')
         expect(f.activity.isBranchMarkerGenerationActive(marker)).toBe(true)
-        f.placements.set('thread:request', { activeRunKeys, lineagePlan: plan({ branchForkNodeId: 'different', mediaRunId: 'matching' }) })
+        f.placements.set('thread:request', {
+            activeRunKeys,
+            lineagePlan: plan({
+                branchForkNodeId: 'different',
+                mediaRunId: 'matching',
+            }),
+        })
         expect(f.activity.isBranchMarkerGenerationActive(marker)).toBe(false)
     })
 
     it('matches reasoning identity before the persisted marker ID is attached', () => {
         const f = fixture()
-        f.placements.set('thread', { activeRunKeys: new Set(['reasoning']), lineagePlan: plan({ reasoningRunId: 'reasoning' }) })
+        f.placements.set('thread', {
+            activeRunKeys: new Set(['reasoning']),
+            lineagePlan: plan({ reasoningRunId: 'reasoning' }),
+        })
         expect(f.activity.isBranchMarkerGenerationActive(marker)).toBe(true)
     })
 
@@ -120,8 +156,17 @@ describe('WorkspaceBranchActivity', () => {
         const f = fixture()
         f.nodes.push(media())
         expect(f.activity.isBranchMarkerGenerationGroupActive(marker)).toBe(true)
-        const synthetic = { ...marker, generationRequestId: 'canvas-request' }
-        f.nodes[0] = { ...media(), generationProgress: { ...media().generationProgress!, generationRequestId: 'canvas-request' } }
+        const synthetic = {
+            ...marker,
+            generationRequestId: 'canvas-request',
+        }
+        f.nodes[0] = {
+            ...media(),
+            generationProgress: {
+                ...media().generationProgress!,
+                generationRequestId: 'canvas-request',
+            },
+        }
         expect(f.activity.isBranchMarkerGenerationGroupActive(synthetic)).toBe(false)
     })
 
@@ -135,7 +180,11 @@ describe('WorkspaceBranchActivity', () => {
 
     it('does not let a completed Artifact conclude a group that still has an active placement', () => {
         const f = fixture()
-        f.outputs.push({ nodeId: 'artifact', type: 'capabilityArtifact', assetId: 'artifact' } as CapabilityArtifactCanvasNode)
+        f.outputs.push({
+            nodeId: 'artifact',
+            type: 'capabilityArtifact',
+            assetId: 'artifact',
+        } as CapabilityArtifactCanvasNode)
         f.assets.set('artifact', { documents: { capabilityArtifact: {} } } as Asset)
         f.placements.set('thread:request', { activeRunKeys: new Set(['media']) })
         expect(f.activity.isBranchMarkerGenerationGroupActive(marker)).toBe(true)
@@ -143,7 +192,10 @@ describe('WorkspaceBranchActivity', () => {
 
     it('concludes a fully materialized media group before stale pending state', () => {
         const f = fixture()
-        f.outputs.push({ ...media('completed'), mediaGenerationPhase: 'ready' })
+        f.outputs.push({
+            ...media('completed'),
+            mediaGenerationPhase: 'ready',
+        })
         f.assets.set('asset', { media: { renditions: { original: { status: 'ready' } } } } as Asset)
         f.pend()
         expect(f.activity.isBranchMarkerGenerationGroupActive(marker)).toBe(false)
@@ -151,20 +203,35 @@ describe('WorkspaceBranchActivity', () => {
 
     it('does not borrow placements from another conversation', () => {
         const f = fixture()
-        f.placements.set('other:request', { activeRunKeys: new Set(['media']), lineagePlan: plan({ branchForkNodeId: 'fork' }) })
+        f.placements.set('other:request', {
+            activeRunKeys: new Set(['media']),
+            lineagePlan: plan({ branchForkNodeId: 'fork' }),
+        })
         expect(f.activity.isBranchMarkerGenerationGroupActive(marker)).toBe(false)
-        f.placements.set('thread:request', { activeRunKeys: new Set(['media']), lineagePlan: plan({ branchForkNodeId: 'fork' }) })
+        f.placements.set('thread:request', {
+            activeRunKeys: new Set(['media']),
+            lineagePlan: plan({ branchForkNodeId: 'fork' }),
+        })
         expect(f.activity.isBranchMarkerGenerationGroupActive(marker)).toBe(true)
     })
 
     it('derives placement keys without duplicating the conversation key', () => {
         expect(getBranchMarkerPlacementKeys(marker)).toEqual(['thread', 'thread:request'])
-        expect(getBranchMarkerPlacementKeys({ ...marker, generationRequestId: 'thread' })).toEqual(['thread'])
-        expect(getBranchMarkerPlacementKeys({ ...marker, conversationAssetId: '' })).toEqual([])
+        expect(getBranchMarkerPlacementKeys({
+            ...marker,
+            generationRequestId: 'thread',
+        })).toEqual(['thread'])
+        expect(getBranchMarkerPlacementKeys({
+            ...marker,
+            conversationAssetId: '',
+        })).toEqual([])
     })
 
     it('recognizes a regeneration target without fabricating marker assignments', () => {
-        const lineage = { ...plan({}), regenerationTarget: { lineageParentNodeId: 'fork' } } as MediaBranchLineagePlan
+        const lineage = {
+            ...plan({}),
+            regenerationTarget: { lineageParentNodeId: 'fork' },
+        } as MediaBranchLineagePlan
         expect(lineagePlanReferencesBranchMarkerNode(lineage, marker)).toBe(true)
         expect(lineagePlanReferencesBranchMarkerNode(plan({}), marker)).toBe(false)
     })

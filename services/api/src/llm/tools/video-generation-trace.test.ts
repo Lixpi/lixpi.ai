@@ -13,18 +13,31 @@ import {
     type ProviderState,
 } from '../graph/state.ts'
 
-function createState(overrides: Partial<ProviderState> = {}): ProviderState {
+const createState = (overrides: Partial<ProviderState> = {}): ProviderState => {
     return {
         messages: [
             {
                 role: 'user',
                 content: [
-                    { type: 'input_image', image_url: 'data:image/png;base64,branch-inline', detail: 'high' },
-                    { type: 'input_image', image_url: 'data:image/png;base64,feature-inline', detail: 'high' },
+                    {
+                        type: 'input_image',
+                        image_url: 'data:image/png;base64,branch-inline',
+                        detail: 'high',
+                    },
+                    {
+                        type: 'input_image',
+                        image_url: 'data:image/png;base64,feature-inline',
+                        detail: 'high',
+                    },
                 ],
             },
         ],
-        aiModelMetaInfo: { provider: 'Anthropic', model: 'Claude', modelVersion: 'claude-sonnet-4-6', maxCompletionSize: 4096 },
+        aiModelMetaInfo: {
+            provider: 'Anthropic',
+            model: 'Claude',
+            modelVersion: 'claude-sonnet-4-6',
+            maxCompletionSize: 4096,
+        },
         eventMeta: {},
         workspaceId: 'workspace-1',
         aiChatThreadId: 'thread-1',
@@ -35,7 +48,11 @@ function createState(overrides: Partial<ProviderState> = {}): ProviderState {
         streamActive: false,
         aiRequestReceivedAt: 1,
         enableVideoGeneration: true,
-        videoModelMetaInfo: { provider: 'Google', model: 'VEO', modelVersion: 'veo-3.1-generate-preview' },
+        videoModelMetaInfo: {
+            provider: 'Google',
+            model: 'VEO',
+            modelVersion: 'veo-3.1-generate-preview',
+        },
         videoModelVersion: 'veo-3.1-generate-preview',
         videoProviderName: 'Google',
         videoAspectRatio: '16:9',
@@ -100,8 +117,16 @@ function createState(overrides: Partial<ProviderState> = {}): ProviderState {
             confidence: 0.94,
             rationale: 'Animate the portrait branch and exclude the goat branch.',
             decisions: [
-                { candidateId: 'person-generated', role: 'target', reason: 'selected generated portrait branch' },
-                { candidateId: 'goat-generated', role: 'excluded', reason: 'different subject and branch' },
+                {
+                    candidateId: 'person-generated',
+                    role: 'target',
+                    reason: 'selected generated portrait branch',
+                },
+                {
+                    candidateId: 'goat-generated',
+                    role: 'excluded',
+                    reason: 'different subject and branch',
+                },
             ],
         },
         ...overrides,
@@ -154,7 +179,11 @@ describe('buildVideoModelPrompt — Seedance profile', () => {
     // The /seedance/i model version selects the Seedance profile; provider name
     // is irrelevant to prompt shaping (the providers gate on the same signal).
     const seedanceOverrides = {
-        videoModelMetaInfo: { provider: 'Google', model: 'Seedance', modelVersion: 'dreamina-seedance-2-0-260128' },
+        videoModelMetaInfo: {
+            provider: 'Google',
+            model: 'Seedance',
+            modelVersion: 'dreamina-seedance-2-0-260128',
+        },
         videoModelVersion: 'dreamina-seedance-2-0-260128',
     } as const
 

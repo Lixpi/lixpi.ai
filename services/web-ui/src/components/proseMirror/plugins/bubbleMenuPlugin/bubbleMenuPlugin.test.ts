@@ -5,7 +5,7 @@ import {
     beforeEach,
     vi,
 } from 'vitest'
-import { NodeSelection } from 'prosemirror-state'
+
 import {
     doc,
     p,
@@ -18,12 +18,12 @@ import {
 } from '$src/components/proseMirror/plugins/testUtils/testHelpers.ts'
 import { BubbleMenuView } from '$src/components/proseMirror/plugins/bubbleMenuPlugin/bubbleMenuPlugin.ts'
 
-function findNodeSelectionPos(document: any, nodeType: string): number {
+const findNodeSelectionPos = (document: any, nodeType: string): number => {
     for (let position = 0; position < document.content.size; position += 1) {
         const candidate = document.resolve(position).nodeAfter
-        if (candidate?.type.name === nodeType) {
+
+        if (candidate?.type.name === nodeType)
             return position
-        }
     }
 
     throw new Error(`No node of type ${nodeType} found`)
@@ -39,7 +39,6 @@ type BubbleMenuMockState = {
 }
 
 const {
-    createBubbleMenuMock,
     bubbleMenuMockState,
     getSelectionContextMock,
     buildBubbleMenuItemsMock,
@@ -47,7 +46,6 @@ const {
     updateMenuItemMock,
 } = vi.hoisted(
     (): {
-        createBubbleMenuMock: typeof vi.fn
         bubbleMenuMockState: BubbleMenuMockState[]
         getSelectionContextMock: ReturnType<typeof vi.fn>
         buildBubbleMenuItemsMock: ReturnType<typeof vi.fn>
@@ -58,52 +56,6 @@ const {
         const updateMenuItemMock = vi.fn()
         const getSelectionContextMock = vi.fn(() => 'none' as const)
         const updateImageButtonStatesMock = vi.fn()
-        const createBubbleMenuMock = vi.fn(function(opts: any) {
-            const bubbleMenu = {
-                element: document.createElement('div'),
-                isVisible: false,
-                preventHide: false,
-                show: vi.fn(),
-                hide: vi.fn(() => {
-                    bubbleMenu.isVisible = false
-                    if (opts.onHide) {
-                        opts.onHide()
-                    }
-                }),
-                reposition: vi.fn(),
-                updateContext: vi.fn(),
-                forceHide: vi.fn(),
-                destroy: vi.fn(),
-            }
-
-            const showSpy = bubbleMenu.show
-            bubbleMenu.show = vi.fn((context: string, position: unknown) => {
-                bubbleMenu.isVisible = true
-                showSpy(context, position)
-            })
-
-            const textButton = document.createElement('button')
-            textButton.className = 'bubble-menu-button'
-            textButton.classList.add('is-active')
-            textButton.dataset.update = 'true'
-            textButton.dataset.markType = 'strong'
-            bubbleMenu.element.appendChild(textButton)
-
-            for (const item of opts.items) {
-                bubbleMenu.element.appendChild(item.element)
-            }
-
-            state.push({
-                show: bubbleMenu.show as ReturnType<typeof vi.fn>,
-                hide: bubbleMenu.hide,
-                reposition: bubbleMenu.reposition,
-                updateContext: bubbleMenu.updateContext,
-                forceHide: bubbleMenu.forceHide,
-                destroy: bubbleMenu.destroy,
-            })
-
-            return bubbleMenu as any
-        })
 
         const buildBubbleMenuItemsMock = vi.fn(() => ({
             items: [
@@ -117,7 +69,6 @@ const {
         }))
 
         return {
-            createBubbleMenuMock,
             bubbleMenuMockState: state,
             getSelectionContextMock,
             buildBubbleMenuItemsMock,
@@ -128,7 +79,48 @@ const {
 )
 
 vi.mock('@lixpi/ui-kit/components/bubble-menu', () => ({
-    BubbleMenu: createBubbleMenuMock,
+    BubbleMenu: function BubbleMenuMock(this: any, opts: any) {
+        this.element = document.createElement('div')
+        this.isVisible = false
+        this.preventHide = false
+        this.show = vi.fn()
+        this.hide = vi.fn(() => {
+            this.isVisible = false
+
+            if (opts.onHide)
+                opts.onHide()
+        })
+        this.reposition = vi.fn()
+        this.updateContext = vi.fn()
+        this.forceHide = vi.fn()
+        this.destroy = vi.fn()
+
+        const showSpy = this.show
+        this.show = vi.fn((context: string, position: unknown) => {
+            this.isVisible = true
+            showSpy(context, position)
+        })
+
+        const textButton = document.createElement('button')
+        textButton.className = 'bubble-menu-button'
+        textButton.classList.add('is-active')
+        textButton.dataset.update = 'true'
+        textButton.dataset.markType = 'strong'
+        this.element.appendChild(textButton)
+
+        for (const item of opts.items) {
+            this.element.appendChild(item.element)
+        }
+
+        bubbleMenuMockState.push({
+            show: this.show,
+            hide: this.hide,
+            reposition: this.reposition,
+            updateContext: this.updateContext,
+            forceHide: this.forceHide,
+            destroy: this.destroy,
+        })
+    },
 }))
 
 vi.mock('$src/components/proseMirror/plugins/bubbleMenuPlugin/bubbleMenuItems.ts', () => {

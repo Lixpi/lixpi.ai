@@ -15,56 +15,109 @@ import {
     type WorkspaceNodeDeletionPorts,
 } from './workspace-node-deletion.ts'
 
-function image(nodeId = 'image', generated = false): ImageCanvasNode {
+const image = (nodeId = 'image', generated = false): ImageCanvasNode => {
     return {
         nodeId,
         type: 'image',
         assetId: nodeId,
-        position: { x: 0, y: 0 },
-        dimensions: { width: 200, height: 100 },
-        ...(generated ? { generatedBy: { conversationAssetId: 'thread', responseId: 'response', aiModel: 'test:model', revisedPrompt: 'prompt', generationRequestId: 'request' } } : {}),
+        position: {
+            x: 0,
+            y: 0,
+        },
+        dimensions: {
+            width: 200,
+            height: 100,
+        },
+        ...(generated ? { generatedBy: {
+            conversationAssetId: 'thread',
+            responseId: 'response',
+            aiModel: 'test:model',
+            revisedPrompt: 'prompt',
+            generationRequestId: 'request',
+        } } : {}),
     }
 }
-function operation(): OperationStatusCanvasNode {
-    return { nodeId: 'operation', type: 'operationStatus', operation: 'media-generation', status: 'failed', title: 'Failed', message: 'Generation failed', generationRequestId: 'request', requestRevision: 7, outputNodeId: 'image', position: { x: 0, y: 0 }, dimensions: { width: 200, height: 100 }, createdAt: 1, updatedAt: 1 }
+const operation = (): OperationStatusCanvasNode => {
+    return {
+        nodeId: 'operation',
+        type: 'operationStatus',
+        operation: 'media-generation',
+        status: 'failed',
+        title: 'Failed',
+        message: 'Generation failed',
+        generationRequestId: 'request',
+        requestRevision: 7,
+        outputNodeId: 'image',
+        position: {
+            x: 0,
+            y: 0,
+        },
+        dimensions: {
+            width: 200,
+            height: 100,
+        },
+        createdAt: 1,
+        updatedAt: 1,
+    }
 }
-function marker(): CanvasNode {
-    return { nodeId: 'marker', type: 'branchOrigin', branchId: 'branch', generationRequestId: 'request', position: { x: 0, y: 0 }, dimensions: { width: 100, height: 60 }, temporary: true }
+const marker = (): CanvasNode => {
+    return {
+        nodeId: 'marker',
+        type: 'branchOrigin',
+        branchId: 'branch',
+        generationRequestId: 'request',
+        position: {
+            x: 0,
+            y: 0,
+        },
+        dimensions: {
+            width: 100,
+            height: 60,
+        },
+        temporary: true,
+    }
 }
-function setup(nodes: CanvasNode[] = [image()]) {
-    let state: CanvasState | null = { nodes, edges: [], viewport: { x: 0, y: 0, zoom: 1 } }
-    let scope = { workspaceId: 'workspace', sceneKey: 'scene' }
+const setup = (nodes: CanvasNode[] = [image()]) => {
+    let state: CanvasState | null = {
+        nodes,
+        edges: [],
+        viewport: {
+            x: 0,
+            y: 0,
+            zoom: 1,
+        },
+    }
+    let scope = {
+        workspaceId: 'workspace',
+        sceneKey: 'scene',
+    }
     const ports: WorkspaceNodeDeletionPorts = {
         readScope: () => scope,
         readState: () => state,
         getAsset: () => undefined,
         clearSelection: vi.fn(),
-        resolveTree: (nodes, edges) => ({ nodes, edges }),
+        resolveTree: (nodes, edges) => ({
+            nodes,
+            edges,
+        }),
         rejectOutput: vi.fn(async () => 'not-found' as const),
         getRequest: vi.fn(async () => ({ request: { revision: 9 } })),
         cancelRequest: vi.fn(async () => undefined),
         removeOperation: vi.fn(),
         detachAsset: vi.fn(async request => request.canvasState),
-        commitTransient: vi.fn(next => {
-            state = next
-        }),
-        commit: vi.fn(next => {
-            state = next
-        }),
+        commitTransient: vi.fn(next => void (state = next)),
+        commit: vi.fn(next => void (state = next)),
         removeContextChips: vi.fn(),
         reportError: vi.fn(),
         warn: vi.fn(),
     }
     const owner = new WorkspaceNodeDeletion(ports)
+
     return {
         owner,
         ports,
-        setScope: (value: typeof scope) => {
-            scope = value
-        },
-        setState: (value: CanvasState | null) => {
-            state = value
-        },
+        setScope: (value: typeof scope) => void (scope = value),
+        setState: (value: CanvasState | null) => void (state = value),
         get state() {
             return state!
         },
@@ -74,14 +127,29 @@ function setup(nodes: CanvasNode[] = [image()]) {
 describe('WorkspaceNodeDeletion', () => {
     it('detaches an Asset and every pruned marker while dropping incident edges', async () => {
         const media = image('image', true)
-        media.generatedBy = { ...media.generatedBy!, branchId: 'branch', generationRequestId: 'canvas-request' }
+        media.generatedBy = {
+            ...media.generatedBy!,
+            branchId: 'branch',
+            generationRequestId: 'canvas-request',
+        }
         const fixture = setup([media, marker(), image('retained')])
         fixture.setState({
             ...fixture.state,
-            aiChatPanel: { isOpen: false, topLevelMode: 'aiThreads', contextChips: ['image', 'marker', 'retained'] },
-            edges: [{ edgeId: 'edge', sourceNodeId: 'marker', targetNodeId: 'image' }],
+            aiChatPanel: {
+                isOpen: false,
+                topLevelMode: 'aiThreads',
+                contextChips: ['image', 'marker', 'retained'],
+            },
+            edges: [{
+                edgeId: 'edge',
+                sourceNodeId: 'marker',
+                targetNodeId: 'image',
+            }],
         })
-        fixture.ports.resolveTree = (nodes, edges) => ({ nodes: nodes.filter(node => node.nodeId !== 'marker'), edges })
+        fixture.ports.resolveTree = (nodes, edges) => ({
+            nodes: nodes.filter(node => node.nodeId !== 'marker'),
+            edges,
+        })
         await fixture.owner.deleteCanvasNodes(new Set(['image']))
         expect(fixture.ports.detachAsset).toHaveBeenCalledWith(expect.objectContaining({ removedNodeIds: ['image', 'marker'] }))
         expect(fixture.state.nodes.map(node => node.nodeId)).toEqual(['retained'])
@@ -106,10 +174,15 @@ describe('WorkspaceNodeDeletion', () => {
     it('continues deleting other selected nodes after one detach fails', async () => {
         const fixture = setup([image('blocked'), image('allowed')])
         fixture.ports.detachAsset = async request => {
-            if (request.nodeId === 'blocked') throw new Error('DENIED')
+            if (request.nodeId === 'blocked')
+                throw new Error('DENIED')
+
             return request.canvasState
         }
-        await fixture.owner.deleteCanvasNodes(new Set(['blocked', 'allowed']))
+        await fixture.owner.deleteCanvasNodes(new Set([
+            'blocked',
+            'allowed',
+        ]))
         expect(fixture.state.nodes.map(node => node.nodeId)).toEqual(['blocked'])
         expect(fixture.ports.reportError).toHaveBeenCalledTimes(2)
     })
@@ -134,7 +207,11 @@ describe('WorkspaceNodeDeletion', () => {
     it('cancels unfinished media using an operation revision without fetching', async () => {
         const fixture = setup([image('image', true), operation()])
         await fixture.owner.deleteCanvasNodes(new Set(['image']))
-        expect(fixture.ports.cancelRequest).toHaveBeenCalledWith({ workspaceId: 'workspace', generationRequestId: 'request', requestRevision: 7 })
+        expect(fixture.ports.cancelRequest).toHaveBeenCalledWith({
+            workspaceId: 'workspace',
+            generationRequestId: 'request',
+            requestRevision: 7,
+        })
         expect(fixture.ports.getRequest).not.toHaveBeenCalled()
         expect(fixture.ports.detachAsset).not.toHaveBeenCalled()
         expect(fixture.ports.removeOperation).toHaveBeenCalledWith('operation', 'media-generation')
@@ -143,8 +220,15 @@ describe('WorkspaceNodeDeletion', () => {
     it('fetches the request revision when no operation survived', async () => {
         const fixture = setup([image('image', true)])
         await fixture.owner.deleteCanvasNodes(new Set(['image']))
-        expect(fixture.ports.getRequest).toHaveBeenCalledWith({ workspaceId: 'workspace', generationRequestId: 'request' })
-        expect(fixture.ports.cancelRequest).toHaveBeenCalledWith({ workspaceId: 'workspace', generationRequestId: 'request', requestRevision: 9 })
+        expect(fixture.ports.getRequest).toHaveBeenCalledWith({
+            workspaceId: 'workspace',
+            generationRequestId: 'request',
+        })
+        expect(fixture.ports.cancelRequest).toHaveBeenCalledWith({
+            workspaceId: 'workspace',
+            generationRequestId: 'request',
+            requestRevision: 9,
+        })
         expect(fixture.ports.detachAsset).not.toHaveBeenCalled()
     })
 
@@ -163,10 +247,19 @@ describe('WorkspaceNodeDeletion', () => {
         const fixture = setup([image(), image('other')])
         const pending = Promise.withResolvers<CanvasState>()
         fixture.ports.detachAsset = vi.fn(() => pending.promise)
-        const deleting = fixture.owner.deleteCanvasNodes(new Set(['image', 'other']))
+        const deleting = fixture.owner.deleteCanvasNodes(new Set([
+            'image',
+            'other',
+        ]))
         await Promise.resolve()
-        fixture.setScope({ workspaceId: 'replacement', sceneKey: 'replacement' })
-        pending.resolve({ ...fixture.state, nodes: [] })
+        fixture.setScope({
+            workspaceId: 'replacement',
+            sceneKey: 'replacement',
+        })
+        pending.resolve({
+            ...fixture.state,
+            nodes: [],
+        })
         await deleting
         expect(fixture.ports.commitTransient).not.toHaveBeenCalled()
         expect(fixture.ports.detachAsset).toHaveBeenCalledOnce()
@@ -178,7 +271,10 @@ describe('WorkspaceNodeDeletion', () => {
         const pending = Promise.withResolvers<{ request: { revision: number } }>()
         fixture.ports.getRequest = () => pending.promise
         const deleting = fixture.owner.deleteCanvasNodes(new Set(['image']))
-        fixture.setScope({ workspaceId: 'workspace', sceneKey: 'replacement' })
+        fixture.setScope({
+            workspaceId: 'workspace',
+            sceneKey: 'replacement',
+        })
         pending.resolve({ request: { revision: 8 } })
         await deleting
         expect(fixture.ports.cancelRequest).not.toHaveBeenCalled()
@@ -194,14 +290,23 @@ describe('WorkspaceNodeDeletion', () => {
             .mockImplementationOnce(() => second.promise)
         const obsolete = fixture.owner.deleteCanvasNodes(new Set(['image']))
         await Promise.resolve()
-        fixture.setScope({ workspaceId: 'workspace', sceneKey: 'replacement' })
+        fixture.setScope({
+            workspaceId: 'workspace',
+            sceneKey: 'replacement',
+        })
         const current = fixture.owner.deleteCanvasNodes(new Set(['image']))
         await Promise.resolve()
-        first.resolve({ ...fixture.state, nodes: [] })
+        first.resolve({
+            ...fixture.state,
+            nodes: [],
+        })
         await obsolete
         await fixture.owner.deleteCanvasNodes(new Set(['image']))
         expect(fixture.ports.detachAsset).toHaveBeenCalledTimes(2)
-        second.resolve({ ...fixture.state, nodes: [] })
+        second.resolve({
+            ...fixture.state,
+            nodes: [],
+        })
         await current
         expect(fixture.ports.commitTransient).toHaveBeenCalledOnce()
     })
@@ -214,7 +319,10 @@ describe('WorkspaceNodeDeletion', () => {
         const deleting = first.owner.deleteCanvasNodes(new Set(['image']))
         await Promise.resolve()
         first.owner.destroy()
-        pending.resolve({ ...first.state, nodes: [] })
+        pending.resolve({
+            ...first.state,
+            nodes: [],
+        })
         await deleting
         await first.owner.deleteCanvasNodes(new Set(['image']))
         await second.owner.deleteCanvasNodes(new Set(['image']))

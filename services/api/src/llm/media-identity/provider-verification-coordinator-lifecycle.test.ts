@@ -159,7 +159,12 @@ const updatedAsset = (verification: ProviderIdentityVerification): Asset => ({
         providerVerifications: [verification],
     },
     documents: {},
-    states: { lifecycle: 'active', media: 'ready', conversation: 'none', provenance: 'none' },
+    states: {
+        lifecycle: 'active',
+        media: 'ready',
+        conversation: 'none',
+        provenance: 'none',
+    },
     referenceCount: 1,
     revision: 4,
     createdAt: NOW - 10_000,
@@ -214,7 +219,10 @@ describe('ProviderVerificationCoordinator lifecycle', () => {
             status: 'submitted',
             revision: 4,
             runs: [{ status: 'pending' }],
-            verificationSessions: [{ status: 'consumed', consumedAt: NOW }],
+            verificationSessions: [{
+                status: 'consumed',
+                consumedAt: NOW,
+            }],
         })
         expect(mocks.addProviderVerification).toHaveBeenCalledWith(expect.objectContaining({
             verification: expect.objectContaining({

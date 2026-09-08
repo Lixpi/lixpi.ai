@@ -55,7 +55,10 @@ describe('createDefaultCapabilityCatalogClient', () => {
                 workspaceId: 'workspace-1',
                 organizationId: 'org-1',
             })
-            expect(result).toEqual({ items: [], cursor: undefined })
+            expect(result).toEqual({
+                items: [],
+                cursor: undefined,
+            })
         })
 
         it('throws when no NATS connection is active', async () => {

@@ -49,18 +49,29 @@ const makeDeps = () => ({
 const createFakeProvider = (resolveToken?: { release: () => void }) => {
     const providerName = 'Anthropic' as const
     const process = vi.fn(async () => {
-        if (resolveToken) {
-            await new Promise<void>((resolve) => {
-                resolveToken.release = resolve
-            })
-        }
+        if (resolveToken)
+            await new Promise<void>((resolve) => void (resolveToken.release = resolve))
+
         return {}
     })
     const stop = vi.fn()
-    const ctor = vi.fn(function() {
-        return { process, stop, providerName }
-    }) as any
-    return { process, stop, providerName, ctor }
+    class FakeProvider {
+        constructor() {
+            return {
+                process,
+                stop,
+                providerName,
+            }
+        }
+    }
+    const ctor = vi.fn(FakeProvider) as any
+
+    return {
+        process,
+        stop,
+        providerName,
+        ctor,
+    }
 }
 
 const createDefinition = (provider: ProviderName, constructor: any): MediaProviderDefinition => ({
@@ -90,10 +101,20 @@ const createDefinition = (provider: ProviderName, constructor: any): MediaProvid
         automaticRetry: 'never',
         costOnFilter: 'not-documented',
     },
-    normalizeProblem: (error, context) => normalizeProviderProblem({ provider, error, context }),
+    normalizeProblem: (error, context) => normalizeProviderProblem({
+        provider,
+        error,
+        context,
+    }),
     verification: provider === 'BytePlus'
-        ? { strategy: 'provider-hosted-session', derivativeReuse: 'documented-lineage' }
-        : { strategy: 'unsupported', derivativeReuse: 'not-allowed' },
+        ? {
+            strategy: 'provider-hosted-session',
+            derivativeReuse: 'documented-lineage',
+        }
+        : {
+            strategy: 'unsupported',
+            derivativeReuse: 'not-allowed',
+        },
     retentionNotes: 'Test retention policy.',
     sensitiveDataNotes: 'Test sensitive-data policy.',
     documentationUrls: ['https://docs.anthropic.com/'],
@@ -108,8 +129,15 @@ const createDefinitions = (anthropicConstructor: any): Record<ProviderName, Medi
     ])) as Record<ProviderName, MediaProviderDefinition>
 
 const createState = () => ({
-    messages: [{ role: 'user', content: 'hi' }],
-    aiModelMetaInfo: { provider: 'Anthropic', model: 'claude', modelVersion: 'claude' },
+    messages: [{
+        role: 'user',
+        content: 'hi',
+    }],
+    aiModelMetaInfo: {
+        provider: 'Anthropic',
+        model: 'claude',
+        modelVersion: 'claude',
+    },
     eventMeta: {},
     workspaceId: 'ws-1',
     aiChatThreadId: 'thread-1',
@@ -139,7 +167,11 @@ describe('ProviderRegistry', () => {
 
     it('ignores duplicate process requests while one is in flight', async () => {
         const resolver = { release: () => undefined as void }
-        const { process, stop, ctor } = createFakeProvider(resolver)
+        const {
+            process,
+            stop,
+            ctor,
+        } = createFakeProvider(resolver)
         const create = ctor
         const deps = makeDeps()
         const registry = new ProviderRegistry(deps.natsService, createDefinitions(create))
@@ -159,7 +191,11 @@ describe('ProviderRegistry', () => {
 
     it('stops every instance in a request group', async () => {
         const resolver = { release: () => undefined as void }
-        const { process, stop, ctor } = createFakeProvider(resolver)
+        const {
+            process,
+            stop,
+            ctor,
+        } = createFakeProvider(resolver)
         const create = ctor
         const deps = makeDeps()
         const registry = new ProviderRegistry(deps.natsService, createDefinitions(create))
@@ -179,16 +215,28 @@ describe('ProviderRegistry', () => {
     it('shuts down all active providers', async () => {
         const providerA = createFakeProvider()
         const providerB = createFakeProvider()
-        const create = vi.fn(function() {
-            return providerA.ctor()
-        }) as any
+        class FirstProvider {
+            constructor() {
+                return {
+                    process: providerA.process,
+                    stop: providerA.stop,
+                    providerName: providerA.providerName,
+                }
+            }
+        }
+        class SecondProvider {
+            constructor() {
+                return {
+                    process: providerB.process,
+                    stop: providerB.stop,
+                    providerName: providerB.providerName,
+                }
+            }
+        }
+        const create = vi.fn(FirstProvider) as any
         create
-            .mockImplementationOnce(function() {
-                return { process: providerA.process, stop: providerA.stop, providerName: providerA.providerName }
-            })
-            .mockImplementationOnce(function() {
-                return { process: providerB.process, stop: providerB.stop, providerName: providerB.providerName }
-            })
+            .mockImplementationOnce(FirstProvider)
+            .mockImplementationOnce(SecondProvider)
         const deps = makeDeps()
         const registry = new ProviderRegistry(deps.natsService, createDefinitions(create))
 
@@ -204,7 +252,10 @@ describe('ProviderRegistry', () => {
 
     it('stops requests by inferred media key from instanceKey when no request group is passed', async () => {
         const resolver = { release: () => undefined as void }
-        const { stop, ctor } = createFakeProvider(resolver)
+        const {
+            stop,
+            ctor,
+        } = createFakeProvider(resolver)
         const deps = makeDeps()
         const registry = new ProviderRegistry(deps.natsService, createDefinitions(ctor))
 

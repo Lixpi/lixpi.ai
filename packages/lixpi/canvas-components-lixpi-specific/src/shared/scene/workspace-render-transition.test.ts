@@ -10,9 +10,13 @@ import {
 
 import { planWorkspaceRenderTransition } from './workspace-render-transition.ts'
 
-function makeCanvasState(): CanvasState {
+const makeCanvasState = (): CanvasState => {
     return {
-        viewport: { x: 0, y: 0, zoom: 1 },
+        viewport: {
+            x: 0,
+            y: 0,
+            zoom: 1,
+        },
         nodes: [],
         edges: [],
     }

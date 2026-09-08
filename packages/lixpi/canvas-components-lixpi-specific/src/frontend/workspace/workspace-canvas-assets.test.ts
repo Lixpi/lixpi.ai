@@ -18,8 +18,14 @@ const image: ImageCanvasNode = {
     nodeId: 'image-1',
     type: 'image',
     assetId: 'asset-1',
-    position: { x: 0, y: 0 },
-    dimensions: { width: 100, height: 100 },
+    position: {
+        x: 0,
+        y: 0,
+    },
+    dimensions: {
+        width: 100,
+        height: 100,
+    },
 }
 
 describe('WorkspaceCanvasAssets', () => {
@@ -27,7 +33,10 @@ describe('WorkspaceCanvasAssets', () => {
         const host = {
             assets: {
                 read: () => ({ descriptor: { content: 'image' } }),
-                readDocument: () => ({ doc: { text: 'provenance' }, version: 1 }),
+                readDocument: () => ({
+                    doc: { text: 'provenance' },
+                    version: 1,
+                }),
             },
             extractText: () => '{"input":{"prompt":"draw"}}',
         }
@@ -37,8 +46,14 @@ describe('WorkspaceCanvasAssets', () => {
             type: 'capabilityArtifact',
             assetId: 'asset-artifact',
             artifactTypeId: 'chart',
-            position: { x: 0, y: 0 },
-            dimensions: { width: 100, height: 100 },
+            position: {
+                x: 0,
+                y: 0,
+            },
+            dimensions: {
+                width: 100,
+                height: 100,
+            },
         } as CapabilityArtifactCanvasNode
 
         expect(owner.getDescriptor(image)).toEqual({ content: 'image' })
@@ -48,7 +63,10 @@ describe('WorkspaceCanvasAssets', () => {
     it('upserts successful metadata updates and refreshes chrome', async () => {
         const upsert = vi.fn()
         const refreshChrome = vi.fn()
-        const updated = { assetId: 'asset-1', revision: 2 }
+        const updated = {
+            assetId: 'asset-1',
+            revision: 2,
+        }
         const host = {
             settings: { helpTooltip: { interactiveHideDelayMs: 10 } },
             workspace: { userId: () => 'user-1' },

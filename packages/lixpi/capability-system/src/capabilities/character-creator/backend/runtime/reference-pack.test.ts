@@ -30,9 +30,11 @@ const capabilities = {
 
 const makeStore = (): CharacterTransientMediaStorePort => {
     let sequence = 0
+
     return {
         putWithCoordinate: vi.fn(async input => {
             sequence += 1
+
             return {
                 coordinate: {
                     organizationId: 'org-1',
@@ -60,7 +62,12 @@ const evidence = (): CharacterEvidenceProfile => ({
             requestAuthority: 'supporting',
             visibility: 'observed',
             sourceAssetId: 'asset-front',
-            sourceRegion: { x: 40, y: 20, width: 180, height: 160 },
+            sourceRegion: {
+                x: 40,
+                y: 20,
+                width: 180,
+                height: 160,
+            },
             targetAngles: ['front'],
             confidence: 1,
         },
@@ -71,7 +78,12 @@ const evidence = (): CharacterEvidenceProfile => ({
             requestAuthority: 'assigned',
             visibility: 'observed',
             sourceAssetId: 'asset-front',
-            sourceRegion: { x: -20, y: 180, width: 800, height: 1000 },
+            sourceRegion: {
+                x: -20,
+                y: 180,
+                width: 800,
+                height: 1000,
+            },
             targetAngles: ['front'],
             confidence: 0.9,
         },
@@ -82,7 +94,12 @@ const evidence = (): CharacterEvidenceProfile => ({
             requestAuthority: 'assigned',
             visibility: 'observed',
             sourceAssetId: 'asset-profile',
-            sourceRegion: { x: 500, y: 100, width: 300, height: 900 },
+            sourceRegion: {
+                x: 500,
+                y: 100,
+                width: 300,
+                height: 900,
+            },
             targetAngles: ['profile'],
             confidence: 0.8,
         },
@@ -98,10 +115,20 @@ const evidence = (): CharacterEvidenceProfile => ({
 describe('buildCharacterReferencePack', () => {
     it('keeps multi-angle originals, creates lossless role crops, and enforces pixel bounds', async () => {
         const frontBytes = await sharp({
-            create: { width: 1200, height: 900, channels: 3, background: '#884422' },
+            create: {
+                width: 1200,
+                height: 900,
+                channels: 3,
+                background: '#884422',
+            },
         }).png().toBuffer()
         const profileBytes = await sharp({
-            create: { width: 900, height: 1200, channels: 3, background: '#226688' },
+            create: {
+                width: 900,
+                height: 1200,
+                channels: 3,
+                background: '#226688',
+            },
         }).png().toBuffer()
         const store = makeStore()
 
@@ -130,8 +157,14 @@ describe('buildCharacterReferencePack', () => {
             ],
             evidence: evidence(),
             referenceAliases: [
-                { assetId: 'asset-front', alias: 'REFERENCE_1' },
-                { assetId: 'asset-profile', alias: 'REFERENCE_2' },
+                {
+                    assetId: 'asset-front',
+                    alias: 'REFERENCE_1',
+                },
+                {
+                    assetId: 'asset-profile',
+                    alias: 'REFERENCE_2',
+                },
             ],
             capabilities,
             store,
@@ -162,7 +195,12 @@ describe('buildCharacterReferencePack', () => {
 
     it('marks an existing sheet component as the edit target instead of another original source', async () => {
         const bytes = await sharp({
-            create: { width: 256, height: 256, channels: 3, background: '#334455' },
+            create: {
+                width: 256,
+                height: 256,
+                channels: 3,
+                background: '#334455',
+            },
         }).png().toBuffer()
 
         const pack = await buildCharacterReferencePack({
@@ -179,7 +217,10 @@ describe('buildCharacterReferencePack', () => {
                 width: 256,
                 height: 256,
             }],
-            evidence: { ...evidence(), facts: [] },
+            evidence: {
+                ...evidence(),
+                facts: [],
+            },
             editTargetAssetId: 'sheet-1',
             capabilities,
             store: makeStore(),
@@ -197,7 +238,12 @@ describe('buildCharacterReferencePack', () => {
 
     it('keeps only a face-region edit target when the prior sheet is authoritative for identity alone', async () => {
         const bytes = await sharp({
-            create: { width: 512, height: 512, channels: 3, background: '#334455' },
+            create: {
+                width: 512,
+                height: 512,
+                channels: 3,
+                background: '#334455',
+            },
         }).png().toBuffer()
         const store = makeStore()
 

@@ -54,7 +54,10 @@ describe('Capability sealed manifest reads', () => {
     it('reads the BatchGet-captured hash without consulting the mutable catalog pointer', async () => {
         const result = await readAuthorizedCapabilityManifestSnapshot({
             record: capturedRecord,
-            requester: { userId: 'member-1', organizationIds: ['org-1'] },
+            requester: {
+                userId: 'member-1',
+                organizationIds: ['org-1'],
+            },
         })
 
         expect(getContentAddressedBlobMock).toHaveBeenCalledWith({

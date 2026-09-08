@@ -18,17 +18,19 @@ import {
 } from './context-preview.ts'
 
 const owners: ReturnType<typeof mountContextPreviewTile>[] = []
-function createContextPreviewTile(options: Parameters<typeof mountContextPreviewTile>[0]) {
+const createContextPreviewTile = (options: Parameters<typeof mountContextPreviewTile>[0]) => {
     const tile = mountContextPreviewTile(options)
     owners.push(tile)
+
     return tile
 }
 afterEach(() => {
     for (const tile of owners.splice(0)) tile.destroy()
+
     vi.restoreAllMocks()
 })
 
-function makeAsset(overrides: Partial<Asset> & { assetId: string }): Asset {
+const makeAsset = (overrides: Partial<Asset> & { assetId: string }): Asset => {
     return {
         organizationId: 'org-1',
         title: '',
@@ -46,9 +48,17 @@ function makeAsset(overrides: Partial<Asset> & { assetId: string }): Asset {
     } as Asset
 }
 
-function createMockEnvironment(overrides: {
-    documents?: { documentId: string; title?: string; content?: string | object }[]
-    threads?: { threadId: string; title?: string; content?: string | object }[]
+const createMockEnvironment = (overrides: {
+    documents?: {
+        documentId: string
+        title?: string
+        content?: string | object
+    }[]
+    threads?: {
+        threadId: string
+        title?: string
+        content?: string | object
+    }[]
     assets?: Asset[]
     authToken?: string
     apiBaseUrl?: string
@@ -57,7 +67,7 @@ function createMockEnvironment(overrides: {
     getThreads: ReturnType<typeof vi.fn>
     getAsset: ReturnType<typeof vi.fn>
     getAuthToken: ReturnType<typeof vi.fn>
-} {
+} => {
     const {
         documents = [],
         threads = [],
@@ -79,107 +89,146 @@ function createMockEnvironment(overrides: {
         getAuthToken,
         getArtifactIcon: () => '<svg></svg>',
         extractDocumentText: (content: string | object) => {
-            if (!content) return ''
+            if (!content)
+                return ''
+
             const source = typeof content === 'string' ? JSON.parse(content) : content
+
             return source.content?.map((block: { content?: Array<{ text?: string }> }) => block.content?.map(node => node.text ?? '').join('') ?? '').join('\n') ?? ''
         },
         initialRenditionUrl: (assetId: string, rendition: string) => `/api/assets/${assetId}/renditions/${rendition}`,
         resolveRenditionUrl: async (assetId: string, rendition: string): Promise<string> => {
             const token = await environment.getAuthToken()
+
             return `${apiBaseUrl}/api/assets/${assetId}/renditions/${rendition}?token=${encodeURIComponent(token)}`
         },
         onError: (error: unknown) => console.warn('Failed to resolve context preview media URL:', error),
     }
+
     return environment
 }
 
-function createDocumentNode(overrides: any = {}) {
+const createDocumentNode = (overrides: any = {}) => {
     return {
         type: 'document',
         nodeId: 'document-node',
         assetId: 'document-node',
-        position: { x: 0, y: 0 },
-        dimensions: { width: 300, height: 200 },
+        position: {
+            x: 0,
+            y: 0,
+        },
+        dimensions: {
+            width: 300,
+            height: 200,
+        },
         ...overrides,
     }
 }
 
-function createThreadNode(overrides: any = {}) {
+const createThreadNode = (overrides: any = {}) => {
     return {
         type: 'aiChatThread',
         nodeId: 'thread-node',
         assetId: 'thread-node',
-        position: { x: 0, y: 0 },
-        dimensions: { width: 320, height: 180 },
+        position: {
+            x: 0,
+            y: 0,
+        },
+        dimensions: {
+            width: 320,
+            height: 180,
+        },
         ...overrides,
     }
 }
 
-function createImageNode(overrides: any = {}) {
+const createImageNode = (overrides: any = {}) => {
     return {
         type: 'image',
         nodeId: 'image-node',
         assetId: 'image-node',
-        position: { x: 0, y: 0 },
-        dimensions: { width: 420, height: 560 },
+        position: {
+            x: 0,
+            y: 0,
+        },
+        dimensions: {
+            width: 420,
+            height: 560,
+        },
         ...overrides,
     }
 }
 
-function createVideoNode(overrides: any = {}) {
+const createVideoNode = (overrides: any = {}) => {
     return {
         type: 'video',
         nodeId: 'video-node',
         assetId: 'video-node',
-        position: { x: 0, y: 0 },
-        dimensions: { width: 480, height: 270 },
+        position: {
+            x: 0,
+            y: 0,
+        },
+        dimensions: {
+            width: 480,
+            height: 270,
+        },
         ...overrides,
     }
 }
 
-function createAudioNode(overrides: any = {}) {
+const createAudioNode = (overrides: any = {}) => {
     return {
         type: 'audio',
         nodeId: 'audio-node',
         assetId: 'audio-node',
-        position: { x: 0, y: 0 },
-        dimensions: { width: 320, height: 80 },
+        position: {
+            x: 0,
+            y: 0,
+        },
+        dimensions: {
+            width: 320,
+            height: 80,
+        },
         ...overrides,
     }
 }
 
-function createCapabilityArtifactNode(overrides: any = {}) {
+const createCapabilityArtifactNode = (overrides: any = {}) => {
     return {
         type: 'capabilityArtifact',
         nodeId: 'timeline-node',
         artifactTypeId: 'action-timeline',
         assetId: 'timeline-asset',
-        position: { x: 0, y: 0 },
-        dimensions: { width: 520, height: 360 },
+        position: {
+            x: 0,
+            y: 0,
+        },
+        dimensions: {
+            width: 520,
+            height: 360,
+        },
         ...overrides,
     }
 }
 
-function createTextDoc(text: string): string {
+const createTextDoc = (text: string): string => {
     return JSON.stringify({
         type: 'doc',
-        content: [{ type: 'paragraph', content: [{ type: 'text', text }] }],
+        content: [{
+            type: 'paragraph',
+            content: [{
+                type: 'text',
+                text,
+            }],
+        }],
     })
 }
 
-function waitForMicrotasks(): Promise<void> {
-    return Promise.resolve()
-}
+const waitForMicrotasks = (): Promise<void> => Promise.resolve()
 
-function waitForNextTick(): Promise<void> {
-    return new Promise((resolve) => {
-        setTimeout(resolve, 0)
-    })
-}
+const waitForNextTick = (): Promise<void> => new Promise((resolve) => void setTimeout(resolve, 0))
 
-beforeEach(() => {
-    document.body.innerHTML = ''
-})
+beforeEach(() => void (document.body.innerHTML = ''))
 
 // =============================================================================
 // LABELS — title resolution prefers Asset.title, then falls back to the
@@ -189,7 +238,10 @@ beforeEach(() => {
 describe('context preview labels', () => {
     it('uses the Asset title when available and falls back to the node type label for media', () => {
         const env = createMockEnvironment({
-            assets: [makeAsset({ assetId: 'document-node', title: 'Project Notes' })],
+            assets: [makeAsset({
+                assetId: 'document-node',
+                title: 'Project Notes',
+            })],
         })
 
         expect(getContextPreviewAccessibleLabel(createDocumentNode(), env)).toBe('Project Notes')
@@ -206,7 +258,10 @@ describe('context preview labels', () => {
                 {
                     type: 'unknown',
                     nodeId: 'unknown-node',
-                    dimensions: { width: 100, height: 100 },
+                    dimensions: {
+                        width: 100,
+                        height: 100,
+                    },
                 } as unknown as CanvasNode,
                 env,
             ),
@@ -215,8 +270,14 @@ describe('context preview labels', () => {
 
     it('falls back to the document store title when the Asset has no title', () => {
         const env = createMockEnvironment({
-            assets: [makeAsset({ assetId: 'document-node', title: '' })],
-            documents: [{ documentId: 'document-node', title: '  Project Notes  ' }],
+            assets: [makeAsset({
+                assetId: 'document-node',
+                title: '',
+            })],
+            documents: [{
+                documentId: 'document-node',
+                title: '  Project Notes  ',
+            }],
         })
 
         expect(getContextPreviewAccessibleLabel(createDocumentNode(), env)).toBe('Project Notes')
@@ -224,7 +285,10 @@ describe('context preview labels', () => {
 
     it('renders a Capability Artifact with its registered existing SVG icon and canonical title', async () => {
         const env = createMockEnvironment({
-            assets: [makeAsset({ assetId: 'timeline-asset', title: 'Train Timeline' })],
+            assets: [makeAsset({
+                assetId: 'timeline-asset',
+                title: 'Train Timeline',
+            })],
         })
         const { dom } = createContextPreviewTile({
             node: createCapabilityArtifactNode(),
@@ -250,7 +314,10 @@ describe('context preview labels', () => {
             assets: [makeAsset({
                 assetId: 'document-node',
                 title: 'Draft Note',
-                descriptor: { status: 'ready', summary: '   ' } as Asset['descriptor'],
+                descriptor: {
+                    status: 'ready',
+                    summary: '   ',
+                } as Asset['descriptor'],
             })],
             documents: [
                 {
@@ -283,9 +350,13 @@ describe('context preview resource ownership', () => {
         const signals: AbortSignal[] = []
         environment.resolveRenditionUrl = (_asset, _rendition, signal) => {
             signals.push(signal)
+
             return pending.promise
         }
-        const tile = createContextPreviewTile({ node: createImageNode(), environment })
+        const tile = createContextPreviewTile({
+            node: createImageNode(),
+            environment,
+        })
         document.body.appendChild(tile.dom)
         const image = tile.dom.querySelector('img')!
         const source = image.src
@@ -298,8 +369,14 @@ describe('context preview resource ownership', () => {
     })
 
     it('pauses and releases native videos without touching another preview instance', () => {
-        const first = createContextPreviewTile({ node: createVideoNode(), environment: createMockEnvironment() })
-        const second = createContextPreviewTile({ node: createVideoNode(), environment: createMockEnvironment() })
+        const first = createContextPreviewTile({
+            node: createVideoNode(),
+            environment: createMockEnvironment(),
+        })
+        const second = createContextPreviewTile({
+            node: createVideoNode(),
+            environment: createMockEnvironment(),
+        })
         document.body.append(first.dom, second.dom)
         const firstVideo = first.dom.querySelector('video')!
         const secondVideo = second.dom.querySelector('video')!
@@ -318,9 +395,14 @@ describe('context preview resource ownership', () => {
         const signals: AbortSignal[] = []
         environment.resolveRenditionUrl = async (_asset, _rendition, signal) => {
             signals.push(signal)
+
             return 'https://media.test/image.png'
         }
-        const tile = createContextPreviewTile({ node: createImageNode(), environment, inlinePopover: true })
+        const tile = createContextPreviewTile({
+            node: createImageNode(),
+            environment,
+            inlinePopover: true,
+        })
         document.body.appendChild(tile.dom)
         const originalContentSignal = signals[0]!
         const triggerSignal = signals[1]!
@@ -402,9 +484,7 @@ describe('createContextPreviewTile — media resolution', () => {
         const env = createMockEnvironment()
         let resolveAuth: ((value: string | undefined) => void) | null = null
         env.getAuthToken = vi.fn(() =>
-            new Promise((resolve) => {
-                resolveAuth = resolve
-            })
+            new Promise((resolve) => void (resolveAuth = resolve))
         )
 
         const { dom } = createContextPreviewTile({
@@ -457,7 +537,10 @@ describe('createContextPreviewTile — document content', () => {
             assets: [makeAsset({
                 assetId: 'document-node',
                 title: 'Project Notes',
-                descriptor: { status: 'ready', summary: 'Descriptor override' } as Asset['descriptor'],
+                descriptor: {
+                    status: 'ready',
+                    summary: 'Descriptor override',
+                } as Asset['descriptor'],
             })],
             documents: [
                 {
@@ -491,7 +574,10 @@ describe('createContextPreviewTile — document content', () => {
             assets: [makeAsset({
                 assetId: 'document-node',
                 title: 'Draft Note',
-                descriptor: { status: 'error', summary: 'Descriptor should be ignored while not ready' } as Asset['descriptor'],
+                descriptor: {
+                    status: 'error',
+                    summary: 'Descriptor should be ignored while not ready',
+                } as Asset['descriptor'],
             })],
             documents: [
                 {
@@ -529,7 +615,10 @@ describe('createContextPreviewTile — popover layout', () => {
         const triggerContent = document.createElement('span')
         triggerContent.className = 'test-inline-reference-label'
         triggerContent.textContent = 'Character Sheet'
-        const { dom, destroy } = createContextPreviewTile({
+        const {
+            dom,
+            destroy,
+        } = createContextPreviewTile({
             node: createImageNode({ assetId: 'image-1' }),
             environment: env,
             triggerContent,
@@ -558,7 +647,10 @@ describe('createContextPreviewTile — popover layout', () => {
 
     it('uses the base popover class when image/video metadata is missing', async () => {
         const env = createMockEnvironment()
-        const { dom, destroy } = createContextPreviewTile({
+        const {
+            dom,
+            destroy,
+        } = createContextPreviewTile({
             node: createImageNode(),
             environment: env,
         })
@@ -595,10 +687,22 @@ describe('createContextPreviewTile — popover layout', () => {
 
     it('adds a portrait orientation class when the node is taller than it is wide, and landscape otherwise', async () => {
         const env = createMockEnvironment({
-            assets: [makeAsset({ assetId: 'image-node', descriptor: { status: 'ready', summary: 'Has meta' } as Asset['descriptor'] })],
+            assets: [makeAsset({
+                assetId: 'image-node',
+                descriptor: {
+                    status: 'ready',
+                    summary: 'Has meta',
+                } as Asset['descriptor'],
+            })],
         })
-        const { dom, destroy } = createContextPreviewTile({
-            node: createImageNode({ dimensions: { width: 200, height: 500 } }),
+        const {
+            dom,
+            destroy,
+        } = createContextPreviewTile({
+            node: createImageNode({ dimensions: {
+                width: 200,
+                height: 500,
+            } }),
             environment: env,
         })
         document.body.appendChild(dom)
@@ -612,8 +716,14 @@ describe('createContextPreviewTile — popover layout', () => {
         destroy()
         expect(document.body.querySelector('.help-tooltip-content')).toBeNull()
 
-        const { dom: landscapeDom, destroy: destroyLandscape } = createContextPreviewTile({
-            node: createImageNode({ dimensions: { width: 500, height: 300 } }),
+        const {
+            dom: landscapeDom,
+            destroy: destroyLandscape,
+        } = createContextPreviewTile({
+            node: createImageNode({ dimensions: {
+                width: 500,
+                height: 300,
+            } }),
             environment: env,
         })
         document.body.appendChild(landscapeDom)
@@ -667,7 +777,10 @@ describe('createContextPreviewTile — live updates', () => {
         viewport.appendChild(node)
         document.body.appendChild(pane)
 
-        const { dom, destroy } = createContextPreviewTile({
+        const {
+            dom,
+            destroy,
+        } = createContextPreviewTile({
             node: createImageNode(),
             environment: createMockEnvironment(),
             inlinePopover: true,
@@ -693,7 +806,10 @@ describe('createContextPreviewTile — live updates', () => {
         let currentNode = createThreadNode()
 
         const env = createMockEnvironment({
-            assets: [makeAsset({ assetId: 'thread-node', title: 'First title' })],
+            assets: [makeAsset({
+                assetId: 'thread-node',
+                title: 'First title',
+            })],
         })
 
         const { dom } = createContextPreviewTile({
@@ -710,7 +826,10 @@ describe('createContextPreviewTile — live updates', () => {
         let tooltipContent = document.body.querySelector('.help-tooltip-content') as HTMLElement
         expect(tooltipContent.textContent).toContain('First title')
 
-        env.getAsset = vi.fn(() => makeAsset({ assetId: 'thread-node', title: 'Second title' }))
+        env.getAsset = vi.fn(() => makeAsset({
+            assetId: 'thread-node',
+            title: 'Second title',
+        }))
         currentNode = createThreadNode()
 
         trigger.dispatchEvent(new PointerEvent('focusin', { bubbles: true }))
@@ -726,10 +845,16 @@ describe('createContextPreviewTile — live updates', () => {
             assets: [makeAsset({
                 assetId: 'document-node',
                 title: 'Thread title',
-                descriptor: { status: 'ready', summary: 'First summary' } as Asset['descriptor'],
+                descriptor: {
+                    status: 'ready',
+                    summary: 'First summary',
+                } as Asset['descriptor'],
             })],
         })
-        const { dom, destroy } = createContextPreviewTile({
+        const {
+            dom,
+            destroy,
+        } = createContextPreviewTile({
             node: currentNode,
             getNode: () => currentNode,
             environment: env,
@@ -755,7 +880,10 @@ describe('createContextPreviewTile — live updates', () => {
             makeAsset({
                 assetId: 'document-node',
                 title: 'Thread title',
-                descriptor: { status: 'ready', summary: 'Second summary' } as Asset['descriptor'],
+                descriptor: {
+                    status: 'ready',
+                    summary: 'Second summary',
+                } as Asset['descriptor'],
             })
         )
         currentNode = createDocumentNode()
@@ -780,7 +908,10 @@ describe('createContextPreviewTile — live updates', () => {
 describe('createContextPreviewTile — lifecycle', () => {
     it('destroys tooltip DOM cleanly', async () => {
         const env = createMockEnvironment()
-        const { dom, destroy } = createContextPreviewTile({
+        const {
+            dom,
+            destroy,
+        } = createContextPreviewTile({
             node: createDocumentNode(),
             environment: env,
         })

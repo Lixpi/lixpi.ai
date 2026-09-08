@@ -17,30 +17,42 @@ import { createToggleSwitch } from './toggleSwitch.ts'
 // (checked flips, onChange callbacks) still run; only the cosmetic animation is skipped.
 const makeChain = (): any => {
     const chain: any = {}
+
     for (const method of ['duration', 'ease', 'attr', 'style', 'select', 'delay', 'on', 'remove', 'tween']) {
         chain[method] = () => chain
     }
+
     return chain
 }
 ;(selection.prototype as any).transition = () => makeChain()
 
 const SVG_NS = 'http://www.w3.org/2000/svg'
 
-function mountToggle(config: Partial<Parameters<typeof createToggleSwitch>[1]> = {}) {
+const mountToggle = (config: Partial<Parameters<typeof createToggleSwitch>[1]> = {}) => {
     const svg = document.createElementNS(SVG_NS, 'svg') as unknown as SVGSVGElement
     document.body.appendChild(svg)
     const onChange = vi.fn()
-    const toggle = createToggleSwitch(select(svg), { id: 't1', x: 0, y: 0, onChange, ...config })
+    const toggle = createToggleSwitch(select(svg), {
+        id: 't1',
+        x: 0,
+        y: 0,
+        onChange,
+        ...config,
+    })
     const group = svg.querySelector('.toggle-switch-group') as Element
-    return { svg, toggle, onChange, group }
+
+    return {
+        svg,
+        toggle,
+        onChange,
+        group,
+    }
 }
 
 const clickGroup = (group: Element) => group.dispatchEvent(new MouseEvent('click', { bubbles: true }))
 
 describe('createToggleSwitch', () => {
-    beforeEach(() => {
-        document.body.innerHTML = ''
-    })
+    beforeEach(() => void (document.body.innerHTML = ''))
 
     it('reports its initial checked state', () => {
         expect(mountToggle({ checked: false }).toggle.getChecked()).toBe(false)
@@ -56,7 +68,11 @@ describe('createToggleSwitch', () => {
     })
 
     it('flips state and fires onChange with the new value and id on click', () => {
-        const { toggle, onChange, group } = mountToggle({ checked: false })
+        const {
+            toggle,
+            onChange,
+            group,
+        } = mountToggle({ checked: false })
 
         clickGroup(group)
 
@@ -69,7 +85,10 @@ describe('createToggleSwitch', () => {
     })
 
     it('setChecked updates state without firing onChange', () => {
-        const { toggle, onChange } = mountToggle({ checked: false })
+        const {
+            toggle,
+            onChange,
+        } = mountToggle({ checked: false })
 
         toggle.setChecked(true)
 
@@ -78,7 +97,14 @@ describe('createToggleSwitch', () => {
     })
 
     it('does not respond to clicks when created disabled', () => {
-        const { toggle, onChange, group } = mountToggle({ checked: false, disabled: true })
+        const {
+            toggle,
+            onChange,
+            group,
+        } = mountToggle({
+            checked: false,
+            disabled: true,
+        })
 
         clickGroup(group)
 
@@ -87,7 +113,11 @@ describe('createToggleSwitch', () => {
     })
 
     it('stops responding to clicks after setDisabled(true)', () => {
-        const { toggle, onChange, group } = mountToggle({ checked: false })
+        const {
+            toggle,
+            onChange,
+            group,
+        } = mountToggle({ checked: false })
 
         toggle.setDisabled(true)
         clickGroup(group)
@@ -97,13 +127,19 @@ describe('createToggleSwitch', () => {
     })
 
     it('removes its DOM on destroy', () => {
-        const { svg, toggle } = mountToggle()
+        const {
+            svg,
+            toggle,
+        } = mountToggle()
         toggle.destroy()
         expect(svg.querySelector('.toggle-switch-group')).toBeNull()
     })
 
     it('uses explicit dimensions and passes geometry to SVG attributes', () => {
-        const { svg, group } = mountToggle({
+        const {
+            svg,
+            group,
+        } = mountToggle({
             x: 7,
             y: 11,
             width: 40,
@@ -126,7 +162,10 @@ describe('createToggleSwitch', () => {
     })
 
     it('derives width from size and starts checked geometry on the right', () => {
-        const { svg } = mountToggle({ size: 20, checked: true })
+        const { svg } = mountToggle({
+            size: 20,
+            checked: true,
+        })
 
         const track = svg.querySelector('.toggle-track') as SVGRectElement
         const knob = svg.querySelector('.toggle-knob') as SVGCircleElement
@@ -138,7 +177,10 @@ describe('createToggleSwitch', () => {
     })
 
     it('scales the checkmark from its SVG viewBox instead of assuming a 24px icon', () => {
-        const { svg } = mountToggle({ size: 20, checked: true })
+        const { svg } = mountToggle({
+            size: 20,
+            checked: true,
+        })
         const checkmarkPath = svg.querySelector('.toggle-checkmark path') as SVGPathElement
         const scale = Number(checkmarkPath.getAttribute('transform')?.match(/scale\(([^)]+)\)/)?.[1])
 
@@ -147,7 +189,14 @@ describe('createToggleSwitch', () => {
     })
 
     it('re-enables click handling after setDisabled(false)', () => {
-        const { toggle, onChange, group } = mountToggle({ checked: false, disabled: true })
+        const {
+            toggle,
+            onChange,
+            group,
+        } = mountToggle({
+            checked: false,
+            disabled: true,
+        })
 
         toggle.setDisabled(false)
         clickGroup(group)

@@ -35,8 +35,16 @@ describe('getAiLineageEventsForProjection', () => {
         }, 'conversation')
 
         expect(events).toHaveLength(2)
-        expect(events[0]).toEqual({ kind: 'branch-origin', branchOriginNodeId: 'origin-id', branchForkNodeId: undefined })
-        expect(events[1]).toEqual({ kind: 'branch-fork', branchOriginNodeId: undefined, branchForkNodeId: 'fork-id' })
+        expect(events[0]).toEqual({
+            kind: 'branch-origin',
+            branchOriginNodeId: 'origin-id',
+            branchForkNodeId: undefined,
+        })
+        expect(events[1]).toEqual({
+            kind: 'branch-fork',
+            branchOriginNodeId: undefined,
+            branchForkNodeId: 'fork-id',
+        })
     })
 
     it('emits branch-origin only for section-zero lineage in branch-origin scope', () => {
@@ -52,8 +60,16 @@ describe('getAiLineageEventsForProjection', () => {
         }, 'branch-origin')
 
         expect(forFirstSection).toHaveLength(1)
-        expect(forFirstSection[0]).toEqual({ kind: 'branch-origin', branchOriginNodeId: 'origin-id', branchForkNodeId: undefined })
-        expect(forLaterSection).toEqual([{ kind: 'branch-origin', branchOriginNodeId: 'origin-id', branchForkNodeId: undefined }])
+        expect(forFirstSection[0]).toEqual({
+            kind: 'branch-origin',
+            branchOriginNodeId: 'origin-id',
+            branchForkNodeId: undefined,
+        })
+        expect(forLaterSection).toEqual([{
+            kind: 'branch-origin',
+            branchOriginNodeId: 'origin-id',
+            branchForkNodeId: undefined,
+        }])
     })
 
     it('emits only branch-fork in branch-fork and media-run scopes', () => {
@@ -69,10 +85,18 @@ describe('getAiLineageEventsForProjection', () => {
         }, 'media-run')
 
         expect(branchFork).toEqual([
-            { kind: 'branch-fork', branchOriginNodeId: undefined, branchForkNodeId: 'fork-id' },
+            {
+                kind: 'branch-fork',
+                branchOriginNodeId: undefined,
+                branchForkNodeId: 'fork-id',
+            },
         ])
         expect(mediaRun).toEqual([
-            { kind: 'branch-fork', branchOriginNodeId: undefined, branchForkNodeId: 'fork-id' },
+            {
+                kind: 'branch-fork',
+                branchOriginNodeId: undefined,
+                branchForkNodeId: 'fork-id',
+            },
         ])
     })
 
@@ -95,7 +119,11 @@ describe('getReasoningSectionLineageEvents', () => {
         const events = getReasoningSectionLineageEvents(input, 'media-run')
 
         expect(events).toEqual([
-            { kind: 'branch-fork', branchOriginNodeId: undefined, branchForkNodeId: 'fork-id' },
+            {
+                kind: 'branch-fork',
+                branchOriginNodeId: undefined,
+                branchForkNodeId: 'fork-id',
+            },
         ])
     })
 })
@@ -111,6 +139,7 @@ describe('createAiLineageEventMarker', () => {
     const getFirstPath = (icon: string): string | null => {
         const fixture = document.createElement('div')
         fixture.innerHTML = icon
+
         return fixture.querySelector('path')?.getAttribute('d') ?? null
     }
 
@@ -145,7 +174,5 @@ describe('createAiLineageEventMarker', () => {
         expect(marker.textContent).toContain('Branch fork created')
     })
 
-    it('matches legacy node type constants', () => {
-        expect(aiLineageEventNodeType).toBe('aiLineageEvent')
-    })
+    it('matches legacy node type constants', () => void expect(aiLineageEventNodeType).toBe('aiLineageEvent'))
 })

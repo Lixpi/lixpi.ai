@@ -23,8 +23,9 @@ import {
 
 const emptyPage: CapabilityCatalogPage = { items: [] }
 
-function item(capabilityId: string, options: Partial<CapabilityCatalogItem> = {}): CapabilityCatalogItem {
+const item = (capabilityId: string, options: Partial<CapabilityCatalogItem> = {}): CapabilityCatalogItem => {
     const name = options.name ?? capabilityId
+
     return {
         scopeAndOwner: 'global#system',
         scopeOwnerId: 'system',
@@ -50,9 +51,7 @@ describe('CapabilityCatalogClient', () => {
         expect(() => parseCapabilityManifestJson('{"schemaVersion":1}')).toThrow('Invalid manifest')
     })
 
-    it('normalizes picker queries', () => {
-        expect(normalizeQuery('  Character   CREATOR ')).toBe('character creator')
-    })
+    it('normalizes picker queries', () => void expect(normalizeQuery('  Character   CREATOR ')).toBe('character creator'))
 
     it('deduplicates concurrent searches and caches the result', async () => {
         const request = vi.fn().mockResolvedValue(emptyPage)
@@ -118,12 +117,25 @@ describe('CapabilityCatalogClient', () => {
                 kind: 'tool',
                 name: 'Character Creator',
                 description: 'Build a character sheet.',
-                references: [{ capabilityId: 'skill-1', kind: 'skill' }],
+                references: [{
+                    capabilityId: 'skill-1',
+                    kind: 'skill',
+                }],
                 resources: [],
                 tool: {
                     toolType: 'character-creator',
-                    inputSchema: { resourceId: 'input', blobHash: 'input-hash', mediaType: 'application/schema+json', role: 'schema' },
-                    outputSchema: { resourceId: 'output', blobHash: 'output-hash', mediaType: 'application/schema+json', role: 'schema' },
+                    inputSchema: {
+                        resourceId: 'input',
+                        blobHash: 'input-hash',
+                        mediaType: 'application/schema+json',
+                        role: 'schema',
+                    },
+                    outputSchema: {
+                        resourceId: 'output',
+                        blobHash: 'output-hash',
+                        mediaType: 'application/schema+json',
+                        role: 'schema',
+                    },
                     executionPolicy: 'required',
                     executionMultiplicity: 'once',
                     modelAxisPolicy: {
@@ -132,11 +144,25 @@ describe('CapabilityCatalogClient', () => {
                         video: 'ignore',
                         outputMode: 'capability-only',
                     },
-                    workflow: { steps: [], outputs: {} },
+                    workflow: {
+                        steps: [],
+                        outputs: {},
+                    },
                 },
             },
-            references: [{ capabilityId: 'skill-1', kind: 'skill', name: 'Layout' }],
-            resources: [{ resourceId: 'input', content: { type: 'object', properties: { prompt: { type: 'string' } }, required: ['prompt'] } }],
+            references: [{
+                capabilityId: 'skill-1',
+                kind: 'skill',
+                name: 'Layout',
+            }],
+            resources: [{
+                resourceId: 'input',
+                content: {
+                    type: 'object',
+                    properties: { prompt: { type: 'string' } },
+                    required: ['prompt'],
+                },
+            }],
         })
         const client = new CapabilityCatalogClient({
             transport: { request },
@@ -148,7 +174,11 @@ describe('CapabilityCatalogClient', () => {
         const details = await client.get('tool-1')
 
         expect(details.scope).toBe('global')
-        expect(details.references).toEqual([{ capabilityId: 'skill-1', kind: 'skill', name: 'Layout' }])
+        expect(details.references).toEqual([{
+            capabilityId: 'skill-1',
+            kind: 'skill',
+            name: 'Layout',
+        }])
         expect(details.inputSchema?.required).toEqual(['prompt'])
         expect(details.permissions.canEdit).toBe(false)
         expect(details.grants).toEqual([])
@@ -185,26 +215,54 @@ describe('CapabilityCatalogClient', () => {
             organizationId: 'org-1',
         })
         const details = {
-            ...item('skill-1', { kind: 'skill', scope: 'user', scopeOwnerId: 'user-1' }),
+            ...item('skill-1', {
+                kind: 'skill',
+                scope: 'user',
+                scopeOwnerId: 'user-1',
+            }),
             record,
             manifest,
             references: [],
-            permissions: { canEdit: true, canDelete: true, canShare: true, canSetStatus: true },
+            permissions: {
+                canEdit: true,
+                canDelete: true,
+                canShare: true,
+                canSetStatus: true,
+            },
             grants: [],
         }
 
-        await client.create({ manifest, scope: 'user', scopeOwnerId: 'user-1', storageOwnerId: 'org-1', summary: 'Summary', tags: ['tag'] })
-        await client.update(details, { ...manifest, description: 'Updated.' })
+        await client.create({
+            manifest,
+            scope: 'user',
+            scopeOwnerId: 'user-1',
+            storageOwnerId: 'org-1',
+            summary: 'Summary',
+            tags: ['tag'],
+        })
+        await client.update(details, {
+            ...manifest,
+            description: 'Updated.',
+        })
         await client.setStatus(details, 'disabled')
         await client.delete(details)
         await client.grant('skill-1', 'user-2', 'editor')
         await client.revoke('skill-1', 'user-2')
 
-        expect(request).toHaveBeenNthCalledWith(1, CAPABILITY_CATALOG_SUBJECTS.create, expect.objectContaining({ manifest, scope: 'user' }))
+        expect(request).toHaveBeenNthCalledWith(1, CAPABILITY_CATALOG_SUBJECTS.create, expect.objectContaining({
+            manifest,
+            scope: 'user',
+        }))
         expect(request).toHaveBeenNthCalledWith(2, CAPABILITY_CATALOG_SUBJECTS.update, expect.objectContaining({ expectedManifestBlobHash: 'hash-1' }))
-        expect(request).toHaveBeenNthCalledWith(3, CAPABILITY_CATALOG_SUBJECTS.update, expect.objectContaining({ capabilityId: 'skill-1', status: 'disabled' }))
+        expect(request).toHaveBeenNthCalledWith(3, CAPABILITY_CATALOG_SUBJECTS.update, expect.objectContaining({
+            capabilityId: 'skill-1',
+            status: 'disabled',
+        }))
         expect(request).toHaveBeenNthCalledWith(4, CAPABILITY_CATALOG_SUBJECTS.delete, expect.objectContaining({ capabilityId: 'skill-1' }))
-        expect(request).toHaveBeenNthCalledWith(5, CAPABILITY_CATALOG_SUBJECTS.grant, expect.objectContaining({ principalId: 'user-2', accessLevel: 'editor' }))
+        expect(request).toHaveBeenNthCalledWith(5, CAPABILITY_CATALOG_SUBJECTS.grant, expect.objectContaining({
+            principalId: 'user-2',
+            accessLevel: 'editor',
+        }))
         expect(request).toHaveBeenNthCalledWith(6, CAPABILITY_CATALOG_SUBJECTS.revoke, expect.objectContaining({ principalId: 'user-2' }))
     })
 
@@ -226,7 +284,13 @@ describe('CapabilityCatalogClient', () => {
             .mockResolvedValueOnce({
                 events: [{
                     streamSequence: 8,
-                    event: { runId: 'run-1', sequence: 1, eventType: 'RUN_STARTED', timestamp: 1, runStatus: 'running' },
+                    event: {
+                        runId: 'run-1',
+                        sequence: 1,
+                        eventType: 'RUN_STARTED',
+                        timestamp: 1,
+                        runStatus: 'running',
+                    },
                 }],
                 hasMore: true,
             })
@@ -256,10 +320,14 @@ describe('CapabilityCatalogClient', () => {
         const unsubscribe = vi.fn()
         const subscribe = vi.fn((_subject: string, listener: (payload: unknown) => void) => {
             transportListener = listener
+
             return { unsubscribe }
         })
         const client = new CapabilityCatalogClient({
-            transport: { request: vi.fn(), subscribe },
+            transport: {
+                request: vi.fn(),
+                subscribe,
+            },
             getToken: vi.fn().mockResolvedValue('token'),
             workspaceId: 'workspace-1',
             organizationId: 'org-1',
@@ -267,15 +335,33 @@ describe('CapabilityCatalogClient', () => {
         })
         const listener = vi.fn()
         const stop = client.subscribeToRunEvents('run-1', listener)
-        const runEvent = { runId: 'run-1', sequence: 1, eventType: 'RUN_STARTED', timestamp: 1, runStatus: 'running' } as const
+        const runEvent = {
+            runId: 'run-1',
+            sequence: 1,
+            eventType: 'RUN_STARTED',
+            timestamp: 1,
+            runStatus: 'running',
+        } as const
 
         expect(subscribe).toHaveBeenCalledWith(
             `${getCapabilityUserEventSubject('user-1', NATS_SUBJECTS.CAPABILITY_SUBJECTS.RUN.STATUS)}.workspace-1.run-1`,
             expect.any(Function),
         )
-        transportListener?.({ workspaceId: 'other-workspace', event: runEvent })
-        transportListener?.({ workspaceId: 'workspace-1', event: { ...runEvent, runId: 'other-run' } })
-        transportListener?.({ workspaceId: 'workspace-1', event: runEvent })
+        transportListener?.({
+            workspaceId: 'other-workspace',
+            event: runEvent,
+        })
+        transportListener?.({
+            workspaceId: 'workspace-1',
+            event: {
+                ...runEvent,
+                runId: 'other-run',
+            },
+        })
+        transportListener?.({
+            workspaceId: 'workspace-1',
+            event: runEvent,
+        })
         expect(listener).toHaveBeenCalledOnce()
         expect(listener).toHaveBeenCalledWith(runEvent)
 
@@ -287,9 +373,15 @@ describe('CapabilityCatalogClient', () => {
         const page = {
             items: [
                 item('ordinary'),
-                item('recommended-z', { name: 'Zulu', tags: ['recommended'] }),
+                item('recommended-z', {
+                    name: 'Zulu',
+                    tags: ['recommended'],
+                }),
                 item('recent-a'),
-                item('recommended-a', { name: 'Alpha', tags: ['recommended'] }),
+                item('recommended-a', {
+                    name: 'Alpha',
+                    tags: ['recommended'],
+                }),
             ],
             cursor: 'next',
         }
@@ -313,6 +405,7 @@ describe('CapabilityCatalogClient', () => {
             workspaceId: 'workspace-1',
             organizationId: 'org-1',
         })
+
         for (let index = 0; index < 22; index += 1) client.rememberSelection(item(`recent-${index}`))
 
         const page = await client.search('')

@@ -126,7 +126,11 @@ const asset = (originalReady: boolean): Asset => ({
 })
 
 const canvasState: CanvasState = {
-    viewport: { x: 0, y: 0, zoom: 1 },
+    viewport: {
+        x: 0,
+        y: 0,
+        zoom: 1,
+    },
     nodes: [],
     edges: [],
 }
@@ -164,7 +168,10 @@ beforeEach(() => {
     vi.useRealTimers()
     vi.resetAllMocks()
     ;(globalThis as any).dynamoDBService = { transactWrite: mocks.transactWrite }
-    mocks.buildBlobReferenceBatchOperations.mockReturnValue({ operations: [], deletionBlobHashes: [] })
+    mocks.buildBlobReferenceBatchOperations.mockReturnValue({
+        operations: [],
+        deletionBlobHashes: [],
+    })
     mocks.buildBlobReferenceOperations.mockReturnValue([])
     mocks.renditionProcess.mockResolvedValue(undefined)
     mocks.transactWrite.mockResolvedValue(undefined)
@@ -205,9 +212,7 @@ describe('resolveInheritedGenerationSeed', () => {
         ...(lineage ? { lineage } : {}),
     })
 
-    beforeEach(() => {
-        mocks.getAssetRecord.mockReset()
-    })
+    beforeEach(() => void mocks.getAssetRecord.mockReset())
 
     it('reuses the parent Asset seed when a branch continues an earlier generation', async () => {
         mocks.getAssetRecord.mockImplementation(async (assetId: string) => ({
@@ -215,8 +220,14 @@ describe('resolveInheritedGenerationSeed', () => {
                 parentAssetId: 'parent-asset',
                 sourceAssetIds: ['reference-asset'],
             }),
-            'parent-asset': seededAsset('parent-asset', { sourceAssetIds: [], generationSeed: 777 }),
-            'reference-asset': seededAsset('reference-asset', { sourceAssetIds: [], generationSeed: 999 }),
+            'parent-asset': seededAsset('parent-asset', {
+                sourceAssetIds: [],
+                generationSeed: 777,
+            }),
+            'reference-asset': seededAsset('reference-asset', {
+                sourceAssetIds: [],
+                generationSeed: 999,
+            }),
         }[assetId]))
 
         expect(
@@ -231,7 +242,10 @@ describe('resolveInheritedGenerationSeed', () => {
         mocks.getAssetRecord.mockImplementation(async (assetId: string) => ({
             'pending-asset': seededAsset('pending-asset', { sourceAssetIds: ['uploaded-asset', 'reference-asset'] }),
             'uploaded-asset': seededAsset('uploaded-asset', { sourceAssetIds: [] }),
-            'reference-asset': seededAsset('reference-asset', { sourceAssetIds: [], generationSeed: 999 }),
+            'reference-asset': seededAsset('reference-asset', {
+                sourceAssetIds: [],
+                generationSeed: 999,
+            }),
         }[assetId]))
 
         expect(
@@ -245,7 +259,10 @@ describe('resolveInheritedGenerationSeed', () => {
     it('skips a seed the target provider would reject and reports none', async () => {
         mocks.getAssetRecord.mockImplementation(async (assetId: string) => ({
             'pending-asset': seededAsset('pending-asset', { sourceAssetIds: ['reference-asset'] }),
-            'reference-asset': seededAsset('reference-asset', { sourceAssetIds: [], generationSeed: 4294967000 }),
+            'reference-asset': seededAsset('reference-asset', {
+                sourceAssetIds: [],
+                generationSeed: 4294967000,
+            }),
         }[assetId]))
 
         expect(
@@ -308,8 +325,14 @@ describe('settleGeneratedAssetOriginal', () => {
             sourceMimeType: 'video/quicktime',
             modelSafe: false,
             renditions: {
-                original: { mimeType: 'video/quicktime', status: 'ready' },
-                representativeFrame: { mimeType: 'image/png', status: 'ready' },
+                original: {
+                    mimeType: 'video/quicktime',
+                    status: 'ready',
+                },
+                representativeFrame: {
+                    mimeType: 'image/png',
+                    status: 'ready',
+                },
             },
         })
         expect(mocks.buildBlobReferenceOperations).toHaveBeenCalledWith(expect.objectContaining({
@@ -392,9 +415,18 @@ describe('settleGeneratedAssetComposition', () => {
 
 describe('attachGeneratedAssetNode', () => {
     it.each([
-        { originalReady: false, expectedPending: true },
-        { originalReady: true, expectedPending: false },
-    ])('projects the API phase from Asset readiness before attaching', async ({ originalReady, expectedPending }) => {
+        {
+            originalReady: false,
+            expectedPending: true,
+        },
+        {
+            originalReady: true,
+            expectedPending: false,
+        },
+    ])('projects the API phase from Asset readiness before attaching', async ({
+        originalReady,
+        expectedPending,
+    }) => {
         vi.useFakeTimers()
         vi.setSystemTime(100)
         mocks.getAssetRecord.mockResolvedValue(asset(originalReady))

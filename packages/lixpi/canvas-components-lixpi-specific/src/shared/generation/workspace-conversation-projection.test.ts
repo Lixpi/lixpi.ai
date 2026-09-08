@@ -20,7 +20,16 @@ const record = (overrides: Partial<Thread> = {}): Thread => ({
     workspaceId: 'workspace',
     proseMirrorVersion: 3,
     updatedAt: 10,
-    content: { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'persisted' }] }] },
+    content: {
+        type: 'doc',
+        content: [{
+            type: 'paragraph',
+            content: [{
+                type: 'text',
+                text: 'persisted',
+            }],
+        }],
+    },
     ...overrides,
 })
 const marker = (): CanvasNode => ({
@@ -30,29 +39,48 @@ const marker = (): CanvasNode => ({
     conversationAssetId: 'thread',
     generationRequestId: 'request',
     temporary: true,
-    position: { x: 0, y: 0 },
-    dimensions: { width: 300, height: 100 },
+    position: {
+        x: 0,
+        y: 0,
+    },
+    dimensions: {
+        width: 300,
+        height: 100,
+    },
 })
-function setup(overrides: Partial<WorkspaceConversationProjectionPorts<Thread>> = {}) {
+const setup = (overrides: Partial<WorkspaceConversationProjectionPorts<Thread>> = {}) => {
     let threads = [record()]
     let sceneKey = 'scene'
-    const timers: Array<{ callback: () => void; delay: number; cancel: ReturnType<typeof vi.fn> }> = []
+    const timers: Array<{
+        callback: () => void
+        delay: number
+        cancel: ReturnType<typeof vi.fn>
+    }> = []
     const ports: WorkspaceConversationProjectionPorts<Thread> = {
-        readScope: () => ({ workspaceId: 'workspace', sceneKey }),
+        readScope: () => ({
+            workspaceId: 'workspace',
+            sceneKey,
+        }),
         getThreads: () => threads,
-        setThreads: values => {
-            threads = values
-        },
+        setThreads: values => void (threads = values),
         getNodes: () => [],
         retainedThreadIds: () => [],
         canUseLatestTurnFallback: () => true,
-        fetchThread: vi.fn(async () => record({ proseMirrorVersion: 4, content: { durable: true } })),
+        fetchThread: vi.fn(async () => record({
+            proseMirrorVersion: 4,
+            content: { durable: true },
+        })),
         refreshProjection: vi.fn(),
         now: () => 20,
         reportError: vi.fn(),
         setTimer: (callback, delay) => {
             const cancel = vi.fn()
-            timers.push({ callback, delay, cancel })
+            timers.push({
+                callback,
+                delay,
+                cancel,
+            })
+
             return cancel
         },
         ...overrides,
@@ -63,17 +91,14 @@ function setup(overrides: Partial<WorkspaceConversationProjectionPorts<Thread>> 
         await Promise.resolve()
         await Promise.resolve()
     }
+
     return {
         owner,
         ports,
         timers,
         fire,
-        setThreads: (values: Thread[]) => {
-            threads = values
-        },
-        setScene: (value: string) => {
-            sceneKey = value
-        },
+        setThreads: (values: Thread[]) => void (threads = values),
+        setScene: (value: string) => void (sceneKey = value),
         get threads() {
             return threads
         },
@@ -135,11 +160,32 @@ describe('workspace conversation projection', () => {
 
     it('preserves fresher and more complete local content while accepting incoming metadata', () => {
         const fixture = setup()
-        const state: CanvasState = { nodes: [], edges: [], viewport: { x: 0, y: 0, zoom: 1 } }
-        const local = record({ title: 'old', proseMirrorVersion: 7 })
+        const state: CanvasState = {
+            nodes: [],
+            edges: [],
+            viewport: {
+                x: 0,
+                y: 0,
+                zoom: 1,
+            },
+        }
+        const local = record({
+            title: 'old',
+            proseMirrorVersion: 7,
+        })
         fixture.setThreads([local])
-        const incoming = record({ title: 'new', proseMirrorVersion: 6, content: { type: 'doc' }, updatedAt: 5 })
-        expect(fixture.owner.merge([incoming], state, false)[0]).toEqual({ ...incoming, content: local.content, proseMirrorVersion: 7, updatedAt: 10 })
+        const incoming = record({
+            title: 'new',
+            proseMirrorVersion: 6,
+            content: { type: 'doc' },
+            updatedAt: 5,
+        })
+        expect(fixture.owner.merge([incoming], state, false)[0]).toEqual({
+            ...incoming,
+            content: local.content,
+            proseMirrorVersion: 7,
+            updatedAt: 10,
+        })
         incoming.proseMirrorVersion = 7
         expect(fixture.owner.merge([incoming], state, false)[0].content).toEqual(local.content)
         incoming.proseMirrorVersion = 8
@@ -152,24 +198,40 @@ describe('workspace conversation projection', () => {
         const fixture = setup({ retainedThreadIds: () => ['active'] })
         fixture.setThreads([record(), record({ threadId: 'active' }), record({ threadId: 'streaming' }), record({ threadId: 'obsolete' })])
         fixture.owner.rememberContent('streaming', { streaming: true }, true)
-        const state: CanvasState = { nodes: [marker()], edges: [], viewport: { x: 0, y: 0, zoom: 1 } }
+        const state: CanvasState = {
+            nodes: [marker()],
+            edges: [],
+            viewport: {
+                x: 0,
+                y: 0,
+                zoom: 1,
+            },
+        }
         expect(fixture.owner.merge([], state, false).map(thread => thread.threadId)).toEqual(['thread', 'active', 'streaming'])
         expect(fixture.owner.merge([], state, true)).toEqual([])
         fixture.owner.destroy()
     })
 
     it('bounds retries for incomplete snapshots and preserves the live override', async () => {
-        const fixture = setup({ getNodes: () => [marker()], fetchThread: async () => record({ proseMirrorVersion: 4 }) })
+        const fixture = setup({
+            getNodes: () => [marker()],
+            fetchThread: async () => record({ proseMirrorVersion: 4 }),
+        })
         fixture.owner.rememberContent('thread', { streaming: true }, true)
         fixture.owner.schedule('thread')
+
         for (let index = 0; index < 4; index += 1) await fixture.fire(index)
+
         expect(fixture.timers.map(timer => timer.delay)).toEqual([400, 1000, 1600, 3000])
         expect(fixture.owner.content('thread')).toEqual({ streaming: true })
         fixture.owner.destroy()
     })
 
     it('rejects older persisted versions without replacing local content', async () => {
-        const fixture = setup({ fetchThread: async () => record({ proseMirrorVersion: 2, content: { stale: true } }) })
+        const fixture = setup({ fetchThread: async () => record({
+            proseMirrorVersion: 2,
+            content: { stale: true },
+        }) })
         fixture.owner.schedule('thread')
         await fixture.fire()
         expect(fixture.owner.get('thread')!.proseMirrorVersion).toBe(3)

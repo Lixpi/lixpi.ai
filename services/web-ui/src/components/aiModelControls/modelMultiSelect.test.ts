@@ -18,6 +18,7 @@ vi.mock('@lixpi/ui-kit/components/info-bubble', () => ({
     createInfoBubble: vi.fn((config: any) => {
         const dom = document.createElement('div')
         dom.appendChild(config.bodyContent)
+
         return {
             dom,
             open: vi.fn(),
@@ -57,7 +58,10 @@ const imageModels = [
         shortTitle: 'Image One',
         iconName: 'gpt',
         modalities: [{ modality: 'image_generation' }],
-        imageSizes: [{ value: '1024x1024', label: '1024x1024' }],
+        imageSizes: [{
+            value: '1024x1024',
+            label: '1024x1024',
+        }],
     },
 ]
 
@@ -69,19 +73,33 @@ const videoModels = [
         iconName: 'gpt',
         modalities: [{ modality: 'video_generation' }],
         imageSizes: [],
-        videoAspectRatios: [{ value: '16:9', label: '16:9' }],
-        videoResolutions: [{ value: '1080p', label: '1080p' }],
-        videoDurations: [{ value: '30s', label: '30s' }],
+        videoAspectRatios: [{
+            value: '16:9',
+            label: '16:9',
+        }],
+        videoResolutions: [{
+            value: '1080p',
+            label: '1080p',
+        }],
+        videoDurations: [{
+            value: '30s',
+            label: '30s',
+        }],
     },
 ]
 
 const createAiModelControls = (seedModels: string[] = []) => {
     const selectedModels: string[] = [...seedModels]
+
     return {
         selectedModels,
         getCurrentAiModel: vi.fn(() => selectedModels[0] ?? ''),
         setAiModel: vi.fn((id: string) => {
-            if (id && !selectedModels.includes(id)) selectedModels.push(id)
+            if (
+                id
+                && !selectedModels.includes(id)
+            )
+                selectedModels.push(id)
         }),
         getCurrentAiModels: vi.fn(() => selectedModels),
         setAiModels: vi.fn((models: string[]) => {
@@ -151,8 +169,14 @@ describe('createGenericAiModelMultiSelect', () => {
         })
         const stopSpy = vi.spyOn(wheelEvent, 'stopPropagation')
 
-        Object.defineProperty(optionList, 'clientHeight', { configurable: true, value: 100 })
-        Object.defineProperty(optionList, 'scrollHeight', { configurable: true, value: 400 })
+        Object.defineProperty(optionList, 'clientHeight', {
+            configurable: true,
+            value: 100,
+        })
+        Object.defineProperty(optionList, 'scrollHeight', {
+            configurable: true,
+            value: 400,
+        })
 
         optionList.dispatchEvent(wheelEvent)
 
@@ -295,9 +319,7 @@ describe('createGenericImageModelMultiSelect', () => {
 })
 
 describe('createGenericVideoModelMultiSelect', () => {
-    beforeEach(() => {
-        aiModelsStore.setAiModels(videoModels)
-    })
+    beforeEach(() => void aiModelsStore.setAiModels(videoModels))
 
     afterEach(() => {
         vi.restoreAllMocks()

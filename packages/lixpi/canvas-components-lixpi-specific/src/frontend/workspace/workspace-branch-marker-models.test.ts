@@ -20,8 +20,14 @@ const marker = (overrides: Partial<BranchOriginCanvasNode> = {}): BranchOriginCa
     type: 'branchOrigin',
     branchId: 'branch-1',
     generationRequestId: 'request-1',
-    position: { x: 0, y: 0 },
-    dimensions: { width: 320, height: 80 },
+    position: {
+        x: 0,
+        y: 0,
+    },
+    dimensions: {
+        width: 320,
+        height: 80,
+    },
     temporary: true,
     ...overrides,
 })
@@ -30,8 +36,14 @@ const image = (modelId: string, positionY = 0): ImageCanvasNode => ({
     nodeId: `image-${positionY}`,
     type: 'image',
     assetId: `asset-image-${positionY}`,
-    position: { x: 400, y: positionY },
-    dimensions: { width: 300, height: 300 },
+    position: {
+        x: 400,
+        y: positionY,
+    },
+    dimensions: {
+        width: 300,
+        height: 300,
+    },
     generatedBy: {
         conversationAssetId: 'thread-1',
         responseId: 'response-1',
@@ -47,8 +59,14 @@ const video = (modelId: string): VideoCanvasNode => ({
     nodeId: 'video-1',
     type: 'video',
     assetId: 'asset-video-1',
-    position: { x: 400, y: 400 },
-    dimensions: { width: 320, height: 180 },
+    position: {
+        x: 400,
+        y: 400,
+    },
+    dimensions: {
+        width: 320,
+        height: 180,
+    },
     generatedBy: {
         conversationAssetId: 'thread-1',
         responseId: 'response-1',
@@ -60,7 +78,7 @@ const video = (modelId: string): VideoCanvasNode => ({
     },
 })
 
-function modelPorts(entries: ReturnType<WorkspaceCanvasHost['models']['read']>): WorkspaceCanvasHost['models'] {
+const modelPorts = (entries: ReturnType<WorkspaceCanvasHost['models']['read']>): WorkspaceCanvasHost['models'] => {
     return {
         read: () => entries,
         subscribe: () => vi.fn(),
@@ -113,16 +131,40 @@ describe('WorkspaceBranchMarkerModels', () => {
         ]
         const owner = new WorkspaceBranchMarkerModels({
             models: modelPorts([
-                { provider: 'black-forest-labs', model: 'flux-1', shortTitle: 'Flux', color: '#123456' },
-                { provider: 'google', model: 'veo-3', shortTitle: 'Veo', color: '#654321' },
+                {
+                    provider: 'black-forest-labs',
+                    model: 'flux-1',
+                    shortTitle: 'Flux',
+                    color: '#123456',
+                },
+                {
+                    provider: 'google',
+                    model: 'veo-3',
+                    shortTitle: 'Veo',
+                    color: '#654321',
+                },
             ]),
             getCanvasNodes: () => nodes,
             getGeneratedOutputNodes: () => [],
         })
 
         expect(owner.getDetails(source)).toEqual([
-            { label: 'Image', entries: [{ title: 'Flux', icon: 'provider:black-forest-labs', color: '#123456' }] },
-            { label: 'Video', entries: [{ title: 'Veo', icon: 'provider:google', color: '#654321' }] },
+            {
+                label: 'Image',
+                entries: [{
+                    title: 'Flux',
+                    icon: 'provider:black-forest-labs',
+                    color: '#123456',
+                }],
+            },
+            {
+                label: 'Video',
+                entries: [{
+                    title: 'Veo',
+                    icon: 'provider:google',
+                    color: '#654321',
+                }],
+            },
         ])
         expect(owner.getSummary(source)).toBe('Image: Flux · Video: Veo')
     })

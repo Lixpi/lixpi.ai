@@ -10,14 +10,32 @@ import { GestureController } from './gesture-controller.ts'
 import { InteractionLocks } from './interaction-locks.ts'
 import { NodeTransformController } from './node-transform-controller.ts'
 
-function setup() {
+const setup = () => {
     const root = document.createElement('div')
     const overrides = new GeometryOverrides()
     const gestures = new GestureController()
     const locks = new InteractionLocks()
-    const controller = new NodeTransformController({ root, overrides, gestures, getViewport: () => ({ x: 0, y: 0, zoom: 2 }) })
-    const callbacks = { onStart: vi.fn(), onChange: vi.fn(), onEnd: vi.fn(), onCancel: vi.fn() }
-    const event = new MouseEvent('mousedown', { clientX: 10, clientY: 20 })
+    const controller = new NodeTransformController({
+        root,
+        overrides,
+        gestures,
+        getViewport: () => ({
+            x: 0,
+            y: 0,
+            zoom: 2,
+        }),
+    })
+    const callbacks = {
+        onStart: vi.fn(),
+        onChange: vi.fn(),
+        onEnd: vi.fn(),
+        onCancel: vi.fn(),
+    }
+    const event = new MouseEvent('mousedown', {
+        clientX: 10,
+        clientY: 20,
+    })
+
     return {
         controller,
         overrides,
@@ -33,39 +51,84 @@ function setup() {
     }
 }
 
-function move(x: number, y: number) {
-    document.dispatchEvent(new MouseEvent('mousemove', { clientX: x, clientY: y }))
+const move = (x: number, y: number) => {
+    document.dispatchEvent(new MouseEvent('mousemove', {
+        clientX: x,
+        clientY: y,
+    }))
 }
-function release() {
-    document.dispatchEvent(new MouseEvent('mouseup'))
-}
+const release = () => void document.dispatchEvent(new MouseEvent('mouseup'))
 
 describe('NodeTransformController', () => {
     it('defers drag activation until the threshold and preserves rigid group spacing under zoom', () => {
         const f = setup()
         const projection = f.overrides.createScope()
-        projection.set('a', { position: { x: 50, y: 60 } })
+        projection.set('a', { position: {
+            x: 50,
+            y: 60,
+        } })
         const targets = [
-            { nodeId: 'a', bounds: { x: 50, y: 60, width: 100, height: 100 } },
-            { nodeId: 'b', bounds: { x: 250, y: 80, width: 50, height: 50 } },
+            {
+                nodeId: 'a',
+                bounds: {
+                    x: 50,
+                    y: 60,
+                    width: 100,
+                    height: 100,
+                },
+            },
+            {
+                nodeId: 'b',
+                bounds: {
+                    x: 250,
+                    y: 80,
+                    width: 50,
+                    height: 50,
+                },
+            },
         ]
-        f.controller.startDrag({ ...f.callbacks, event: f.event, targets, threshold: 4, lock: () => f.locks.acquire() })
+        f.controller.startDrag({
+            ...f.callbacks,
+            event: f.event,
+            targets,
+            threshold: 4,
+            lock: () => f.locks.acquire(),
+        })
         move(11, 21)
         expect(f.callbacks.onChange).not.toHaveBeenCalled()
         move(30, 40)
         expect(f.callbacks.onStart).toHaveBeenCalledOnce()
-        expect(f.overrides.get('a')?.position).toEqual({ x: 60, y: 70 })
-        expect(f.overrides.get('b')?.position).toEqual({ x: 260, y: 90 })
+        expect(f.overrides.get('a')?.position).toEqual({
+            x: 60,
+            y: 70,
+        })
+        expect(f.overrides.get('b')?.position).toEqual({
+            x: 260,
+            y: 90,
+        })
         release()
         expect(f.callbacks.onEnd).toHaveBeenCalledWith(
             expect.any(MouseEvent),
             new Map([
-                ['a', { x: 60, y: 70, width: 100, height: 100 }],
-                ['b', { x: 260, y: 90, width: 50, height: 50 }],
+                ['a', {
+                    x: 60,
+                    y: 70,
+                    width: 100,
+                    height: 100,
+                }],
+                ['b', {
+                    x: 260,
+                    y: 90,
+                    width: 50,
+                    height: 50,
+                }],
             ]),
             true,
         )
-        expect(f.overrides.get('a')?.position).toEqual({ x: 50, y: 60 })
+        expect(f.overrides.get('a')?.position).toEqual({
+            x: 50,
+            y: 60,
+        })
         expect(f.overrides.get('b')).toBeUndefined()
         expect(f.locks.state.locked).toBe(false)
         expect(targets[0].bounds.x).toBe(50)
@@ -74,7 +137,20 @@ describe('NodeTransformController', () => {
 
     it('reports a click without publishing geometry when movement stays below the drag threshold', () => {
         const f = setup()
-        f.controller.startDrag({ ...f.callbacks, event: f.event, threshold: 4, targets: [{ nodeId: 'a', bounds: { x: 0, y: 0, width: 10, height: 10 } }] })
+        f.controller.startDrag({
+            ...f.callbacks,
+            event: f.event,
+            threshold: 4,
+            targets: [{
+                nodeId: 'a',
+                bounds: {
+                    x: 0,
+                    y: 0,
+                    width: 10,
+                    height: 10,
+                },
+            }],
+        })
         move(12, 21)
         release()
         expect(f.callbacks.onStart).not.toHaveBeenCalled()
@@ -89,13 +165,34 @@ describe('NodeTransformController', () => {
         f.controller.startResize({
             ...f.callbacks,
             event: f.event,
-            target: { nodeId: 'a', bounds: { x: 0, y: 0, width: 100, height: 50 } },
+            target: {
+                nodeId: 'a',
+                bounds: {
+                    x: 0,
+                    y: 0,
+                    width: 100,
+                    height: 50,
+                },
+            },
             handle: 'bottom-right',
-            constraints: { min: { width: 50, height: 25 }, max: { width: 120, height: 60 }, preserveAspectRatio: true },
+            constraints: {
+                min: {
+                    width: 50,
+                    height: 25,
+                },
+                max: {
+                    width: 120,
+                    height: 60,
+                },
+                preserveAspectRatio: true,
+            },
             lock: () => f.locks.acquire(),
         })
         move(210, 220)
-        expect(f.overrides.get('a')?.dimensions).toEqual({ width: 120, height: 60 })
+        expect(f.overrides.get('a')?.dimensions).toEqual({
+            width: 120,
+            height: 60,
+        })
         f.gestures.cancelAll('scene-change')
         expect(f.callbacks.onCancel).toHaveBeenCalledExactlyOnceWith('scene-change')
         expect(f.callbacks.onEnd).not.toHaveBeenCalled()

@@ -8,9 +8,7 @@ import { readFileSync } from 'fs'
 import { resolve } from 'path'
 import { withoutLayout } from '@lixpi/test-utils'
 
-function expectSourceToContain(source: string, snippet: string): void {
-    expect(withoutLayout(source).includes(withoutLayout(snippet)), `source should contain: ${snippet}`).toBe(true)
-}
+const expectSourceToContain = (source: string, snippet: string): void => void expect(withoutLayout(source).includes(withoutLayout(snippet)), `source should contain: ${snippet}`).toBe(true)
 
 describe('help-tooltip.scss', () => {
     const scss = readFileSync(resolve(import.meta.dirname, 'help-tooltip.scss'), 'utf-8')

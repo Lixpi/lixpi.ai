@@ -136,11 +136,11 @@ export const assessProviderInputBudget = ({
     }
 }
 
-function assessDataUrl(value: string): {
+const assessDataUrl = (value: string): {
     mimeType: string
     byteLength: number
     tokens: number
-} | undefined {
+} | undefined => {
     const match = /^data:([^;,]+)(?:;[^,]*)?;base64,(.*)$/su.exec(value)
 
     if (!match)
@@ -158,12 +158,12 @@ function assessDataUrl(value: string): {
     }
 }
 
-function contextError(
+const contextError = (
     state: ProviderState,
     inputTokens: number,
     reservedCompletionTokens: number,
     contextWindow: number | undefined,
-): CapabilityError {
+): CapabilityError => {
     const modelId = state.aiModelMetaInfo?.model ?? state.modelVersion
 
     return new CapabilityError(
@@ -178,7 +178,7 @@ function contextError(
     )
 }
 
-function base64ByteLength(value: string): number {
+const base64ByteLength = (value: string): number => {
     const padding = value.endsWith('==')
         ? 2
         : value.endsWith('=')
@@ -188,11 +188,9 @@ function base64ByteLength(value: string): number {
     return Math.max(0, Math.floor((value.length * 3) / 4) - padding)
 }
 
-function isBase64(value: string): boolean {
-    return value.length > 0 && value.length % 4 === 0 && /^[A-Za-z0-9+/]*={0,2}$/u.test(value)
-}
+const isBase64 = (value: string): boolean => value.length > 0 && value.length % 4 === 0 && /^[A-Za-z0-9+/]*={0,2}$/u.test(value)
 
-function asRecord(value: unknown): Record<string, unknown> | undefined {
+const asRecord = (value: unknown): Record<string, unknown> | undefined => {
     return value
         && typeof value === 'object'
         && !Array.isArray(value)

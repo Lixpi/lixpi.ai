@@ -20,7 +20,7 @@ import {
     type ActionTimelineBackendDependencies,
 } from './action-timeline-actions.ts'
 
-function makeContext(): CapabilityActionExecutionContext {
+const makeContext = (): CapabilityActionExecutionContext => {
     return {
         userId: 'user-1',
         workspaceId: 'workspace-1',
@@ -49,18 +49,21 @@ function makeContext(): CapabilityActionExecutionContext {
     }
 }
 
-function validBatch(slotIndex: number, continuity: string) {
+const validBatch = (slotIndex: number, continuity: string) => {
     return {
         parsed: {
-            segments: [{ slotIndex, runs: [{ text: `Beat ${slotIndex}` }] }],
+            segments: [{
+                slotIndex,
+                runs: [{ text: `Beat ${slotIndex}` }],
+            }],
             continuity,
         },
     }
 }
 
-function makeDependencies(
+const makeDependencies = (
     modelOverrides: Partial<CapabilityStructuredModelPort> = {},
-): ActionTimelineBackendDependencies {
+): ActionTimelineBackendDependencies => {
     return {
         resolveModelInputs: vi.fn(async () => []),
         model: {
@@ -127,9 +130,21 @@ describe('Action Timeline registered actions', () => {
                 referenceAssetIds: ['asset-a', 'asset-b'],
             },
             grid: [
-                { slotIndex: 0, startMs: 0, endMs: 1000 },
-                { slotIndex: 1, startMs: 1000, endMs: 2000 },
-                { slotIndex: 2, startMs: 2000, endMs: 2500 },
+                {
+                    slotIndex: 0,
+                    startMs: 0,
+                    endMs: 1000,
+                },
+                {
+                    slotIndex: 1,
+                    startMs: 1000,
+                    endMs: 2000,
+                },
+                {
+                    slotIndex: 2,
+                    startMs: 2000,
+                    endMs: 2500,
+                },
             ],
         })
         expect(dependencies.resolveModelInputs).toHaveBeenCalledWith({
@@ -150,7 +165,10 @@ describe('Action Timeline registered actions', () => {
 
     it('uses accepted continuity sequentially and gives one invalid batch a complete correction attempt', async () => {
         const call = vi.fn()
-            .mockResolvedValueOnce({ parsed: { segments: [], continuity: 'rejected continuity' } })
+            .mockResolvedValueOnce({ parsed: {
+                segments: [],
+                continuity: 'rejected continuity',
+            } })
             .mockResolvedValueOnce(validBatch(0, 'accepted zero'))
             .mockResolvedValueOnce(validBatch(1, 'accepted one'))
         const dependencies = makeDependencies({ call })
@@ -164,8 +182,16 @@ describe('Action Timeline registered actions', () => {
                 referenceAssetIds: [],
             },
             grid: [
-                { slotIndex: 0, startMs: 0, endMs: 1000 },
-                { slotIndex: 1, startMs: 1000, endMs: 2000 },
+                {
+                    slotIndex: 0,
+                    startMs: 0,
+                    endMs: 1000,
+                },
+                {
+                    slotIndex: 1,
+                    startMs: 1000,
+                    endMs: 2000,
+                },
             ],
             modelInputs: [],
         }
@@ -174,8 +200,14 @@ describe('Action Timeline registered actions', () => {
 
         expect(written).toMatchObject({
             segments: [
-                { slotIndex: 0, runs: [{ text: 'Beat 0' }] },
-                { slotIndex: 1, runs: [{ text: 'Beat 1' }] },
+                {
+                    slotIndex: 0,
+                    runs: [{ text: 'Beat 0' }],
+                },
+                {
+                    slotIndex: 1,
+                    runs: [{ text: 'Beat 1' }],
+                },
             ],
         })
         expect(call).toHaveBeenCalledTimes(3)
@@ -205,7 +237,11 @@ describe('Action Timeline registered actions', () => {
                 precisionMs: 1000,
                 referenceAssetIds: ['asset-shelby', 'asset-train'],
             },
-            grid: [{ slotIndex: 0, startMs: 0, endMs: 1000 }],
+            grid: [{
+                slotIndex: 0,
+                startMs: 0,
+                endMs: 1000,
+            }],
             modelInputs: [{
                 kind: 'image' as const,
                 assetId: 'asset-shelby',
@@ -246,7 +282,10 @@ describe('Action Timeline registered actions', () => {
     it('rejects an unauthorized cited Asset after one correction and never persists a partial Artifact', async () => {
         const invalid = {
             parsed: {
-                segments: [{ slotIndex: 0, runs: [{ assetId: 'asset-unauthorized' }] }],
+                segments: [{
+                    slotIndex: 0,
+                    runs: [{ assetId: 'asset-unauthorized' }],
+                }],
                 continuity: 'bad',
             },
         }
@@ -260,7 +299,11 @@ describe('Action Timeline registered actions', () => {
                 precisionMs: 1000,
                 referenceAssetIds: ['asset-authorized'],
             },
-            grid: [{ slotIndex: 0, startMs: 0, endMs: 1000 }],
+            grid: [{
+                slotIndex: 0,
+                startMs: 0,
+                endMs: 1000,
+            }],
             modelInputs: [{
                 kind: 'document-text',
                 assetId: 'asset-authorized',
@@ -279,7 +322,10 @@ describe('Action Timeline registered actions', () => {
     it('rejects ambiguous plain-text titles instead of attaching the wrong same-named Asset', async () => {
         const call = vi.fn(async () => ({
             parsed: {
-                segments: [{ slotIndex: 0, runs: [{ text: 'Shelby boards the train.' }] }],
+                segments: [{
+                    slotIndex: 0,
+                    runs: [{ text: 'Shelby boards the train.' }],
+                }],
                 continuity: 'Shelby is aboard.',
             },
         }))
@@ -293,7 +339,11 @@ describe('Action Timeline registered actions', () => {
                 precisionMs: 1000,
                 referenceAssetIds: ['asset-shelby-a', 'asset-shelby-b'],
             },
-            grid: [{ slotIndex: 0, startMs: 0, endMs: 1000 }],
+            grid: [{
+                slotIndex: 0,
+                startMs: 0,
+                endMs: 1000,
+            }],
             modelInputs: [{
                 kind: 'document-text',
                 assetId: 'asset-shelby-a',
@@ -330,7 +380,11 @@ describe('Action Timeline registered actions', () => {
                     precisionMs: 1000,
                     referenceAssetIds: ['asset-a'],
                 },
-                grid: [{ slotIndex: 0, startMs: 0, endMs: 1000 }],
+                grid: [{
+                    slotIndex: 0,
+                    startMs: 0,
+                    endMs: 1000,
+                }],
                 modelInputs: [{
                     kind: 'video-frame',
                     assetId: 'asset-a',
@@ -340,7 +394,10 @@ describe('Action Timeline registered actions', () => {
                     mimeType: 'image/jpeg',
                 }],
             },
-            written: { segments: [{ slotIndex: 0, runs: [{ text: 'Show ' }, { assetId: 'asset-a' }] }] },
+            written: { segments: [{
+                slotIndex: 0,
+                runs: [{ text: 'Show ' }, { assetId: 'asset-a' }],
+            }] },
         }, context)
 
         expect(dependencies.persistArtifact).toHaveBeenCalledWith(expect.objectContaining({
@@ -353,7 +410,10 @@ describe('Action Timeline registered actions', () => {
         }
         expect(persistedDocument.content?.[0]?.content?.[0]?.content?.[1]?.attrs?.mediaKind).toBe('video')
         expect(persistedDocument.content?.[0]?.content?.[0]?.content?.[1]?.attrs?.displayName).toBe('Slop Train')
-        expect(output).toMatchObject({ outputKind: 'capabilityArtifact', assetId: 'artifact-1' })
+        expect(output).toMatchObject({
+            outputKind: 'capabilityArtifact',
+            assetId: 'artifact-1',
+        })
         expect(action.collectOutputAssetIds?.(output)).toEqual(['artifact-1'])
         expect(action.collectCanvasGeometry).toBeUndefined()
     })

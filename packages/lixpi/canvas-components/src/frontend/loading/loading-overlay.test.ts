@@ -21,7 +21,10 @@ vi.mock('@lixpi/canvas-engine/frontend/rendering', () => ({
         ready = Promise.resolve(true)
         controller = new AbortController()
         createScope() {
-            return { signal: this.controller.signal, destroy: () => this.controller.abort() }
+            return {
+                signal: this.controller.signal,
+                destroy: () => this.controller.abort(),
+            }
         }
         destroy() {
             this.controller.abort()
@@ -44,7 +47,7 @@ import {
     type LoadingOverlayOptions,
 } from './loading-overlay.ts'
 
-function createOverlay(root: HTMLElement, onRetry?: () => void) {
+const createOverlay = (root: HTMLElement, onRetry?: () => void) => {
     const outline: LoadingOverlayOptions['outline'] = {
         size: 128,
         style: {
@@ -59,9 +62,24 @@ function createOverlay(root: HTMLElement, onRetry?: () => void) {
             edgeFeatherFraction: 0.5,
             durationMs: 1000,
         },
-        texture: { kind: 'pixels', size: { width: 1, height: 1 }, rgba: new Uint8Array([255, 255, 255, 255]) },
+        texture: {
+            kind: 'pixels',
+            size: {
+                width: 1,
+                height: 1,
+            },
+            rgba: new Uint8Array([255, 255, 255, 255]),
+        },
     }
-    return new LoadingOverlay({ root, outline, errorTitle: 'Could not load', retryLabel: 'Try again', onRetry, onError: vi.fn() })
+
+    return new LoadingOverlay({
+        root,
+        outline,
+        errorTitle: 'Could not load',
+        retryLabel: 'Try again',
+        onRetry,
+        onError: vi.fn(),
+    })
 }
 
 class FakeResizeObserver {
@@ -76,9 +94,7 @@ describe('LoadingOverlay', () => {
         vi.stubGlobal('ResizeObserver', FakeResizeObserver)
     })
 
-    afterEach(() => {
-        vi.unstubAllGlobals()
-    })
+    afterEach(() => void vi.unstubAllGlobals())
 
     it('shows the loading outline while loading and clears it when an error is shown', async () => {
         const paneEl = document.createElement('div')

@@ -18,16 +18,45 @@ describe('WorkspaceCanvasContext', () => {
     it('adds only eligible unique canvas nodes and persists removals', () => {
         const canvasState = {
             nodes: [
-                { nodeId: 'image-1', type: 'image', assetId: 'asset-1', position: { x: 0, y: 0 }, dimensions: { width: 1, height: 1 } },
-                { nodeId: 'branch-1', type: 'branchOrigin', position: { x: 0, y: 0 }, dimensions: { width: 1, height: 1 } },
+                {
+                    nodeId: 'image-1',
+                    type: 'image',
+                    assetId: 'asset-1',
+                    position: {
+                        x: 0,
+                        y: 0,
+                    },
+                    dimensions: {
+                        width: 1,
+                        height: 1,
+                    },
+                },
+                {
+                    nodeId: 'branch-1',
+                    type: 'branchOrigin',
+                    position: {
+                        x: 0,
+                        y: 0,
+                    },
+                    dimensions: {
+                        width: 1,
+                        height: 1,
+                    },
+                },
             ],
             edges: [],
-            viewport: { x: 0, y: 0, zoom: 1 },
+            viewport: {
+                x: 0,
+                y: 0,
+                zoom: 1,
+            },
         } as CanvasState
-        let panelState = { isOpen: false, topLevelMode: 'aiThreads', contextChips: [] } as CanvasAiChatPanelState
-        const persistPanelState = vi.fn((state: CanvasAiChatPanelState) => {
-            panelState = state
-        })
+        let panelState = {
+            isOpen: false,
+            topLevelMode: 'aiThreads',
+            contextChips: [],
+        } as CanvasAiChatPanelState
+        const persistPanelState = vi.fn((state: CanvasAiChatPanelState) => void (panelState = state))
         const owner = new WorkspaceCanvasContext({
             document,
             window,
@@ -47,9 +76,7 @@ describe('WorkspaceCanvasContext', () => {
             getState: () => canvasState,
             getPanelState: () => panelState,
             persistPanelState,
-            applyLocalPanelState: state => {
-                panelState = state
-            },
+            applyLocalPanelState: state => void (panelState = state),
             findNode: nodeId => canvasState.nodes.find(node => node.nodeId === nodeId),
             getPreviewNode: vi.fn(),
         } as WorkspaceCanvasContextPorts)

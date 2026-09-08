@@ -22,20 +22,29 @@ type JsonNode = {
     content?: JsonNode[]
 }
 
-function findNode(root: JsonNode, predicate: (node: JsonNode) => boolean): JsonNode | undefined {
-    if (predicate(root)) return root
+const findNode = (root: JsonNode, predicate: (node: JsonNode) => boolean): JsonNode | undefined => {
+    if (predicate(root))
+        return root
+
     for (const child of root.content ?? []) {
         const found = findNode(child, predicate)
-        if (found) return found
+
+        if (found)
+            return found
     }
+
     return undefined
 }
 
-function createTransport() {
+const createTransport = () => {
     let subjectSeq = 0
     let streamSequence = 0
+
     return {
-        getCurrentSubjectState: vi.fn(async () => ({ subjectSeq, streamSequence })),
+        getCurrentSubjectState: vi.fn(async () => ({
+            subjectSeq,
+            streamSequence,
+        })),
         replayDocumentStepEvents: vi.fn(async () => []),
         purgeDocumentSubject: vi.fn(async () => {
             subjectSeq = 0
@@ -44,12 +53,20 @@ function createTransport() {
         publishAiStreamStep: vi.fn(async (event: { subjectSeq: number }) => {
             subjectSeq = event.subjectSeq
             streamSequence += 1
-            return { envelope: { subjectSeq }, streamSequence }
+
+            return {
+                envelope: { subjectSeq },
+                streamSequence,
+            }
         }),
         publishControlEvent: vi.fn(async (event: { subjectSeq: number }) => {
             subjectSeq = event.subjectSeq
             streamSequence += 1
-            return { envelope: { subjectSeq }, streamSequence }
+
+            return {
+                envelope: { subjectSeq },
+                streamSequence,
+            }
         }),
         isExpectationFailure: vi.fn(() => false),
     }
@@ -72,9 +89,16 @@ describe('AiChatProseMirrorStreamAssembler Capability generation history', () =>
             capabilityRunId: 'timeline-run',
             chatModelProvider: 'Google',
             chatModelId: 'Google:gemini-2.5-flash',
-            input: { durationMs: 15000, precisionMs: 2000 },
+            input: {
+                durationMs: 15000,
+                precisionMs: 2000,
+            },
             outputAssetIds: ['timeline-asset'],
-            steps: [{ stepId: 'persist', title: 'Persist timeline', status: 'completed' }],
+            steps: [{
+                stepId: 'persist',
+                title: 'Persist timeline',
+                status: 'completed',
+            }],
         }
         const assembler = new AiChatProseMirrorStreamAssembler({
             organizationId: 'organization-1',

@@ -64,6 +64,4 @@ export const resolveActionTimelineInput = ({
     }
 }
 
-function readNumber(value: CapabilityJsonValue | undefined): number | undefined {
-    return typeof value === 'number' ? value : undefined
-}
+const readNumber = (value: CapabilityJsonValue | undefined): number | undefined => (typeof value === 'number' ? value : undefined)

@@ -30,8 +30,12 @@ const STORAGE_KEY = 'localauth0_token'
 const makeToken = (expSecondsFromNow: number): string => {
     const now = Math.floor(Date.now() / 1000)
     const base64url = (obj: object) => btoa(JSON.stringify(obj)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
-    const header = base64url({ typ: 'JWT', alg: 'none' })
+    const header = base64url({
+        typ: 'JWT',
+        alg: 'none',
+    })
     const payload = base64url({ exp: now + expSecondsFromNow })
+
     return `${header}.${payload}.sig`
 }
 

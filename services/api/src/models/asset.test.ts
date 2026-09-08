@@ -85,13 +85,23 @@ const reference: AssetReference = {
 }
 
 const canvasState = (positionX: number): CanvasState => ({
-    viewport: { x: 0, y: 0, zoom: 1 },
+    viewport: {
+        x: 0,
+        y: 0,
+        zoom: 1,
+    },
     nodes: [{
         nodeId: 'node-1',
         type: 'image',
         assetId: 'asset-1',
-        position: { x: positionX, y: 20 },
-        dimensions: { width: 800, height: 450 },
+        position: {
+            x: positionX,
+            y: 20,
+        },
+        dimensions: {
+            width: 800,
+            height: 450,
+        },
         mediaGenerationPhase: 'ready',
     }],
     edges: [],
@@ -182,14 +192,23 @@ describe('Asset.attachWorkspaceReference', () => {
                 type: 'capabilityArtifact' as const,
                 artifactTypeId: 'action-timeline',
                 assetId: 'asset-1',
-                position: { x: 500, y: 20 },
-                dimensions: { width: 520, height: 360 },
+                position: {
+                    x: 500,
+                    y: 20,
+                },
+                dimensions: {
+                    width: 520,
+                    height: 360,
+                },
             }],
         }
         dynamo.getItem
             .mockResolvedValueOnce({
                 ...asset,
-                artifact: { artifactTypeId: 'action-timeline', schemaVersion: 'action-timeline-v1' },
+                artifact: {
+                    artifactTypeId: 'action-timeline',
+                    schemaVersion: 'action-timeline-v1',
+                },
                 documents: {
                     capabilityArtifact: {
                         role: 'capabilityArtifact',
@@ -200,14 +219,20 @@ describe('Asset.attachWorkspaceReference', () => {
                         updatedAt: 10,
                     },
                 },
-                states: { ...asset.states, media: 'none' },
+                states: {
+                    ...asset.states,
+                    media: 'none',
+                },
             })
             .mockResolvedValueOnce({ organizationId: 'organization-1' })
             .mockResolvedValueOnce(undefined)
             .mockResolvedValueOnce({
                 updatedAt: 100,
                 canvasStateUpdatedAt: 100,
-                canvasState: { ...nextCanvasState, nodes: [] },
+                canvasState: {
+                    ...nextCanvasState,
+                    nodes: [],
+                },
             })
 
         await AssetModel.attachWorkspaceReference({
@@ -282,7 +307,10 @@ describe('Asset prompt-reference search', () => {
         expect(buildAssetSearchRecord({
             ...asset,
             title: 'Action Timeline',
-            artifact: { artifactTypeId: 'action-timeline', schemaVersion: 'action-timeline-v1' },
+            artifact: {
+                artifactTypeId: 'action-timeline',
+                schemaVersion: 'action-timeline-v1',
+            },
             documents: {
                 capabilityArtifact: {
                     role: 'capabilityArtifact',
@@ -293,7 +321,10 @@ describe('Asset prompt-reference search', () => {
                     updatedAt: 1,
                 },
             },
-            states: { ...asset.states, media: 'none' },
+            states: {
+                ...asset.states,
+                media: 'none',
+            },
         })).toMatchObject({
             primaryCategory: 'capabilityArtifact',
             artifactTypeId: 'action-timeline',
@@ -308,13 +339,19 @@ describe('Asset prompt-reference search', () => {
             title: 'Portrait Study',
             scope: 'organization',
             scopeOwnerId: 'organization-1',
-            states: { ...asset.states, lifecycle: 'active' },
+            states: {
+                ...asset.states,
+                lifecycle: 'active',
+            },
         })!
         dynamo.queryItems.mockImplementation(async ({ keyConditions }: { keyConditions: { scopeAndOwner: string } }) => ({
             items: keyConditions.scopeAndOwner === 'organization#organization-1'
                 ? [baseRecord]
                 : keyConditions.scopeAndOwner === 'principal#user-1'
-                ? [{ ...baseRecord, scopeAndOwner: 'principal#user-1' }]
+                ? [{
+                    ...baseRecord,
+                    scopeAndOwner: 'principal#user-1',
+                }]
                 : [],
         }))
 
@@ -326,14 +363,24 @@ describe('Asset prompt-reference search', () => {
             categories: ['document'],
         })
 
-        expect(result.items).toEqual([{ ...baseRecord, scopeAndOwner: 'principal#user-1' }])
+        expect(result.items).toEqual([{
+            ...baseRecord,
+            scopeAndOwner: 'principal#user-1',
+        }])
         expect(dynamo.queryItems).toHaveBeenCalledWith(expect.objectContaining({
-            sortKeyCondition: { key: 'searchKey', operator: 'begins_with', value: 'document#por' },
+            sortKeyCondition: {
+                key: 'searchKey',
+                operator: 'begins_with',
+                value: 'document#por',
+            },
         }))
     })
 
     it('does not autocomplete Assets that are not active and model-usable', async () => {
-        const creatingDocument = buildAssetSearchRecord({ ...asset, title: 'Still creating' })!
+        const creatingDocument = buildAssetSearchRecord({
+            ...asset,
+            title: 'Still creating',
+        })!
         const failedImage = {
             ...creatingDocument,
             primaryCategory: 'image' as const,
@@ -355,10 +402,16 @@ describe('Asset prompt-reference search', () => {
     })
 
     it('binds opaque cursors to the normalized query and category set', async () => {
-        const record = buildAssetSearchRecord({ ...asset, title: 'Portrait Study' })!
+        const record = buildAssetSearchRecord({
+            ...asset,
+            title: 'Portrait Study',
+        })!
         dynamo.queryItems.mockResolvedValue({
             items: [record],
-            lastEvaluatedKey: { scopeAndOwner: record.scopeAndOwner, searchKey: record.searchKey },
+            lastEvaluatedKey: {
+                scopeAndOwner: record.scopeAndOwner,
+                searchKey: record.searchKey,
+            },
         })
         const first = await AssetModel.searchAvailable({
             scopeAndOwners: [record.scopeAndOwner],
@@ -528,7 +581,10 @@ describe('Asset prompt-reference search', () => {
             .mockResolvedValueOnce(asset)
             .mockResolvedValueOnce(catalogReference)
 
-        await AssetModel.detachCatalogReference({ assetId: asset.assetId, requester })
+        await AssetModel.detachCatalogReference({
+            assetId: asset.assetId,
+            requester,
+        })
 
         expect(dynamo.transactWrite).toHaveBeenCalledWith(expect.objectContaining({
             origin: 'Asset.detachCatalogReference',

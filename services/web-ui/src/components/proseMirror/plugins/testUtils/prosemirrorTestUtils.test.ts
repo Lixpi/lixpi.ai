@@ -86,16 +86,12 @@ describe('prosemirrorTestUtils — node lookup', () => {
         expect(position).toBeNull()
     })
 
-    it('returns the same test schema used by helper test factories', () => {
-        expect(testUtilsSchema).toBe(testSchema)
-    })
+    it('returns the same test schema used by helper test factories', () => void expect(testUtilsSchema).toBe(testSchema))
 })
 
 describe('prosemirrorTestUtils — state factories', () => {
     let stateDoc = nestedThreadDoc
-    beforeEach(() => {
-        stateDoc = doc(response(p('first')), response(p('second')))
-    })
+    beforeEach(() => void (stateDoc = doc(response(p('first')), response(p('second')))))
 
     it('shares schema object identity in createEditorState', () => {
         const state = createEditorState(stateDoc)
@@ -109,11 +105,7 @@ describe('prosemirrorTestUtils — state factories', () => {
         expect(state.schema).toBeDefined()
     })
 
-    it('throws when creating a node selection at non-node positions', () => {
-        expect(() => {
-            createStateWithNodeSelection(stateDoc, Number.MAX_SAFE_INTEGER)
-        }).toThrow()
-    })
+    it('throws when creating a node selection at non-node positions', () => void expect(() => void createStateWithNodeSelection(stateDoc, Number.MAX_SAFE_INTEGER)).toThrow())
 
     it('creates node-selection state at a found node position', () => {
         const responsePos = findNodePosition(stateDoc, 'aiResponseMessage')

@@ -106,7 +106,7 @@ export const persistStyle = async (
     )
 }
 
-function requireAllowedActions(deps: StyleExtractionDependencies): ReadonlySet<string> {
+const requireAllowedActions = (deps: StyleExtractionDependencies): ReadonlySet<string> => {
     if (!deps.getAllowedActions)
         throw new Error('Style Extraction capability module is not registered')
 
@@ -121,7 +121,7 @@ type VisualStyleResources = {
     samples: CapabilityResourceRef[]
 }
 
-async function buildVisualStyleResources({
+const buildVisualStyleResources = async ({
     capabilityId,
     organizationId,
     state,
@@ -131,7 +131,7 @@ async function buildVisualStyleResources({
     organizationId: string
     state: StyleExtractionState
     samples: StyleSampleRef[]
-}): Promise<VisualStyleResources> {
+}): Promise<VisualStyleResources> => {
     const draft = state.draft!
     const instructions = await storeCapabilityResource({
         storageOwnerId: organizationId,
@@ -239,7 +239,7 @@ async function buildVisualStyleResources({
     }
 }
 
-function buildVisualStyleManifest({
+const buildVisualStyleManifest = ({
     capabilityId,
     name,
     description,
@@ -249,7 +249,7 @@ function buildVisualStyleManifest({
     name: string
     description: string
     resources: VisualStyleResources
-}): CapabilityManifest {
+}): CapabilityManifest => {
     const sampleInputs = Object.fromEntries(
         resources.samples.map(
             (sample, index) => [
@@ -342,7 +342,7 @@ function buildVisualStyleManifest({
     }
 }
 
-function sampleMediaType(sample: StyleSampleRef): CapabilityResourceMediaType {
+const sampleMediaType = (sample: StyleSampleRef): CapabilityResourceMediaType => {
     return sample.ext === 'jpg'
         || sample.ext === 'jpeg'
         ? 'image/jpeg'

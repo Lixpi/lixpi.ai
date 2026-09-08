@@ -16,8 +16,14 @@ import {
 it('cancels pending positioning when the menu is destroyed', () => {
     const request = vi.spyOn(window, 'requestAnimationFrame').mockReturnValue(91)
     const cancel = vi.spyOn(window, 'cancelAnimationFrame')
-    const { menu, parentEl } = createBubbleMenu()
-    menu.show('text', createMockPosition({ width: 0, height: 0 }))
+    const {
+        menu,
+        parentEl,
+    } = createBubbleMenu()
+    menu.show('text', createMockPosition({
+        width: 0,
+        height: 0,
+    }))
     expect(request).toHaveBeenCalledOnce()
     menu.destroy()
     expect(cancel).toHaveBeenCalledWith(91)
@@ -32,14 +38,19 @@ it('cancels pending positioning when the menu is destroyed', () => {
 // HELPERS
 // =============================================================================
 
-function createMockItem(contexts: string[], label = 'btn'): BubbleMenuItem {
+const createMockItem = (contexts: string[], label = 'btn'): BubbleMenuItem => {
     const el = document.createElement('button')
     el.className = 'bubble-menu-button'
     el.textContent = label
-    return { element: el, context: contexts, update: vi.fn() }
+
+    return {
+        element: el,
+        context: contexts,
+        update: vi.fn(),
+    }
 }
 
-function createMockPosition(overrides: Partial<DOMRect> = {}): BubbleMenuPositionRequest {
+const createMockPosition = (overrides: Partial<DOMRect> = {}): BubbleMenuPositionRequest => {
     const rect = {
         left: 100,
         right: 300,
@@ -51,19 +62,23 @@ function createMockPosition(overrides: Partial<DOMRect> = {}): BubbleMenuPositio
         y: 50,
         toJSON: () => ({}),
     }
+
     return {
-        targetRect: { ...rect, ...overrides } as DOMRect,
+        targetRect: {
+            ...rect,
+            ...overrides,
+        } as DOMRect,
         placement: 'below',
     }
 }
 
-function createBubbleMenu(overrides: {
+const createBubbleMenu = (overrides: {
     items?: BubbleMenuItem[]
     panels?: HTMLElement[]
     getVisualScale?: () => number
     onShow?: (ctx: string) => void
     onHide?: () => void
-} = {}) {
+} = {}) => {
     const parentEl = document.createElement('div')
     document.body.appendChild(parentEl)
 
@@ -82,7 +97,11 @@ function createBubbleMenu(overrides: {
         onHide: overrides.onHide,
     })
 
-    return { menu, parentEl, items }
+    return {
+        menu,
+        parentEl,
+        items,
+    }
 }
 
 // =============================================================================
@@ -92,9 +111,7 @@ function createBubbleMenu(overrides: {
 describe('BubbleMenu — construction', () => {
     let parentEl: HTMLElement
 
-    afterEach(() => {
-        parentEl?.remove()
-    })
+    afterEach(() => void (parentEl?.remove()))
 
     it('appends menu element to parentEl', () => {
         const result = createBubbleMenu()
@@ -204,13 +221,14 @@ describe('BubbleMenu — show/hide', () => {
 describe('BubbleMenu — callbacks', () => {
     let parentEl: HTMLElement
 
-    afterEach(() => {
-        parentEl?.remove()
-    })
+    afterEach(() => void (parentEl?.remove()))
 
     it('calls onShow with context when shown', () => {
         const onShow = vi.fn()
-        const { menu, parentEl: pe } = createBubbleMenu({ onShow })
+        const {
+            menu,
+            parentEl: pe,
+        } = createBubbleMenu({ onShow })
         parentEl = pe
         menu.show('image', createMockPosition())
         expect(onShow).toHaveBeenCalledWith('image')
@@ -219,7 +237,10 @@ describe('BubbleMenu — callbacks', () => {
 
     it('calls onHide when hidden', () => {
         const onHide = vi.fn()
-        const { menu, parentEl: pe } = createBubbleMenu({ onHide })
+        const {
+            menu,
+            parentEl: pe,
+        } = createBubbleMenu({ onHide })
         parentEl = pe
         menu.show('text', createMockPosition())
         menu.hide()
@@ -284,9 +305,7 @@ describe('BubbleMenu — context switching', () => {
 describe('BubbleMenu — refreshState', () => {
     let parentEl: HTMLElement
 
-    afterEach(() => {
-        parentEl?.remove()
-    })
+    afterEach(() => void (parentEl?.remove()))
 
     it('calls update() on each item that has it', () => {
         const item1 = createMockItem(['text'], 'a')
@@ -297,7 +316,10 @@ describe('BubbleMenu — refreshState', () => {
             // no update
         }
 
-        const { menu, parentEl: pe } = createBubbleMenu({ items: [item1, item2, item3] })
+        const {
+            menu,
+            parentEl: pe,
+        } = createBubbleMenu({ items: [item1, item2, item3] })
         parentEl = pe
 
         menu.refreshState()
@@ -371,10 +393,20 @@ describe('BubbleMenu — reposition', () => {
             y: 0,
             toJSON: () => ({}),
         } as DOMRect))
-        Object.defineProperty(menu.element, 'offsetWidth', { configurable: true, value: 200 })
-        Object.defineProperty(menu.element, 'offsetHeight', { configurable: true, value: 40 })
+        Object.defineProperty(menu.element, 'offsetWidth', {
+            configurable: true,
+            value: 200,
+        })
+        Object.defineProperty(menu.element, 'offsetHeight', {
+            configurable: true,
+            value: 40,
+        })
 
-        menu.show('image', createMockPosition({ left: 100, right: 300, width: 200 }))
+        menu.show('image', createMockPosition({
+            left: 100,
+            right: 300,
+            width: 200,
+        }))
 
         expect(menu.element.style.left).toBe('150px')
         expect(menu.element.style.top).toBe('108px')
@@ -392,11 +424,21 @@ describe('BubbleMenu — reposition', () => {
             y: 0,
             toJSON: () => ({}),
         } as DOMRect))
-        Object.defineProperty(menu.element, 'offsetWidth', { configurable: true, value: 100 })
-        Object.defineProperty(menu.element, 'offsetHeight', { configurable: true, value: 40 })
+        Object.defineProperty(menu.element, 'offsetWidth', {
+            configurable: true,
+            value: 100,
+        })
+        Object.defineProperty(menu.element, 'offsetHeight', {
+            configurable: true,
+            value: 40,
+        })
 
         menu.show('image', {
-            ...createMockPosition({ left: -80, right: 20, width: 100 }),
+            ...createMockPosition({
+                left: -80,
+                right: 20,
+                width: 100,
+            }),
             clampToParent: false,
         })
 
@@ -415,8 +457,14 @@ describe('BubbleMenu — reposition', () => {
             y: 0,
             toJSON: () => ({}),
         } as DOMRect))
-        Object.defineProperty(menu.element, 'offsetWidth', { configurable: true, value: 120 })
-        Object.defineProperty(menu.element, 'offsetHeight', { configurable: true, value: 60 })
+        Object.defineProperty(menu.element, 'offsetWidth', {
+            configurable: true,
+            value: 120,
+        })
+        Object.defineProperty(menu.element, 'offsetHeight', {
+            configurable: true,
+            value: 60,
+        })
 
         menu.show('image', {
             targetRect: {
@@ -479,9 +527,7 @@ describe('BubbleMenu — preventHide', () => {
         expect(menu.preventHide).toBe(true)
     })
 
-    it('preventHide defaults to false', () => {
-        expect(menu.preventHide).toBe(false)
-    })
+    it('preventHide defaults to false', () => void expect(menu.preventHide).toBe(false))
 })
 
 // =============================================================================
@@ -490,7 +536,10 @@ describe('BubbleMenu — preventHide', () => {
 
 describe('BubbleMenu — destroy', () => {
     it('removes menu element from DOM', () => {
-        const { menu, parentEl } = createBubbleMenu()
+        const {
+            menu,
+            parentEl,
+        } = createBubbleMenu()
         expect(parentEl.querySelector('.bubble-menu')).not.toBeNull()
 
         menu.destroy()
@@ -506,12 +555,13 @@ describe('BubbleMenu — destroy', () => {
 describe('BubbleMenu — transform awareness', () => {
     let parentEl: HTMLElement
 
-    afterEach(() => {
-        parentEl?.remove()
-    })
+    afterEach(() => void (parentEl?.remove()))
 
     it('screenToLocal converts screen coords to local coords (no transform)', () => {
-        const { menu, parentEl: pe } = createBubbleMenu()
+        const {
+            menu,
+            parentEl: pe,
+        } = createBubbleMenu()
         parentEl = pe
 
         // Without any CSS transform, scale is 1 and coords are relative to parent
@@ -524,7 +574,10 @@ describe('BubbleMenu — transform awareness', () => {
     })
 
     it('getScale returns 1 when no transform ancestor exists', () => {
-        const { menu, parentEl: pe } = createBubbleMenu()
+        const {
+            menu,
+            parentEl: pe,
+        } = createBubbleMenu()
         parentEl = pe
 
         expect(menu.getScale()).toBe(1)
@@ -532,7 +585,10 @@ describe('BubbleMenu — transform awareness', () => {
     })
 
     it('findTransformedAncestor returns null when no transform', () => {
-        const { menu, parentEl: pe } = createBubbleMenu()
+        const {
+            menu,
+            parentEl: pe,
+        } = createBubbleMenu()
         parentEl = pe
 
         expect(menu.findTransformedAncestor()).toBeNull()
@@ -540,7 +596,10 @@ describe('BubbleMenu — transform awareness', () => {
     })
 
     it('applies optional visual scale without changing transform-aware coordinate scale', () => {
-        const { menu, parentEl: pe } = createBubbleMenu({ getVisualScale: () => 0.5 })
+        const {
+            menu,
+            parentEl: pe,
+        } = createBubbleMenu({ getVisualScale: () => 0.5 })
         parentEl = pe
 
         menu.show('image', createMockPosition())
@@ -551,7 +610,10 @@ describe('BubbleMenu — transform awareness', () => {
     })
 
     it('clamps invalid visual scale values', () => {
-        const { menu, parentEl: pe } = createBubbleMenu({ getVisualScale: () => 0 })
+        const {
+            menu,
+            parentEl: pe,
+        } = createBubbleMenu({ getVisualScale: () => 0 })
         parentEl = pe
 
         menu.show('image', createMockPosition())

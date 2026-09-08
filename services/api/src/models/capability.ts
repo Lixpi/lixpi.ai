@@ -784,11 +784,11 @@ const canEditCapability = async (
     return !('error' in result)
 }
 
-async function isCatalogMetaVisible(
+const isCatalogMetaVisible = async (
     item: CapabilityMeta,
     requester: CapabilityRequesterContext,
     editVisibilityByCapabilityId: Map<string, Promise<boolean>>,
-): Promise<boolean> {
+): Promise<boolean> => {
     if (
         item.catalogExposure !== 'standalone'
         || item.parentModuleId !== undefined
@@ -882,13 +882,13 @@ const registerResourceReferences = async (
     return created
 }
 
-async function rollbackResourceReferences(
+const rollbackResourceReferences = async (
     record: CapabilityCatalogRecord,
     references: Array<{
         blobHash: string
         referenceKey: string
     }>,
-): Promise<void> {
+): Promise<void> => {
     await Promise.all(
         references.map(async reference => {
             await BlobModel.removeReference({
@@ -1094,29 +1094,27 @@ export const retireSupersededCapabilityBlobReferences = async ({
     }
 }
 
-function addProtectedManifestHash(
+const addProtectedManifestHash = (
     protectedHashes: Map<string, Set<string>>,
     capabilityId: string,
     manifestBlobHash: string,
-): void {
+): void => {
     const hashes = protectedHashes.get(capabilityId) ?? new Set<string>()
     hashes.add(manifestBlobHash)
     protectedHashes.set(capabilityId, hashes)
 }
 
-function buildProtectedReferenceId(
+const buildProtectedReferenceId = (
     capabilityId: string,
     blobHash: string,
     referenceKey: string,
-): string {
-    return `${capabilityId}\u0000${blobHash}\u0000${referenceKey}`
-}
+): string => `${capabilityId}\u0000${blobHash}\u0000${referenceKey}`
 
-async function readCapabilityManifestBlob(
+const readCapabilityManifestBlob = async (
     storageOwnerId: string,
     manifestBlobHash: string,
     capabilityId: string,
-): Promise<CapabilityManifest> {
+): Promise<CapabilityManifest> => {
     const bytes = await getContentAddressedBlob({
         organizationId: storageOwnerId,
         blobHash: manifestBlobHash,
@@ -1526,7 +1524,7 @@ export const seedBuiltInCapability = async ({
     })
 }
 
-function canReplaceInvalidBuiltInManifest({
+const canReplaceInvalidBuiltInManifest = ({
     input,
     existing,
     error,
@@ -1534,7 +1532,7 @@ function canReplaceInvalidBuiltInManifest({
     input: SaveCapabilityInput
     existing: CapabilityCatalogRecord
     error: unknown
-}): boolean {
+}): boolean => {
     const message = error instanceof Error ? error.message : ''
 
     return (

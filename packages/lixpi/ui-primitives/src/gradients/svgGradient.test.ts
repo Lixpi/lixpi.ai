@@ -19,7 +19,10 @@ type TransitionRecord = {
     onEnd?: () => void
 }
 
-function createStopRecorder(): { gradient: any; stops: StopRecord[] } {
+const createStopRecorder = (): {
+    gradient: any
+    stops: StopRecord[]
+} => {
     const stops: StopRecord[] = []
 
     return {
@@ -27,16 +30,21 @@ function createStopRecorder(): { gradient: any; stops: StopRecord[] } {
         gradient: {
             append: vi.fn((tagName: string) => {
                 expect(tagName).toBe('stop')
-                const stop: StopRecord = { attrs: {}, styles: {} }
+                const stop: StopRecord = {
+                    attrs: {},
+                    styles: {},
+                }
                 stops.push(stop)
 
                 const selection = {
                     attr: vi.fn((name: string, value: unknown) => {
                         stop.attrs[name] = value
+
                         return selection
                     }),
                     style: vi.fn((name: string, value: unknown) => {
                         stop.styles[name] = value
+
                         return selection
                     }),
                 }
@@ -47,7 +55,10 @@ function createStopRecorder(): { gradient: any; stops: StopRecord[] } {
     }
 }
 
-function createTransitionRecorder(): { gradient: any; transitions: TransitionRecord[] } {
+const createTransitionRecorder = (): {
+    gradient: any
+    transitions: TransitionRecord[]
+} => {
     const transitions: TransitionRecord[] = []
 
     return {
@@ -61,19 +72,23 @@ function createTransitionRecorder(): { gradient: any; transitions: TransitionRec
                 const selection = {
                     duration: vi.fn((duration: number) => {
                         transition.duration = duration
+
                         return selection
                     }),
                     ease: vi.fn((ease: (progress: number) => number) => {
                         transition.ease = ease
+
                         return selection
                     }),
                     attr: vi.fn((name: string, value: unknown) => {
                         transition.attrs[name] = value
+
                         return selection
                     }),
                     on: vi.fn((eventName: string, callback: () => void) => {
                         expect(eventName).toBe('end')
                         transition.onEnd = callback
+
                         return selection
                     }),
                 }
@@ -86,43 +101,82 @@ function createTransitionRecorder(): { gradient: any; transitions: TransitionRec
 
 describe('SvgGradientRenderer', () => {
     it('appends evenly-spaced linear gradient stops with optional ids', () => {
-        const { gradient, stops } = createStopRecorder()
+        const {
+            gradient,
+            stops,
+        } = createStopRecorder()
 
         SvgGradientRenderer.appendLinearGradientStops(gradient, ['#111111', '#222222', '#333333'], {
             idPrefix: 'test-stop',
         })
 
         expect(stops).toEqual([
-            { attrs: { offset: '0%', id: 'test-stop-0' }, styles: { 'stop-color': '#111111' } },
-            { attrs: { offset: '50%', id: 'test-stop-1' }, styles: { 'stop-color': '#222222' } },
-            { attrs: { offset: '100%', id: 'test-stop-2' }, styles: { 'stop-color': '#333333' } },
+            {
+                attrs: {
+                    offset: '0%',
+                    id: 'test-stop-0',
+                },
+                styles: { 'stop-color': '#111111' },
+            },
+            {
+                attrs: {
+                    offset: '50%',
+                    id: 'test-stop-1',
+                },
+                styles: { 'stop-color': '#222222' },
+            },
+            {
+                attrs: {
+                    offset: '100%',
+                    id: 'test-stop-2',
+                },
+                styles: { 'stop-color': '#333333' },
+            },
         ])
     })
 
     it('keeps a single linear gradient stop at the start of the gradient', () => {
-        const { gradient, stops } = createStopRecorder()
+        const {
+            gradient,
+            stops,
+        } = createStopRecorder()
 
         SvgGradientRenderer.appendLinearGradientStops(gradient, ['#111111'])
 
         expect(stops).toEqual([
-            { attrs: { offset: '0%' }, styles: { 'stop-color': '#111111' } },
+            {
+                attrs: { offset: '0%' },
+                styles: { 'stop-color': '#111111' },
+            },
         ])
     })
 
     it('appends repeated stops for looping gradient borders', () => {
-        const { gradient, stops } = createStopRecorder()
+        const {
+            gradient,
+            stops,
+        } = createStopRecorder()
 
         SvgGradientRenderer.appendRepeatingLinearGradientStops(gradient, ['#111111', '#222222'], 2)
 
         expect(stops).toHaveLength(7)
-        expect(stops[0]).toEqual({ attrs: { offset: '0%' }, styles: { 'stop-color': '#111111' } })
+        expect(stops[0]).toEqual({
+            attrs: { offset: '0%' },
+            styles: { 'stop-color': '#111111' },
+        })
         expect(Number.parseFloat(stops[1].attrs.offset as string)).toBeCloseTo(100 / 6)
         expect(stops[1].styles).toEqual({ 'stop-color': '#222222' })
-        expect(stops[6]).toEqual({ attrs: { offset: '100%' }, styles: { 'stop-color': '#111111' } })
+        expect(stops[6]).toEqual({
+            attrs: { offset: '100%' },
+            styles: { 'stop-color': '#111111' },
+        })
     })
 
     it('does not append repeating stops for an empty color set', () => {
-        const { gradient, stops } = createStopRecorder()
+        const {
+            gradient,
+            stops,
+        } = createStopRecorder()
 
         SvgGradientRenderer.appendRepeatingLinearGradientStops(gradient, [])
 
@@ -131,11 +185,17 @@ describe('SvgGradientRenderer', () => {
     })
 
     it('starts and stops a rotating linear gradient transition', () => {
-        const { gradient, transitions } = createTransitionRecorder()
+        const {
+            gradient,
+            transitions,
+        } = createTransitionRecorder()
         const customEase = vi.fn((progress: number) => progress)
 
         const animation = SvgGradientRenderer.startRotatingLinearGradient(gradient, {
-            center: { x: 0.5, y: 0.5 },
+            center: {
+                x: 0.5,
+                y: 0.5,
+            },
             radius: 0.5,
             duration: 50,
             angleStep: -0.25,
@@ -163,10 +223,16 @@ describe('SvgGradientRenderer', () => {
     })
 
     it('uses the shared hover transition by default', () => {
-        const { gradient, transitions } = createTransitionRecorder()
+        const {
+            gradient,
+            transitions,
+        } = createTransitionRecorder()
 
         SvgGradientRenderer.startRotatingLinearGradient(gradient, {
-            center: { x: 0, y: 0 },
+            center: {
+                x: 0,
+                y: 0,
+            },
             radius: 1,
             duration: 100,
         })

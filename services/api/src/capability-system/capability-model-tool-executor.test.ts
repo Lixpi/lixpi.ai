@@ -27,9 +27,9 @@ import {
     shouldExposeCapabilityModelTools,
 } from './capability-model-tool-executor.ts'
 
-function makePlan(
+const makePlan = (
     executionPolicy: 'model-choice' | 'model-required' | 'required' = 'model-choice',
-): SealedResolvedCapabilityPlan {
+): SealedResolvedCapabilityPlan => {
     const ref: CapabilityResourceRef = {
         resourceId: 'input',
         blobHash: 'input-hash',
@@ -56,14 +56,26 @@ function makePlan(
                 video: 'ignore',
                 outputMode: executionPolicy === 'model-required' ? 'capability-only' : 'continue-media-generation',
             },
-            workflow: { steps: [], outputs: {} },
+            workflow: {
+                steps: [],
+                outputs: {},
+            },
         },
     }
     const serializable: ResolvedCapabilityPlan = {
         rootCapabilityIds: ['discovered-tool'],
-        capabilities: [{ capabilityId: 'discovered-tool', kind: 'tool', manifestBlobHash: 'hash', manifest }],
-        resolvedManifests: [{ capabilityId: 'discovered-tool', manifestBlobHash: 'hash' }],
+        capabilities: [{
+            capabilityId: 'discovered-tool',
+            kind: 'tool',
+            manifestBlobHash: 'hash',
+            manifest,
+        }],
+        resolvedManifests: [{
+            capabilityId: 'discovered-tool',
+            manifestBlobHash: 'hash',
+        }],
     }
+
     return new SealedResolvedCapabilityPlan(serializable, [{
         capabilityId: 'discovered-tool',
         ref,
@@ -71,7 +83,10 @@ function makePlan(
             type: 'object',
             properties: {
                 prompt: { type: 'string' },
-                referenceAssetIds: { type: 'array', items: { type: 'string' } },
+                referenceAssetIds: {
+                    type: 'array',
+                    items: { type: 'string' },
+                },
             },
         })),
     }])
@@ -98,7 +113,11 @@ describe('CapabilityModelToolExecutor', () => {
     it('seals a model-discovered Tool before schema-aware explicit chip injection', async () => {
         const plan = makePlan()
         const use = vi.fn(async () => ({
-            run: { runId: 'run-1', status: 'completed', outputAssetIds: [] },
+            run: {
+                runId: 'run-1',
+                status: 'completed',
+                outputAssetIds: [],
+            },
             output: { ok: true },
             stepOutputs: {},
         }))
@@ -107,14 +126,26 @@ describe('CapabilityModelToolExecutor', () => {
             use,
         } as unknown as CapabilityDispatcher
         const state = {
-            messages: [{ role: 'user', content: 'Create it' }],
-            eventMeta: { userId: 'user-1', organizationId: 'organization-1' },
+            messages: [{
+                role: 'user',
+                content: 'Create it',
+            }],
+            eventMeta: {
+                userId: 'user-1',
+                organizationId: 'organization-1',
+            },
             workspaceId: 'workspace-1',
             aiChatThreadId: 'conversation-1',
             workspaceContextSnapshot: {
                 nodes: [
-                    { assetId: 'asset-2', isExplicitChip: true },
-                    { assetId: 'asset-1', isExplicitChip: true },
+                    {
+                        assetId: 'asset-2',
+                        isExplicitChip: true,
+                    },
+                    {
+                        assetId: 'asset-1',
+                        isExplicitChip: true,
+                    },
                 ],
             },
         } as ProviderState
@@ -152,8 +183,15 @@ describe('CapabilityModelToolExecutor', () => {
         const plan = makePlan('model-required')
         const trace = vi.fn()
         const use = vi.fn(async () => ({
-            run: { runId: 'run-timeline', status: 'completed', outputAssetIds: ['timeline-asset'] },
-            output: { outputKind: 'capabilityArtifact', assetId: 'timeline-asset' },
+            run: {
+                runId: 'run-timeline',
+                status: 'completed',
+                outputAssetIds: ['timeline-asset'],
+            },
+            output: {
+                outputKind: 'capabilityArtifact',
+                assetId: 'timeline-asset',
+            },
             stepOutputs: {},
             events: [{
                 eventType: 'STEP_COMPLETED',
@@ -166,17 +204,30 @@ describe('CapabilityModelToolExecutor', () => {
             }],
         }))
         const state = {
-            messages: [{ role: 'user', content: 'Create a 15 second timeline with 2 second gaps' }],
-            eventMeta: { userId: 'user-1', organizationId: 'organization-1' },
+            messages: [{
+                role: 'user',
+                content: 'Create a 15 second timeline with 2 second gaps',
+            }],
+            eventMeta: {
+                userId: 'user-1',
+                organizationId: 'organization-1',
+            },
             workspaceId: 'workspace-1',
             aiChatThreadId: 'conversation-1',
             provider: 'Anthropic',
             modelVersion: 'claude-haiku-4-5',
-            aiModelMetaInfo: { model: 'claude-haiku-4-5', contextWindow: 200000, maxCompletionSize: 8192 },
+            aiModelMetaInfo: {
+                model: 'claude-haiku-4-5',
+                contextWindow: 200000,
+                maxCompletionSize: 8192,
+            },
             maxCompletionSize: 8192,
             resolvedCapabilityPlan: plan,
             capabilityInputs: {
-                'discovered-tool': { durationMs: 15000, precisionMs: 2000 },
+                'discovered-tool': {
+                    durationMs: 15000,
+                    precisionMs: 2000,
+                },
             },
             generationRun: {
                 requestKind: 'media-generation-matrix',
@@ -198,7 +249,10 @@ describe('CapabilityModelToolExecutor', () => {
         await executor.execute({
             callId: 'call-timeline',
             name: toolName,
-            arguments: { durationMs: 1, precisionMs: 1 },
+            arguments: {
+                durationMs: 1,
+                precisionMs: 1,
+            },
         }, new AbortController().signal)
 
         expect(use).toHaveBeenCalledWith(expect.objectContaining({

@@ -19,6 +19,7 @@ const slidingDropdownConfigs = vi.hoisted(() => [] as any[])
 vi.mock('@lixpi/ui-kit/components/sliding-dropdown', () => ({
     createSlidingDropdown: vi.fn((_parent: any, config: any) => {
         slidingDropdownConfigs.push(config)
+
         return {
             render: vi.fn(),
             setValue: vi.fn(),
@@ -48,34 +49,31 @@ const createPureDropdownMock = vi.mocked(createPureDropdown)
 const createSlidingDropdownMock = vi.mocked(createSlidingDropdown)
 let lastConfig: Parameters<typeof createPureDropdown>[0] | null = null
 
-function lastModelConfig(): any {
-    return slidingDropdownConfigs.at(-1)
-}
+const lastModelConfig = (): any => slidingDropdownConfigs.at(-1)
 
-function resetMockDropdown() {
+const createMockDropdown = (): DropdownInstance => ({
+    dom: document.createElement('div'),
+    update: vi.fn(),
+    setOptions: vi.fn(),
+    destroy: vi.fn(),
+})
+
+const resetMockDropdown = () => {
     createPureDropdownMock.mockReset()
     createPureDropdownMock.mockImplementation((config) => {
         lastConfig = config
+
         return createMockDropdown()
     })
     slidingDropdownConfigs.length = 0
     createSlidingDropdownMock.mockClear()
 }
 
-function createMockDropdown(): DropdownInstance {
-    return {
-        dom: document.createElement('div'),
-        update: vi.fn(),
-        setOptions: vi.fn(),
-        destroy: vi.fn(),
-    }
-}
-
-function createControls(overrides: {
+const createControls = (overrides: {
     currentImageModel?: string
     provider?: string
     currentImageGenerationSize?: string
-} = {}) {
+} = {}) => {
     return {
         getImageGenerationSize: vi.fn(() => overrides.currentImageGenerationSize ?? 'auto'),
         setImageGenerationSize: vi.fn(),
@@ -113,9 +111,7 @@ describe('createGenericAiModelDropdown', () => {
         let currentModel = ''
         const controls = {
             getCurrentAiModel: vi.fn(() => currentModel),
-            setAiModel: vi.fn((modelId: string) => {
-                currentModel = modelId
-            }),
+            setAiModel: vi.fn((modelId: string) => void (currentModel = modelId)),
         }
         const dropdown = createGenericAiModelDropdown(controls, 'reasoning-model')
 
@@ -242,8 +238,14 @@ describe('createGenericImageSizeDropdown', () => {
                         key: 'imageSize',
                         label: 'Resolution',
                         options: [
-                            { value: '1024x1024', label: '1024x1024' },
-                            { value: '1536x1024', label: '1536x1024' },
+                            {
+                                value: '1024x1024',
+                                label: '1024x1024',
+                            },
+                            {
+                                value: '1536x1024',
+                                label: '1536x1024',
+                            },
                         ],
                     }],
                 }],
@@ -259,8 +261,14 @@ describe('createGenericImageSizeDropdown', () => {
         expect(dropdown.getControlLabel?.()).toBe('Resolution')
         expect(lastConfig?.id).toBe('image-size')
         expect(lastConfig?.options).toEqual([
-            { title: '1024x1024', value: '1024x1024' },
-            { title: '1536x1024', value: '1536x1024' },
+            {
+                title: '1024x1024',
+                value: '1024x1024',
+            },
+            {
+                title: '1536x1024',
+                value: '1536x1024',
+            },
         ])
 
         dropdown.destroy()
@@ -286,8 +294,14 @@ describe('createGenericImageSizeDropdown', () => {
                         key: 'imageSize',
                         label: 'Aspect ratio',
                         options: [
-                            { value: '16:9', label: '16:9' },
-                            { value: '4:3', label: '4:3' },
+                            {
+                                value: '16:9',
+                                label: '16:9',
+                            },
+                            {
+                                value: '4:3',
+                                label: '4:3',
+                            },
                         ],
                     }],
                 }],
@@ -303,8 +317,14 @@ describe('createGenericImageSizeDropdown', () => {
 
         expect(dropdown.getControlLabel?.()).toBe('Aspect ratio')
         expect(lastConfig?.options).toEqual([
-            { title: '16:9', value: '16:9' },
-            { title: '4:3', value: '4:3' },
+            {
+                title: '16:9',
+                value: '16:9',
+            },
+            {
+                title: '4:3',
+                value: '4:3',
+            },
         ])
 
         dropdown.destroy()
@@ -330,8 +350,14 @@ describe('createGenericImageSizeDropdown', () => {
                         key: 'imageSize',
                         label: 'Image option',
                         options: [
-                            { value: 'small', label: 'Small' },
-                            { value: 'large', label: 'Large' },
+                            {
+                                value: 'small',
+                                label: 'Small',
+                            },
+                            {
+                                value: 'large',
+                                label: 'Large',
+                            },
                         ],
                     }],
                 }],
@@ -347,8 +373,14 @@ describe('createGenericImageSizeDropdown', () => {
 
         expect(dropdown.getControlLabel?.()).toBe('Image option')
         expect(lastConfig?.options).toEqual([
-            { title: 'Small', value: 'small' },
-            { title: 'Large', value: 'large' },
+            {
+                title: 'Small',
+                value: 'small',
+            },
+            {
+                title: 'Large',
+                value: 'large',
+            },
         ])
 
         dropdown.destroy()
@@ -375,7 +407,10 @@ describe('createGenericImageSizeDropdown', () => {
                         key: 'imageSize',
                         label: 'Image option',
                         options: [
-                            { value: 'auto', label: 'Auto' },
+                            {
+                                value: 'auto',
+                                label: 'Auto',
+                            },
                         ],
                     }],
                 }],
@@ -410,8 +445,14 @@ describe('createGenericImageSizeDropdown', () => {
                         key: 'imageSize',
                         label: 'Image option',
                         options: [
-                            { value: 'tiny', label: 'Tiny' },
-                            { value: 'small', label: 'Small' },
+                            {
+                                value: 'tiny',
+                                label: 'Tiny',
+                            },
+                            {
+                                value: 'small',
+                                label: 'Small',
+                            },
                         ],
                     }],
                 }],
@@ -460,9 +501,7 @@ describe('transformModelsToOptions', () => {
 })
 
 describe('createGenericImageModelDropdown', () => {
-    beforeEach(() => {
-        resetMockDropdown()
-    })
+    beforeEach(() => void resetMockDropdown())
 
     it('auto-selects configured default image model when current model is empty', () => {
         const imageModels = [
@@ -566,9 +605,7 @@ describe('createGenericImageModelDropdown', () => {
 })
 
 describe('createGenericVideoModelDropdown', () => {
-    beforeEach(() => {
-        resetMockDropdown()
-    })
+    beforeEach(() => void resetMockDropdown())
 
     it('filters to video-generation models only', () => {
         aiModelsStore.setAiModels([
@@ -578,9 +615,18 @@ describe('createGenericVideoModelDropdown', () => {
                 iconName: 'gpt',
                 shortTitle: 'Veo',
                 modalities: [{ modality: 'video_generation' }],
-                videoAspectRatios: [{ value: '16:9', label: '16:9' }],
-                videoResolutions: [{ value: '1080p', label: '1080p' }],
-                videoDurations: [{ value: '30s', label: '30s' }],
+                videoAspectRatios: [{
+                    value: '16:9',
+                    label: '16:9',
+                }],
+                videoResolutions: [{
+                    value: '1080p',
+                    label: '1080p',
+                }],
+                videoDurations: [{
+                    value: '30s',
+                    label: '30s',
+                }],
             },
             {
                 provider: 'openai',
@@ -614,9 +660,18 @@ describe('createGenericVideoModelDropdown', () => {
             iconName: 'gpt',
             shortTitle: 'Veo',
             modalities: [{ modality: 'video_generation' }],
-            videoAspectRatios: [{ value: '16:9', label: '16:9' }],
-            videoResolutions: [{ value: '1080p', label: '1080p' }],
-            videoDurations: [{ value: '30s', label: '30s' }],
+            videoAspectRatios: [{
+                value: '16:9',
+                label: '16:9',
+            }],
+            videoResolutions: [{
+                value: '1080p',
+                label: '1080p',
+            }],
+            videoDurations: [{
+                value: '30s',
+                label: '30s',
+            }],
         }] as any)
 
         const dropdown = createGenericVideoModelDropdown({

@@ -24,7 +24,10 @@ describe('DOM templates', () => {
         expect(element.dataset.id).toBe('12')
         element.click()
         expect(onClick).toHaveBeenCalledOnce()
-        applyStyle(element, { color: 'blue', width: '10px' })
+        applyStyle(element, {
+            color: 'blue',
+            width: '10px',
+        })
         expect(element.style.color).toBe('blue')
         expect(element.style.width).toBe('10px')
         expect(element.isConnected).toBe(false)

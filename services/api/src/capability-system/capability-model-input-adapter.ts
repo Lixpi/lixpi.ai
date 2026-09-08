@@ -144,11 +144,11 @@ export const createCapabilityStructuredModelPort = (): CapabilityStructuredModel
     }
 }
 
-export function assessCapabilityModelInputBudget(request: CapabilityStructuredModelBudgetRequest): {
+export const assessCapabilityModelInputBudget = (request: CapabilityStructuredModelBudgetRequest): {
     inputTokens: number
     reservedCompletionTokens: number
     contextWindow: number
-} {
+} => {
     const textCharacters = request.systemPrompt.length
         + request.userPrompt.length
         + JSON.stringify(request.schema).length
@@ -206,10 +206,10 @@ export function assessCapabilityModelInputBudget(request: CapabilityStructuredMo
     }
 }
 
-function buildModelContent(
+const buildModelContent = (
     userPrompt: string,
     inputs: readonly CapabilityResolvedModelInput[],
-): Array<Record<string, unknown>> {
+): Array<Record<string, unknown>> => {
     const blocks: Array<Record<string, unknown>> = [{
         type: 'input_text',
         text: userPrompt,
@@ -254,10 +254,10 @@ function buildModelContent(
     return blocks
 }
 
-export async function resolveAuthorizedAssetModelInput(
+export const resolveAuthorizedAssetModelInput = async (
     asset: Asset,
     requester: AssetRequesterContext,
-): Promise<CapabilityResolvedModelInput> {
+): Promise<CapabilityResolvedModelInput> => {
     const marker = `<ref asset:${asset.assetId} "${asset.title.replaceAll('"', '\\"')}">`
 
     if (
@@ -355,13 +355,13 @@ export async function resolveAuthorizedAssetModelInput(
     throw inputFailure(asset.assetId, 'MODEL_INPUT_REPRESENTATION_UNAVAILABLE')
 }
 
-async function loadRendition(
+const loadRendition = async (
     asset: Asset,
     names: Array<'canonical' | 'preview' | 'original' | 'representativeFrame' | 'poster' | 'thumbnail'>,
 ): Promise<{
     bytes: Uint8Array
     mimeType: string
-}> {
+}> => {
     const rendition = names.map(name => asset.media?.renditions[name]).find(
         candidate => candidate?.status === 'ready' && candidate.blobHash && candidate.mimeType,
     )
@@ -398,11 +398,11 @@ async function loadRendition(
     }
 }
 
-function assertImagePayload(
+const assertImagePayload = (
     bytes: Uint8Array,
     mimeType: string,
     assetId: string,
-): void {
+): void => {
     const validMime = mimeType === 'image/png'
         || mimeType === 'image/jpeg'
         || mimeType === 'image/gif'
@@ -422,10 +422,10 @@ function assertImagePayload(
         throw inputFailure(assetId, 'CORRUPT_IMAGE_INPUT')
 }
 
-function inputFailure(
+const inputFailure = (
     assetId: string,
     reason: string,
-): CapabilityError {
+): CapabilityError => {
     return new CapabilityError(
         'CAPABILITY_ACTION_INPUT_INVALID',
         `Referenced Asset ${assetId} cannot be materialized: ${reason}`,
@@ -436,6 +436,4 @@ function inputFailure(
     )
 }
 
-function audioFormat(mimeType: string): string {
-    return mimeType.split('/')[1]?.split(';')[0] ?? 'wav'
-}
+const audioFormat = (mimeType: string): string => mimeType.split('/')[1]?.split(';')[0] ?? 'wav'

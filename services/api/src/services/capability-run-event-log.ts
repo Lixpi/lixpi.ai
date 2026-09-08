@@ -202,22 +202,16 @@ export class CapabilityRunEventRelay {
     }
 }
 
-export function getCapabilityRunEventSubject(
+export const getCapabilityRunEventSubject = (
     workspaceId: string,
     runId: string,
-): string {
-    return `${NATS_SUBJECTS.CAPABILITY_SUBJECTS.RUN.EVENTS}.${sanitizeToken(workspaceId)}.${sanitizeToken(runId)}`
-}
+): string => `${NATS_SUBJECTS.CAPABILITY_SUBJECTS.RUN.EVENTS}.${sanitizeToken(workspaceId)}.${sanitizeToken(runId)}`
 
-export function getCapabilityRunEventStreamName(workspaceId: string): string {
-    return `CAPABILITY_RUN_EVENTS_${sanitizeToken(workspaceId)}`
-}
+export const getCapabilityRunEventStreamName = (workspaceId: string): string => `CAPABILITY_RUN_EVENTS_${sanitizeToken(workspaceId)}`
 
-function sanitizeToken(value: string): string {
-    return value.replace(/[^A-Za-z0-9_-]/g, '_')
-}
+const sanitizeToken = (value: string): string => value.replace(/[^A-Za-z0-9_-]/g, '_')
 
-function getPublishAckSequence(ack: unknown): number {
+const getPublishAckSequence = (ack: unknown): number => {
     const candidate = ack as {
         seq?: number
         sequence?: number

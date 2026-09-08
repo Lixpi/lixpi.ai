@@ -13,7 +13,7 @@ vi.mock('uuid', () => ({
     v4: () => 'thread-uuid-fixed',
 }))
 
-function createState() {
+const createState = () => {
     return EditorState.create({
         schema: testSchema,
         doc: testSchema.nodes.doc.createAndFill()!,

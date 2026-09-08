@@ -22,6 +22,7 @@ const fakes = vi.hoisted(() => ({
 
 vi.mock('@lixpi/canvas-components-lixpi-specific/frontend/nodes', async importOriginal => {
     const actual = await importOriginal<typeof import('@lixpi/canvas-components-lixpi-specific/frontend/nodes')>()
+
     return {
         ...actual,
         BranchMarkerContent: class {
@@ -61,8 +62,14 @@ const marker: BranchOriginCanvasNode = {
     branchId: 'branch-1',
     conversationAssetId: 'thread-1',
     generationRequestId: 'request-1',
-    position: { x: 0, y: 0 },
-    dimensions: { width: 320, height: 80 },
+    position: {
+        x: 0,
+        y: 0,
+    },
+    dimensions: {
+        width: 320,
+        height: 80,
+    },
     temporary: true,
 }
 
@@ -75,13 +82,26 @@ describe('WorkspaceBranchMarkerPresentation', () => {
         dragOverlay.className = 'branch-origin-drag-overlay'
         nodeElement.append(dragOverlay)
         const openDetails = vi.fn()
-        const state = { nodes: [marker], edges: [], viewport: { x: 0, y: 0, zoom: 1 } } satisfies CanvasState
+        const state = {
+            nodes: [marker],
+            edges: [],
+            viewport: {
+                x: 0,
+                y: 0,
+                zoom: 1,
+            },
+        } satisfies CanvasState
         const owner = new WorkspaceBranchMarkerPresentation({
             document,
             shells: {
                 createBranchMarker: (_node: BranchOriginCanvasNode, onInfoClick: () => void) => {
                     infoClick = onInfoClick
-                    return { nodeEl: nodeElement, dragOverlay, own }
+
+                    return {
+                        nodeEl: nodeElement,
+                        dragOverlay,
+                        own,
+                    }
                 },
             },
             modelCircleSettings: {},
@@ -105,7 +125,10 @@ describe('WorkspaceBranchMarkerPresentation', () => {
             regenerate: vi.fn(async () => {}),
             getZoomScale: () => 0.75,
             getConversationPreview: () => null,
-            getPromptParts: () => [{ type: 'text', text: 'draw it' }],
+            getPromptParts: () => [{
+                type: 'text',
+                text: 'draw it',
+            }],
             getPromptPreviewRenderer: () => ({} as never),
             showResponseLine: () => false,
             createProgress: () => null,
@@ -116,7 +139,10 @@ describe('WorkspaceBranchMarkerPresentation', () => {
         } as WorkspaceBranchMarkerPresentationPorts)
 
         expect(owner.create(marker)).toBe(nodeElement)
-        expect(fakes.contentOptions.at(-1)).toMatchObject({ label: 'Start branch', headerHeight: 80 })
+        expect(fakes.contentOptions.at(-1)).toMatchObject({
+            label: 'Start branch',
+            headerHeight: 80,
+        })
         expect(fakes.zoomScales.at(-1)).toBe(0.75)
         expect(own).toHaveBeenCalledOnce()
 

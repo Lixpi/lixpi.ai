@@ -57,7 +57,10 @@ describe('restrictMediaRequestToExplicitVideoOutput', () => {
     })
 
     it('returns an image-only request unchanged even for an explicit video prompt', () => {
-        const imageOnly = { imageModelIds: ['OpenAI:gpt-image-2'], videoModelIds: [] }
+        const imageOnly = {
+            imageModelIds: ['OpenAI:gpt-image-2'],
+            videoModelIds: [],
+        }
 
         expect(restrictMediaRequestToExplicitVideoOutput({
             request: imageOnly,

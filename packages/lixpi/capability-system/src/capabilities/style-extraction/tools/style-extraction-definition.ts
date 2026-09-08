@@ -112,10 +112,10 @@ export const seedStyleExtractionTool = async (
     })
 }
 
-export function buildStyleExtractionManifest(resources: {
+export const buildStyleExtractionManifest = (resources: {
     inputSchema: CapabilityResourceRef
     outputSchema: CapabilityResourceRef
-}): CapabilityManifest {
+}): CapabilityManifest => {
     const routeStepId = 'route'
     const axisSteps = STYLE_EXTRACTION_AXES.map(
         (axis, index) => ({
@@ -366,11 +366,11 @@ export function buildStyleExtractionManifest(resources: {
     }
 }
 
-async function storeToolResource(
+const storeToolResource = async (
     storage: StyleExtractionCapabilityStorage,
     storageOwnerId: string,
     source: ResourceSource,
-): Promise<CapabilityResourceRef> {
+): Promise<CapabilityResourceRef> => {
     return await storage.storeResource({
         storageOwnerId,
         resourceId: source.resourceId,

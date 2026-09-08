@@ -17,9 +17,7 @@ import {
     type RecordedUsageRequest,
 } from './usage-metering-contract.ts'
 
-function stubTransport(request: UsageMeteringTransport['request'] = vi.fn()): UsageMeteringTransport {
-    return { request }
-}
+const stubTransport = (request: UsageMeteringTransport['request'] = vi.fn()): UsageMeteringTransport => ({ request })
 
 const opts = (over: Partial<UsageMeteringOptions> = {}): UsageMeteringOptions => ({
     enabled: true,
@@ -47,16 +45,17 @@ const usageRecord: RecordedUsageRequest = {
     model: 'OpenAI:gpt-5',
     modality: 'tokens',
     measuringUnit: 'tokens',
-    usage: { promptTokens: 100, completionTokens: 50 },
+    usage: {
+        promptTokens: 100,
+        completionTokens: 50,
+    },
     currency: 'USD',
     occurredAt: '2026-01-01T00:00:00.000Z',
 }
 
 let consoleWarnSpy: ReturnType<typeof vi.spyOn> | null = null
 
-beforeEach(() => {
-    consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
-})
+beforeEach(() => void (consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined)))
 
 afterEach(() => {
     consoleWarnSpy?.mockRestore()
@@ -72,7 +71,10 @@ describe('UsageMeteringClient.authorizeSpend', () => {
     })
 
     it('requests usage.check and returns the decision when enabled', async () => {
-        const request = vi.fn().mockResolvedValue({ approved: true, balance: 1000 })
+        const request = vi.fn().mockResolvedValue({
+            approved: true,
+            balance: 1000,
+        })
         const response = await new UsageMeteringClient(stubTransport(request), opts()).authorizeSpend(authorizationRequest)
         expect(request).toHaveBeenCalledWith('metrics.usage.check', authorizationRequest, 3000)
         expect(response.approved).toBe(true)
@@ -101,7 +103,11 @@ describe('UsageMeteringClient.recordSpend', () => {
     })
 
     it('requests usage.confirm when enabled', async () => {
-        const request = vi.fn().mockResolvedValue({ transferId: 'txn_1', resaleCost: 1000, balance: 999000 })
+        const request = vi.fn().mockResolvedValue({
+            transferId: 'txn_1',
+            resaleCost: 1000,
+            balance: 999000,
+        })
         const response = await new UsageMeteringClient(stubTransport(request), opts()).recordSpend(usageRecord)
         expect(request).toHaveBeenCalledWith('metrics.usage.confirm', usageRecord, 3000)
         expect(response?.transferId).toBe('txn_1')

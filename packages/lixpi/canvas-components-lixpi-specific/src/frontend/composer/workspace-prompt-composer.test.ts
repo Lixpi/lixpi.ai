@@ -20,22 +20,38 @@ import {
 const owners: WorkspacePromptComposer[] = []
 afterEach(() => {
     for (const owner of owners.splice(0)) owner.destroy()
+
     document.body.replaceChildren()
 })
 
-function fixture(raw: string | null = null) {
+const fixture = (raw: string | null = null) => {
     const requests: PromptComposerEditorRequest[] = []
     const trayDestroy = vi.fn()
     const editorDestroy = vi.fn()
     const options: WorkspacePromptComposerOptions = {
         document,
         workspaceId: 'w',
-        appearance: { popoverBoxShadow: '', useShiftingGradientBackground: false, gradientColors: [] },
-        storage: { getItem: vi.fn(() => raw), setItem: vi.fn() },
-        mountContextTray: () => ({ element: document.createElement('div'), destroy: trayDestroy }),
+        appearance: {
+            popoverBoxShadow: '',
+            useShiftingGradientBackground: false,
+            gradientColors: [],
+        },
+        storage: {
+            getItem: vi.fn(() => raw),
+            setItem: vi.fn(),
+        },
+        mountContextTray: () => ({
+            element: document.createElement('div'),
+            destroy: trayDestroy,
+        }),
         mountEditor: request => {
             requests.push(request)
-            return { editorView: {} as EditorView, restoreContent: vi.fn(), destroy: editorDestroy }
+
+            return {
+                editorView: {} as EditorView,
+                restoreContent: vi.fn(),
+                destroy: editorDestroy,
+            }
         },
         onSubmit: vi.fn(),
     }
@@ -43,9 +59,17 @@ function fixture(raw: string | null = null) {
         const composer = new WorkspacePromptComposer(options)
         owners.push(composer)
         document.body.appendChild(composer.element)
+
         return composer
     }
-    return { options, requests, trayDestroy, editorDestroy, mount }
+
+    return {
+        options,
+        requests,
+        trayDestroy,
+        editorDestroy,
+        mount,
+    }
 }
 
 describe('Workspace prompt composer', () => {
@@ -55,7 +79,10 @@ describe('Workspace prompt composer', () => {
         expect(f.options.storage.getItem).toHaveBeenCalledWith('lixpi:canvas-global-composer-draft:w')
         expect(f.requests[0]?.initialContent).toEqual({ type: 'doc' })
         f.options.workspaceId = 'other'
-        f.requests[0]!.onContentChange({ type: 'doc', content: [] })
+        f.requests[0]!.onContentChange({
+            type: 'doc',
+            content: [],
+        })
         expect(f.options.storage.setItem).toHaveBeenCalledWith('lixpi:canvas-global-composer-draft:w', '{"type":"doc","content":[]}')
         expect(composer.element.contains(composer.input.element)).toBe(true)
     })
