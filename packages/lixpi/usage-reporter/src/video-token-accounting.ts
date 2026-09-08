@@ -116,6 +116,53 @@ export type VideoTokenEstimate = {
     provisional: boolean
 }
 
+const framePixels = (size: VideoFrameSize): number => size.width * size.height
+
+const largestFramePixels = (tier: string): number => Object.values(PROVISIONAL_SEEDANCE_FRAME_SIZES[tier]!).reduce(
+    (largest, size) => Math.max(
+        largest,
+        framePixels(size),
+    ),
+    0,
+)
+
+const resolveTier = (requested: string | undefined): string => {
+    const tiers = Object.keys(PROVISIONAL_SEEDANCE_FRAME_SIZES)
+
+    if (
+        requested
+        && Object.hasOwn(PROVISIONAL_SEEDANCE_FRAME_SIZES, requested)
+    )
+        return requested
+
+    return tiers.reduce(
+        (largest, tier) => (
+            largestFramePixels(tier) > largestFramePixels(largest) ? tier : largest
+        ),
+        tiers[0]!,
+    )
+}
+
+const resolveRatio = (
+    tier: string,
+    requested: string | undefined,
+): string => {
+    const sizes = PROVISIONAL_SEEDANCE_FRAME_SIZES[tier]!
+
+    if (
+        requested
+        && Object.hasOwn(sizes, requested)
+    )
+        return requested
+
+    return Object.keys(sizes).reduce(
+        (largest, ratio) => (
+            framePixels(sizes[ratio]!) > framePixels(sizes[largest]!) ? ratio : largest
+        ),
+        Object.keys(sizes)[0]!,
+    )
+}
+
 // Bounds one clip in vendor video tokens. An unknown tier or ratio resolves to the
 // largest entry available, which keeps it on the over-estimating side of the gate.
 export const estimateVideoTokens = ({
@@ -142,55 +189,4 @@ export const estimateVideoTokens = ({
         aspectRatio: ratio,
         provisional: true,
     }
-}
-
-function resolveTier(requested: string | undefined): string {
-    const tiers = Object.keys(PROVISIONAL_SEEDANCE_FRAME_SIZES)
-
-    if (
-        requested
-        && Object.hasOwn(PROVISIONAL_SEEDANCE_FRAME_SIZES, requested)
-    )
-        return requested
-
-    return tiers.reduce(
-        (largest, tier) => (
-            largestFramePixels(tier) > largestFramePixels(largest) ? tier : largest
-        ),
-        tiers[0]!,
-    )
-}
-
-function resolveRatio(
-    tier: string,
-    requested: string | undefined,
-): string {
-    const sizes = PROVISIONAL_SEEDANCE_FRAME_SIZES[tier]!
-
-    if (
-        requested
-        && Object.hasOwn(sizes, requested)
-    )
-        return requested
-
-    return Object.keys(sizes).reduce(
-        (largest, ratio) => (
-            framePixels(sizes[ratio]!) > framePixels(sizes[largest]!) ? ratio : largest
-        ),
-        Object.keys(sizes)[0]!,
-    )
-}
-
-function largestFramePixels(tier: string): number {
-    return Object.values(PROVISIONAL_SEEDANCE_FRAME_SIZES[tier]!).reduce(
-        (largest, size) => Math.max(
-            largest,
-            framePixels(size),
-        ),
-        0,
-    )
-}
-
-function framePixels(size: VideoFrameSize): number {
-    return size.width * size.height
 }
