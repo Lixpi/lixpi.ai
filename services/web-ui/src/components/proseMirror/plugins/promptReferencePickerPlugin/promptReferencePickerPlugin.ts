@@ -405,10 +405,12 @@ class PromptReferencePickerMenu {
             || categoryChanged
         ) {
             this.results = []
-            this.list.replaceChildren(html`<div
+            this.list.replaceChildren(html`
+                <div
                     className="prompt-reference-picker-status"
                     role="status"
-                >Searching…</div>`)
+                >Searching…</div>
+            `)
         }
 
         const requestSequence = ++this.requestSequence
@@ -739,14 +741,14 @@ class PromptReferencePickerMenu {
                         )
                 }}
             >
-            <span
-                className="prompt-reference-picker-glyph prompt-reference-picker-glyph-capability-artifact"
-                aria-hidden="true"
-                innerHTML=${getCapabilityArtifactIcon(item.artifactTypeId)}
-            ></span>
-            <span className="prompt-reference-picker-copy prompt-reference-picker-artifact-host"></span>
-            <span className="prompt-reference-picker-badge">Artifact</span>
-        </button>
+                <span
+                    className="prompt-reference-picker-glyph prompt-reference-picker-glyph-capability-artifact"
+                    aria-hidden="true"
+                    innerHTML=${getCapabilityArtifactIcon(item.artifactTypeId)}
+                ></span>
+                <span className="prompt-reference-picker-copy prompt-reference-picker-artifact-host"></span>
+                <span className="prompt-reference-picker-badge">Artifact</span>
+            </button>
         ` as HTMLButtonElement
         capabilityArtifactFrontendRegistry.require(item.artifactTypeId).createPromptReferenceView({
             container: row.querySelector('.prompt-reference-picker-artifact-host') as HTMLElement,

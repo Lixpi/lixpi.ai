@@ -1,4 +1,7 @@
-const lixpiClassPattern = '^(?:[a-z][a-z0-9]*(?:-[a-z0-9]+)*|ProseMirror(?:-[A-Za-z0-9]+)*)$'
+// Lixpi's own classes are flat kebab-case. The alternatives are class names a library
+// renders itself and a stylesheet can only match: ProseMirror's, and CodeMirror's
+// `cm-` set, which is camelCase past the prefix (`cm-foldGutter`, `cm-gutterElement`).
+const lixpiClassPattern = '^(?:[a-z][a-z0-9]*(?:-[a-z0-9]+)*|ProseMirror(?:-[A-Za-z0-9]+)*|cm-[A-Za-z0-9]+)$'
 
 export default {
     customSyntax: 'postcss-scss',

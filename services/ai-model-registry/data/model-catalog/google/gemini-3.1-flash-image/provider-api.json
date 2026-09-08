@@ -1,0 +1,38 @@
+{
+    "_meta": {
+        "sourceName": "Google Generative Language API",
+        "sourceId": "provider-api",
+        "queriedEndpoints": [
+            {
+                "endpoint": "GET https://generativelanguage.googleapis.com/v1beta/models",
+                "params": {
+                    "pageSize": 100,
+                    "pagesFetched": 1
+                },
+                "note": "Paged with pageToken until exhausted. The API key travels as a query parameter and is not recorded."
+            }
+        ],
+        "hasDataForThisModel": true,
+        "inferenceProvidersWithData": [
+            "google"
+        ],
+        "fetchedAt": "2026-09-08T00:55:53.405Z",
+        "publishedVersions": {
+            "currentVersion": "gemini-3.1-flash-image",
+            "allPublishedVersions": [
+                "gemini-3.1-flash-image"
+            ]
+        }
+    },
+    "byInferenceProvider": {
+        "google": {
+            "title": "Nano Banana 2",
+            "contextWindow": 65536,
+            "maxCompletionSize": 65536,
+            "defaultTemperature": 1,
+            "model": "gemini-3.1-flash-image",
+            "modelVersion": "gemini-3.1-flash-image",
+            "modelKeyAtSource": "gemini-3.1-flash-image"
+        }
+    }
+}

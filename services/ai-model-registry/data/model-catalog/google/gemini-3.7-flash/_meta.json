@@ -1,0 +1,254 @@
+{
+    "modelFamily": "gemini-3.7-flash",
+    "mergedAt": "2026-09-08T03:06:07.368Z",
+    "baseSchemaVersion": 1,
+    "syncStatus": "written-to-database",
+    "sources": {
+        "sourcesQueried": [
+            "litellm",
+            "models.dev",
+            "provider-api",
+            "bedrock"
+        ],
+        "sourcesWithDataForThisModel": [
+            "litellm",
+            "models.dev",
+            "provider-api"
+        ],
+        "inferenceProviderCalledByThePlatform": "google",
+        "sourcesWithoutRatesForThatProvider": [],
+        "confirmedByMoreThanOneSource": true,
+        "fieldsWhereSourcesDisagree": []
+    },
+    "lixpi": {
+        "fieldsOnlyLixpiSupplies": [
+            "imageSizeMode",
+            "imageSizes",
+            "inferenceCapabilities.requiresAutoToolChoiceWithThinking",
+            "inferenceCapabilities.requiresClosedJsonSchema",
+            "inferenceCapabilities.supportedInputKinds",
+            "inferenceCapabilities.supportsSystemPrompt",
+            "inferenceCapabilities.supportsTemperature",
+            "inferenceCapabilities.thinkingMode",
+            "modalities",
+            "reasoningGenerationControls",
+            "shortTitle",
+            "sortingPosition"
+        ],
+        "fieldsWhereLixpiOverridesSources": [],
+        "fieldsInheritedFromProviderBaseFile": [
+            "color",
+            "colorIconName",
+            "iconName",
+            "providerTitle"
+        ]
+    },
+    "requiredFieldsStillMissing": [],
+    "fieldsFilledFromSchemaDefault": [],
+    "ratesRefusedBecauseUnitsDiffer": [],
+    "fieldOrigins": {
+        "providerTitle": {
+            "valueCameFrom": "provider-base-file",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": []
+        },
+        "color": {
+            "valueCameFrom": "provider-base-file",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": []
+        },
+        "iconName": {
+            "valueCameFrom": "provider-base-file",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": []
+        },
+        "colorIconName": {
+            "valueCameFrom": "provider-base-file",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": []
+        },
+        "title": {
+            "valueCameFrom": "lixpi-authored-file",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": [
+                "provider-api"
+            ]
+        },
+        "shortTitle": {
+            "valueCameFrom": "lixpi-authored-file",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": []
+        },
+        "sortingPosition": {
+            "valueCameFrom": "lixpi-authored-file",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": []
+        },
+        "modalities": {
+            "valueCameFrom": "lixpi-authored-file",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": []
+        },
+        "defaultTemperature": {
+            "valueCameFrom": "lixpi-authored-file",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": [
+                "provider-api"
+            ]
+        },
+        "inferenceCapabilities.thinkingMode": {
+            "valueCameFrom": "lixpi-authored-file",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": []
+        },
+        "inferenceCapabilities.requiresAutoToolChoiceWithThinking": {
+            "valueCameFrom": "lixpi-authored-file",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": []
+        },
+        "inferenceCapabilities.supportsTemperature": {
+            "valueCameFrom": "lixpi-authored-file",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": []
+        },
+        "inferenceCapabilities.supportsSystemPrompt": {
+            "valueCameFrom": "lixpi-authored-file",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": []
+        },
+        "inferenceCapabilities.requiresClosedJsonSchema": {
+            "valueCameFrom": "lixpi-authored-file",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": []
+        },
+        "inferenceCapabilities.supportedInputKinds": {
+            "valueCameFrom": "lixpi-authored-file",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": []
+        },
+        "reasoningGenerationControls": {
+            "valueCameFrom": "lixpi-authored-file",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": []
+        },
+        "imageSizeMode": {
+            "valueCameFrom": "lixpi-authored-file",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": []
+        },
+        "imageSizes": {
+            "valueCameFrom": "lixpi-authored-file",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": []
+        },
+        "contextWindow": {
+            "valueCameFrom": "litellm",
+            "sourceAgreement": "all-sources-agree",
+            "sourcesThatAnswered": [
+                "litellm",
+                "models.dev",
+                "provider-api"
+            ]
+        },
+        "maxCompletionSize": {
+            "valueCameFrom": "litellm",
+            "sourceAgreement": "all-sources-agree",
+            "sourcesThatAnswered": [
+                "litellm",
+                "models.dev",
+                "provider-api"
+            ]
+        },
+        "model": {
+            "valueCameFrom": "provider-api",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": [
+                "provider-api"
+            ]
+        },
+        "modelVersion": {
+            "valueCameFrom": "provider-api",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": [
+                "provider-api"
+            ]
+        },
+        "inferenceProviders.google.contextWindow": {
+            "valueCameFrom": "litellm",
+            "sourceAgreement": "all-sources-agree",
+            "sourcesThatAnswered": [
+                "litellm",
+                "models.dev",
+                "provider-api"
+            ]
+        },
+        "inferenceProviders.google.maxCompletionSize": {
+            "valueCameFrom": "litellm",
+            "sourceAgreement": "all-sources-agree",
+            "sourcesThatAnswered": [
+                "litellm",
+                "models.dev",
+                "provider-api"
+            ]
+        },
+        "inferenceProviders.google.pricing.currency": {
+            "valueCameFrom": "litellm",
+            "sourceAgreement": "all-sources-agree",
+            "sourcesThatAnswered": [
+                "litellm",
+                "models.dev"
+            ]
+        },
+        "inferenceProviders.google.pricing.text.measuringUnit": {
+            "valueCameFrom": "litellm",
+            "sourceAgreement": "all-sources-agree",
+            "sourcesThatAnswered": [
+                "litellm",
+                "models.dev"
+            ]
+        },
+        "inferenceProviders.google.pricing.text.pricePer": {
+            "valueCameFrom": "litellm",
+            "sourceAgreement": "all-sources-agree",
+            "sourcesThatAnswered": [
+                "litellm",
+                "models.dev"
+            ]
+        },
+        "inferenceProviders.google.pricing.text.tiers.default.prompt": {
+            "valueCameFrom": "litellm",
+            "sourceAgreement": "all-sources-agree",
+            "sourcesThatAnswered": [
+                "litellm",
+                "models.dev"
+            ]
+        },
+        "inferenceProviders.google.pricing.text.tiers.default.completion": {
+            "valueCameFrom": "litellm",
+            "sourceAgreement": "all-sources-agree",
+            "sourcesThatAnswered": [
+                "litellm",
+                "models.dev"
+            ]
+        },
+        "inferenceProviders.google.title": {
+            "valueCameFrom": "provider-api",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": [
+                "provider-api"
+            ]
+        },
+        "inferenceProviders.google.defaultTemperature": {
+            "valueCameFrom": "provider-api",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": [
+                "provider-api"
+            ]
+        },
+        "provider": {
+            "valueCameFrom": "derived-from-file-name",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": []
+        }
+    }
+}

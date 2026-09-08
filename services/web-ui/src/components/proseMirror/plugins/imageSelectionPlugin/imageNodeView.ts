@@ -83,10 +83,12 @@ export class ImageNodeView implements NodeView {
         this.resizeEnabled = view.editable
         this.isGeneratedImage = node.type.name === 'aiGeneratedImage'
 
-        this.figure = html`<figure
+        this.figure = html`
+            <figure
                 className=${this.buildClassName()}
                 draggable=${this.resizeEnabled}
-            ></figure>` as HTMLElement
+            ></figure>
+        ` as HTMLElement
         this.mediaFrame = html`<div className="pm-image-media-frame"></div>` as HTMLElement
         this.img = html`<img />` as HTMLImageElement
         // Set src asynchronously to handle auth token

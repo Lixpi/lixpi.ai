@@ -20,18 +20,19 @@ import {
     type ProseMirrorContentHandler,
     type ProseMirrorSnapshotProvider,
 } from '../graph/stream-publisher.ts'
-import { UsageReporter } from '../usage/usage-reporter.ts'
+
 import {
-    type MetricsClient,
-} from '../../metrics/metrics-client.ts'
+    UsageReporter,
+    type UsageMeteringClient,
+} from '@lixpi/usage-reporter'
 import {
     assertValidMediaProviderDefinition,
     type MediaProviderDefinition,
 } from './media-provider-definition.ts'
 
 // Metrics dependencies threaded into every provider's graph deps.
-export type MetricsDeps = {
-    metrics?: MetricsClient
+export type UsageMeteringDeps = {
+    usageMetering?: UsageMeteringClient
 }
 
 export type ProviderConstructor = new(
@@ -64,7 +65,7 @@ export class ProviderRegistry {
     constructor(
         private readonly natsService: NatsService,
         definitions: Partial<Record<ProviderName, MediaProviderDefinition>>,
-        private readonly metricsDeps: MetricsDeps = {},
+        private readonly meteringDeps: UsageMeteringDeps = {},
     ) {
         const missingProviders = PROVIDER_NAMES.filter(provider => !definitions[provider])
 
@@ -117,7 +118,7 @@ export class ProviderRegistry {
 
                 return this.videoRouter(state, options)
             },
-            metrics: this.metricsDeps.metrics,
+            usageMetering: this.meteringDeps.usageMetering,
             mediaProviderDefinition: definition,
         }
     }

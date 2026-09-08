@@ -1,0 +1,28 @@
+{
+    "providerTitle": "Google",
+    "color": "#4285F4",
+    "iconName": "geminiIcon",
+    "colorIconName": "geminiColorIcon",
+    "title": "",
+    "shortTitle": "Lyria Realtime Experimental",
+    "sortingPosition": null,
+    "modalities": [],
+    "defaultTemperature": null,
+    "provider": "Google",
+    "model": "lyria-realtime-exp",
+    "modelVersion": "lyria-realtime-exp",
+    "inferenceProviderCalledByThePlatform": "google",
+    "inferenceProviders": {
+        "google": {
+            "inferenceProviderTitle": "Google",
+            "isCalledByThePlatform": true,
+            "reportedBySources": [],
+            "modelKeyAtSource": {},
+            "pricing": {
+                "currency": "USD"
+            }
+        }
+    },
+    "contextWindow": 0,
+    "maxCompletionSize": 0
+}

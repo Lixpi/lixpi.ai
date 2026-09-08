@@ -101,11 +101,13 @@ export class WorkspaceMediaAdapter implements MediaPorts {
         )
         const href = `${source}${source.includes('?') ? '&' : '?'}download=true`
         const html = createDocumentHtml(document)
-        const anchor = html`<a
+        const anchor = html`
+            <a
                 href=${href}
                 rel="noopener"
                 style=${{ display: 'none' }}
-            ></a>` as HTMLAnchorElement
+            ></a>
+        ` as HTMLAnchorElement
 
         try {
             document.body.append(anchor)

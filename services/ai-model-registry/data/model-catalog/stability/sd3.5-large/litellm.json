@@ -1,0 +1,31 @@
+{
+    "_meta": {
+        "sourceName": "LiteLLM model_prices_and_context_window.json",
+        "sourceId": "litellm",
+        "queriedEndpoints": [
+            {
+                "endpoint": "https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json",
+                "note": "Whole catalog fetched once per run and matched by model key."
+            }
+        ],
+        "hasDataForThisModel": true,
+        "inferenceProvidersWithData": [
+            "stability"
+        ],
+        "fetchedAt": "2026-09-08T00:55:53.549Z"
+    },
+    "byInferenceProvider": {
+        "stability": {
+            "pricing": {
+                "currency": "USD",
+                "image": {
+                    "measuringUnit": "images",
+                    "pricePer": "1",
+                    "prompt": "0.00",
+                    "completion": "0.07"
+                }
+            },
+            "modelKeyAtSource": "stability/sd3.5-large"
+        }
+    }
+}

@@ -7,3 +7,7 @@ public/
 data/history/
 
 node_modules/
+
+# What the last sync did. Local run state, not catalog data: the page reads it to
+# say whether what it is showing came from a run that finished.
+data/_last-sync.json

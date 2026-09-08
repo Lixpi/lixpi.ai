@@ -1,0 +1,26 @@
+// Global stylesheet. The Gentelella theme supplies the design system: the reset,
+// the tokens, the layout, and the components the pages build from. Everything
+// Lixpi owns lives beside the component that uses it.
+
+@use "gentelella/scss/v4/main.scss";
+
+// No rubber banding on the page: reaching the top or the bottom stops there.
+//
+// Only the page. Setting this on everything breaks scrolling, because any element
+// with an overflow of its own is a scroll container, and `none` stops a gesture
+// passing to the parent even when the element cannot move in that direction. A wheel
+// over a block that scrolls sideways, or over anything with `overflow: hidden`, then
+// does nothing at all. Elements that scroll say so themselves, per axis, beside the
+// rule that makes them scroll.
+html,
+body {
+    overscroll-behavior: none;
+}
+
+// The theme's table wrapper scrolls sideways when the columns need it. Naming that
+// axis leaves the vertical one at `auto`, so a wheel anywhere over a table, its
+// header included, scrolls the page instead of being swallowed by a container that
+// cannot move that way.
+.table-responsive {
+    overscroll-behavior-x: none;
+}

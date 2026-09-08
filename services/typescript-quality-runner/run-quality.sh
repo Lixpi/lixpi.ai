@@ -135,7 +135,8 @@ run_shared() {
         prosemirror \
         test-utils \
         ui-kit \
-        ui-primitives
+        ui-primitives \
+        usage-reporter
     do
         package_name=${package_path%%/*}
         if [ -n "$package_filter" ] && [ "$package_filter" != "$package_name" ] && [ "$package_filter" != "$package_path" ]; then
@@ -232,7 +233,8 @@ run_all() {
         packages/lixpi/prosemirror \
         packages/lixpi/test-utils \
         packages/lixpi/ui-kit \
-        packages/lixpi/ui-primitives
+        packages/lixpi/ui-primitives \
+        packages/lixpi/usage-reporter
 }
 
 cd "$repository_dir"

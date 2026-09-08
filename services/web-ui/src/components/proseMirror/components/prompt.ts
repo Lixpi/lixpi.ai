@@ -227,8 +227,10 @@ export class SelectField extends Field {
                 ` as HTMLOptionElement,
         )
 
-        return html`<select>
-            ${options}
-        </select>` as HTMLSelectElement
+        return html`
+            <select>
+                ${options}
+            </select>
+        ` as HTMLSelectElement
     }
 }

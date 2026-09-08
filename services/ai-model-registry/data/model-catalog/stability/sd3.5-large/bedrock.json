@@ -1,0 +1,42 @@
+{
+    "_meta": {
+        "sourceName": "AWS Bedrock",
+        "sourceId": "bedrock",
+        "queriedEndpoints": [
+            {
+                "endpoint": "bedrock:ListFoundationModels",
+                "params": {
+                    "region": "us-east-1",
+                    "byProvider": "Stability AI"
+                }
+            },
+            {
+                "endpoint": "bedrock:ListInferenceProfiles",
+                "params": {
+                    "region": "us-east-1"
+                },
+                "note": "Fetched once per run for every vendor, and read here to resolve the id an on-demand-less model is invoked through."
+            },
+            {
+                "endpoint": "pricing:GetProducts",
+                "params": {
+                    "region": "us-east-1",
+                    "serviceCodes": [
+                        "AmazonBedrock",
+                        "AmazonBedrockService",
+                        "AmazonBedrockFoundationModels"
+                    ],
+                    "filters": {
+                        "regionCode": "us-east-1"
+                    }
+                },
+                "note": "Rates read from the AWS price list for that region."
+            }
+        ],
+        "hasDataForThisModel": false,
+        "inferenceProvidersWithData": [],
+        "fetchedAt": "2026-09-08T00:55:53.551Z",
+        "note": "This source has no entry for this model."
+    },
+    "byInferenceProvider": {}
+}

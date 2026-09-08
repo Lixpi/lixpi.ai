@@ -1,0 +1,38 @@
+{
+    "_meta": {
+        "sourceName": "Google Generative Language API",
+        "sourceId": "provider-api",
+        "queriedEndpoints": [
+            {
+                "endpoint": "GET https://generativelanguage.googleapis.com/v1beta/models",
+                "params": {
+                    "pageSize": 100,
+                    "pagesFetched": 1
+                },
+                "note": "Paged with pageToken until exhausted. The API key travels as a query parameter and is not recorded."
+            }
+        ],
+        "hasDataForThisModel": true,
+        "inferenceProvidersWithData": [
+            "google"
+        ],
+        "fetchedAt": "2026-09-08T00:55:53.334Z",
+        "publishedVersions": {
+            "currentVersion": "aqa",
+            "allPublishedVersions": [
+                "aqa"
+            ]
+        }
+    },
+    "byInferenceProvider": {
+        "google": {
+            "title": "Model that performs Attributed Question Answering.",
+            "contextWindow": 7168,
+            "maxCompletionSize": 1024,
+            "defaultTemperature": 0.2,
+            "model": "aqa",
+            "modelVersion": "aqa",
+            "modelKeyAtSource": "aqa"
+        }
+    }
+}

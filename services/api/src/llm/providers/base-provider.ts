@@ -14,15 +14,22 @@ import {
 import {
     STREAM_STATUS,
     type CapabilityJsonValue,
-    type ConfirmRequest,
     type MediaGenerationRunMeta,
     type ProviderName,
     type StreamStatus,
 } from '@lixpi/constants'
 
 import {
-    type MetricsClient,
-} from '../../metrics/metrics-client.ts'
+    METRICS_CURRENCY,
+    logRecordedSpend,
+    logSpendAuthorization,
+    usageRecordForImageCall,
+    usageRecordForTextCall,
+    usageRecordForVideoCall,
+    type RecordedUsageRequest,
+    type UsageMeteringClient,
+    type UsageReporter,
+} from '@lixpi/usage-reporter'
 
 import { LLM_TIMEOUT_MS } from '../config.ts'
 import {
@@ -38,9 +45,6 @@ import {
 import { ImagePublisher } from '../graph/image-publisher.ts'
 import { VideoPublisher } from '../graph/video-publisher.ts'
 import {
-    type UsageReporter,
-} from '../usage/usage-reporter.ts'
-import {
     getImagePromptMaxChars,
     validateImagePrompt as toolValidateImagePrompt,
 } from '../tools/image-generation.ts'
@@ -48,16 +52,7 @@ import { buildImageGenerationTrace } from '../tools/image-generation-trace.ts'
 import { buildVideoGenerationTrace } from '../tools/video-generation-trace.ts'
 import { resolveWorkspaceContext } from '../graph/workspace-context-resolver.ts'
 import { resolveMediaBranch } from '../graph/media-branch-resolver.ts'
-import {
-    tokenUsageConfirm,
-    imageUsageConfirm,
-    videoUsageConfirm,
-} from '../usage/usage-event-mapper.ts'
-import { resolveCheckMetering } from '../usage/usage-estimator.ts'
-import {
-    logUsageCheck,
-    logUsageConfirm,
-} from '../usage/usage-log.ts'
+import { estimateSpendForGraphRun } from '../usage/spend-estimate.ts'
 import { MediaBranchLineagePlanner } from '../lineage/media-branch-lineage-planner.ts'
 import { MediaGenerationRunPlanner } from '../lineage/media-generation-run-planner.ts'
 import {
@@ -111,8 +106,8 @@ export type BaseProviderDeps = {
     capabilityDispatcher?: CapabilityDispatcher
     // Metrics (optional — absent/disabled = the open-source plug, i.e. today's
     // behavior). The synchronous check/confirm run on the workflow path via this
-    // abstract metering client (see metrics/metrics-client.ts).
-    metrics?: MetricsClient
+    // abstract metering client (see @lixpi/usage-reporter).
+    usageMetering?: UsageMeteringClient
     mediaProviderDefinition: MediaProviderDefinition
 }
 
@@ -863,25 +858,25 @@ export abstract class BaseProvider {
     // Disabled = the open-source plug, which always approves. On admission, mint the
     // per-run workflowId so the confirm calls can be grouped.
     private async metricsCheck(state: ProviderState): Promise<Partial<ProviderState>> {
-        const metrics = this.deps.metrics
+        const usageMetering = this.deps.usageMetering
 
-        if (!metrics?.enabled)
+        if (!usageMetering?.enabled)
             return {}
 
         const userId = state.eventMeta?.userId ?? ''
         const orgId = (state.eventMeta?.organizationId as string) ?? ''
         const workflowKind = this.deriveWorkflowKind(state)
         const workflowId = uuid()
-        // Modality and unit count are derived together so they always describe the
-        // same model, the one named below. See llm/usage/usage-estimator.ts.
+        // MeteredModality and unit count are derived together so they always describe the
+        // same model, the one named below. See @lixpi/usage-reporter.
         const model = state.modelVersion ?? ''
         const {
             modality,
             estimatedUnits,
             basis,
-        } = resolveCheckMetering(state)
+        } = estimateSpendForGraphRun(state)
 
-        const res = await metrics.check({
+        const authorization = await usageMetering.authorizeSpend({
             orgId,
             userId,
             workspaceId: state.workspaceId,
@@ -889,29 +884,29 @@ export abstract class BaseProvider {
             model,
             modality,
             estimatedUnits,
-            currency: 'USD',
+            currency: METRICS_CURRENCY,
         })
-        logUsageCheck({
+        logSpendAuthorization({
             model,
             modality,
             estimatedUnits,
             basis,
             workflowId,
-            response: res,
+            response: authorization,
         })
 
-        if (!res.approved) {
-            const reason = res.reason ? `: ${res.reason}` : ''
+        if (!authorization.approved) {
+            const reason = authorization.reason ? `: ${authorization.reason}` : ''
 
-            throw new Error(`Metrics: balance does not cover this workflow (${workflowKind}${reason})`)
+            throw new Error(`UsageMetering: balance does not cover this workflow (${workflowKind}${reason})`)
         }
 
-        // Thread the operationId from the check into graph state so the confirm(s)
-        // can correlate back to this admission.
+        // Thread the metering side's operation id into graph state so each recorded
+        // call can correlate back to this authorization.
         return {
             workflowId,
             workflowSeq: 0,
-            metricsOperationId: res.operationId,
+            metricsOperationId: authorization.operationId,
         }
     }
 
@@ -1695,11 +1690,11 @@ export abstract class BaseProvider {
         // under the run's workflowId (for grouping/display). confirm is awaited but
         // best-effort — the client logs failures rather than failing the completed
         // request. workflowId is only set when the check admitted the run (enabled).
-        const metricsOn = !!(this.deps.metrics?.enabled && state.workflowId)
+        const meteringOn = !!(this.deps.usageMetering?.enabled && state.workflowId)
         let seq = state.workflowSeq ?? 0
 
         if (state.usage) {
-            const report = this.deps.usageReporter.reportTokensUsage({
+            const spend = this.deps.usageReporter.priceTextCall({
                 eventMeta: state.eventMeta,
                 aiModelMetaInfo: state.aiModelMetaInfo,
                 aiVendorRequestId: state.aiVendorRequestId ?? 'unknown',
@@ -1710,25 +1705,25 @@ export abstract class BaseProvider {
             })
 
             if (
-                metricsOn
-                && report
+                meteringOn
+                && spend
             ) {
-                await this.confirmUsage(
+                await this.recordSpend(
                     {
-                        ...tokenUsageConfirm(
-                            report,
+                        ...usageRecordForTextCall(
+                            spend,
                             state.workflowId!,
                             ++seq,
                         ),
                         operationId: state.metricsOperationId,
                     },
-                    report.total,
+                    spend.total,
                 )
             }
         }
 
         if (state.imageUsage) {
-            const report = this.deps.usageReporter.reportImageUsage({
+            const spend = this.deps.usageReporter.priceImageCall({
                 eventMeta: state.eventMeta,
                 aiModelMetaInfo: state.aiModelMetaInfo,
                 aiVendorRequestId: state.aiVendorRequestId ?? 'unknown',
@@ -1739,25 +1734,25 @@ export abstract class BaseProvider {
             })
 
             if (
-                metricsOn
-                && report
+                meteringOn
+                && spend
             ) {
-                await this.confirmUsage(
+                await this.recordSpend(
                     {
-                        ...imageUsageConfirm(
-                            report,
+                        ...usageRecordForImageCall(
+                            spend,
                             state.workflowId!,
                             ++seq,
                         ),
                         operationId: state.metricsOperationId,
                     },
-                    report.image,
+                    spend.image,
                 )
             }
         }
 
         if (state.videoUsage) {
-            const report = this.deps.usageReporter.reportVideoUsage({
+            const spend = this.deps.usageReporter.priceVideoCall({
                 eventMeta: state.eventMeta,
                 aiModelMetaInfo: state.videoModelMetaInfo ?? state.aiModelMetaInfo,
                 aiVendorRequestId: state.aiVendorRequestId ?? 'unknown',
@@ -1772,19 +1767,19 @@ export abstract class BaseProvider {
             })
 
             if (
-                metricsOn
-                && report
+                meteringOn
+                && spend
             ) {
-                await this.confirmUsage(
+                await this.recordSpend(
                     {
-                        ...videoUsageConfirm(
-                            report,
+                        ...usageRecordForVideoCall(
+                            spend,
                             state.workflowId!,
                             ++seq,
                         ),
                         operationId: state.metricsOperationId,
                     },
-                    report.video,
+                    spend.video,
                 )
             }
         }
@@ -1792,19 +1787,19 @@ export abstract class BaseProvider {
         return { workflowSeq: seq }
     }
 
-    // Posts one measured provider call and logs it in the same shape as its
-    // matching check, so the pair reads together in the log. The reporter has
-    // already priced the call locally; that cost travels to the log only, never
-    // over the wire, because the metering backend owns pricing.
-    private async confirmUsage(
-        request: ConfirmRequest,
+    // Reports one measured provider call and logs it in the same shape as the
+    // authorization that admitted it, so the pair reads together. The reporter has
+    // already priced the call locally; that cost reaches the log only, never the
+    // wire, because the metering backend owns pricing.
+    private async recordSpend(
+        request: RecordedUsageRequest,
         cost: {
             purchasedFor: string
             soldToClientFor: string
         },
     ): Promise<void> {
-        const response = await this.deps.metrics!.confirm(request)
-        logUsageConfirm({
+        const response = await this.deps.usageMetering!.recordSpend(request)
+        logRecordedSpend({
             request,
             response,
             purchasedFor: cost.purchasedFor,

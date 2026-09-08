@@ -1,0 +1,36 @@
+{
+    "_meta": {
+        "sourceName": "Anthropic Models API",
+        "sourceId": "provider-api",
+        "queriedEndpoints": [
+            {
+                "endpoint": "GET https://api.anthropic.com/v1/models",
+                "params": {
+                    "limit": 1000,
+                    "anthropic-version": "2023-06-01"
+                }
+            }
+        ],
+        "hasDataForThisModel": true,
+        "inferenceProvidersWithData": [
+            "anthropic"
+        ],
+        "fetchedAt": "2026-09-08T00:55:53.297Z",
+        "publishedVersions": {
+            "currentVersion": "claude-sonnet-5",
+            "allPublishedVersions": [
+                "claude-sonnet-5"
+            ]
+        }
+    },
+    "byInferenceProvider": {
+        "anthropic": {
+            "title": "Claude Sonnet 5",
+            "contextWindow": 1000000,
+            "maxCompletionSize": 128000,
+            "model": "claude-sonnet-5",
+            "modelVersion": "claude-sonnet-5",
+            "modelKeyAtSource": "claude-sonnet-5"
+        }
+    }
+}

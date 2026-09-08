@@ -173,10 +173,12 @@ export class CanvasConversationEditors<Entry> {
             pointerEvents: 'none' as const,
             opacity: '0',
         }
-        this.host = html`<div
+        this.host = html`
+            <div
                 className="workspace-detached-ai-chat-thread-host"
                 style=${style}
-            ></div>` as HTMLDivElement
+            ></div>
+        ` as HTMLDivElement
         const host = this.host
         this.lifetime.own(() => {
             host.remove()

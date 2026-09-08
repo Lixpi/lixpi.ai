@@ -410,9 +410,11 @@ class ProgressTimeline implements ProgressTimelineInstance {
                     ></span>
                 </button>
             `
-            : html`<span className="progress-timeline-title-row">
-                ${heading}
-            </span>`
+            : html`
+                <span className="progress-timeline-title-row">
+                    ${heading}
+                </span>
+            `
         const collapsedSummary = item.summary
             && item.showSummaryWhenCollapsed
             && !isExpanded

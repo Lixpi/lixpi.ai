@@ -8,7 +8,7 @@ FROM node:${NODE_VERSION}-alpine AS builder
 # RUN apk add --update --no-cache python3 make g++ cmake
 
 # Install pnpm globally
-RUN npm install -g pnpm
+RUN npm install -g pnpm@12.3.4
 
 # Set the working directory
 WORKDIR /usr/src/service
@@ -23,6 +23,7 @@ COPY ./packages/lixpi/constants ./packages/lixpi/constants
 COPY ./packages/lixpi/nats-service ./packages/lixpi/nats-service
 COPY ./packages/lixpi/debug-tools ./packages/lixpi/debug-tools
 COPY ./packages/lixpi/prosemirror ./packages/lixpi/prosemirror
+COPY ./packages/lixpi/test-utils ./packages/lixpi/test-utils
 COPY ./packages/lixpi/ui-kit ./packages/lixpi/ui-kit
 COPY ./packages/lixpi/ui-primitives ./packages/lixpi/ui-primitives
 COPY ./services/web-ui/pnpm-workspace.yaml ./pnpm-workspace.yaml
@@ -41,7 +42,7 @@ FROM node:${NODE_VERSION}-alpine
 RUN apk add --update --no-cache curl rsync
 
 # Install pnpm globally (in the runtime stage)
-RUN npm install -g pnpm
+RUN npm install -g pnpm@12.3.4
 
 # Set the working directory
 WORKDIR /usr/src/service

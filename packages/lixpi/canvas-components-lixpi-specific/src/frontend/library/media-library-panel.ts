@@ -112,14 +112,14 @@ class MediaLibraryPanel implements MediaLibraryPanelInstance {
         this.html = createDocumentHtml(options.document)
         this.rootEl = this.html`
             <div className="media-library-panel media-library-panel-embedded media-library-panel-images nopan nowheel">
-            <div className="media-library-controls">
-                <span className="media-library-feedback"></span>
+                <div className="media-library-controls">
+                    <span className="media-library-feedback"></span>
+                </div>
+                <div className="media-library-body">
+                    <section className="media-library-browser"></section>
+                    <aside className="media-library-inspector"></aside>
+                </div>
             </div>
-            <div className="media-library-body">
-                <section className="media-library-browser"></section>
-                <aside className="media-library-inspector"></aside>
-            </div>
-        </div>
         ` as HTMLElement
         this.browserEl = this.rootEl.querySelector('.media-library-browser') as HTMLElement
         this.inspectorEl = this.rootEl.querySelector('.media-library-inspector') as HTMLElement
@@ -238,9 +238,9 @@ class MediaLibraryPanel implements MediaLibraryPanelInstance {
             this.browserEl.replaceChildren(
                 this.html`
                     <div className="media-library-browser-intro">
-                    <h2>Media</h2>
-                    <p>Assets keep one identity across the library, canvas placements, notes, and provenance.</p>
-                </div>
+                        <h2>Media</h2>
+                        <p>Assets keep one identity across the library, canvas placements, notes, and provenance.</p>
+                    </div>
                 ` as HTMLElement,
             )
             this.inspectorEl.replaceChildren()
@@ -264,9 +264,9 @@ class MediaLibraryPanel implements MediaLibraryPanelInstance {
                 this.inspectorEl.appendChild(
                     this.html`
                         <div className="media-library-inspector-empty">
-                        <strong>Select an Asset</strong>
-                        <span>Metadata, scope, content, and provenance appear here.</span>
-                    </div>
+                            <strong>Select an Asset</strong>
+                            <span>Metadata, scope, content, and provenance appear here.</span>
+                        </div>
                     ` as HTMLElement,
                 )
             }
@@ -288,10 +288,12 @@ class MediaLibraryPanel implements MediaLibraryPanelInstance {
                     alt=""
                 />
             ` as HTMLElement
-            : this.html`<div
+            : this.html`
+                <div
                     className="capability-library-row-thumb-placeholder"
                     aria-hidden="true"
-                ></div>` as HTMLElement
+                ></div>
+            ` as HTMLElement
         const metadata = [
             asset.primaryCategory,
             typeof asset.byteSize === 'number' ? formatMediaFileSize(asset.byteSize) : '',
@@ -304,21 +306,21 @@ class MediaLibraryPanel implements MediaLibraryPanelInstance {
                 tabindex="0"
                 data-side-panel-no-drag="true"
             >
-            ${thumbEl}
-            <div className="capability-library-row-info">
-                <div className="capability-library-row-meta">
-                    <span className="capability-library-row-category">${metadata}</span>
+                ${thumbEl}
+                <div className="capability-library-row-info">
+                    <div className="capability-library-row-meta">
+                        <span className="capability-library-row-category">${metadata}</span>
+                    </div>
+                    <div className="capability-library-row-name">${stripMediaFileExtension(asset.title)}</div>
+                    <div className="capability-library-row-summary">${asset.descriptorSummary ?? ''}</div>
                 </div>
-                <div className="capability-library-row-name">${stripMediaFileExtension(asset.title)}</div>
-                <div className="capability-library-row-summary">${asset.descriptorSummary ?? ''}</div>
-            </div>
-            <button
-                type="button"
-                className="capability-library-row-action capability-library-row-action-primary"
-                data-action="insert"
-                data-side-panel-no-drag="true"
-            >Add</button>
-        </article>
+                <button
+                    type="button"
+                    className="capability-library-row-action capability-library-row-action-primary"
+                    data-action="insert"
+                    data-side-panel-no-drag="true"
+                >Add</button>
+            </article>
         ` as HTMLElement
         const selectAsset = (): void => {
             this.selectedAssetId = asset.assetId
@@ -432,37 +434,37 @@ class MediaLibraryPanel implements MediaLibraryPanelInstance {
                 className="media-library-detail"
                 data-side-panel-no-drag="true"
             >
-            <button
-                type="button"
-                className="media-library-detail-back"
-            >Back</button>
-            <label>Title</label>
-            <input
-                type="text"
-                className="media-library-detail-title"
-            />
-            <label>Scope</label>
-            <select className="media-library-detail-scope">
-                <option value="workspace">Workspace</option>
-                <option value="user">Mine</option>
-                <option value="organization">Organization</option>
-            </select>
-            <p className="media-library-detail-state"></p>
-            <label>Subject identity</label>
-            <div className="media-library-detail-subject-identity"></div>
-            <p className="media-library-detail-descriptor"></p>
-            <p className="media-library-detail-lineage"></p>
-            <p className="media-library-detail-seed"></p>
-            <button
-                type="button"
-                className="media-library-detail-remove"
-            >Remove from library</button>
-            <div
-                className="media-library-detail-content"
-                data-help-tooltip="aria-description"
-            ></div>
-            <div className="media-library-detail-provenance"></div>
-        </section>
+                <button
+                    type="button"
+                    className="media-library-detail-back"
+                >Back</button>
+                <label>Title</label>
+                <input
+                    type="text"
+                    className="media-library-detail-title"
+                />
+                <label>Scope</label>
+                <select className="media-library-detail-scope">
+                    <option value="workspace">Workspace</option>
+                    <option value="user">Mine</option>
+                    <option value="organization">Organization</option>
+                </select>
+                <p className="media-library-detail-state"></p>
+                <label>Subject identity</label>
+                <div className="media-library-detail-subject-identity"></div>
+                <p className="media-library-detail-descriptor"></p>
+                <p className="media-library-detail-lineage"></p>
+                <p className="media-library-detail-seed"></p>
+                <button
+                    type="button"
+                    className="media-library-detail-remove"
+                >Remove from library</button>
+                <div
+                    className="media-library-detail-content"
+                    data-help-tooltip="aria-description"
+                ></div>
+                <div className="media-library-detail-provenance"></div>
+            </section>
         ` as HTMLElement
         const titleInput = detail.querySelector('.media-library-detail-title') as HTMLInputElement
         const scopeSelect = detail.querySelector('.media-library-detail-scope') as HTMLSelectElement

@@ -31,6 +31,7 @@
         "@lixpi/nats-service": "workspace:*",
         "@lixpi/nats-auth-callout-service": "workspace:*",
         "@lixpi/prosemirror": "workspace:*",
+        "@lixpi/usage-reporter": "workspace:*",
         "@lixpi/markdown-stream-parser": "latest",
         "cookie-parser": "*",
         "cors": "*",
@@ -69,5 +70,5 @@
         "type": "git",
         "url": "git+https://github.com/Lixpi/lixpi-API.git"
     },
-    "packageManager": "pnpm@11.6.0"
+    "packageManager": "pnpm@12.3.4"
 }

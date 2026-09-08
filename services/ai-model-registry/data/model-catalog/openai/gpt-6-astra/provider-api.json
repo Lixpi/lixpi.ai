@@ -1,0 +1,30 @@
+{
+    "_meta": {
+        "sourceName": "OpenAI Models API",
+        "sourceId": "provider-api",
+        "queriedEndpoints": [
+            {
+                "endpoint": "GET https://api.openai.com/v1/models",
+                "note": "Takes no parameters. Authorized with a bearer token."
+            }
+        ],
+        "hasDataForThisModel": true,
+        "inferenceProvidersWithData": [
+            "openai"
+        ],
+        "fetchedAt": "2026-09-08T00:55:53.273Z",
+        "publishedVersions": {
+            "currentVersion": "gpt-6-astra",
+            "allPublishedVersions": [
+                "gpt-6-astra"
+            ]
+        }
+    },
+    "byInferenceProvider": {
+        "openai": {
+            "model": "gpt-6-astra",
+            "modelVersion": "gpt-6-astra",
+            "modelKeyAtSource": "gpt-6-astra"
+        }
+    }
+}

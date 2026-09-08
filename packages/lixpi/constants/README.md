@@ -16,7 +16,7 @@ Capability data contracts remain in `ts/types.ts`. Manifest, workflow, resource,
 
 `ts/aws-resources.ts` contains only active DynamoDB resource names, including the six revision-2 tables. `nats-subjects.json` contains active Asset/Blob processing and maintenance subjects, Capability subjects, and the internal Character panel fidelity subject.
 
-`ts/metrics-contracts.ts` defines the usage-metering check/confirm request/response shapes served by the hosted metering backend over the `METRICS_SUBJECTS` subjects. Together with `METRICS_SUBJECTS` in `nats-subjects.json`, it is a cross-repo wire contract — do not change it without mirroring the metering backend in the same change.
+Nothing here prices anything. Rates, usage reports, the metering check/confirm contract, and the money constants live in [`@lixpi/usage-reporter`](../usage-reporter/README.md); `nats-subjects.json` still carries the `METRICS_SUBJECTS` that contract travels on, because every subject in the system is listed there. An `AiModel` from this package therefore has no `pricing` field, which is what makes it safe to hand straight to the browser.
 
 ## Main files
 
@@ -28,7 +28,6 @@ packages/lixpi/constants/
     ├── aws-resources.ts
     ├── media-generation-layout-settings.ts
     ├── media-generation-progress.ts
-    ├── metrics-contracts.ts
     ├── workspace-persistence-settings.ts
     ├── types.ts
     └── index.ts

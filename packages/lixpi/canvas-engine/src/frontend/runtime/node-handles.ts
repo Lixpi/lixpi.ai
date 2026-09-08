@@ -43,10 +43,12 @@ export class NodeHandles {
             throw new Error('Node handle size must be finite and positive')
 
         const html = createDocumentHtml(options.root.ownerDocument)
-        this.element = html`<div
+        this.element = html`
+            <div
                 className="canvas-node-handles"
                 data=${{ canvasNodeId: options.nodeId }}
-            ></div>` as HTMLElement
+            ></div>
+        ` as HTMLElement
         options.root.appendChild(this.element)
         this.lifetime.own(() => this.element.remove())
         this.lifetime.own(() => this.children.destroy())

@@ -106,10 +106,12 @@ export type CapabilityRunProgressInstance = {
 }
 
 class CapabilityRunProgress implements CapabilityRunProgressInstance {
-    readonly element = html`<section
+    readonly element = html`
+        <section
             className="capability-run-progress"
             aria-live="polite"
-        ></section>` as HTMLElement
+        ></section>
+    ` as HTMLElement
     private readonly timeline: ProgressTimelineInstance
     private replaySequence = 0
     private run: CapabilityRun | null = null

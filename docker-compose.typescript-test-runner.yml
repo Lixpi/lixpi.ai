@@ -79,7 +79,6 @@ services:
             - ./packages/lixpi/constants/nats-subjects.json:/usr/src/service/api/packages/lixpi/constants/nats-subjects.json:ro,cached
             - ./packages/lixpi/constants/ts/aws-resources.ts:/usr/src/service/api/packages/lixpi/constants/ts/aws-resources.ts:ro,cached
             - ./packages/lixpi/constants/ts/asset-types.ts:/usr/src/service/api/packages/lixpi/constants/ts/asset-types.ts:ro,cached
-            - ./packages/lixpi/constants/ts/metrics-contracts.ts:/usr/src/service/api/packages/lixpi/constants/ts/metrics-contracts.ts:ro,cached
             - ./packages/lixpi/constants/ts/index.ts:/usr/src/service/api/packages/lixpi/constants/ts/index.ts:ro,cached
             - ./packages/lixpi/constants/ts/media-generation-layout-settings.ts:/usr/src/service/api/packages/lixpi/constants/ts/media-generation-layout-settings.ts:ro,cached
             - ./packages/lixpi/constants/ts/media-generation-progress.ts:/usr/src/service/api/packages/lixpi/constants/ts/media-generation-progress.ts:ro,cached
@@ -98,6 +97,8 @@ services:
             - ./packages/lixpi/prosemirror/src:/usr/src/service/api/packages/lixpi/prosemirror/src:ro,cached
             - ./packages/lixpi/test-utils/package.json:/usr/src/service/api/packages/lixpi/test-utils/package.json:ro,cached
             - ./packages/lixpi/test-utils/src:/usr/src/service/api/packages/lixpi/test-utils/src:ro,cached
+            - ./packages/lixpi/usage-reporter/package.json:/usr/src/service/api/packages/lixpi/usage-reporter/package.json:ro,cached
+            - ./packages/lixpi/usage-reporter/src:/usr/src/service/api/packages/lixpi/usage-reporter/src:ro,cached
 
             # --- api domain: persisted node_modules (see the
             #     typescript-test-runner-node-modules-* comment above) ---
@@ -116,6 +117,7 @@ services:
             - typescript-test-runner-node-modules-api-nats-auth-callout-service:/usr/src/service/api/packages/lixpi/nats-auth-callout-service/node_modules
             - typescript-test-runner-node-modules-api-prosemirror:/usr/src/service/api/packages/lixpi/prosemirror/node_modules
             - typescript-test-runner-node-modules-api-test-utils:/usr/src/service/api/packages/lixpi/test-utils/node_modules
+            - typescript-test-runner-node-modules-api-usage-reporter:/usr/src/service/api/packages/lixpi/usage-reporter/node_modules
 
             # --- web-ui domain (bind-mounts services/web-ui's own files — same
             #     package.json/pnpm-workspace.yaml/vitest.config.ts the
@@ -141,7 +143,6 @@ services:
             - ./packages/lixpi/constants/nats-subjects.json:/usr/src/service/web-ui/packages/lixpi/constants/nats-subjects.json:ro,cached
             - ./packages/lixpi/constants/ts/aws-resources.ts:/usr/src/service/web-ui/packages/lixpi/constants/ts/aws-resources.ts:ro,cached
             - ./packages/lixpi/constants/ts/asset-types.ts:/usr/src/service/web-ui/packages/lixpi/constants/ts/asset-types.ts:ro,cached
-            - ./packages/lixpi/constants/ts/metrics-contracts.ts:/usr/src/service/web-ui/packages/lixpi/constants/ts/metrics-contracts.ts:ro,cached
             - ./packages/lixpi/constants/ts/index.ts:/usr/src/service/web-ui/packages/lixpi/constants/ts/index.ts:ro,cached
             - ./packages/lixpi/constants/ts/media-generation-layout-settings.ts:/usr/src/service/web-ui/packages/lixpi/constants/ts/media-generation-layout-settings.ts:ro,cached
             - ./packages/lixpi/constants/ts/media-generation-progress.ts:/usr/src/service/web-ui/packages/lixpi/constants/ts/media-generation-progress.ts:ro,cached
@@ -186,7 +187,6 @@ services:
             - ./packages/lixpi/constants/nats-subjects.json:/usr/src/service/nex/packages/lixpi/constants/nats-subjects.json:ro,cached
             - ./packages/lixpi/constants/ts/aws-resources.ts:/usr/src/service/nex/packages/lixpi/constants/ts/aws-resources.ts:ro,cached
             - ./packages/lixpi/constants/ts/asset-types.ts:/usr/src/service/nex/packages/lixpi/constants/ts/asset-types.ts:ro,cached
-            - ./packages/lixpi/constants/ts/metrics-contracts.ts:/usr/src/service/nex/packages/lixpi/constants/ts/metrics-contracts.ts:ro,cached
             - ./packages/lixpi/constants/ts/index.ts:/usr/src/service/nex/packages/lixpi/constants/ts/index.ts:ro,cached
             - ./packages/lixpi/constants/ts/media-generation-layout-settings.ts:/usr/src/service/nex/packages/lixpi/constants/ts/media-generation-layout-settings.ts:ro,cached
             - ./packages/lixpi/constants/ts/media-generation-progress.ts:/usr/src/service/nex/packages/lixpi/constants/ts/media-generation-progress.ts:ro,cached
@@ -240,7 +240,6 @@ services:
             - ./packages/lixpi/constants/ts/aws-resources.ts:/usr/src/service/shared/constants/ts/aws-resources.ts:cached
             - ./packages/lixpi/constants/ts/asset-types.test.ts:/usr/src/service/shared/constants/ts/asset-types.test.ts:cached
             - ./packages/lixpi/constants/ts/asset-types.ts:/usr/src/service/shared/constants/ts/asset-types.ts:cached
-            - ./packages/lixpi/constants/ts/metrics-contracts.ts:/usr/src/service/shared/constants/ts/metrics-contracts.ts:cached
             - ./packages/lixpi/constants/ts/index.ts:/usr/src/service/shared/constants/ts/index.ts:cached
             - ./packages/lixpi/constants/ts/media-generation-layout-settings.ts:/usr/src/service/shared/constants/ts/media-generation-layout-settings.ts:cached
             - ./packages/lixpi/constants/ts/media-generation-progress.test.ts:/usr/src/service/shared/constants/ts/media-generation-progress.test.ts:cached
@@ -265,6 +264,8 @@ services:
             - ./packages/lixpi/ui-kit/src:/usr/src/service/shared/ui-kit/src:cached
             - ./packages/lixpi/ui-kit/styles:/usr/src/service/shared/ui-kit/styles:cached
             - ./packages/lixpi/ui-kit/vitest.config.ts:/usr/src/service/shared/ui-kit/vitest.config.ts:cached
+            - ./packages/lixpi/usage-reporter/package.json:/usr/src/service/shared/usage-reporter/package.json:cached
+            - ./packages/lixpi/usage-reporter/src:/usr/src/service/shared/usage-reporter/src:cached
 
             # --- shared domain: persisted node_modules (see the
             #     typescript-test-runner-node-modules-* comment above) ---
@@ -282,6 +283,7 @@ services:
             - typescript-test-runner-node-modules-shared-prosemirror:/usr/src/service/shared/prosemirror/node_modules
             - typescript-test-runner-node-modules-shared-test-utils:/usr/src/service/shared/test-utils/node_modules
             - typescript-test-runner-node-modules-shared-ui-kit:/usr/src/service/shared/ui-kit/node_modules
+            - typescript-test-runner-node-modules-shared-usage-reporter:/usr/src/service/shared/usage-reporter/node_modules
         networks:
             - nats
         working_dir: /usr/src/service
@@ -297,6 +299,7 @@ volumes:
     # domain root plus each bind-mounted packages/lixpi/* member.
     typescript-test-runner-node-modules-api:
     typescript-test-runner-node-modules-api-auth-service:
+    typescript-test-runner-node-modules-api-usage-reporter:
     typescript-test-runner-node-modules-api-capability-system:
     typescript-test-runner-node-modules-api-canvas-engine:
     typescript-test-runner-node-modules-api-canvas-components:
@@ -329,6 +332,7 @@ volumes:
     typescript-test-runner-node-modules-nex-nats-service-ts:
     typescript-test-runner-node-modules-nex-test-utils:
     typescript-test-runner-node-modules-shared-auth-service:
+    typescript-test-runner-node-modules-shared-usage-reporter:
     typescript-test-runner-node-modules-shared-capability-system:
     typescript-test-runner-node-modules-shared-canvas-engine:
     typescript-test-runner-node-modules-shared-canvas-components:

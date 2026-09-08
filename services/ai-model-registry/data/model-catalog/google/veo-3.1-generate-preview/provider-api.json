@@ -1,0 +1,37 @@
+{
+    "_meta": {
+        "sourceName": "Google Generative Language API",
+        "sourceId": "provider-api",
+        "queriedEndpoints": [
+            {
+                "endpoint": "GET https://generativelanguage.googleapis.com/v1beta/models",
+                "params": {
+                    "pageSize": 100,
+                    "pagesFetched": 1
+                },
+                "note": "Paged with pageToken until exhausted. The API key travels as a query parameter and is not recorded."
+            }
+        ],
+        "hasDataForThisModel": true,
+        "inferenceProvidersWithData": [
+            "google"
+        ],
+        "fetchedAt": "2026-09-08T00:55:53.537Z",
+        "publishedVersions": {
+            "currentVersion": "veo-3.1-generate-preview",
+            "allPublishedVersions": [
+                "veo-3.1-generate-preview"
+            ]
+        }
+    },
+    "byInferenceProvider": {
+        "google": {
+            "title": "Veo 3.1",
+            "contextWindow": 480,
+            "maxCompletionSize": 8192,
+            "model": "veo-3.1-generate-preview",
+            "modelVersion": "veo-3.1-generate-preview",
+            "modelKeyAtSource": "veo-3.1-generate-preview"
+        }
+    }
+}

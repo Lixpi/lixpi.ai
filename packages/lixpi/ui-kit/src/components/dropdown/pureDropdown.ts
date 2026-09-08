@@ -312,10 +312,12 @@ export const createPureDropdown = <Option extends DropdownOption>(config: PureDr
     }
 
     // Build body content (dropdown items)
-    const bodyContent = html`<ul
+    const bodyContent = html`
+        <ul
             class="submenu"
             onwheel=${handleWheel}
-        ></ul>`
+        ></ul>
+    `
 
     // Build dropdown wrapper with button first
     const dom = html`

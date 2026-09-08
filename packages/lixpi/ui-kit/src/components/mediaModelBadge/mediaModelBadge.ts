@@ -49,14 +49,20 @@ export const createMediaModelBadge = (config: MediaModelBadgeConfig): HTMLElemen
             data-help-tooltip="aria-label"
         >
             ${
-                icon ? html`<span
+                icon ? html`
+                    <span
                         className="media-model-badge-icon"
                         innerHTML=${icon}
-                    ></span>` : null
+                    ></span>
+                ` : null
             }
             ${
                 visibleLabel ? html`
-                    <span className="media-model-badge-name">${providerTitle ? html`<span className="media-model-badge-provider">${providerTitle}</span>` : null}${separator}${modelTitle ? html`<span className="media-model-badge-model">${modelTitle}</span>` : null}</span>
+                    <span className="media-model-badge-name">${providerTitle ? html`
+                        <span className="media-model-badge-provider">${providerTitle}</span>
+                    ` : null}${separator}${modelTitle ? html`
+                        <span className="media-model-badge-model">${modelTitle}</span>
+                    ` : null}</span>
                 ` : null
             }
         </div>

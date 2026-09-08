@@ -1,0 +1,37 @@
+{
+    "_meta": {
+        "sourceName": "models.dev",
+        "sourceId": "models.dev",
+        "queriedEndpoints": [
+            {
+                "endpoint": "https://models.dev/api.json",
+                "note": "Whole catalog fetched once per run; read under providers \"google\" and \"amazon-bedrock\"."
+            }
+        ],
+        "hasDataForThisModel": true,
+        "inferenceProvidersWithData": [
+            "google"
+        ],
+        "fetchedAt": "2026-09-08T00:55:53.521Z"
+    },
+    "byInferenceProvider": {
+        "google": {
+            "contextWindow": 1048576,
+            "maxCompletionSize": 65536,
+            "pricing": {
+                "currency": "USD",
+                "text": {
+                    "measuringUnit": "tokens",
+                    "pricePer": "1000000",
+                    "tiers": {
+                        "default": {
+                            "prompt": "0.00",
+                            "completion": "0.00"
+                        }
+                    }
+                }
+            },
+            "modelKeyAtSource": "lyria-3-pro-preview"
+        }
+    }
+}

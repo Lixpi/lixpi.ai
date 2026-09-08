@@ -31,14 +31,18 @@ export class SelectionOverlay {
             background: options.marquee.backgroundColor,
             borderRadius: `${options.marquee.radius ?? 0}px`,
         }
-        this.marquee = html`<div
+        this.marquee = html`
+            <div
                 className="canvas-selection-marquee"
                 style=${marqueeStyle}
-            ></div>` as HTMLElement
-        this.group = html`<div
+            ></div>
+        ` as HTMLElement
+        this.group = html`
+            <div
                 className="canvas-selection-group"
                 style=${{ display: 'none' }}
-            ></div>` as HTMLElement
+            ></div>
+        ` as HTMLElement
         this.group.addEventListener('mousedown', this.groupPointerDown)
     }
 
