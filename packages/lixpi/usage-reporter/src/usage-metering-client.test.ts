@@ -1,4 +1,6 @@
 import {
+    afterEach,
+    beforeEach,
     describe,
     it,
     expect,
@@ -9,7 +11,7 @@ import {
     UsageMeteringClient,
     type UsageMeteringTransport,
     type UsageMeteringOptions,
-} from './metrics-client.ts'
+} from './usage-metering-client.ts'
 import {
     type SpendAuthorizationRequest,
     type RecordedUsageRequest,
@@ -49,6 +51,17 @@ const usageRecord: RecordedUsageRequest = {
     currency: 'USD',
     occurredAt: '2026-01-01T00:00:00.000Z',
 }
+
+let consoleWarnSpy: ReturnType<typeof vi.spyOn> | null = null
+
+beforeEach(() => {
+    consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+})
+
+afterEach(() => {
+    consoleWarnSpy?.mockRestore()
+    consoleWarnSpy = null
+})
 
 describe('UsageMeteringClient.authorizeSpend', () => {
     it('approves without a request when disabled (the plug)', async () => {
@@ -91,7 +104,7 @@ describe('UsageMeteringClient.recordSpend', () => {
         const request = vi.fn().mockResolvedValue({ transferId: 'txn_1', resaleCost: 1000, balance: 999000 })
         const response = await new UsageMeteringClient(stubTransport(request), opts()).recordSpend(usageRecord)
         expect(request).toHaveBeenCalledWith('metrics.usage.confirm', usageRecord, 3000)
-        expect(res?.transferId).toBe('txn_1')
+        expect(response?.transferId).toBe('txn_1')
     })
 
     it('swallows request errors (best-effort, never throws)', async () => {

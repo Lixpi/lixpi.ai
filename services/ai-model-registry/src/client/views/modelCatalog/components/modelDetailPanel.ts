@@ -5,7 +5,9 @@
 
 import { html } from '@lixpi/ui-primitives/dom'
 
-import { type OpenModelFiles } from '$src/stores/modelCatalogStore.ts'
+import {
+    type OpenModelFiles,
+} from '$src/stores/modelCatalogStore.ts'
 import { arrowLeftIcon } from '$src/views/layouts/icons.ts'
 import {
     createJsonViewer,
@@ -272,7 +274,9 @@ class ModelDetailPanel implements ModelDetailPanelInstance {
         // signature beside everything else. They arrive one render after the panel
         // opens, which rebuilds the body once more before anyone can have typed in it.
         // Which file is on show is not in here: that is swapped in place.
-        const fileNames = this.filesFor(model)?.files.map(file => file.name).join(',') ?? ''
+        const fileNames = this.filesFor(model)
+            ?.files.map(file => file.name)
+            .join(',') ?? ''
         const signature = `${modelKey}:${model.mergedAt}:${saving}:${fileNames}`
 
         if (signature === this.renderedSignature)
@@ -588,16 +592,22 @@ class ModelDetailPanel implements ModelDetailPanelInstance {
                 className="tabs-underline model-catalog-file-tabs"
                 role="tablist"
             >
-                ${(loaded?.files ?? []).map(file => this.renderFileTab(
-                    model,
-                    file.name,
-                    file.name === active,
-                ))}
+                ${(loaded?.files ?? []).map(
+                    file => this.renderFileTab(
+                        model,
+                        file.name,
+                        file.name === active,
+                    ),
+                )}
             </div>
         ` as HTMLElement
         this.filePaneEl = html`
             <div className="model-catalog-file-pane">
-                ${this.renderFilePane(model, loaded, active)}
+                ${this.renderFilePane(
+                    model,
+                    loaded,
+                    active,
+                )}
             </div>
         ` as HTMLElement
 
@@ -673,7 +683,10 @@ class ModelDetailPanel implements ModelDetailPanelInstance {
         loaded: OpenModelFiles | null,
         active: string | null,
     ): HTMLElement {
-        if (!loaded || loaded.loading)
+        if (
+            !loaded
+            || loaded.loading
+        )
             return html`<p className="model-catalog-muted">Reading the model's files…</p>` as HTMLElement
 
         if (loaded.error)

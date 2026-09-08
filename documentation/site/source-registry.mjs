@@ -63,6 +63,7 @@ export class DocumentationSources {
 
     walk(directory, routePrefix, central) {
         for (const entry of readdirSync(this.sourcePath(directory), { withFileTypes: true })) {
+            if (central && entry.name === 'memory') continue
             if (entry.name.startsWith('.') || EXCLUDED.has(entry.name)) continue
             const file = path.posix.join(directory, entry.name)
             const route = path.posix.join(routePrefix, entry.name)
