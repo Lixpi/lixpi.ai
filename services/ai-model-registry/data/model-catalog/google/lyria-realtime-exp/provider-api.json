@@ -12,26 +12,10 @@
                 "note": "Paged with pageToken until exhausted. The API key travels as a query parameter and is not recorded."
             }
         ],
-        "hasDataForThisModel": true,
-        "inferenceProvidersWithData": [
-            "google"
-        ],
-        "fetchedAt": "2026-09-07T23:42:12.625Z",
-        "publishedVersions": {
-            "currentVersion": "lyria-realtime-exp",
-            "allPublishedVersions": [
-                "lyria-realtime-exp"
-            ]
-        }
+        "hasDataForThisModel": false,
+        "inferenceProvidersWithData": [],
+        "fetchedAt": "2026-09-08T00:55:53.528Z",
+        "note": "This source has no entry for this model."
     },
-    "byInferenceProvider": {
-        "google": {
-            "title": "Lyria Realtime Experimental",
-            "contextWindow": 1048576,
-            "maxCompletionSize": 65536,
-            "model": "lyria-realtime-exp",
-            "modelVersion": "lyria-realtime-exp",
-            "modelKeyAtSource": "lyria-realtime-exp"
-        }
-    }
+    "byInferenceProvider": {}
 }

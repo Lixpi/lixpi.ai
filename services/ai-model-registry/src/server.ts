@@ -436,6 +436,45 @@ class AiModelRegistryServer {
             return
         }
 
+        // Every JSON file in one model's directory: the merged record, the authored
+        // half, each source's answer, and the account of the merge. The panel shows
+        // them side by side, so a reader can see what a source actually said rather
+        // than only what the merge made of it.
+        const filesMatch = /^\/api\/model-catalog\/([a-z0-9-]+)\/models\/([^/]+)\/files$/u.exec(pathname)
+
+        if (
+            filesMatch
+            && req.method === 'GET'
+        ) {
+            const provider = this.catalogConfig.resolveProvider(filesMatch[1]!)
+
+            if (!provider) {
+                AiModelRegistryServer.sendJson(
+                    res,
+                    404,
+                    {
+                        error: 'UNKNOWN_PROVIDER',
+                        detail: `No such provider directory: ${filesMatch[1]}`,
+                        knownProviders: this.catalogConfig.providers(),
+                    },
+                )
+
+                return
+            }
+
+            const files = await this.catalogSync.readModelFiles(
+                provider,
+                decodeURIComponent(filesMatch[2]!),
+            )
+            AiModelRegistryServer.sendJson(
+                res,
+                files.length === 0 ? 404 : 200,
+                files.length === 0 ? { error: 'NOT_FOUND' } : { files },
+            )
+
+            return
+        }
+
         // A model's authored file, maintained through the API for the same reasons as
         // the provider config: validated against the catalog, and the previous
         // version kept.
@@ -493,7 +532,7 @@ class AiModelRegistryServer {
             }
         }
 
-        // Model-catalog config. `_catalog-index.json` and `_base.json` are maintained
+        // Model-catalog config. `catalog-settings.json` and `base.json` are maintained
         // through here rather than edited by hand, so a change is validated against
         // what the catalog holds and the previous version is kept in history/.
         const configMatch = /^\/api\/model-catalog\/([a-z0-9-]+)\/(catalog-index|base)$/u.exec(pathname)

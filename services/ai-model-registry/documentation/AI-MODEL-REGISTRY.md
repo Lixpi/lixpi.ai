@@ -14,7 +14,7 @@ Registry data and production code form one contract. A model or parameter fact i
 | Tree | What it holds | Who writes it |
 |---|---|---|
 | `data/params/` | Generation parameters per media type and provider: provider documentation, compatibility, implementation state, and the decision Lixpi made about each one. | Humans, through the container API |
-| `data/model-catalog/` | The models themselves. `catalog-settings.json` and `schema.json` at the root, then one directory per provider holding `_base.json` and `_catalog-index.json` and, per model, one file per source plus `lixpi.json`, `merged.json`, and `_meta.json`. | The authored files by hand, everything else by the sync |
+| `data/model-catalog/` | The models themselves. `catalog-settings.json` and `schema.json` at the root, then one directory per provider holding its own `base.json` and `catalog-settings.json` and, per model, one file per source plus `lixpi.json`, `merged.json`, and `_meta.json`. | The authored files by hand, everything else by the sync |
 
 `catalog-settings.json` holds the catalog-wide settings, which today are the inference providers: every endpoint Lixpi can send a generation request to, the catalog directories each serves, and the environment flag that hands a directory to a platform provider. It decides which endpoints a model file carries values for and which the platform is calling, so a routing change is a data change here plus the matching provider adapter.
 
@@ -22,15 +22,15 @@ Every model records its values per inference provider. A source file keys them u
 
 `schema.json` declares the fields every model carries whatever its provider or modality, their types, and their owner: `lixpi` for what no source can supply, `source` for what an aggregator publishes, `derived` for what the tree itself decides. Conditional groups add fields by modality.
 
-The authored file is edited through `PATCH /api/model-catalog/<provider>/models/<model>/lixpi`, the endpoint the catalog page's field form calls, which validates the model, snapshots the previous version, and reports what changed. One field fills itself in: a model discovered without a short title gets the title with its provider name and any brand prefix in `_base.json`'s `shortTitleDropsLeadingWords` removed, written through that same endpoint so it is authored and editable rather than re-decided on every run. An authored short title is never overwritten.
+The authored file is edited through `PATCH /api/model-catalog/<provider>/models/<model>/lixpi`, the endpoint the catalog page's field form calls, which validates the model, snapshots the previous version, and reports what changed. One field fills itself in: a model discovered without a short title gets the title with its provider name and any brand prefix in `base.json`'s `shortTitleDropsLeadingWords` removed, written through that same endpoint so it is authored and editable rather than re-decided on every run. An authored short title is never overwritten.
 
 The authored `-lixpi.json` holds only the `lixpi` half: capability flags, generation controls, modalities, icons, sort position, and titles, stated in full with no inheritance and no shared fragment to look up. Limits and prices are absent, because the sources publish them.
 
-`_base.json` holds the fields every model in a directory shares, such as the brand name and icons. A model's own authored file overrides anything stated there.
+`base.json` holds the fields every model in a directory shares, such as the brand name and icons. A model's own authored file overrides anything stated there.
 
 `_meta.json` records how each model was resolved and carries no values: which sources were consulted and which had data, whether more than one corroborated it, which fields they disagreed on, and which fields Lixpi authored, overrode, or inherited. Per field it names who supplied the value and who else answered. The values live in the merged file and the source files.
 
-`_catalog-index.json` decides which of a provider's models sync. Discovery is separate: a model a provider lists gets an empty scaffold, and the index says what to do about it. A model reaches DynamoDB only when the index includes it and every field the schema demands is filled in; each `-merged.json` records whether it is `included`, `incomplete`, or `excluded`.
+A provider's `catalog-settings.json` decides which of its models sync. Discovery is separate: a model a provider lists gets an empty scaffold, and the settings file says what to do about it. A model reaches DynamoDB only when the settings file includes it and every field the schema demands is filled in; each `-merged.json` records whether it is `included`, `incomplete`, or `excluded`. An excluded model is not scaffolded, not fetched for, and not merged into anything the database sees, and the sync removes its directory once it is in `history/`. A missing or unreadable settings file fails the run, because carrying on would mean including every model the provider lists.
 
 The catalog holds one entry per model family. A provider's moving alias and its dated snapshots are one model, so the file is named without the snapshot suffix and the `model` inside it is the version to call.
 

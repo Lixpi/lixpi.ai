@@ -11,6 +11,7 @@ import {
     modelCatalogStore,
     modelKey,
     type ModelCatalogFilters,
+    type OpenModelFiles,
     type StatusFilter,
     type SyncProgress,
 } from '$src/stores/modelCatalogStore.ts'
@@ -33,7 +34,9 @@ import { searchHaystack } from '$src/views/modelCatalog/modelFormatting.ts'
 import {
     type CatalogModel,
     type CatalogOverview,
+    type CatalogProvider,
     type ProviderDirectory,
+    type SkippedModel,
 } from '$src/views/modelCatalog/types.ts'
 import '$src/views/modelCatalog/model-catalog.scss'
 
@@ -53,9 +56,10 @@ const STATUS_FILTER_OPTIONS: Array<{
         value: 'missing-required-fields',
         label: 'Missing required fields',
     },
+    // The only way to see excluded models: every other status leaves them out.
     {
         value: 'skipped-by-catalog-index',
-        label: 'Excluded by the index',
+        label: 'Excluded',
     },
     {
         value: 'drifting',
@@ -183,7 +187,13 @@ class ModelCatalogView implements ModelCatalogViewInstance {
                     }],
                 },
             ),
-            onUnskip: async model => await modelCatalogService.patchCatalogIndex(model.provider, { unskipModels: [model.modelId] }),
+            // Unskipping alone only changes the settings file. The model itself is
+            // not in the tree, so nothing can reach the database until a run fetches
+            // it: the sync is part of enabling it, not a separate errand.
+            onUnskip: async model => {
+                if (await modelCatalogService.patchCatalogIndex(model.provider, { unskipModels: [model.modelId] }))
+                    await modelCatalogService.runSync()
+            },
         })
 
         this.el = html`
@@ -243,7 +253,21 @@ class ModelCatalogView implements ModelCatalogViewInstance {
     private selectModel(model: CatalogModel): void {
         const key = modelKey(model)
         const current = modelCatalogStore.getData('selectedModelKey')
-        modelCatalogStore.setDataValues({ selectedModelKey: current === key ? null : key })
+
+        if (current === key) {
+            modelCatalogStore.setDataValues({
+                selectedModelKey: null,
+                openModelFiles: null,
+            })
+
+            return
+        }
+
+        modelCatalogStore.setDataValues({
+            selectedModelKey: key,
+            openModelFiles: null,
+        })
+        void modelCatalogService.loadModelFiles(model.provider, model.modelId)
     }
 
     private async saveFields(fields: Record<string, unknown>): Promise<void> {
@@ -269,13 +293,88 @@ class ModelCatalogView implements ModelCatalogViewInstance {
         )
             return null
 
-        return overview.models.find(model => modelKey(model) === key) ?? null
+        // Excluded models are not in the tree, so a row the excluded filter put on
+        // the page is found in the skip lists instead. Without this, clicking one
+        // selects a model the panel cannot find and nothing opens.
+        return overview.models.find(model => modelKey(model) === key)
+            ?? this.excludedModels(overview).find(model => modelKey(model) === key)
+            ?? null
+    }
+
+    // A row for a model the catalog is told to skip. It has no directory in the tree
+    // and so no merged record, no sources, and no drift: everything known about it is
+    // in the provider's `catalog-settings.json`.
+    private static excludedRow(
+        provider: CatalogProvider,
+        skipped: SkippedModel,
+    ): CatalogModel {
+        return {
+            provider: provider.directory,
+            providerTitle: provider.title,
+            modelId: skipped.model,
+            status: 'skipped-by-catalog-index',
+            mergedAt: '',
+            model: null,
+            file: {},
+            lixpi: null,
+            missingRequiredFields: [],
+            fieldsFilledFromSchemaDefault: [],
+            ratesRefusedBecauseUnitsDiffer: [],
+            sources: {
+                sourcesQueried: [],
+                sourcesWithDataForThisModel: [],
+                inferenceProviderCalledByThePlatform: '',
+                sourcesWithoutRatesForThatProvider: [],
+                confirmedByMoreThanOneSource: false,
+                fieldsWhereSourcesDisagree: [],
+            },
+            authored: {
+                fieldsOnlyLixpiSupplies: [],
+                fieldsWhereLixpiOverridesSources: [],
+                fieldsInheritedFromProviderBaseFile: [],
+            },
+            drift: [],
+            excludedReason: skipped.reason,
+        }
+    }
+
+    // Every model the catalog is told to skip, read from each provider's
+    // `catalog-settings.json` rather than from the tree. The sync deletes a skipped
+    // model's directory, so the tree is exactly where these are not. A model skipped
+    // since the last sync is still in the tree, and that record is used when it is
+    // there, with the reason from the settings file added to it.
+    private excludedModels(overview: CatalogOverview): CatalogModel[] {
+        const inTree = new Map(
+            overview.models.map(model => [modelKey(model), model]),
+        )
+        const rows: CatalogModel[] = []
+
+        for (const provider of overview.providers) {
+            for (const skipped of provider.index?.modelsToSkip ?? []) {
+                const existing = inTree.get(`${provider.directory}/${skipped.model}`)
+                rows.push(
+                    existing
+                        ? {
+                            ...existing,
+                            excludedReason: skipped.reason,
+                        }
+                        : ModelCatalogView.excludedRow(provider, skipped),
+                )
+            }
+        }
+
+        return rows
     }
 
     private visibleModels(overview: CatalogOverview): CatalogModel[] {
         const filters = modelCatalogStore.getData('filters') as ModelCatalogFilters
+        // Excluded models are not in the tree, so they come from the settings files
+        // and only when they are what the filter asks for.
+        const models = filters.status === 'skipped-by-catalog-index'
+            ? this.excludedModels(overview)
+            : overview.models.filter(model => model.status !== 'skipped-by-catalog-index')
 
-        return overview.models.filter(model => {
+        return models.filter(model => {
             if (
                 filters.provider !== 'all'
                 && model.provider !== filters.provider
@@ -303,8 +402,15 @@ class ModelCatalogView implements ModelCatalogViewInstance {
     // provider whose models are all filtered out drops off the page rather than
     // sitting there as an empty band.
     private groupsByProvider(overview: CatalogOverview): ModelGroup[] {
+        const filters = modelCatalogStore.getData('filters') as ModelCatalogFilters
         const visible = this.visibleModels(overview)
         const collapsed = modelCatalogStore.getData('collapsedProviders') as string[]
+        // What the count on a group band is out of. Under the excluded filter that is
+        // the provider's skip list, not the models in the tree, so the band does not
+        // say "79 of 5".
+        const total = filters.status === 'skipped-by-catalog-index'
+            ? this.excludedModels(overview)
+            : overview.models
         const groups: ModelGroup[] = []
 
         for (const provider of overview.providers) {
@@ -316,7 +422,7 @@ class ModelCatalogView implements ModelCatalogViewInstance {
             groups.push({
                 provider,
                 models,
-                totalModels: overview.models.filter(model => model.provider === provider.directory).length,
+                totalModels: total.filter(model => model.provider === provider.directory).length,
                 collapsed: collapsed.includes(provider.directory),
             })
         }
@@ -360,7 +466,11 @@ class ModelCatalogView implements ModelCatalogViewInstance {
         if (!overview) {
             this.statsEl.replaceChildren()
             this.table.render([], null)
-            this.detailPanel.render(null, saving)
+            this.detailPanel.render(
+                null,
+                saving,
+                null,
+            )
 
             return
         }
@@ -377,6 +487,7 @@ class ModelCatalogView implements ModelCatalogViewInstance {
         this.detailPanel.render(
             this.selectedModel(),
             saving,
+            modelCatalogStore.getData('openModelFiles') as OpenModelFiles | null,
         )
     }
 
@@ -481,7 +592,7 @@ class ModelCatalogView implements ModelCatalogViewInstance {
             },
             {
                 label: 'Excluded',
-                value: String(overview.models.filter(model => model.status === 'skipped-by-catalog-index').length),
+                value: String(this.excludedModels(overview).length),
                 tone: '',
             },
             {

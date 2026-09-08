@@ -3,32 +3,25 @@
     "color": "#4285F4",
     "iconName": "geminiIcon",
     "colorIconName": "geminiColorIcon",
-    "title": "Lyria Realtime Experimental",
+    "title": "",
     "shortTitle": "Lyria Realtime Experimental",
     "sortingPosition": null,
     "modalities": [],
     "defaultTemperature": null,
-    "contextWindow": 1048576,
-    "maxCompletionSize": 65536,
+    "provider": "Google",
     "model": "lyria-realtime-exp",
     "modelVersion": "lyria-realtime-exp",
-    "provider": "Google",
     "inferenceProviderCalledByThePlatform": "google",
     "inferenceProviders": {
         "google": {
             "inferenceProviderTitle": "Google",
             "isCalledByThePlatform": true,
-            "reportedBySources": [
-                "provider-api"
-            ],
-            "modelKeyAtSource": {
-                "provider-api": "lyria-realtime-exp"
-            },
-            "title": "Lyria Realtime Experimental",
-            "contextWindow": 1048576,
-            "maxCompletionSize": 65536
+            "reportedBySources": [],
+            "modelKeyAtSource": {}
         }
     },
+    "contextWindow": 0,
+    "maxCompletionSize": 0,
     "pricing": {
         "currency": "USD"
     }

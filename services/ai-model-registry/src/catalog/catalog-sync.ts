@@ -35,6 +35,7 @@ import {
     PROVIDER_DIRECTORIES,
     type LastSyncOutcome,
     type MergedModel,
+    type ModelFile,
     type ProviderDirectory,
     type SourceFailure,
     type SyncProgressListener,
@@ -76,7 +77,7 @@ export type CatalogSyncResult = {
 
 // One sync: discover, fetch every source into its own file, merge each model against
 // the base schema, write the merged file, and send the complete ones to DynamoDB.
-// A model reaches DynamoDB only when `_catalog-index.json` includes it and every
+// A model reaches DynamoDB only when `catalog-settings.json` includes it and every
 // field the schema demands is filled in.
 export class CatalogSync {
     private readonly store: ModelCatalogStore
@@ -99,6 +100,14 @@ export class CatalogSync {
         } catch {
             return null
         }
+    }
+
+    // Every JSON file in one model's directory, for the catalog page's file tabs.
+    async readModelFiles(
+        provider: ProviderDirectory,
+        modelId: string,
+    ): Promise<ModelFile[]> {
+        return await this.store.readModelFiles(provider, modelId)
     }
 
     private async mergeAll(onProgress?: SyncProgressListener): Promise<MergedModel[]> {
@@ -332,7 +341,7 @@ export class CatalogSync {
                     const keptIn = await this.store.removeModel(entry.provider, entry.modelId)
                     removed.push(`${PROVIDER_DIRECTORIES[entry.provider]}:${entry.modelId}`)
                     warn(
-                        `REMOVED ${PROVIDER_DIRECTORIES[entry.provider]}:${entry.modelId}: skipped by _catalog-index.json, directory deleted${keptIn ? `, previous version kept in ${keptIn}` : ''}`,
+                        `REMOVED ${PROVIDER_DIRECTORIES[entry.provider]}:${entry.modelId}: skipped by catalog-settings.json, directory deleted${keptIn ? `, previous version kept in ${keptIn}` : ''}`,
                     )
 
                     continue

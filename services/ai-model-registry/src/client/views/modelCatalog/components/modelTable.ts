@@ -164,6 +164,9 @@ class ModelTable implements ModelTableInstance {
                         <div>
                             <span className="cell-strong">${modelTitle(model)}</span>
                             <code className="model-catalog-model-id">${shortModel(model.modelId)}</code>
+                            ${model.excludedReason
+                                ? html`<div className="model-catalog-muted">${model.excludedReason}</div>`
+                                : null}
                         </div>
                     </div>
                 </td>

@@ -536,6 +536,18 @@ $error-row-selected: color-mix(in srgb, var(--red) 34%, var(--bg-surface));
     color: var(--text-secondary);
 }
 
+// The theme's underlined tabs, with one change: a model directory can hold half a
+// dozen files, so the row wraps rather than pushing the last tab off the panel.
+.model-catalog-file-tabs {
+    flex-wrap: wrap;
+}
+
+// The pane keeps the row above it clear of the document under it, whether that is
+// the viewer, a message, or the banner a failed read puts there.
+.model-catalog-file-pane {
+    padding-top: 8px;
+}
+
 // The record is shown in full down the page: no height cap, so the panel scrolls
 // once vertically instead of trapping a second scrollbar inside itself.
 //

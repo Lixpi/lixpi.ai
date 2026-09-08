@@ -16,7 +16,7 @@
         "inferenceProvidersWithData": [
             "google"
         ],
-        "fetchedAt": "2026-09-07T23:42:12.582Z",
+        "fetchedAt": "2026-09-08T00:55:53.470Z",
         "publishedVersions": {
             "currentVersion": "gemini-embedding-001",
             "allPublishedVersions": [

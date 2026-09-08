@@ -68,7 +68,7 @@ export class CatalogSchema {
         const inherited = new Set(inheritedFields)
 
         for (const [name, field] of Object.entries(this.schema.requiredForEveryModel)) {
-            // Derived fields come from the tree, and fields the provider's _base.json
+            // Derived fields come from the tree, and fields the provider's base.json
             // supplies are inherited. A scaffold shows only what still needs a
             // decision.
             if (field.ownedBy !== 'lixpi')

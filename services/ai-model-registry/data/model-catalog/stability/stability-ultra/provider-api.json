@@ -5,7 +5,7 @@
         "queriedEndpoints": [],
         "hasDataForThisModel": false,
         "inferenceProvidersWithData": [],
-        "fetchedAt": "2026-09-07T23:42:12.648Z",
+        "fetchedAt": "2026-09-08T00:55:53.553Z",
         "note": "This source is not consulted for this provider, so nothing was asked."
     },
     "byInferenceProvider": {}

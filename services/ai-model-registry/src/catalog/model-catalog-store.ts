@@ -15,7 +15,7 @@ import { VersionedJsonStore } from '../versioned-json-store.ts'
 
 import {
     BASE_FILE,
-    INDEX_FILE,
+    PROVIDER_SETTINGS_FILE,
     LIXPI_FILE,
     MERGED_FILE,
     META_FILE,
@@ -24,6 +24,7 @@ import {
     SOURCE_PRECEDENCE,
     type LixpiModelRecord,
     type MergedModelFile,
+    type ModelFile,
     type ModelBundle,
     type ModelMetaFile,
     type ProviderBase,
@@ -113,6 +114,50 @@ export class ModelCatalogStore {
         } catch {
             return []
         }
+    }
+
+    // Every JSON file in a model's directory, for the panel that shows how the model
+    // resolved. The merged file leads because it is the answer; the source files and
+    // the account of the merge follow, in the order a reader works back through them.
+    async readModelFiles(
+        provider: ProviderDirectory,
+        modelId: string,
+    ): Promise<ModelFile[]> {
+        const dir = this.modelDir(provider, modelId)
+        let entries: string[] = []
+
+        try {
+            entries = await readdir(dir)
+        } catch {
+            return []
+        }
+
+        const order = [
+            MERGED_FILE,
+            LIXPI_FILE,
+            ...SOURCE_PRECEDENCE.map(source => SOURCE_FILE_NAMES[source]),
+            META_FILE,
+        ]
+        const named = entries.filter(entry => entry.endsWith('.json'))
+        const files: ModelFile[] = []
+
+        for (const name of [
+            ...order.filter(name => named.includes(name)),
+            ...named.filter(name => !order.includes(name)).sort(),
+        ]) {
+            const content = await this.readJson<unknown>(
+                join(dir, name),
+            )
+            files.push({
+                name,
+                // A file that will not parse is still worth listing: the panel says
+                // it is unreadable rather than leaving a tab out with no explanation.
+                content,
+                readable: content !== null,
+            })
+        }
+
+        return files
     }
 
     private async readJson<T>(path: string): Promise<T | null> {
@@ -362,7 +407,7 @@ export class ModelCatalogStore {
         modelId: string,
     ): Promise<string | null> {
         if (
-            modelId === INDEX_FILE
+            modelId === PROVIDER_SETTINGS_FILE
             || modelId === BASE_FILE
         )
             return null

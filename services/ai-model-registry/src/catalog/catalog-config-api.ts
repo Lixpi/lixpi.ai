@@ -2,8 +2,8 @@ import { join } from 'node:path'
 
 import {
     BASE_FILE,
-    BASE_INDEX_FILE,
-    INDEX_FILE,
+    CATALOG_SETTINGS_FILE,
+    PROVIDER_SETTINGS_FILE,
     LIXPI_FILE,
     PROVIDER_DIRECTORIES,
     type CatalogBaseIndexFile,
@@ -113,7 +113,7 @@ export class CatalogConfigApi {
 
     async readIndex(provider: ProviderDirectory): Promise<CatalogIndex | null> {
         return await this.store.read<CatalogIndex>(
-            this.path(provider, INDEX_FILE),
+            this.path(provider, PROVIDER_SETTINGS_FILE),
         )
     }
 
@@ -127,7 +127,7 @@ export class CatalogConfigApi {
     // the overview so the page can name an endpoint rather than print its id.
     async readBaseIndex(): Promise<CatalogBaseIndexFile | null> {
         return await this.store.read<CatalogBaseIndexFile>(
-            join(this.rootDir, BASE_INDEX_FILE),
+            join(this.rootDir, CATALOG_SETTINGS_FILE),
         )
     }
 
@@ -151,7 +151,7 @@ export class CatalogConfigApi {
         if (!current)
             return {
                 error: 'NO_CATALOG_INDEX',
-                detail: `${provider} has no ${INDEX_FILE}.`,
+                detail: `${provider} has no ${PROVIDER_SETTINGS_FILE}.`,
             }
 
         const named = [
@@ -230,7 +230,7 @@ export class CatalogConfigApi {
 
         return await this.commit(
             provider,
-            INDEX_FILE,
+            PROVIDER_SETTINGS_FILE,
             current,
             next,
             applied,

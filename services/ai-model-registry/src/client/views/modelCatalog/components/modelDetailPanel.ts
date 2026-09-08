@@ -5,6 +5,7 @@
 
 import { html } from '@lixpi/ui-primitives/dom'
 
+import { type OpenModelFiles } from '$src/stores/modelCatalogStore.ts'
 import { arrowLeftIcon } from '$src/views/layouts/icons.ts'
 import {
     createJsonViewer,
@@ -44,6 +45,7 @@ export type ModelDetailPanelInstance = {
     render: (
         model: CatalogModel | null,
         saving: boolean,
+        files: OpenModelFiles | null,
     ) => void
     destroy: () => void
 }
@@ -161,8 +163,21 @@ class ModelDetailPanel implements ModelDetailPanelInstance {
     // half-typed in the editors.
     private renderedSignature: string | null = null
     // The viewer holds a CodeMirror instance, so it is torn down whenever the
-    // body it lives in is rebuilt.
+    // body it lives in is rebuilt, and again on every switch between files.
     private jsonViewer: JsonViewerInstance | null = null
+    // The files behind the open model, as the last render received them. Held so a
+    // tab press can re-render from the same data without waiting for the store.
+    private files: OpenModelFiles | null = null
+    // The tab row and the pane under it, from the render that put them on the page.
+    // A tab press swaps the pane's contents and nothing else: rebuilding the body
+    // would send the panel back to the top of its scroll and rebuild the form above.
+    private fileTabsEl: HTMLElement | null = null
+    private filePaneEl: HTMLElement | null = null
+    // The file on show. Null means the first one, which is the merged record. It
+    // survives a save: the body is rebuilt when the model resolves again, and
+    // dropping back to the merged tab there would undo a deliberate choice.
+    private activeFileName: string | null = null
+    private renderedModelKey: string | null = null
     private readonly onKeyDown: (event: KeyboardEvent) => void
 
     constructor(private readonly config: ModelDetailPanelConfig) {
@@ -219,6 +234,7 @@ class ModelDetailPanel implements ModelDetailPanelInstance {
     render(
         model: CatalogModel | null,
         saving: boolean,
+        files: OpenModelFiles | null,
     ): void {
         this.model = model
         this.saving = saving
@@ -231,6 +247,10 @@ class ModelDetailPanel implements ModelDetailPanelInstance {
             this.jsonViewer = null
             this.bodyEl.replaceChildren()
             this.renderedSignature = null
+            this.renderedModelKey = null
+            this.files = null
+            this.fileTabsEl = null
+            this.filePaneEl = null
 
             return
         }
@@ -240,7 +260,20 @@ class ModelDetailPanel implements ModelDetailPanelInstance {
         this.titleEl.textContent = modelTitle(model) || model.modelId
         this.subtitleEl.textContent = `${model.providerTitle} · ${model.modelId}`
 
-        const signature = `${model.provider}/${model.modelId}:${model.mergedAt}:${saving}`
+        const modelKey = `${model.provider}/${model.modelId}`
+        this.files = files
+
+        if (modelKey !== this.renderedModelKey) {
+            this.renderedModelKey = modelKey
+            this.activeFileName = null
+        }
+
+        // The files are part of what the body is built from, so they belong in the
+        // signature beside everything else. They arrive one render after the panel
+        // opens, which rebuilds the body once more before anyone can have typed in it.
+        // Which file is on show is not in here: that is swapped in place.
+        const fileNames = this.filesFor(model)?.files.map(file => file.name).join(',') ?? ''
+        const signature = `${modelKey}:${model.mergedAt}:${saving}:${fileNames}`
 
         if (signature === this.renderedSignature)
             return
@@ -254,9 +287,18 @@ class ModelDetailPanel implements ModelDetailPanelInstance {
             this.renderInferenceProviders(model),
             this.renderDrift(model),
             this.renderFieldForm(model),
-            this.renderJsonView(model),
+            this.renderFilesSection(model),
             this.renderIndexControls(model),
         )
+    }
+
+    // The files only when they belong to the model on screen. A slower request for
+    // the model before this one must not put its files under this one's name.
+    private filesFor(model: CatalogModel): OpenModelFiles | null {
+        return this.files
+            && this.files.key === `${model.provider}/${model.modelId}`
+            ? this.files
+            : null
     }
 
     // `disabled` is a boolean property, not an attribute with a value: writing
@@ -281,25 +323,32 @@ class ModelDetailPanel implements ModelDetailPanelInstance {
 
     private renderStatus(model: CatalogModel): HTMLElement {
         const missing = model.missingRequiredFields
+        // An excluded model has no merged record and no directory: the sync deletes
+        // it. There is no merge to date, so the panel says why it is out instead.
+        const notInTree = model.mergedAt === ''
 
         return html`
             <section className="model-catalog-section">
                 <h3 className="model-catalog-section-title">Status</h3>
                 <div className="model-catalog-facts">
                     <span className=${`status ${STATUS_TONES[model.status]}`}>${STATUS_LABELS[model.status]}</span>
-                    <span className="model-catalog-muted">Merged ${new Date(model.mergedAt).toLocaleString()}</span>
+                    <span className="model-catalog-muted">${notInTree
+                        ? 'Not in the tree'
+                        : `Merged ${new Date(model.mergedAt).toLocaleString()}`}</span>
                 </div>
                 ${
-                    missing.length === 0
-                        ? html`<p className="model-catalog-muted">Every required field is filled in.</p>`
-                        : html`
-                            <div className="banner">
-                                <div className="banner-body">
-                                    <strong>Missing required fields</strong>
-                                    ${fieldList(missing, 'nothing')}
+                    notInTree
+                        ? html`<p className="model-catalog-muted">${model.excludedReason ?? 'Kept out by the provider\'s catalog settings.'}</p>`
+                        : missing.length === 0
+                            ? html`<p className="model-catalog-muted">Every required field is filled in.</p>`
+                            : html`
+                                <div className="banner">
+                                    <div className="banner-body">
+                                        <strong>Missing required fields</strong>
+                                        ${fieldList(missing, 'nothing')}
+                                    </div>
                                 </div>
-                            </div>
-                        `
+                            `
                 }
                 ${
                     model.ratesRefusedBecauseUnitsDiffer.length === 0
@@ -345,7 +394,7 @@ class ModelDetailPanel implements ModelDetailPanelInstance {
                     <dd>${fieldList(model.authored.fieldsOnlyLixpiSupplies, 'nothing')}</dd>
                     <dt>Lixpi overrides</dt>
                     <dd>${fieldList(model.authored.fieldsWhereLixpiOverridesSources, 'nothing')}</dd>
-                    <dt>Inherited from _base</dt>
+                    <dt>Inherited from base</dt>
                     <dd>${fieldList(model.authored.fieldsInheritedFromProviderBaseFile, 'nothing')}</dd>
                     <dt>Filled from schema default</dt>
                     <dd>${fieldList(model.fieldsFilledFromSchemaDefault, 'nothing')}</dd>
@@ -520,22 +569,137 @@ class ModelDetailPanel implements ModelDetailPanelInstance {
         ` as HTMLElement
     }
 
-    // The authored file as it stands, for reading. Editing happens in the form
-    // above, so a field is changed in one place with the server validating it,
-    // rather than by hand-editing a record that has to parse.
-    private renderJsonView(model: CatalogModel): HTMLElement {
-        this.jsonViewer = createJsonViewer({
-            value: model.lixpi ?? {},
-            ariaLabel: `Authored record for ${model.modelId}`,
-        })
+    // Every file in the model's directory, one tab each. The merged record leads
+    // because it is what the catalog resolved to; the rest are what it was resolved
+    // from, which is the question anyone asks next when a value looks wrong.
+    //
+    // Reading only. A field changes in the form above, where the server validates it
+    // and keeps the previous version.
+    private renderFilesSection(model: CatalogModel): HTMLElement {
+        const loaded = this.filesFor(model)
+        const names = loaded?.files.map(file => file.name) ?? []
+        const active = this.activeFileName
+            && names.includes(this.activeFileName)
+            ? this.activeFileName
+            : names[0] ?? null
+        this.activeFileName = active
+        this.fileTabsEl = html`
+            <div
+                className="tabs-underline model-catalog-file-tabs"
+                role="tablist"
+            >
+                ${(loaded?.files ?? []).map(file => this.renderFileTab(
+                    model,
+                    file.name,
+                    file.name === active,
+                ))}
+            </div>
+        ` as HTMLElement
+        this.filePaneEl = html`
+            <div className="model-catalog-file-pane">
+                ${this.renderFilePane(model, loaded, active)}
+            </div>
+        ` as HTMLElement
 
         return html`
             <section className="model-catalog-section model-catalog-section-wide">
-                <h3 className="model-catalog-section-title">Authored record</h3>
-                <p className="model-catalog-muted">The whole file, as the tree holds it.</p>
-                ${this.jsonViewer.el}
+                <h3 className="model-catalog-section-title">Files</h3>
+                <p className="model-catalog-muted">
+                    The model's directory as the tree holds it: what it resolved to, what Lixpi authored, and what each source answered.
+                </p>
+                ${names.length === 0 ? null : this.fileTabsEl}
+                ${this.filePaneEl}
             </section>
         ` as HTMLElement
+    }
+
+    private renderFileTab(
+        model: CatalogModel,
+        name: string,
+        isActive: boolean,
+    ): HTMLElement {
+        return html`
+            <button
+                className=${isActive ? 'tab active' : 'tab'}
+                type="button"
+                role="tab"
+                aria-selected=${String(isActive)}
+                data=${{ file: name }}
+                onclick=${() => this.showFile(model, name)}
+            >${name}</button>
+        ` as HTMLElement
+    }
+
+    // Swaps the file on show without touching the rest of the panel: the tabs keep
+    // their elements and only their state changes, and the pane's contents are
+    // replaced. Nothing above moves, so the panel stays where it was scrolled to.
+    private showFile(
+        model: CatalogModel,
+        name: string,
+    ): void {
+        if (
+            name === this.activeFileName
+            || !this.fileTabsEl
+            || !this.filePaneEl
+        )
+            return
+
+        this.activeFileName = name
+
+        for (const tab of [...this.fileTabsEl.children]) {
+            const isActive = (tab as HTMLElement).dataset.file === name
+            tab.className = isActive ? 'tab active' : 'tab'
+            tab.setAttribute(
+                'aria-selected',
+                String(isActive),
+            )
+        }
+
+        this.jsonViewer?.destroy()
+        this.jsonViewer = null
+        this.filePaneEl.replaceChildren(
+            this.renderFilePane(
+                model,
+                this.filesFor(model),
+                name,
+            ),
+        )
+    }
+
+    // What sits under the tabs: the file itself once it is here, and why it is not
+    // otherwise. A viewer is built only for a file that parsed.
+    private renderFilePane(
+        model: CatalogModel,
+        loaded: OpenModelFiles | null,
+        active: string | null,
+    ): HTMLElement {
+        if (!loaded || loaded.loading)
+            return html`<p className="model-catalog-muted">Reading the model's files…</p>` as HTMLElement
+
+        if (loaded.error)
+            return html`
+                <div className="banner">
+                    <div className="banner-body">
+                        <strong>The files could not be read</strong>
+                        <p className="model-catalog-muted">${loaded.error}</p>
+                    </div>
+                </div>
+            ` as HTMLElement
+
+        const file = loaded.files.find(entry => entry.name === active)
+
+        if (!file)
+            return html`<p className="model-catalog-muted">This model's directory holds no files.</p>` as HTMLElement
+
+        if (!file.readable)
+            return html`<p className="model-catalog-muted">${file.name} is on disk but does not parse as JSON.</p>` as HTMLElement
+
+        this.jsonViewer = createJsonViewer({
+            value: file.content,
+            ariaLabel: `${file.name} for ${model.modelId}`,
+        })
+
+        return this.jsonViewer.el
     }
 
     // Whether the model syncs at all. Skipping asks for a reason because the
@@ -565,13 +729,16 @@ class ModelDetailPanel implements ModelDetailPanelInstance {
 
         return html`
             <section className="model-catalog-section">
-                <h3 className="model-catalog-section-title">Catalog index</h3>
+                <h3 className="model-catalog-section-title">Catalog settings</h3>
                 ${
                     isSkipped
                         ? html`
+                            <p className="model-catalog-muted">
+                                Bringing it back takes it out of the provider's skip list and runs a sync, which is what fetches the model and puts it in the tree.
+                            </p>
                             <div className="form-actions">
                                 ${this.renderSaveButton(
-                                    'Stop skipping this model',
+                                    'Stop skipping and sync',
                                     'btn btn-primary',
                                     async () => await this.config.onUnskip(model),
                                 )}
@@ -603,6 +770,9 @@ class ModelDetailPanel implements ModelDetailPanelInstance {
 
     destroy(): void {
         this.model = null
+        this.files = null
+        this.fileTabsEl = null
+        this.filePaneEl = null
         document.removeEventListener('keydown', this.onKeyDown)
         document.documentElement.classList.remove(SCROLL_LOCK_CLASS)
         this.jsonViewer?.destroy()

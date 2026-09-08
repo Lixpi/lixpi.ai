@@ -3,7 +3,7 @@ import { join } from 'node:path'
 import process from 'node:process'
 
 import {
-    BASE_INDEX_FILE,
+    CATALOG_SETTINGS_FILE,
     type CatalogBaseIndexFile,
     type InferenceProviderEntry,
     type InferenceProviderId,
@@ -24,7 +24,7 @@ export class CatalogBaseIndex {
 
     static async load(rootDir: string): Promise<CatalogBaseIndex> {
         const raw = await readFile(
-            join(rootDir, BASE_INDEX_FILE),
+            join(rootDir, CATALOG_SETTINGS_FILE),
             'utf8',
         )
 

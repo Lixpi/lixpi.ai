@@ -30,7 +30,7 @@ import {
 import { deriveShortTitle } from './short-title.ts'
 import { familyId } from './model-identity.ts'
 
-// Resolves one model from its source files, the provider's shared `_base.json`, and
+// Resolves one model from its source files, the provider's shared `base.json`, and
 // its own authored file, and produces the merged record plus a full account of where
 // every value came from.
 //
@@ -684,7 +684,7 @@ export class ModelMerger {
             fieldsFilledFromSchemaDefault: usedFallback,
             ratesRefusedBecauseUnitsDiffer: unitMismatches,
             fieldOrigins: fields,
-            ...(excluded && { note: `Skipped by _catalog-index.json: ${index.reasonFor(modelId)}` }),
+            ...(excluded && { note: `Skipped by catalog-settings.json: ${index.reasonFor(modelId)}` }),
             ...(status === 'missing-required-fields' && { note: 'Not written to the database: its authored fields are not filled in yet.' }),
             ...(sourcesWithData.length === 0 && { note: 'No source has data for this model. Every field comes from the authored file.' }),
         }

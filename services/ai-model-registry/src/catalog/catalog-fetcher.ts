@@ -58,7 +58,7 @@ export type FetchResult = {
 //
 // Discovery is separate from selection. What a provider lists becomes a model in the
 // tree with an empty `-lixpi.json` scaffold; whether it reaches DynamoDB is decided
-// by `_catalog-index.json` and by whether its authored fields are filled in.
+// by `catalog-settings.json` and by whether its authored fields are filled in.
 export class CatalogFetcher {
     private readonly sources: ModelSource[]
 

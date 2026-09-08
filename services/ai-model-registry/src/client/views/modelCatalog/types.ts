@@ -59,6 +59,14 @@ export type AuthoredSummary = {
     fieldsInheritedFromProviderBaseFile: string[]
 }
 
+// One JSON file from a model's directory, as `GET .../models/<model>/files` returns
+// it. `merged.json` leads the list, which is the order the panel's tabs follow.
+export type ModelFile = {
+    name: string
+    content: unknown
+    readable: boolean
+}
+
 export type CatalogModel = {
     provider: ProviderDirectory
     providerTitle: string
@@ -78,6 +86,10 @@ export type CatalogModel = {
     sources: ModelSources
     authored: AuthoredSummary
     drift: DriftFinding[]
+    // Why the model is kept out, from the provider's `catalog-settings.json`. Only
+    // excluded models carry it, and it is the whole content of such a row: the sync
+    // deletes a skipped model's directory, so there is nothing else to say about it.
+    excludedReason?: string
 }
 
 export type CatalogProvider = {

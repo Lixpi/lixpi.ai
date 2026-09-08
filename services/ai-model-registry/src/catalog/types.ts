@@ -5,14 +5,14 @@ import {
 // The model catalog is a directory tree, the same way the parameter registry is.
 // There is no database and no index of its own: the layout defines the catalog.
 //
-//   model-catalog/catalog-settings.json                catalog-wide settings
-//   model-catalog/schema.json                          fields every model carries
-//   model-catalog/<provider>/_base.json                  fields every model here inherits
-//   model-catalog/<provider>/_catalog-index.json         what to sync and what to skip
-//   model-catalog/<provider>/<model>/<source>.json       one file per source, always written
-//   model-catalog/<provider>/<model>/lixpi.json          authored, human-owned
-//   model-catalog/<provider>/<model>/merged.json         the resolved result
-//   model-catalog/<provider>/<model>/_meta.json          how that result was arrived at
+//   model-catalog/catalog-settings.json               catalog-wide settings
+//   model-catalog/schema.json                         fields every model carries
+//   model-catalog/<provider>/base.json                fields every model here inherits
+//   model-catalog/<provider>/catalog-settings.json    what to sync and what to skip
+//   model-catalog/<provider>/<model>/<source>.json    one file per source, always written
+//   model-catalog/<provider>/<model>/lixpi.json       authored, human-owned
+//   model-catalog/<provider>/<model>/merged.json      the resolved result
+//   model-catalog/<provider>/<model>/_meta.json       how that result was arrived at
 //
 // One directory per model, so everything about a model sits together.
 //
@@ -22,10 +22,12 @@ import {
 export const LIXPI_FILE = 'lixpi.json'
 export const MERGED_FILE = 'merged.json'
 export const META_FILE = '_meta.json'
-export const INDEX_FILE = '_catalog-index.json'
-export const BASE_FILE = '_base.json'
+export const BASE_FILE = 'base.json'
 export const SCHEMA_FILE = 'schema.json'
-export const BASE_INDEX_FILE = 'catalog-settings.json'
+// The same file name at two levels: one in the catalog root for the whole catalog,
+// one in each provider directory for that provider.
+export const CATALOG_SETTINGS_FILE = 'catalog-settings.json'
+export const PROVIDER_SETTINGS_FILE = CATALOG_SETTINGS_FILE
 // Beside the tree, not in it: it describes the last run rather than the catalog.
 export const LAST_SYNC_FILE = '_last-sync.json'
 
@@ -100,6 +102,15 @@ export const SOURCE_PRECEDENCE: SourceId[] = [
     'provider-api',
     'bedrock',
 ]
+
+// One JSON file from a model's directory, as the catalog page's file tabs read it.
+export type ModelFile = {
+    name: string
+    content: unknown
+    // False when the file is on disk but does not parse, so the page can say so
+    // instead of rendering `null` as though that were the content.
+    readable: boolean
+}
 
 export type FieldOwner = 'lixpi' | 'source' | 'derived'
 
@@ -227,7 +238,7 @@ export type Agreement =
 // only says who supplied it and whether anyone disagreed.
 export type FieldProvenance = {
     // A source name, `lixpi-authored-file` when the model's own file states it,
-    // `provider-base-file` when it comes from `_base.json`, or `derived-from-file-name`
+    // `provider-base-file` when it comes from `base.json`, or `derived-from-file-name`
     // when the tree itself decides it.
     valueCameFrom: string
     sourceAgreement: Agreement

@@ -15,7 +15,7 @@
         "inferenceProvidersWithData": [
             "anthropic"
         ],
-        "fetchedAt": "2026-09-07T23:42:12.444Z",
+        "fetchedAt": "2026-09-08T00:55:53.294Z",
         "publishedVersions": {
             "currentVersion": "claude-opus-5",
             "allPublishedVersions": [

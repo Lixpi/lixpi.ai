@@ -8,12 +8,14 @@ import { LoadingStatus } from '@lixpi/constants'
 import {
     idleSyncProgress,
     modelCatalogStore,
+    type OpenModelFiles,
     type SyncProgress,
 } from '$src/stores/modelCatalogStore.ts'
 
 import {
     type CatalogOverview,
     type ConfigPatchResult,
+    type ModelFile,
     type ProviderDirectory,
     type SyncProgressEvent,
 } from '$src/views/modelCatalog/types.ts'
@@ -67,10 +69,88 @@ class ModelCatalogService {
             const overview = (await response.json()) as CatalogOverview
             modelCatalogStore.setDataValues({ overview })
             modelCatalogStore.setMetaValues({ loadingStatus: LoadingStatus.success })
+
+            // A save and a sync both land here, and both rewrite the files behind the
+            // open model, so the panel's tabs are re-read rather than left showing
+            // what the tree held before.
+            const openKey = modelCatalogStore.getData('selectedModelKey') as string | null
+
+            if (openKey) {
+                const separator = openKey.indexOf('/')
+                void this.loadModelFiles(
+                    openKey.slice(0, separator) as ProviderDirectory,
+                    openKey.slice(separator + 1),
+                )
+            }
         } catch (error: unknown) {
             modelCatalogStore.setMetaValues({
                 loadingStatus: LoadingStatus.error,
                 error: error instanceof Error ? error.message : String(error),
+            })
+        }
+    }
+
+    // The files behind one model, loaded when the panel opens rather than shipped
+    // with the overview: the overview covers every model in the tree, and carrying
+    // every source file for all of them would be most of the catalog in one response.
+    async loadModelFiles(
+        provider: ProviderDirectory,
+        modelId: string,
+    ): Promise<void> {
+        const key = `${provider}/${modelId}`
+        const current = modelCatalogStore.getData('openModelFiles') as OpenModelFiles | null
+        // A reload keeps what is on screen. The files change under a save and under a
+        // sync, and emptying the tabs each time would blank the panel a reader is in
+        // the middle of.
+        modelCatalogStore.setDataValues({
+            openModelFiles: {
+                key,
+                files: current?.key === key ? current.files : [],
+                loading: true,
+                error: null,
+            },
+        })
+
+        try {
+            const response = await fetch(`/api/model-catalog/${provider}/models/${encodeURIComponent(modelId)}/files`)
+
+            // An excluded model has no directory: the sync deletes it. That is the
+            // answer to the question, not a failure to answer it.
+            if (
+                !response.ok
+                && response.status !== 404
+            )
+                throw new Error(await readError(response))
+
+            const body = response.ok
+                ? (await response.json()) as { files: ModelFile[] }
+                : { files: [] }
+
+            // The panel may have moved on while this was in flight. Writing the
+            // answer to a question nobody is asking any more would show one model's
+            // files under another model's name.
+            if (modelCatalogStore.getData('selectedModelKey') !== key)
+                return
+
+            modelCatalogStore.setDataValues({
+                openModelFiles: {
+                    key,
+                    files: body.files,
+                    loading: false,
+                    error: null,
+                },
+            })
+        } catch (error: unknown) {
+            if (modelCatalogStore.getData('selectedModelKey') !== key)
+                return
+
+            modelCatalogStore.setDataValues({
+                openModelFiles: {
+                    key,
+                    files: [],
+                    loading: false,
+                    error: error instanceof Error ? error.message : String(error),
+                },
             })
         }
     }

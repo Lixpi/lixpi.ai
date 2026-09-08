@@ -1,6 +1,6 @@
 {
     "modelFamily": "lyria-realtime-exp",
-    "mergedAt": "2026-09-07T23:42:12.850Z",
+    "mergedAt": "2026-09-08T00:55:53.771Z",
     "baseSchemaVersion": 1,
     "syncStatus": "missing-required-fields",
     "sources": {
@@ -10,9 +10,7 @@
             "provider-api",
             "bedrock"
         ],
-        "sourcesWithDataForThisModel": [
-            "provider-api"
-        ],
+        "sourcesWithDataForThisModel": [],
         "inferenceProviderCalledByThePlatform": "google",
         "sourcesWithoutRatesForThatProvider": [],
         "confirmedByMoreThanOneSource": false,
@@ -32,6 +30,7 @@
         ]
     },
     "requiredFieldsStillMissing": [
+        "title",
         "sortingPosition",
         "modalities",
         "defaultTemperature",
@@ -39,6 +38,8 @@
         "pricing"
     ],
     "fieldsFilledFromSchemaDefault": [
+        "contextWindow",
+        "maxCompletionSize",
         "pricing.currency"
     ],
     "ratesRefusedBecauseUnitsDiffer": [],
@@ -64,11 +65,9 @@
             "sourcesThatAnswered": []
         },
         "title": {
-            "valueCameFrom": "provider-api",
+            "valueCameFrom": "lixpi-authored-file",
             "sourceAgreement": "only-one-source-answered",
-            "sourcesThatAnswered": [
-                "provider-api"
-            ]
+            "sourcesThatAnswered": []
         },
         "shortTitle": {
             "valueCameFrom": "lixpi-authored-file",
@@ -90,39 +89,21 @@
             "sourceAgreement": "only-one-source-answered",
             "sourcesThatAnswered": []
         },
-        "contextWindow": {
-            "valueCameFrom": "provider-api",
-            "sourceAgreement": "only-one-source-answered",
-            "sourcesThatAnswered": [
-                "provider-api"
-            ]
-        },
-        "maxCompletionSize": {
-            "valueCameFrom": "provider-api",
-            "sourceAgreement": "only-one-source-answered",
-            "sourcesThatAnswered": [
-                "provider-api"
-            ]
-        },
-        "model": {
-            "valueCameFrom": "provider-api",
-            "sourceAgreement": "only-one-source-answered",
-            "sourcesThatAnswered": [
-                "provider-api"
-            ]
-        },
-        "modelVersion": {
-            "valueCameFrom": "provider-api",
-            "sourceAgreement": "only-one-source-answered",
-            "sourcesThatAnswered": [
-                "provider-api"
-            ]
-        },
         "provider": {
             "valueCameFrom": "derived-from-file-name",
             "sourceAgreement": "only-one-source-answered",
             "sourcesThatAnswered": []
+        },
+        "model": {
+            "valueCameFrom": "lixpi-authored-file",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": []
+        },
+        "modelVersion": {
+            "valueCameFrom": "lixpi-authored-file",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": []
         }
     },
-    "note": "Not written to the database: its authored fields are not filled in yet."
+    "note": "No source has data for this model. Every field comes from the authored file."
 }

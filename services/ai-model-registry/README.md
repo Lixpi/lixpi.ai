@@ -14,8 +14,8 @@ The registry is an internal engineering service. It does not ship to users, but 
 catalog-settings.json               catalog-wide settings: the inference providers
 schema.json                         fields every model carries, and who owns each
 <provider>/
-  _base.json                        fields every model here inherits
-  _catalog-index.json               which models sync, and which to skip
+  base.json                         fields every model here inherits
+  catalog-settings.json             which models sync, and which to skip
   <model>/
     litellm.json                    one file per source, always written
     models.dev.json                 records "no data" when the source has none
@@ -30,13 +30,13 @@ One directory per model, so everything about a model sits together.
 
 Every source gets a file for every model whether or not it had anything, so a gap reads as "this source has no data" rather than "this source was never asked".
 
-`catalog-settings.json` holds what is true for the whole catalog rather than for one directory or one model. Today that is the inference providers: every endpoint Lixpi can send a generation request to, which catalog directories each one serves, the name a platform provider files those models under, and the environment flag that hands a directory to it. Adding a Bedrock-served vendor is a change to this file, not to code, and it moves together with `services/api/src/llm/providers/bedrock-inference.ts`, which is what can actually route the call.
+The root `catalog-settings.json` holds what is true for the whole catalog rather than for one directory or one model. Today that is the inference providers: every endpoint Lixpi can send a generation request to, which catalog directories each one serves, the name a platform provider files those models under, and the environment flag that hands a directory to it. Adding a Bedrock-served vendor is a change to this file, not to code, and it moves together with `services/api/src/llm/providers/bedrock-inference.ts`, which is what can actually route the call.
 
 `schema.json` declares what every model carries whatever its provider or modality, and who owns each field: `lixpi` for what no source can supply, `source` for what an aggregator publishes, `derived` for what the tree decides. Conditional groups add fields by modality. The merge reads it to know what to demand; the fetch reads it to scaffold a new model's authored file.
 
-`_base.json` holds what every model in a directory shares: the brand name, the colour, the icon names. Stated once and inherited, and overridden by any model that states its own. A scaffold leaves these out, so a new model's authored file shows only what still needs a decision.
+`base.json` holds what every model in a directory shares: the brand name, the colour, the icon names. Stated once and inherited, and overridden by any model that states its own. A scaffold leaves these out, so a new model's authored file shows only what still needs a decision.
 
-`_catalog-index.json` decides what syncs. `syncMode: "all"` takes everything discovered except `modelsToSkip`; `syncMode: "onlyListed"` takes only what `modelsToSync` names.
+A provider's own `catalog-settings.json` decides what syncs. `syncMode: "all"` takes everything discovered except `modelsToSkip`; `syncMode: "onlyListed"` takes only what `modelsToSync` names. A skipped model is never scaffolded, never fetched for, and never offered to DynamoDB, and the sync deletes its directory after copying it into `history/`. A provider whose file is missing or unreadable stops the run rather than falling back to syncing everything: the fallback would treat every model the provider lists as included and rebuild the tree the exclusions exist to keep out.
 
 `_meta.json` is the account of the merge and holds no values of its own: which sources were consulted and which had data, whether the model is corroborated by more than one catalog, which fields the sources disagreed on, and which fields Lixpi authored, overrode, or inherited. Per field it names who supplied the value, who else answered, and whether they agreed. The values are in the merged file and in each source's file, which is where you compare them.
 
@@ -56,7 +56,7 @@ It is edited through `PATCH /api/model-catalog/<provider>/models/<model>/lixpi`,
 
 No source publishes a short title, so a newly discovered model has none and cannot reach the database without one. Rather than leaving a blank for someone to find, the merge derives one from the title and the sync writes it into the authored file through that same endpoint, where it shows up in the page and can be changed.
 
-The default is the title with the provider's name removed, plus any leading brand word the directory's `_base.json` lists in `shortTitleDropsLeadingWords`. Anthropic lists `Claude`, so "Claude Fable 5.1" becomes "Fable 5.1", matching the short titles authored there. Google lists nothing, so "Gemini 2.5 Pro" stays whole and "Google Veo 3.1" becomes "Veo 3.1". A short title that is already filled in is never touched, by this or by anything else in the sync.
+The default is the title with the provider's name removed, plus any leading brand word the directory's `base.json` lists in `shortTitleDropsLeadingWords`. Anthropic lists `Claude`, so "Claude Fable 5.1" becomes "Fable 5.1", matching the short titles authored there. Google lists nothing, so "Gemini 2.5 Pro" stays whole and "Google Veo 3.1" becomes "Veo 3.1". A short title that is already filled in is never touched, by this or by anything else in the sync.
 
 ### One entry per model family
 
@@ -155,7 +155,9 @@ src/client/
         modelCatalog/       the model catalog page
 ```
 
-The catalog page reads `GET /api/model-catalog/overview`, which assembles each provider's index and inherited fields together with every model's resolved record, provenance, authored half, and drift. Its edits go to the same endpoints an engineer would call by hand: `PATCH /api/model-catalog/<provider>/models/<model>/lixpi` for the authored file, and `PATCH /api/model-catalog/<provider>/catalog-index` and `.../base` for the provider's configuration. Nothing in the browser writes a catalog file directly.
+The catalog page reads `GET /api/model-catalog/overview`, which assembles each provider's index and inherited fields together with every model's resolved record, provenance, authored half, and drift. Opening a model reads `GET /api/model-catalog/<provider>/models/<model>/files`, which returns every JSON file in that model's directory with `merged.json` first, and the panel gives each one a tab. Its edits go to the same endpoints an engineer would call by hand: `PATCH /api/model-catalog/<provider>/models/<model>/lixpi` for the authored file, and `PATCH /api/model-catalog/<provider>/catalog-index` and `.../base` for the provider's configuration. Nothing in the browser writes a catalog file directly.
+
+Excluded models show only under the status filter's "Excluded" option; every other status leaves them out. A skip takes effect the moment it is saved, but the model's directory survives until the next sync deletes it, so the rows would otherwise outnumber everything the catalog actually ships.
 
 ## Container-only administration
 

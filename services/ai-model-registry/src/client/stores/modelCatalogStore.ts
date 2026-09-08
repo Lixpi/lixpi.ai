@@ -9,6 +9,7 @@ import { writable } from '$src/stores/nanoStore.ts'
 import {
     type CatalogModel,
     type CatalogOverview,
+    type ModelFile,
     type ProviderDirectory,
 } from '$src/views/modelCatalog/types.ts'
 
@@ -23,6 +24,15 @@ export type ModelCatalogFilters = {
     query: string
     provider: ProviderDirectory | 'all'
     status: StatusFilter
+}
+
+// The files behind the open model, loaded when the panel opens. One slot rather
+// than a cache: only one model is open at a time.
+export type OpenModelFiles = {
+    key: string
+    files: ModelFile[]
+    loading: boolean
+    error: string | null
 }
 
 type Meta = {
@@ -61,6 +71,7 @@ type Data = {
     filters: ModelCatalogFilters
     // `provider/modelId` of the model open in the detail panel.
     selectedModelKey: string | null
+    openModelFiles: OpenModelFiles | null
     // Provider directories whose rows are folded away. A per-browser
     // convenience, so it is kept in localStorage rather than on the server.
     collapsedProviders: string[]
@@ -112,6 +123,7 @@ const initial: ModelCatalogStore = {
             status: 'all',
         },
         selectedModelKey: null,
+        openModelFiles: null,
         collapsedProviders: readCollapsedProviders(),
     },
 }

@@ -12,7 +12,7 @@
         "inferenceProvidersWithData": [
             "aws-bedrock"
         ],
-        "fetchedAt": "2026-09-07T23:42:12.677Z"
+        "fetchedAt": "2026-09-08T00:55:53.582Z"
     },
     "byInferenceProvider": {
         "aws-bedrock": {

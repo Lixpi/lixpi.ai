@@ -4,7 +4,7 @@
 // its authored file.
 //
 // The default is the title with the provider's name taken off it, plus any leading
-// brand word that directory's `_base.json` names in `shortTitleDropsLeadingWords`.
+// brand word that directory's `base.json` names in `shortTitleDropsLeadingWords`.
 // "Google Veo 3.1" becomes "Veo 3.1", and Anthropic lists "Claude" so "Claude Opus 5"
 // becomes "Opus 5", matching the short titles already authored there. A title that
 // names neither, which is most of them, is already as short as this rule can make it
