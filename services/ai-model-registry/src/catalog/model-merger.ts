@@ -349,8 +349,7 @@ export class ModelMerger {
                             ),
                         isPricing: path.startsWith('pricing'),
                     })
-                }
-                else if (sourceValue === undefined)
+                } else if (sourceValue === undefined)
                     authoredOnly.push(
                         provenancePath(path),
                     )
@@ -369,9 +368,7 @@ export class ModelMerger {
             // A rate only transfers when both sides measure the same thing. Dollars
             // per image must never land in a field that means credits.
             if (
-                RATE_KEYS.has(
-                    path.split('.').at(-1)!,
-                )
+                RATE_KEYS.has(path.split('.').at(-1)!)
                 && authoredLeaves.has(path)
                 && !this.unitsAgree(
                     path,

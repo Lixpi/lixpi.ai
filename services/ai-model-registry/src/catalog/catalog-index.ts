@@ -55,9 +55,7 @@ export class ProviderCatalogIndex {
             || !Array.isArray(index.modelsToSync)
             || (index.syncMode !== 'all' && index.syncMode !== 'onlyListed')
         )
-            throw new Error(
-                `${PROVIDER_DIRECTORIES[provider]}'s ${PROVIDER_SETTINGS_FILE} needs syncMode, modelsToSync and modelsToSkip.`,
-            )
+            throw new Error(`${PROVIDER_DIRECTORIES[provider]}'s ${PROVIDER_SETTINGS_FILE} needs syncMode, modelsToSync and modelsToSkip.`)
 
         return new ProviderCatalogIndex(provider, index)
     }

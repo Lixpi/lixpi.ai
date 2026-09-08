@@ -28,9 +28,11 @@ const LOG_TAG = '[UsageMetering] '
 
 // Renders `key=value` pairs and drops anything nobody set, so a tokens line carries
 // no empty video keys and a video line no token keys.
-const fieldParts = (fields: LogField[]): string[] => fields
-    .filter(([, value]) => value !== undefined && value !== '')
-    .map(([key, value]) => `${chalk.gray(key)}=${chalk.white(String(value))} `)
+const fieldParts = (fields: LogField[]): string[] => fields.filter(([, value]) => value !== undefined && value !== '').map(
+    ([key, value]) => `${chalk.gray(key)}=${chalk.white(
+        String(value),
+    )} `,
+)
 
 const asUsd = (microDollars: number | undefined): string | undefined => (
     typeof microDollars === 'number'

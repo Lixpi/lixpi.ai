@@ -5,9 +5,7 @@ import {
     err,
     info,
 } from '@lixpi/debug-tools'
-import {
-    getDynamoDbTableStageName,
-} from '@lixpi/constants'
+import { getDynamoDbTableStageName } from '@lixpi/constants'
 import {
     type PricedAiModel,
 } from '@lixpi/usage-reporter'

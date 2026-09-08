@@ -345,8 +345,7 @@ export default {
             origin: 'model::AiModel->getAvailableAiModels()',
         })
 
-        const models = availableAiModels.items
-            .map(item => withoutInferenceProviderPricing(item as PricedAiModel))
+        const models = availableAiModels.items.map(item => withoutInferenceProviderPricing(item as PricedAiModel))
             .sort((a, b) => a.sortingPosition - b.sortingPosition)
 
         return {
