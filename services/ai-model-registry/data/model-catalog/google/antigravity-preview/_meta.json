@@ -1,6 +1,6 @@
 {
     "modelFamily": "antigravity-preview",
-    "mergedAt": "2026-09-08T00:55:53.662Z",
+    "mergedAt": "2026-09-08T02:03:20.684Z",
     "baseSchemaVersion": 1,
     "syncStatus": "missing-required-fields",
     "sources": {
@@ -32,14 +32,14 @@
         ]
     },
     "requiredFieldsStillMissing": [
+        "inferenceProviders.google.pricing",
         "sortingPosition",
         "modalities",
         "defaultTemperature",
-        "inferenceCapabilities",
-        "pricing"
+        "inferenceCapabilities"
     ],
     "fieldsFilledFromSchemaDefault": [
-        "pricing.currency"
+        "inferenceProviders.google.pricing.currency"
     ],
     "ratesRefusedBecauseUnitsDiffer": [],
     "fieldOrigins": {
@@ -112,6 +112,27 @@
             ]
         },
         "modelVersion": {
+            "valueCameFrom": "provider-api",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": [
+                "provider-api"
+            ]
+        },
+        "inferenceProviders.google.title": {
+            "valueCameFrom": "provider-api",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": [
+                "provider-api"
+            ]
+        },
+        "inferenceProviders.google.contextWindow": {
+            "valueCameFrom": "provider-api",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": [
+                "provider-api"
+            ]
+        },
+        "inferenceProviders.google.maxCompletionSize": {
             "valueCameFrom": "provider-api",
             "sourceAgreement": "only-one-source-answered",
             "sourcesThatAnswered": [

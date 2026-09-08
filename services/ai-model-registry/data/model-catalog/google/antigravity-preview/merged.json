@@ -26,10 +26,10 @@
             },
             "title": "Antigravity Agent Preview",
             "contextWindow": 131072,
-            "maxCompletionSize": 65536
+            "maxCompletionSize": 65536,
+            "pricing": {
+                "currency": "USD"
+            }
         }
-    },
-    "pricing": {
-        "currency": "USD"
     }
 }

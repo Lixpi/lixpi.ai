@@ -1,6 +1,6 @@
 {
     "modelFamily": "claude-opus-5",
-    "mergedAt": "2026-09-08T00:55:53.641Z",
+    "mergedAt": "2026-09-08T02:03:20.654Z",
     "baseSchemaVersion": 1,
     "syncStatus": "written-to-database",
     "sources": {
@@ -22,8 +22,8 @@
         ],
         "confirmedByMoreThanOneSource": true,
         "fieldsWhereSourcesDisagree": [
-            "pricing.text.tiers.default.prompt",
-            "pricing.text.tiers.default.completion"
+            "inferenceProviders.aws-bedrock.pricing.text.tiers.default.prompt",
+            "inferenceProviders.aws-bedrock.pricing.text.tiers.default.completion"
         ]
     },
     "lixpi": {
@@ -153,51 +153,6 @@
                 "provider-api"
             ]
         },
-        "pricing.currency": {
-            "valueCameFrom": "bedrock",
-            "sourceAgreement": "all-sources-agree",
-            "sourcesThatAnswered": [
-                "litellm",
-                "models.dev",
-                "bedrock"
-            ]
-        },
-        "pricing.text.measuringUnit": {
-            "valueCameFrom": "bedrock",
-            "sourceAgreement": "all-sources-agree",
-            "sourcesThatAnswered": [
-                "litellm",
-                "models.dev",
-                "bedrock"
-            ]
-        },
-        "pricing.text.pricePer": {
-            "valueCameFrom": "bedrock",
-            "sourceAgreement": "all-sources-agree",
-            "sourcesThatAnswered": [
-                "litellm",
-                "models.dev",
-                "bedrock"
-            ]
-        },
-        "pricing.text.tiers.default.prompt": {
-            "valueCameFrom": "bedrock",
-            "sourceAgreement": "sources-disagree",
-            "sourcesThatAnswered": [
-                "litellm",
-                "models.dev",
-                "bedrock"
-            ]
-        },
-        "pricing.text.tiers.default.completion": {
-            "valueCameFrom": "bedrock",
-            "sourceAgreement": "sources-disagree",
-            "sourcesThatAnswered": [
-                "litellm",
-                "models.dev",
-                "bedrock"
-            ]
-        },
         "model": {
             "valueCameFrom": "provider-api",
             "sourceAgreement": "only-one-source-answered",
@@ -210,6 +165,139 @@
             "sourceAgreement": "only-one-source-answered",
             "sourcesThatAnswered": [
                 "provider-api"
+            ]
+        },
+        "inferenceProviders.anthropic.contextWindow": {
+            "valueCameFrom": "litellm",
+            "sourceAgreement": "all-sources-agree",
+            "sourcesThatAnswered": [
+                "litellm",
+                "models.dev",
+                "provider-api"
+            ]
+        },
+        "inferenceProviders.anthropic.maxCompletionSize": {
+            "valueCameFrom": "litellm",
+            "sourceAgreement": "all-sources-agree",
+            "sourcesThatAnswered": [
+                "litellm",
+                "models.dev",
+                "provider-api"
+            ]
+        },
+        "inferenceProviders.anthropic.pricing.currency": {
+            "valueCameFrom": "litellm",
+            "sourceAgreement": "all-sources-agree",
+            "sourcesThatAnswered": [
+                "litellm",
+                "models.dev"
+            ]
+        },
+        "inferenceProviders.anthropic.pricing.text.measuringUnit": {
+            "valueCameFrom": "litellm",
+            "sourceAgreement": "all-sources-agree",
+            "sourcesThatAnswered": [
+                "litellm",
+                "models.dev"
+            ]
+        },
+        "inferenceProviders.anthropic.pricing.text.pricePer": {
+            "valueCameFrom": "litellm",
+            "sourceAgreement": "all-sources-agree",
+            "sourcesThatAnswered": [
+                "litellm",
+                "models.dev"
+            ]
+        },
+        "inferenceProviders.anthropic.pricing.text.tiers.default.prompt": {
+            "valueCameFrom": "litellm",
+            "sourceAgreement": "all-sources-agree",
+            "sourcesThatAnswered": [
+                "litellm",
+                "models.dev"
+            ]
+        },
+        "inferenceProviders.anthropic.pricing.text.tiers.default.completion": {
+            "valueCameFrom": "litellm",
+            "sourceAgreement": "all-sources-agree",
+            "sourcesThatAnswered": [
+                "litellm",
+                "models.dev"
+            ]
+        },
+        "inferenceProviders.anthropic.title": {
+            "valueCameFrom": "provider-api",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": [
+                "provider-api"
+            ]
+        },
+        "inferenceProviders.aws-bedrock.contextWindow": {
+            "valueCameFrom": "litellm",
+            "sourceAgreement": "all-sources-agree",
+            "sourcesThatAnswered": [
+                "litellm",
+                "models.dev"
+            ]
+        },
+        "inferenceProviders.aws-bedrock.maxCompletionSize": {
+            "valueCameFrom": "litellm",
+            "sourceAgreement": "all-sources-agree",
+            "sourcesThatAnswered": [
+                "litellm",
+                "models.dev"
+            ]
+        },
+        "inferenceProviders.aws-bedrock.pricing.currency": {
+            "valueCameFrom": "bedrock",
+            "sourceAgreement": "all-sources-agree",
+            "sourcesThatAnswered": [
+                "litellm",
+                "models.dev",
+                "bedrock"
+            ]
+        },
+        "inferenceProviders.aws-bedrock.pricing.text.measuringUnit": {
+            "valueCameFrom": "bedrock",
+            "sourceAgreement": "all-sources-agree",
+            "sourcesThatAnswered": [
+                "litellm",
+                "models.dev",
+                "bedrock"
+            ]
+        },
+        "inferenceProviders.aws-bedrock.pricing.text.pricePer": {
+            "valueCameFrom": "bedrock",
+            "sourceAgreement": "all-sources-agree",
+            "sourcesThatAnswered": [
+                "litellm",
+                "models.dev",
+                "bedrock"
+            ]
+        },
+        "inferenceProviders.aws-bedrock.pricing.text.tiers.default.prompt": {
+            "valueCameFrom": "bedrock",
+            "sourceAgreement": "sources-disagree",
+            "sourcesThatAnswered": [
+                "litellm",
+                "models.dev",
+                "bedrock"
+            ]
+        },
+        "inferenceProviders.aws-bedrock.pricing.text.tiers.default.completion": {
+            "valueCameFrom": "bedrock",
+            "sourceAgreement": "sources-disagree",
+            "sourcesThatAnswered": [
+                "litellm",
+                "models.dev",
+                "bedrock"
+            ]
+        },
+        "inferenceProviders.aws-bedrock.title": {
+            "valueCameFrom": "bedrock",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": [
+                "bedrock"
             ]
         },
         "provider": {

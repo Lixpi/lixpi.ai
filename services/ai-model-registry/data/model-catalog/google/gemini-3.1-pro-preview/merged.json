@@ -10,25 +10,6 @@
     "defaultTemperature": 1,
     "contextWindow": 1048576,
     "maxCompletionSize": 65536,
-    "pricing": {
-        "currency": "USD",
-        "text": {
-            "measuringUnit": "tokens",
-            "pricePer": "1000000",
-            "tiers": {
-                "default": {
-                    "prompt": "2.00",
-                    "completion": "12.00"
-                }
-            }
-        },
-        "image": {
-            "measuringUnit": "images",
-            "pricePer": "1",
-            "prompt": "0.00",
-            "completion": "0.00"
-        }
-    },
     "model": "gemini-3.1-pro-preview",
     "modelVersion": "gemini-3.1-pro-preview",
     "provider": "Google",

@@ -1,6 +1,6 @@
 {
     "modelFamily": "gemini-3.5-transcribe-live",
-    "mergedAt": "2026-09-08T00:55:53.728Z",
+    "mergedAt": "2026-09-08T02:03:20.751Z",
     "baseSchemaVersion": 1,
     "syncStatus": "missing-required-fields",
     "sources": {
@@ -89,41 +89,6 @@
                 "provider-api"
             ]
         },
-        "pricing.currency": {
-            "valueCameFrom": "litellm",
-            "sourceAgreement": "only-one-source-answered",
-            "sourcesThatAnswered": [
-                "litellm"
-            ]
-        },
-        "pricing.text.measuringUnit": {
-            "valueCameFrom": "litellm",
-            "sourceAgreement": "only-one-source-answered",
-            "sourcesThatAnswered": [
-                "litellm"
-            ]
-        },
-        "pricing.text.pricePer": {
-            "valueCameFrom": "litellm",
-            "sourceAgreement": "only-one-source-answered",
-            "sourcesThatAnswered": [
-                "litellm"
-            ]
-        },
-        "pricing.text.tiers.default.prompt": {
-            "valueCameFrom": "litellm",
-            "sourceAgreement": "only-one-source-answered",
-            "sourcesThatAnswered": [
-                "litellm"
-            ]
-        },
-        "pricing.text.tiers.default.completion": {
-            "valueCameFrom": "litellm",
-            "sourceAgreement": "only-one-source-answered",
-            "sourcesThatAnswered": [
-                "litellm"
-            ]
-        },
         "contextWindow": {
             "valueCameFrom": "provider-api",
             "sourceAgreement": "only-one-source-answered",
@@ -146,6 +111,69 @@
             ]
         },
         "modelVersion": {
+            "valueCameFrom": "provider-api",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": [
+                "provider-api"
+            ]
+        },
+        "inferenceProviders.google.pricing.currency": {
+            "valueCameFrom": "litellm",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": [
+                "litellm"
+            ]
+        },
+        "inferenceProviders.google.pricing.text.measuringUnit": {
+            "valueCameFrom": "litellm",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": [
+                "litellm"
+            ]
+        },
+        "inferenceProviders.google.pricing.text.pricePer": {
+            "valueCameFrom": "litellm",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": [
+                "litellm"
+            ]
+        },
+        "inferenceProviders.google.pricing.text.tiers.default.prompt": {
+            "valueCameFrom": "litellm",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": [
+                "litellm"
+            ]
+        },
+        "inferenceProviders.google.pricing.text.tiers.default.completion": {
+            "valueCameFrom": "litellm",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": [
+                "litellm"
+            ]
+        },
+        "inferenceProviders.google.title": {
+            "valueCameFrom": "provider-api",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": [
+                "provider-api"
+            ]
+        },
+        "inferenceProviders.google.contextWindow": {
+            "valueCameFrom": "provider-api",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": [
+                "provider-api"
+            ]
+        },
+        "inferenceProviders.google.maxCompletionSize": {
+            "valueCameFrom": "provider-api",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": [
+                "provider-api"
+            ]
+        },
+        "inferenceProviders.google.defaultTemperature": {
             "valueCameFrom": "provider-api",
             "sourceAgreement": "only-one-source-answered",
             "sourcesThatAnswered": [

@@ -9,19 +9,6 @@
     "modalities": [],
     "defaultTemperature": null,
     "contextWindow": 8192,
-    "pricing": {
-        "currency": "USD",
-        "text": {
-            "measuringUnit": "tokens",
-            "pricePer": "1000000",
-            "tiers": {
-                "default": {
-                    "prompt": "0.20",
-                    "completion": "0.00"
-                }
-            }
-        }
-    },
     "maxCompletionSize": 1,
     "model": "gemini-embedding-2-preview",
     "modelVersion": "gemini-embedding-2-preview",

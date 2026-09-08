@@ -1,6 +1,7 @@
 import { Decimal } from 'decimal.js'
 
 import {
+    activeInferenceProviderPricing,
     type TokensUsage,
     type TokensUsageEvent,
 } from '@lixpi/constants'
@@ -22,10 +23,17 @@ export const reportAiTokensUsage = ({
     aiRequestReceivedAt,
     aiRequestFinishedAt,
 }: TokensUsage) => {
-    const pricePer = new Decimal(aiModelMetaInfo.pricing.text.pricePer)
+    // Rates for the endpoint the request went to. The same model billed through a
+    // vendor API and through AWS Bedrock has two different prices.
+    const pricing = activeInferenceProviderPricing(aiModelMetaInfo)
 
-    const textPromptPrice = new Decimal(aiModelMetaInfo.pricing.text.tiers.default.prompt)
-    const textCompletionPrice = new Decimal(aiModelMetaInfo.pricing.text.tiers.default.completion)
+    if (!pricing?.text)
+        throw new Error(`MODEL_TEXT_PRICING_MISSING:${aiModelMetaInfo.provider}:${aiModelMetaInfo.model}`)
+
+    const pricePer = new Decimal(pricing.text.pricePer)
+
+    const textPromptPrice = new Decimal(pricing.text.tiers.default.prompt)
+    const textCompletionPrice = new Decimal(pricing.text.tiers.default.completion)
 
     const message: TokensUsageEvent = {
         eventMeta,

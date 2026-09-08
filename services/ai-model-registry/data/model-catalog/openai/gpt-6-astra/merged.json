@@ -10,19 +10,6 @@
     "defaultTemperature": null,
     "contextWindow": 922000,
     "maxCompletionSize": 128000,
-    "pricing": {
-        "currency": "USD",
-        "text": {
-            "measuringUnit": "tokens",
-            "pricePer": "1000000",
-            "tiers": {
-                "default": {
-                    "prompt": "10.00",
-                    "completion": "50.00"
-                }
-            }
-        }
-    },
     "model": "gpt-6-astra",
     "modelVersion": "gpt-6-astra",
     "provider": "OpenAI",

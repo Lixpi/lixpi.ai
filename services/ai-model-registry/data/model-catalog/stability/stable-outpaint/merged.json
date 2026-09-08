@@ -18,7 +18,10 @@
             "inferenceProviderTitle": "Stability AI",
             "isCalledByThePlatform": true,
             "reportedBySources": [],
-            "modelKeyAtSource": {}
+            "modelKeyAtSource": {},
+            "pricing": {
+                "currency": "USD"
+            }
         },
         "aws-bedrock": {
             "inferenceProviderTitle": "AWS Bedrock",
@@ -66,8 +69,5 @@
             }
         }
     },
-    "maxCompletionSize": 0,
-    "pricing": {
-        "currency": "USD"
-    }
+    "maxCompletionSize": 0
 }

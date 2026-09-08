@@ -10,19 +10,6 @@
     "defaultTemperature": 1,
     "contextWindow": 131072,
     "maxCompletionSize": 65536,
-    "pricing": {
-        "currency": "USD",
-        "text": {
-            "measuringUnit": "tokens",
-            "pricePer": "1000000",
-            "tiers": {
-                "default": {
-                    "prompt": "2.00",
-                    "completion": "10.00"
-                }
-            }
-        }
-    },
     "model": "gemini-robotics-er-2-preview",
     "modelVersion": "gemini-robotics-er-2-preview",
     "provider": "Google",

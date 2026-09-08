@@ -3,6 +3,7 @@ import {
     type CapabilityPromptReference,
     type CapabilityReasoningModelVariant,
     type AiModelInferenceCapabilities,
+    type AiModelPricing,
     type ImageReferenceCapabilities,
     type MediaBranchCandidateSnapshot,
     type MediaBranchVlmResolution,
@@ -75,7 +76,14 @@ export type AiModelMetaInfo = {
     imagePromptMaxChars?: number
     imageReferenceCapabilities?: ImageReferenceCapabilities
     videoMaxReferenceImages?: number
-    pricing?: Record<string, any>
+    // Rates are per inference provider, because the same model costs different
+    // amounts through a vendor API and through AWS Bedrock. Metering reads the block
+    // for the endpoint the request went to (see activeInferenceProviderPricing).
+    inferenceProviderCalledByThePlatform?: string
+    inferenceProviders?: Record<string, {
+        isCalledByThePlatform?: boolean
+        pricing?: AiModelPricing
+    }>
     [key: string]: unknown
 }
 

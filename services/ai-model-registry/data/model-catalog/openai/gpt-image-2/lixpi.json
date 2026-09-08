@@ -158,14 +158,18 @@
             "21:9"
         ]
     },
-    "pricing": {
-        "text": {
-            "measuringUnit": "tokens",
-            "pricePer": "1000000",
-            "tiers": {
-                "default": {
-                    "prompt": "5.00",
-                    "completion": "10.00"
+    "byInferenceProvider": {
+        "openai": {
+            "pricing": {
+                "text": {
+                    "measuringUnit": "tokens",
+                    "pricePer": "1000000",
+                    "tiers": {
+                        "default": {
+                            "prompt": "5.00",
+                            "completion": "10.00"
+                        }
+                    }
                 }
             }
         }

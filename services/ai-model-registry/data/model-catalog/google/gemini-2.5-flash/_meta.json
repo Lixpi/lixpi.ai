@@ -1,6 +1,6 @@
 {
     "modelFamily": "gemini-2.5-flash",
-    "mergedAt": "2026-09-08T00:55:53.674Z",
+    "mergedAt": "2026-09-08T02:03:20.698Z",
     "baseSchemaVersion": 1,
     "syncStatus": "written-to-database",
     "sources": {
@@ -19,7 +19,8 @@
         "sourcesWithoutRatesForThatProvider": [],
         "confirmedByMoreThanOneSource": true,
         "fieldsWhereSourcesDisagree": [
-            "maxCompletionSize"
+            "maxCompletionSize",
+            "inferenceProviders.google.maxCompletionSize"
         ]
     },
     "lixpi": {
@@ -161,46 +162,6 @@
                 "provider-api"
             ]
         },
-        "pricing.currency": {
-            "valueCameFrom": "litellm",
-            "sourceAgreement": "all-sources-agree",
-            "sourcesThatAnswered": [
-                "litellm",
-                "models.dev"
-            ]
-        },
-        "pricing.text.measuringUnit": {
-            "valueCameFrom": "litellm",
-            "sourceAgreement": "all-sources-agree",
-            "sourcesThatAnswered": [
-                "litellm",
-                "models.dev"
-            ]
-        },
-        "pricing.text.pricePer": {
-            "valueCameFrom": "litellm",
-            "sourceAgreement": "all-sources-agree",
-            "sourcesThatAnswered": [
-                "litellm",
-                "models.dev"
-            ]
-        },
-        "pricing.text.tiers.default.prompt": {
-            "valueCameFrom": "litellm",
-            "sourceAgreement": "all-sources-agree",
-            "sourcesThatAnswered": [
-                "litellm",
-                "models.dev"
-            ]
-        },
-        "pricing.text.tiers.default.completion": {
-            "valueCameFrom": "litellm",
-            "sourceAgreement": "all-sources-agree",
-            "sourcesThatAnswered": [
-                "litellm",
-                "models.dev"
-            ]
-        },
         "model": {
             "valueCameFrom": "provider-api",
             "sourceAgreement": "only-one-source-answered",
@@ -209,6 +170,78 @@
             ]
         },
         "modelVersion": {
+            "valueCameFrom": "provider-api",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": [
+                "provider-api"
+            ]
+        },
+        "inferenceProviders.google.contextWindow": {
+            "valueCameFrom": "litellm",
+            "sourceAgreement": "all-sources-agree",
+            "sourcesThatAnswered": [
+                "litellm",
+                "models.dev",
+                "provider-api"
+            ]
+        },
+        "inferenceProviders.google.maxCompletionSize": {
+            "valueCameFrom": "litellm",
+            "sourceAgreement": "sources-disagree",
+            "sourcesThatAnswered": [
+                "litellm",
+                "models.dev",
+                "provider-api"
+            ]
+        },
+        "inferenceProviders.google.pricing.currency": {
+            "valueCameFrom": "litellm",
+            "sourceAgreement": "all-sources-agree",
+            "sourcesThatAnswered": [
+                "litellm",
+                "models.dev"
+            ]
+        },
+        "inferenceProviders.google.pricing.text.measuringUnit": {
+            "valueCameFrom": "litellm",
+            "sourceAgreement": "all-sources-agree",
+            "sourcesThatAnswered": [
+                "litellm",
+                "models.dev"
+            ]
+        },
+        "inferenceProviders.google.pricing.text.pricePer": {
+            "valueCameFrom": "litellm",
+            "sourceAgreement": "all-sources-agree",
+            "sourcesThatAnswered": [
+                "litellm",
+                "models.dev"
+            ]
+        },
+        "inferenceProviders.google.pricing.text.tiers.default.prompt": {
+            "valueCameFrom": "litellm",
+            "sourceAgreement": "all-sources-agree",
+            "sourcesThatAnswered": [
+                "litellm",
+                "models.dev"
+            ]
+        },
+        "inferenceProviders.google.pricing.text.tiers.default.completion": {
+            "valueCameFrom": "litellm",
+            "sourceAgreement": "all-sources-agree",
+            "sourcesThatAnswered": [
+                "litellm",
+                "models.dev"
+            ]
+        },
+        "inferenceProviders.google.title": {
+            "valueCameFrom": "provider-api",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": [
+                "provider-api"
+            ]
+        },
+        "inferenceProviders.google.defaultTemperature": {
             "valueCameFrom": "provider-api",
             "sourceAgreement": "only-one-source-answered",
             "sourcesThatAnswered": [

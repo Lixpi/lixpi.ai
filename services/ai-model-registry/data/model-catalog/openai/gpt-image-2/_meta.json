@@ -1,6 +1,6 @@
 {
     "modelFamily": "gpt-image-2",
-    "mergedAt": "2026-09-08T00:55:53.633Z",
+    "mergedAt": "2026-09-08T02:03:20.644Z",
     "baseSchemaVersion": 1,
     "syncStatus": "written-to-database",
     "sources": {
@@ -19,7 +19,7 @@
         "sourcesWithoutRatesForThatProvider": [],
         "confirmedByMoreThanOneSource": true,
         "fieldsWhereSourcesDisagree": [
-            "pricing.image.prompt"
+            "inferenceProviders.openai.pricing.image.prompt"
         ]
     },
     "lixpi": {
@@ -46,11 +46,11 @@
             "inferenceCapabilities.supportsSystemPrompt",
             "inferenceCapabilities.supportsTemperature",
             "inferenceCapabilities.thinkingMode",
+            "inferenceProviders.openai.pricing.text.measuringUnit",
+            "inferenceProviders.openai.pricing.text.pricePer",
+            "inferenceProviders.openai.pricing.text.tiers.default.completion",
+            "inferenceProviders.openai.pricing.text.tiers.default.prompt",
             "modalities",
-            "pricing.text.measuringUnit",
-            "pricing.text.pricePer",
-            "pricing.text.tiers.default.completion",
-            "pricing.text.tiers.default.prompt",
             "shortTitle",
             "sortingPosition",
             "title"
@@ -220,66 +220,6 @@
             "sourceAgreement": "only-one-source-answered",
             "sourcesThatAnswered": []
         },
-        "pricing.text.measuringUnit": {
-            "valueCameFrom": "lixpi-authored-file",
-            "sourceAgreement": "only-one-source-answered",
-            "sourcesThatAnswered": []
-        },
-        "pricing.text.pricePer": {
-            "valueCameFrom": "lixpi-authored-file",
-            "sourceAgreement": "only-one-source-answered",
-            "sourcesThatAnswered": []
-        },
-        "pricing.text.tiers.default.prompt": {
-            "valueCameFrom": "lixpi-authored-file",
-            "sourceAgreement": "only-one-source-answered",
-            "sourcesThatAnswered": []
-        },
-        "pricing.text.tiers.default.completion": {
-            "valueCameFrom": "lixpi-authored-file",
-            "sourceAgreement": "only-one-source-answered",
-            "sourcesThatAnswered": []
-        },
-        "pricing.currency": {
-            "valueCameFrom": "litellm",
-            "sourceAgreement": "all-sources-agree",
-            "sourcesThatAnswered": [
-                "litellm",
-                "models.dev"
-            ]
-        },
-        "pricing.image.measuringUnit": {
-            "valueCameFrom": "litellm",
-            "sourceAgreement": "all-sources-agree",
-            "sourcesThatAnswered": [
-                "litellm",
-                "models.dev"
-            ]
-        },
-        "pricing.image.pricePer": {
-            "valueCameFrom": "litellm",
-            "sourceAgreement": "all-sources-agree",
-            "sourcesThatAnswered": [
-                "litellm",
-                "models.dev"
-            ]
-        },
-        "pricing.image.prompt": {
-            "valueCameFrom": "litellm",
-            "sourceAgreement": "sources-disagree",
-            "sourcesThatAnswered": [
-                "litellm",
-                "models.dev"
-            ]
-        },
-        "pricing.image.completion": {
-            "valueCameFrom": "litellm",
-            "sourceAgreement": "all-sources-agree",
-            "sourcesThatAnswered": [
-                "litellm",
-                "models.dev"
-            ]
-        },
         "model": {
             "valueCameFrom": "provider-api",
             "sourceAgreement": "only-one-source-answered",
@@ -292,6 +232,66 @@
             "sourceAgreement": "only-one-source-answered",
             "sourcesThatAnswered": [
                 "provider-api"
+            ]
+        },
+        "inferenceProviders.openai.pricing.text.measuringUnit": {
+            "valueCameFrom": "lixpi-authored-file",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": []
+        },
+        "inferenceProviders.openai.pricing.text.pricePer": {
+            "valueCameFrom": "lixpi-authored-file",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": []
+        },
+        "inferenceProviders.openai.pricing.text.tiers.default.prompt": {
+            "valueCameFrom": "lixpi-authored-file",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": []
+        },
+        "inferenceProviders.openai.pricing.text.tiers.default.completion": {
+            "valueCameFrom": "lixpi-authored-file",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": []
+        },
+        "inferenceProviders.openai.pricing.currency": {
+            "valueCameFrom": "litellm",
+            "sourceAgreement": "all-sources-agree",
+            "sourcesThatAnswered": [
+                "litellm",
+                "models.dev"
+            ]
+        },
+        "inferenceProviders.openai.pricing.image.measuringUnit": {
+            "valueCameFrom": "litellm",
+            "sourceAgreement": "all-sources-agree",
+            "sourcesThatAnswered": [
+                "litellm",
+                "models.dev"
+            ]
+        },
+        "inferenceProviders.openai.pricing.image.pricePer": {
+            "valueCameFrom": "litellm",
+            "sourceAgreement": "all-sources-agree",
+            "sourcesThatAnswered": [
+                "litellm",
+                "models.dev"
+            ]
+        },
+        "inferenceProviders.openai.pricing.image.prompt": {
+            "valueCameFrom": "litellm",
+            "sourceAgreement": "sources-disagree",
+            "sourcesThatAnswered": [
+                "litellm",
+                "models.dev"
+            ]
+        },
+        "inferenceProviders.openai.pricing.image.completion": {
+            "valueCameFrom": "litellm",
+            "sourceAgreement": "all-sources-agree",
+            "sourcesThatAnswered": [
+                "litellm",
+                "models.dev"
             ]
         },
         "provider": {

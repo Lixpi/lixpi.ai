@@ -138,15 +138,6 @@
             "9:21"
         ]
     },
-    "pricing": {
-        "image": {
-            "measuringUnit": "credits",
-            "pricePer": "1",
-            "prompt": "0.00",
-            "completion": "6.50"
-        },
-        "currency": "USD"
-    },
     "provider": "Stability",
     "model": "sd3.5-large",
     "modelVersion": "sd3.5-large",
@@ -162,13 +153,13 @@
                 "litellm": "stability/sd3.5-large"
             },
             "pricing": {
-                "currency": "USD",
                 "image": {
-                    "measuringUnit": "images",
+                    "measuringUnit": "credits",
                     "pricePer": "1",
                     "prompt": "0.00",
-                    "completion": "0.07"
-                }
+                    "completion": "6.50"
+                },
+                "currency": "USD"
             }
         },
         "aws-bedrock": {

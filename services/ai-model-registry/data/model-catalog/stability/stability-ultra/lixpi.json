@@ -134,15 +134,19 @@
             "9:21"
         ]
     },
-    "pricing": {
-        "image": {
-            "measuringUnit": "credits",
-            "pricePer": "1",
-            "prompt": "0.00",
-            "completion": "8.00"
-        }
-    },
     "otherIdsUsedBySources": [
         "stable-image-ultra"
-    ]
+    ],
+    "byInferenceProvider": {
+        "stability": {
+            "pricing": {
+                "image": {
+                    "measuringUnit": "credits",
+                    "pricePer": "1",
+                    "prompt": "0.00",
+                    "completion": "8.00"
+                }
+            }
+        }
+    }
 }

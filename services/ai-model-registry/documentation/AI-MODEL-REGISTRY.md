@@ -20,11 +20,13 @@ Registry data and production code form one contract. A model or parameter fact i
 
 Every model records its values per inference provider. A source file keys them under `byInferenceProvider` and the merged file carries an `inferenceProviders` block with one entry per endpoint, alongside `inferenceProviderCalledByThePlatform` and the top-level fields that describe that call. A price on an endpoint Lixpi is not calling today is still a fact about the model and is never dropped.
 
-`schema.json` declares the fields every model carries whatever its provider or modality, their types, and their owner: `lixpi` for what no source can supply, `source` for what an aggregator publishes, `derived` for what the tree itself decides. Conditional groups add fields by modality.
+Rates live in those per-endpoint blocks and nowhere else. A model carries no `pricing` field, because a price is a fact about an endpoint: the same model is billed at one rate through a vendor's own API and another through AWS Bedrock, so a single rate on the model would be wrong for at least one of them. Code that meters a request reads the block for the endpoint it called, through `activeInferenceProviderPricing` in `@lixpi/constants`.
+
+`schema.json` declares the fields every model carries whatever its provider or modality, their types, and their owner: `lixpi` for what no source can supply, `source` for what an aggregator publishes, `derived` for what the tree itself decides. Conditional groups add fields by modality, and `requiredForEveryInferenceProvider` holds the fields a model carries once per endpoint rather than once, which today is pricing. Only the endpoint the platform calls has to satisfy those: a model with no rate on the route it runs on is held out of the database, and a gap on any other endpoint is recorded and ignored.
 
 The authored file is edited through `PATCH /api/model-catalog/<provider>/models/<model>/lixpi`, the endpoint the catalog page's field form calls, which validates the model, snapshots the previous version, and reports what changed. One field fills itself in: a model discovered without a short title gets the title with its provider name and any brand prefix in `base.json`'s `shortTitleDropsLeadingWords` removed, written through that same endpoint so it is authored and editable rather than re-decided on every run. An authored short title is never overwritten.
 
-The authored `-lixpi.json` holds only the `lixpi` half: capability flags, generation controls, modalities, icons, sort position, and titles, stated in full with no inheritance and no shared fragment to look up. Limits and prices are absent, because the sources publish them.
+The authored `-lixpi.json` holds only the `lixpi` half: capability flags, generation controls, modalities, icons, sort position, and titles, stated in full with no inheritance and no shared fragment to look up. Limits and prices are absent, because the sources publish them. An authored rate goes under `byInferenceProvider.<endpoint>.pricing`, the same key the source files use, so it states which endpoint's price it is correcting; a `pricing` block on the model itself is ignored and the model's `_meta.json` says so.
 
 `base.json` holds the fields every model in a directory shares, such as the brand name and icons. A model's own authored file overrides anything stated there.
 
@@ -60,7 +62,7 @@ Filling a blank is an override, and it is the only way a Lixpi file asserts a nu
 - No source covers the field. The four Seedance models are here, plus `gpt-image-2` and the Veo models for their text rates.
 - A source covers it in a different unit. Stability prices in credits while LiteLLM publishes dollars per image, so the merge refuses the value rather than converting it by guesswork and logs `UNIT MISMATCH`.
 
-Once a file states a value, the sync reports every later disagreement with the source instead of resolving it. Price disagreements are reported separately, because pricing reaches billing over the `metrics.*` wire.
+Once a file states a value, the sync reports every later disagreement with the source instead of resolving it. Price disagreements are reported separately, because pricing reaches billing over the `metrics.*` wire. A price finding names the endpoint it belongs to, as in `inferenceProviders.stability.pricing.image.completion`, so a disagreement on one route is never read as a disagreement everywhere.
 
 A fetch is all or nothing. If any source fails, for any provider, the run raises before writing and the tree keeps what the last complete run left; a partial write would record a broken source as a source with nothing to say. Every run writes its outcome to `data/_last-sync.json`, and the catalog page shows a banner naming the sources that failed and what they said.
 

@@ -437,28 +437,6 @@
         }
     ],
     "videoMaxReferenceImages": 30,
-    "pricing": {
-        "video": {
-            "measuringUnit": "tokens",
-            "pricePer": "1000000",
-            "price": "11.7",
-            "tiers": {
-                "480p": {
-                    "withoutVideoInput": "10.7",
-                    "withVideoInput": "6.4"
-                },
-                "720p": {
-                    "withoutVideoInput": "10.7",
-                    "withVideoInput": "6.4"
-                },
-                "1080p": {
-                    "withoutVideoInput": "11.7",
-                    "withVideoInput": "7.0"
-                }
-            }
-        },
-        "currency": "USD"
-    },
     "provider": "BytePlus",
     "modelVersion": "dreamina-seedance-2-5-260628",
     "inferenceProviderCalledByThePlatform": "byteplus",
@@ -467,7 +445,29 @@
             "inferenceProviderTitle": "BytePlus ModelArk",
             "isCalledByThePlatform": true,
             "reportedBySources": [],
-            "modelKeyAtSource": {}
+            "modelKeyAtSource": {},
+            "pricing": {
+                "video": {
+                    "measuringUnit": "tokens",
+                    "pricePer": "1000000",
+                    "price": "11.7",
+                    "tiers": {
+                        "480p": {
+                            "withoutVideoInput": "10.7",
+                            "withVideoInput": "6.4"
+                        },
+                        "720p": {
+                            "withoutVideoInput": "10.7",
+                            "withVideoInput": "6.4"
+                        },
+                        "1080p": {
+                            "withoutVideoInput": "11.7",
+                            "withVideoInput": "7.0"
+                        }
+                    }
+                },
+                "currency": "USD"
+            }
         }
     },
     "contextWindow": 0,

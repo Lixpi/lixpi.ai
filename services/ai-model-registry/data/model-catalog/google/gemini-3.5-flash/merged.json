@@ -112,19 +112,6 @@
     ],
     "contextWindow": 1048576,
     "maxCompletionSize": 65535,
-    "pricing": {
-        "currency": "USD",
-        "text": {
-            "measuringUnit": "tokens",
-            "pricePer": "1000000",
-            "tiers": {
-                "default": {
-                    "prompt": "1.50",
-                    "completion": "9.00"
-                }
-            }
-        }
-    },
     "model": "gemini-3.5-flash",
     "modelVersion": "gemini-3.5-flash",
     "provider": "Google",

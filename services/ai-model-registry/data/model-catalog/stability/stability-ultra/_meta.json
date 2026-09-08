@@ -1,6 +1,6 @@
 {
     "modelFamily": "stability-ultra",
-    "mergedAt": "2026-09-08T00:55:53.791Z",
+    "mergedAt": "2026-09-08T02:03:20.811Z",
     "baseSchemaVersion": 1,
     "syncStatus": "written-to-database",
     "sources": {
@@ -49,8 +49,8 @@
             "title"
         ],
         "fieldsWhereLixpiOverridesSources": [
-            "pricing.image.completion",
-            "pricing.image.measuringUnit"
+            "inferenceProviders.stability.pricing.image.completion",
+            "inferenceProviders.stability.pricing.image.measuringUnit"
         ],
         "fieldsInheritedFromProviderBaseFile": [
             "color",
@@ -215,49 +215,91 @@
             "sourceAgreement": "only-one-source-answered",
             "sourcesThatAnswered": []
         },
-        "pricing.image.measuringUnit": {
-            "valueCameFrom": "lixpi-authored-file",
-            "sourceAgreement": "only-one-source-answered",
-            "sourcesThatAnswered": [
-                "litellm"
-            ],
-            "lixpiOverridesSource": true
-        },
-        "pricing.image.pricePer": {
-            "valueCameFrom": "lixpi-authored-file",
-            "sourceAgreement": "only-one-source-answered",
-            "sourcesThatAnswered": [
-                "litellm"
-            ]
-        },
-        "pricing.image.prompt": {
-            "valueCameFrom": "lixpi-authored-file",
-            "sourceAgreement": "only-one-source-answered",
-            "sourcesThatAnswered": [
-                "litellm"
-            ]
-        },
-        "pricing.image.completion": {
-            "valueCameFrom": "lixpi-authored-file",
-            "sourceAgreement": "only-one-source-answered",
-            "sourcesThatAnswered": [
-                "litellm"
-            ],
-            "lixpiOverridesSource": true
-        },
         "otherIdsUsedBySources": {
             "valueCameFrom": "lixpi-authored-file",
             "sourceAgreement": "only-one-source-answered",
             "sourcesThatAnswered": []
         },
-        "pricing.currency": {
+        "contextWindow": {
             "valueCameFrom": "litellm",
             "sourceAgreement": "only-one-source-answered",
             "sourcesThatAnswered": [
                 "litellm"
             ]
         },
-        "contextWindow": {
+        "inferenceProviders.stability.pricing.image.measuringUnit": {
+            "valueCameFrom": "lixpi-authored-file",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": [
+                "litellm"
+            ],
+            "lixpiOverridesSource": true
+        },
+        "inferenceProviders.stability.pricing.image.pricePer": {
+            "valueCameFrom": "lixpi-authored-file",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": [
+                "litellm"
+            ]
+        },
+        "inferenceProviders.stability.pricing.image.prompt": {
+            "valueCameFrom": "lixpi-authored-file",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": [
+                "litellm"
+            ]
+        },
+        "inferenceProviders.stability.pricing.image.completion": {
+            "valueCameFrom": "lixpi-authored-file",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": [
+                "litellm"
+            ],
+            "lixpiOverridesSource": true
+        },
+        "inferenceProviders.stability.pricing.currency": {
+            "valueCameFrom": "litellm",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": [
+                "litellm"
+            ]
+        },
+        "inferenceProviders.aws-bedrock.contextWindow": {
+            "valueCameFrom": "litellm",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": [
+                "litellm"
+            ]
+        },
+        "inferenceProviders.aws-bedrock.pricing.currency": {
+            "valueCameFrom": "litellm",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": [
+                "litellm"
+            ]
+        },
+        "inferenceProviders.aws-bedrock.pricing.image.measuringUnit": {
+            "valueCameFrom": "litellm",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": [
+                "litellm"
+            ]
+        },
+        "inferenceProviders.aws-bedrock.pricing.image.pricePer": {
+            "valueCameFrom": "litellm",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": [
+                "litellm"
+            ]
+        },
+        "inferenceProviders.aws-bedrock.pricing.image.prompt": {
+            "valueCameFrom": "litellm",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": [
+                "litellm"
+            ]
+        },
+        "inferenceProviders.aws-bedrock.pricing.image.completion": {
             "valueCameFrom": "litellm",
             "sourceAgreement": "only-one-source-answered",
             "sourcesThatAnswered": [

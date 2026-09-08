@@ -1,5 +1,7 @@
 import {
     type AiModel,
+    type AiModelInferenceProvider,
+    type AiModelPricing,
 } from '@lixpi/constants'
 
 // The model catalog is a directory tree, the same way the parameter registry is.
@@ -125,6 +127,11 @@ export type BaseSchema = {
     schemaVersion: number
     description: string
     requiredForEveryModel: Record<string, SchemaField>
+    // Fields a model carries once per inference provider rather than once. Rates are
+    // the whole of it: the same model billed through a vendor API and through AWS
+    // Bedrock has two prices, and a single one on the model would be wrong for at
+    // least one endpoint.
+    requiredForEveryInferenceProvider: Record<string, SchemaField>
     requiredForModelsWithModality: Record<string, Record<string, SchemaField>>
     optionalFields: Record<string, SchemaField>
 }
@@ -167,11 +174,22 @@ export type LixpiModelRecord = Partial<Omit<AiModel, 'createdAt' | 'updatedAt'>>
     // Bedrock both call it `stable-image-ultra`; without the alias neither source
     // matches and the model looks uncovered when it is not.
     otherIdsUsedBySources?: string[]
+    // Authored values that belong to one endpoint rather than to the model. Rates
+    // live here, keyed the same way the source files key theirs, so an override
+    // states which endpoint's price it is correcting.
+    byInferenceProvider?: Partial<Record<InferenceProviderId, AuthoredInferenceProviderValues>>
+}
+
+export type AuthoredInferenceProviderValues = {
+    pricing?: AiModelPricing
 }
 
 // One source's answer for one model. Written even when the source has nothing.
 // What one source says about one model on one route.
-export type InferenceProviderFacts = Partial<LixpiModelRecord> & {
+export type InferenceProviderFacts = Partial<Omit<LixpiModelRecord, 'byInferenceProvider'>> & {
+    // What this model costs at this endpoint. Held per endpoint because that is the
+    // only level at which a rate is true.
+    pricing?: AiModelPricing
     // The key this source files the model under for this inference provider, which is
     // rarely the Lixpi model id.
     modelKeyAtSource: string
@@ -257,9 +275,10 @@ export type MergeStatus =
 // costs there, the limits it carries there, and the key each source files it under.
 // Held apart from the top-level fields, which describe the call the platform makes
 // today, so switching the flag that chooses a provider never destroys what the others
-// said. Authored overrides apply to the top-level record and are deliberately not
-// folded in here: this block is what the sources say, per endpoint.
-export type MergedInferenceProvider = Partial<Pick<AiModel, 'pricing' | 'contextWindow' | 'maxCompletionSize' | 'title'>> & {
+// said. Rates only exist here: an authored price override names its endpoint and is
+// resolved into that endpoint's block, so no rate is ever stated for the model as a
+// whole.
+export type MergedInferenceProvider = Partial<Pick<AiModelInferenceProvider, 'pricing'>> & Partial<Pick<AiModel, 'contextWindow' | 'maxCompletionSize' | 'title'>> & {
     // The endpoint's own name. `title`, when a source reports one, is what that
     // endpoint calls the model, which is not always what the vendor calls it.
     inferenceProviderTitle: string

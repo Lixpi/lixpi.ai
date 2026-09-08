@@ -1,5 +1,6 @@
 import { Decimal } from 'decimal.js'
 
+import { activeInferenceProviderPricing } from '@lixpi/constants'
 import { warn } from '@lixpi/debug-tools'
 
 import {
@@ -120,7 +121,7 @@ export class UsageReporter {
                 aiRequestReceivedAt,
                 aiRequestFinishedAt,
             } = args
-            const pricing = aiModelMetaInfo.pricing ?? {}
+            const pricing: Record<string, any> = activeInferenceProviderPricing(aiModelMetaInfo) ?? {}
             const pricePer = dec(pricing.text?.pricePer, '1000000')
             const tiers = pricing.text?.tiers?.default ?? {}
             const promptPrice = dec(tiers.prompt, '0')
@@ -206,7 +207,7 @@ export class UsageReporter {
                 aiRequestReceivedAt,
                 aiRequestFinishedAt,
             } = args
-            const pricing = aiModelMetaInfo.pricing ?? {}
+            const pricing: Record<string, any> = activeInferenceProviderPricing(aiModelMetaInfo) ?? {}
             const imagePricing = pricing.image ?? {}
             const sizePricing = imagePricing[imageSize]
                 ?? imagePricing.default
@@ -272,8 +273,8 @@ export class UsageReporter {
                 aiRequestReceivedAt,
                 aiRequestFinishedAt,
             } = args
-            const pricing = aiModelMetaInfo.pricing ?? {}
-            const videoPricing = (pricing as any).video ?? {}
+            const pricing: Record<string, any> = activeInferenceProviderPricing(aiModelMetaInfo) ?? {}
+            const videoPricing = pricing.video ?? {}
             const measuringUnit = videoPricing.measuringUnit ?? 'seconds'
             const price = dec(videoPricing.price, '0')
 

@@ -1,6 +1,6 @@
 {
     "modelFamily": "stable-image-search-replace",
-    "mergedAt": "2026-09-08T00:55:53.814Z",
+    "mergedAt": "2026-09-08T02:03:20.832Z",
     "baseSchemaVersion": 1,
     "syncStatus": "missing-required-fields",
     "sources": {
@@ -36,15 +36,15 @@
         ]
     },
     "requiredFieldsStillMissing": [
+        "inferenceProviders.stability.pricing",
         "sortingPosition",
         "modalities",
         "defaultTemperature",
-        "inferenceCapabilities",
-        "pricing"
+        "inferenceCapabilities"
     ],
     "fieldsFilledFromSchemaDefault": [
-        "maxCompletionSize",
-        "pricing.currency"
+        "inferenceProviders.stability.pricing.currency",
+        "maxCompletionSize"
     ],
     "ratesRefusedBecauseUnitsDiffer": [],
     "fieldOrigins": {
@@ -100,6 +100,55 @@
             "sourceAgreement": "only-one-source-answered",
             "sourcesThatAnswered": [
                 "litellm"
+            ]
+        },
+        "inferenceProviders.aws-bedrock.contextWindow": {
+            "valueCameFrom": "litellm",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": [
+                "litellm"
+            ]
+        },
+        "inferenceProviders.aws-bedrock.pricing.currency": {
+            "valueCameFrom": "litellm",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": [
+                "litellm"
+            ]
+        },
+        "inferenceProviders.aws-bedrock.pricing.image.measuringUnit": {
+            "valueCameFrom": "litellm",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": [
+                "litellm"
+            ]
+        },
+        "inferenceProviders.aws-bedrock.pricing.image.pricePer": {
+            "valueCameFrom": "litellm",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": [
+                "litellm"
+            ]
+        },
+        "inferenceProviders.aws-bedrock.pricing.image.prompt": {
+            "valueCameFrom": "litellm",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": [
+                "litellm"
+            ]
+        },
+        "inferenceProviders.aws-bedrock.pricing.image.completion": {
+            "valueCameFrom": "litellm",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": [
+                "litellm"
+            ]
+        },
+        "inferenceProviders.aws-bedrock.title": {
+            "valueCameFrom": "bedrock",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": [
+                "bedrock"
             ]
         },
         "provider": {

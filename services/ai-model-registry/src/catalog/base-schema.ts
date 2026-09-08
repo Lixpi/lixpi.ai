@@ -31,6 +31,12 @@ export class CatalogSchema {
         return this.schema.requiredForEveryModel
     }
 
+    // Fields a model carries once per endpoint. The merge resolves these inside each
+    // inference provider's block instead of on the model.
+    inferenceProviderFields(): Record<string, SchemaField> {
+        return this.schema.requiredForEveryInferenceProvider
+    }
+
     // Conditional groups keyed by modality, so an image-generation model is asked for
     // its reference capabilities and a text model is not.
     fieldsForModalities(modalities: string[]): Record<string, SchemaField> {
@@ -47,6 +53,9 @@ export class CatalogSchema {
     ownerOf(field: string): SchemaField | null {
         if (this.schema.requiredForEveryModel[field])
             return this.schema.requiredForEveryModel[field]
+
+        if (this.schema.requiredForEveryInferenceProvider[field])
+            return this.schema.requiredForEveryInferenceProvider[field]
 
         if (this.schema.optionalFields[field])
             return this.schema.optionalFields[field]
@@ -82,8 +91,8 @@ export class CatalogSchema {
             if (field.defaultWhenNoSourceHasIt !== undefined)
                 continue
 
-            // Schema names are paths, so `pricing.currency` is a field inside
-            // `pricing`, not a key with a dot in it.
+            // Schema names are paths, so `a.b` is field `b` inside `a`, not a key
+            // with a dot in it.
             const segments = name.split('.')
             let cursor = scaffold
 

@@ -138,15 +138,6 @@
             "9:21"
         ]
     },
-    "pricing": {
-        "image": {
-            "measuringUnit": "credits",
-            "pricePer": "1",
-            "prompt": "0.00",
-            "completion": "8.00"
-        },
-        "currency": "USD"
-    },
     "otherIdsUsedBySources": [
         "stable-image-ultra"
     ],
@@ -166,13 +157,13 @@
                 "litellm": "stability/stable-image-ultra"
             },
             "pricing": {
-                "currency": "USD",
                 "image": {
-                    "measuringUnit": "images",
+                    "measuringUnit": "credits",
                     "pricePer": "1",
                     "prompt": "0.00",
-                    "completion": "0.08"
-                }
+                    "completion": "8.00"
+                },
+                "currency": "USD"
             }
         },
         "aws-bedrock": {

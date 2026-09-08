@@ -3,6 +3,7 @@ import * as process from 'process'
 
 import {
     getDynamoDbTableStageName,
+    withoutInferenceProviderPricing,
     type AiModel,
     type AiModelId,
     type AiModelsCatalogResponse,
@@ -13,6 +14,7 @@ import {
     type MediaGenerationConfigControlKey,
     type MediaGenerationConfigGroup,
     type MediaGenerationConfigMatrix,
+    type PublicAiModel,
 } from '@lixpi/constants'
 
 import { settings } from '../settings.ts'
@@ -23,17 +25,17 @@ const {
 } = process.env
 
 const modelHasGenerationModality = (
-    model: Omit<AiModel, 'pricing'>,
+    model: PublicAiModel,
     modality: 'image_generation' | 'video_generation',
 ): boolean => model.modalities?.some(entry => entry.modality === modality) ?? false
 
 const modelIdFor = (model: Pick<AiModel, 'provider' | 'model'>): AiModelId => `${model.provider}:${model.model}` as AiModelId
 
 const findConfiguredCatalogModel = (
-    models: Array<Omit<AiModel, 'pricing'>>,
+    models: Array<PublicAiModel>,
     configuredModelId: AiModelId,
-    matchesCapability: (model: Omit<AiModel, 'pricing'>) => boolean,
-): Omit<AiModel, 'pricing'> | undefined => {
+    matchesCapability: (model: PublicAiModel) => boolean,
+): PublicAiModel | undefined => {
     const exactModel = models.find(model => modelIdFor(model) === configuredModelId && matchesCapability(model))
 
     if (exactModel)
@@ -80,7 +82,7 @@ const isResolutionValue = (value: string): boolean => /^\d+x\d+$/i.test(value)
 
 const isAspectRatioValue = (value: string): boolean => /^\d+:\d+$/.test(value)
 
-const getImageSizeControlLabel = (model: Omit<AiModel, 'pricing'>): string => {
+const getImageSizeControlLabel = (model: PublicAiModel): string => {
     if (model.imageSizeMode === 'resolution')
         return 'Resolution'
 
@@ -98,7 +100,7 @@ const getImageSizeControlLabel = (model: Omit<AiModel, 'pricing'>): string => {
     return 'Image option'
 }
 
-const buildImageControls = (model: Omit<AiModel, 'pricing'>): MediaGenerationConfigControl[] => {
+const buildImageControls = (model: PublicAiModel): MediaGenerationConfigControl[] => {
     if (model.imageGenerationControls?.length) {
         return model.imageGenerationControls.map(
             control => ({
@@ -150,7 +152,7 @@ const SUPPORTED_MEDIA_GENERATION_CONTROL_KEYS = new Set<MediaGenerationConfigCon
     'thinkingLevel',
 ])
 
-const buildReasoningControls = (model: Omit<AiModel, 'pricing'>): MediaGenerationConfigControl[] =>
+const buildReasoningControls = (model: PublicAiModel): MediaGenerationConfigControl[] =>
     (model.reasoningGenerationControls ?? []).filter(control => SUPPORTED_MEDIA_GENERATION_CONTROL_KEYS.has(control.key)).map(
         control => ({
             ...control,
@@ -158,7 +160,7 @@ const buildReasoningControls = (model: Omit<AiModel, 'pricing'>): MediaGeneratio
         }),
     )
 
-const buildVideoControls = (model: Omit<AiModel, 'pricing'>): MediaGenerationConfigControl[] => {
+const buildVideoControls = (model: PublicAiModel): MediaGenerationConfigControl[] => {
     return (model.videoGenerationControls ?? []).filter(control => SUPPORTED_MEDIA_GENERATION_CONTROL_KEYS.has(control.key)).map(
         control => ({
             ...control,
@@ -184,7 +186,7 @@ const getControlOptionsSignature = (controls: MediaGenerationConfigControl[]): s
 }
 
 const getMatrixGroupKey = (
-    model: Omit<AiModel, 'pricing'>,
+    model: PublicAiModel,
     mediaType: 'reasoning' | 'image' | 'video',
     controls: MediaGenerationConfigControl[],
 ): string => {
@@ -199,7 +201,7 @@ const getMatrixGroupKey = (
 
 const appendMatrixGroup = (
     groupsByKey: Map<string, MediaGenerationConfigGroup>,
-    model: Omit<AiModel, 'pricing'>,
+    model: PublicAiModel,
     mediaType: 'reasoning' | 'image' | 'video',
     controls: MediaGenerationConfigControl[],
 ): void => {
@@ -243,15 +245,15 @@ const appendMatrixGroup = (
 // Derive the default model id per capability from the catalog. API-configured
 // defaults win when available, followed by synchronization flags and then
 // the first model matching the requested capability.
-const resolveDefaultModels = (models: Array<Omit<AiModel, 'pricing'>>): DefaultAiModelSelection => {
-    const isReasoningModel = (model: Omit<AiModel, 'pricing'>): boolean => !modelHasGenerationModality(model, 'image_generation') && !modelHasGenerationModality(
+const resolveDefaultModels = (models: Array<PublicAiModel>): DefaultAiModelSelection => {
+    const isReasoningModel = (model: PublicAiModel): boolean => !modelHasGenerationModality(model, 'image_generation') && !modelHasGenerationModality(
         model,
         'video_generation',
     )
 
     const resolve = (
         capability: DefaultAiModelCapability,
-        matches: (model: Omit<AiModel, 'pricing'>) => boolean,
+        matches: (model: PublicAiModel) => boolean,
         configuredModelId?: AiModelId,
     ): AiModelId => {
         const configured = configuredModelId
@@ -288,7 +290,7 @@ const resolveDefaultModels = (models: Array<Omit<AiModel, 'pricing'>>): DefaultA
     }
 }
 
-const buildMediaGenerationConfigMatrix = (models: Array<Omit<AiModel, 'pricing'>>): MediaGenerationConfigMatrix => {
+const buildMediaGenerationConfigMatrix = (models: Array<PublicAiModel>): MediaGenerationConfigMatrix => {
     const groupsByKey = new Map<string, MediaGenerationConfigGroup>()
 
     for (const model of models) {
@@ -341,12 +343,9 @@ export default {
             origin: 'model::AiModel->getAvailableAiModels()',
         })
 
-        const models = availableAiModels.items.map(item => {
-            const model = { ...item }
-            delete model.pricing
-
-            return model as Omit<AiModel, 'pricing'>
-        }).sort((a, b) => a.sortingPosition - b.sortingPosition)
+        const models = availableAiModels.items
+            .map(item => withoutInferenceProviderPricing(item as AiModel))
+            .sort((a, b) => a.sortingPosition - b.sortingPosition)
 
         return {
             models,
@@ -358,7 +357,7 @@ export default {
         provider,
         model,
         omitPricing = true,
-    }: Pick<AiModel, 'provider' | 'model'> & { omitPricing?: boolean }): Promise<AiModel | Omit<AiModel, 'pricing'> | undefined> => {
+    }: Pick<AiModel, 'provider' | 'model'> & { omitPricing?: boolean }): Promise<AiModel | PublicAiModel | undefined> => {
         const aiModel = await dynamoDBService.getItem({
             tableName: getDynamoDbTableStageName(
                 'AI_MODELS_LIST',
@@ -375,12 +374,8 @@ export default {
         if (!aiModel)
             return undefined
 
-        if (omitPricing) {
-            const modelWithoutPricing = { ...aiModel }
-            delete modelWithoutPricing.pricing
-
-            return modelWithoutPricing
-        }
+        if (omitPricing)
+            return withoutInferenceProviderPricing(aiModel as AiModel)
 
         return aiModel
     },

@@ -1,6 +1,6 @@
 {
     "modelFamily": "veo-3.1-generate-preview",
-    "mergedAt": "2026-09-08T00:55:53.778Z",
+    "mergedAt": "2026-09-08T02:03:20.798Z",
     "baseSchemaVersion": 1,
     "syncStatus": "written-to-database",
     "sources": {
@@ -19,7 +19,8 @@
         "sourcesWithoutRatesForThatProvider": [],
         "confirmedByMoreThanOneSource": true,
         "fieldsWhereSourcesDisagree": [
-            "contextWindow"
+            "contextWindow",
+            "inferenceProviders.google.contextWindow"
         ]
     },
     "lixpi": {
@@ -33,11 +34,11 @@
             "inferenceCapabilities.supportsSystemPrompt",
             "inferenceCapabilities.supportsTemperature",
             "inferenceCapabilities.thinkingMode",
+            "inferenceProviders.google.pricing.text.measuringUnit",
+            "inferenceProviders.google.pricing.text.pricePer",
+            "inferenceProviders.google.pricing.text.tiers.default.completion",
+            "inferenceProviders.google.pricing.text.tiers.default.prompt",
             "modalities",
-            "pricing.text.measuringUnit",
-            "pricing.text.pricePer",
-            "pricing.text.tiers.default.completion",
-            "pricing.text.tiers.default.prompt",
             "shortTitle",
             "sortingPosition",
             "videoAspectRatios",
@@ -164,26 +165,6 @@
             "sourceAgreement": "only-one-source-answered",
             "sourcesThatAnswered": []
         },
-        "pricing.text.measuringUnit": {
-            "valueCameFrom": "lixpi-authored-file",
-            "sourceAgreement": "only-one-source-answered",
-            "sourcesThatAnswered": []
-        },
-        "pricing.text.pricePer": {
-            "valueCameFrom": "lixpi-authored-file",
-            "sourceAgreement": "only-one-source-answered",
-            "sourcesThatAnswered": []
-        },
-        "pricing.text.tiers.default.prompt": {
-            "valueCameFrom": "lixpi-authored-file",
-            "sourceAgreement": "only-one-source-answered",
-            "sourcesThatAnswered": []
-        },
-        "pricing.text.tiers.default.completion": {
-            "valueCameFrom": "lixpi-authored-file",
-            "sourceAgreement": "only-one-source-answered",
-            "sourcesThatAnswered": []
-        },
         "contextWindow": {
             "valueCameFrom": "litellm",
             "sourceAgreement": "sources-disagree",
@@ -191,34 +172,6 @@
                 "litellm",
                 "models.dev",
                 "provider-api"
-            ]
-        },
-        "pricing.currency": {
-            "valueCameFrom": "litellm",
-            "sourceAgreement": "only-one-source-answered",
-            "sourcesThatAnswered": [
-                "litellm"
-            ]
-        },
-        "pricing.video.measuringUnit": {
-            "valueCameFrom": "litellm",
-            "sourceAgreement": "only-one-source-answered",
-            "sourcesThatAnswered": [
-                "litellm"
-            ]
-        },
-        "pricing.video.pricePer": {
-            "valueCameFrom": "litellm",
-            "sourceAgreement": "only-one-source-answered",
-            "sourcesThatAnswered": [
-                "litellm"
-            ]
-        },
-        "pricing.video.price": {
-            "valueCameFrom": "litellm",
-            "sourceAgreement": "only-one-source-answered",
-            "sourcesThatAnswered": [
-                "litellm"
             ]
         },
         "maxCompletionSize": {
@@ -237,6 +190,78 @@
             ]
         },
         "modelVersion": {
+            "valueCameFrom": "provider-api",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": [
+                "provider-api"
+            ]
+        },
+        "inferenceProviders.google.pricing.text.measuringUnit": {
+            "valueCameFrom": "lixpi-authored-file",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": []
+        },
+        "inferenceProviders.google.pricing.text.pricePer": {
+            "valueCameFrom": "lixpi-authored-file",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": []
+        },
+        "inferenceProviders.google.pricing.text.tiers.default.prompt": {
+            "valueCameFrom": "lixpi-authored-file",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": []
+        },
+        "inferenceProviders.google.pricing.text.tiers.default.completion": {
+            "valueCameFrom": "lixpi-authored-file",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": []
+        },
+        "inferenceProviders.google.contextWindow": {
+            "valueCameFrom": "litellm",
+            "sourceAgreement": "sources-disagree",
+            "sourcesThatAnswered": [
+                "litellm",
+                "models.dev",
+                "provider-api"
+            ]
+        },
+        "inferenceProviders.google.pricing.currency": {
+            "valueCameFrom": "litellm",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": [
+                "litellm"
+            ]
+        },
+        "inferenceProviders.google.pricing.video.measuringUnit": {
+            "valueCameFrom": "litellm",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": [
+                "litellm"
+            ]
+        },
+        "inferenceProviders.google.pricing.video.pricePer": {
+            "valueCameFrom": "litellm",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": [
+                "litellm"
+            ]
+        },
+        "inferenceProviders.google.pricing.video.price": {
+            "valueCameFrom": "litellm",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": [
+                "litellm"
+            ]
+        },
+        "inferenceProviders.google.maxCompletionSize": {
+            "valueCameFrom": "models.dev",
+            "sourceAgreement": "all-sources-agree",
+            "sourcesThatAnswered": [
+                "models.dev",
+                "provider-api"
+            ]
+        },
+        "inferenceProviders.google.title": {
             "valueCameFrom": "provider-api",
             "sourceAgreement": "only-one-source-answered",
             "sourcesThatAnswered": [

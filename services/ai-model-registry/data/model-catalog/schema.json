@@ -72,17 +72,19 @@
         "inferenceCapabilities": {
             "valueType": "object",
             "ownedBy": "lixpi"
-        },
+        }
+    },
+    "requiredForEveryInferenceProvider": {
         "pricing": {
             "valueType": "object",
             "ownedBy": "source",
-            "note": "Rates come from a source. A bucket appears in the Lixpi file only when no source covers it or a source measures it differently."
+            "note": "Rates belong to one endpoint, because the same model costs different amounts through a vendor API and through AWS Bedrock. A bucket appears in the Lixpi file's byInferenceProvider block only when no source covers it or a source measures it differently."
         },
         "pricing.currency": {
             "valueType": "string",
             "ownedBy": "source",
             "defaultWhenNoSourceHasIt": "USD",
-            "note": "Sources publish this. Defaults for a model no source covers."
+            "note": "Sources publish this. Defaults for an endpoint no source covers."
         }
     },
     "requiredForModelsWithModality": {

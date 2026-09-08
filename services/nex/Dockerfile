@@ -40,7 +40,7 @@ ARG TARGETARCH
 RUN apk add --update --no-cache curl ca-certificates libc6-compat ffmpeg libreoffice poppler-utils libheif-tools rsync
 
 # pnpm installs the workload's node_modules (mirrors services/api).
-RUN npm install -g pnpm
+RUN npm install -g pnpm@12.3.4
 
 # Install the pinned nex binary for the build's target architecture.
 RUN set -eux; \

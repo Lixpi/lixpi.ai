@@ -162,25 +162,6 @@
             "21:9"
         ]
     },
-    "pricing": {
-        "text": {
-            "measuringUnit": "tokens",
-            "pricePer": "1000000",
-            "tiers": {
-                "default": {
-                    "prompt": "5.00",
-                    "completion": "10.00"
-                }
-            }
-        },
-        "currency": "USD",
-        "image": {
-            "measuringUnit": "tokens",
-            "pricePer": "1000000",
-            "prompt": "8.00",
-            "completion": "30.00"
-        }
-    },
     "model": "gpt-image-2",
     "modelVersion": "gpt-image-2",
     "provider": "OpenAI",
@@ -200,6 +181,16 @@
                 "provider-api": "gpt-image-2"
             },
             "pricing": {
+                "text": {
+                    "measuringUnit": "tokens",
+                    "pricePer": "1000000",
+                    "tiers": {
+                        "default": {
+                            "prompt": "5.00",
+                            "completion": "10.00"
+                        }
+                    }
+                },
                 "currency": "USD",
                 "image": {
                     "measuringUnit": "tokens",

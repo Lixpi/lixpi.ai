@@ -1,6 +1,8 @@
 // Read-only projections of a catalog model, shared by the table and the detail
 // panel so both describe a model the same way.
 
+import { activeInferenceProviderPricing } from '@lixpi/constants'
+
 import {
     type CatalogModel,
     type MergeStatus,
@@ -44,12 +46,13 @@ export const formatNumber = (value: unknown): string => typeof value === 'number
     ? value.toLocaleString('en-US')
     : '—'
 
-// The headline rate, which is whichever family this model is billed on. A model
-// with none of them priced yet reads as a dash rather than as free.
+// The headline rate on the endpoint the platform calls, which is the rate this model
+// is billed at. Every other endpoint's rates are in the detail panel. A model with
+// none of them priced yet reads as a dash rather than as free.
 export const pricingSummary = (model: CatalogModel): string => {
-    const pricing = model.model?.pricing
-        ?? model.file.pricing
-        ?? {}
+    const pricing = activeInferenceProviderPricing(model.model ?? undefined)
+        ?? activeInferenceProviderPricing(model.file)
+        ?? {} as Record<string, any>
     const currency = String(pricing.currency ?? 'USD')
 
     if (pricing.text?.tiers?.default) {

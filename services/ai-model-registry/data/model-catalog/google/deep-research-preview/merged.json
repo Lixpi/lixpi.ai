@@ -29,10 +29,10 @@
             "contextWindow": 131072,
             "maxCompletionSize": 65536,
             "title": "Deep Research Preview (Apr-21-2026)",
-            "defaultTemperature": 1
+            "defaultTemperature": 1,
+            "pricing": {
+                "currency": "USD"
+            }
         }
-    },
-    "pricing": {
-        "currency": "USD"
     }
 }

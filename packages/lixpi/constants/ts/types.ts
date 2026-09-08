@@ -461,7 +461,7 @@ export type DefaultAiModelCapability = 'reasoning' | 'image' | 'video'
 export type DefaultAiModelSelection = Record<DefaultAiModelCapability, AiModelId>
 
 export type AiModelsCatalogResponse = {
-    models: Omit<AiModel, 'pricing'>[]
+    models: PublicAiModel[]
     mediaGenerationConfigMatrix: MediaGenerationConfigMatrix
     defaultModels: DefaultAiModelSelection
 }
@@ -2343,24 +2343,36 @@ export type AiModel = {
     // are, so a routing change is a lookup rather than a re-fetch. Written by the
     // AI Model Registry from `catalog-settings.json`.
     inferenceProviderCalledByThePlatform?: string
-    inferenceProviders?: Record<string, {
-        inferenceProviderTitle: string
-        isCalledByThePlatform: boolean
-        // What that endpoint calls the model, which is not always what the vendor
-        // calls it.
-        title?: string
-        reportedBySources: string[]
-        modelKeyAtSource: Record<string, string>
-        contextWindow?: number
-        maxCompletionSize?: number
-        pricing?: AiModelPricing
-        // What that endpoint reports that no model field holds, such as AWS Bedrock's
-        // lifecycle status and the id to invoke.
-        providerReportedFacts?: Record<string, unknown>
-    }>
-    pricing: AiModelPricing
+    inferenceProviders?: Record<string, AiModelInferenceProvider>
     createdAt: number
     updatedAt: number
+}
+
+// One endpoint's view of a model. Prices live here and nowhere else: the same model
+// costs different amounts through a vendor's own API and through AWS Bedrock, so a
+// single rate on the model would be true for at most one of them.
+export type AiModelInferenceProvider = {
+    inferenceProviderTitle: string
+    isCalledByThePlatform: boolean
+    // What that endpoint calls the model, which is not always what the vendor
+    // calls it.
+    title?: string
+    reportedBySources: string[]
+    modelKeyAtSource: Record<string, string>
+    contextWindow?: number
+    maxCompletionSize?: number
+    pricing?: AiModelPricing
+    // What that endpoint reports that no model field holds, such as AWS Bedrock's
+    // lifecycle status and the id to invoke.
+    providerReportedFacts?: Record<string, unknown>
+}
+
+// The model as the browser sees it. Rates are an internal fact used for metering, so
+// every endpoint's pricing block is stripped before the catalog leaves the API.
+export type PublicAiModelInferenceProvider = Omit<AiModelInferenceProvider, 'pricing'>
+
+export type PublicAiModel = Omit<AiModel, 'inferenceProviders'> & {
+    inferenceProviders?: Record<string, PublicAiModelInferenceProvider>
 }
 
 export type AiModelPricing = {

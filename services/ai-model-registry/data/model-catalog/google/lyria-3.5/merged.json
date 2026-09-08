@@ -27,10 +27,10 @@
             "title": "Lyria 3.5",
             "contextWindow": 1048576,
             "maxCompletionSize": 65536,
-            "defaultTemperature": 1
+            "defaultTemperature": 1,
+            "pricing": {
+                "currency": "USD"
+            }
         }
-    },
-    "pricing": {
-        "currency": "USD"
     }
 }

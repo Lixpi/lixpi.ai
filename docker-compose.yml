@@ -84,7 +84,7 @@ services:
             # Mounted so a dependency added on the host is installed by the next
             # container start, without rebuilding the image.
             #
-            # NOT mounted: pnpm-workspace.yaml. pnpm@11 rewrites it during install
+            # NOT mounted: pnpm-workspace.yaml. pnpm@12 rewrites it during install
             # (write-temp + atomic rename), which fails EBUSY against a single-file
             # bind mount. The image bakes it, so a change there needs a rebuild.
             - ./services/ai-model-registry/package.json:/usr/src/service/package.json:cached
@@ -439,7 +439,7 @@ services:
             - ./services/web-ui/jsconfig.json:/usr/src/service/jsconfig.json:cached
             - ./services/web-ui/package.json:/usr/src/service/package.json:cached
 
-            # NOT mounted: pnpm@11 rewrites pnpm-workspace.yaml during install (write-temp + atomic
+            # NOT mounted: pnpm@12 rewrites pnpm-workspace.yaml during install (write-temp + atomic
             # rename), which fails EBUSY against a single-file bind mount on Docker Desktop/Windows.
             # The image bakes this file (services/web-ui/Dockerfile), so the container uses the baked
             # copy and pnpm's rewrite lands in the writable layer. Rebuild the image to pick up edits.
@@ -573,7 +573,7 @@ services:
             - aws-config:/root/.aws:cached    # AWS SSO credentials
             - ./.aws/config:/root/.aws/config:cached    # AWS SSO credentials
             - ./services/api/package.json:/usr/src/service/package.json:cached
-            # NOT mounted: pnpm@11 rewrites pnpm-workspace.yaml during install (write-temp + atomic
+            # NOT mounted: pnpm@12 rewrites pnpm-workspace.yaml during install (write-temp + atomic
             # rename), which fails EBUSY against a single-file bind mount on Docker Desktop/Windows.
             # The image bakes this file (services/api/Dockerfile), so the container uses the baked
             # copy and pnpm's rewrite lands in the writable layer. Rebuild the image to pick up edits.

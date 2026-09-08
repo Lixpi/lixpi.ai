@@ -433,23 +433,27 @@
         }
     ],
     "videoMaxReferenceImages": 30,
-    "pricing": {
-        "video": {
-            "measuringUnit": "tokens",
-            "pricePer": "1000000",
-            "price": "11.7",
-            "tiers": {
-                "480p": {
-                    "withoutVideoInput": "10.7",
-                    "withVideoInput": "6.4"
-                },
-                "720p": {
-                    "withoutVideoInput": "10.7",
-                    "withVideoInput": "6.4"
-                },
-                "1080p": {
-                    "withoutVideoInput": "11.7",
-                    "withVideoInput": "7.0"
+    "byInferenceProvider": {
+        "byteplus": {
+            "pricing": {
+                "video": {
+                    "measuringUnit": "tokens",
+                    "pricePer": "1000000",
+                    "price": "11.7",
+                    "tiers": {
+                        "480p": {
+                            "withoutVideoInput": "10.7",
+                            "withVideoInput": "6.4"
+                        },
+                        "720p": {
+                            "withoutVideoInput": "10.7",
+                            "withVideoInput": "6.4"
+                        },
+                        "1080p": {
+                            "withoutVideoInput": "11.7",
+                            "withVideoInput": "7.0"
+                        }
+                    }
                 }
             }
         }

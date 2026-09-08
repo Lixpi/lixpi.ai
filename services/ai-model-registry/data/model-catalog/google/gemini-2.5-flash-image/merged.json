@@ -10,25 +10,6 @@
     "defaultTemperature": 1,
     "contextWindow": 32768,
     "maxCompletionSize": 32768,
-    "pricing": {
-        "currency": "USD",
-        "text": {
-            "measuringUnit": "tokens",
-            "pricePer": "1000000",
-            "tiers": {
-                "default": {
-                    "prompt": "0.30",
-                    "completion": "2.50"
-                }
-            }
-        },
-        "image": {
-            "measuringUnit": "images",
-            "pricePer": "1",
-            "prompt": "0.00",
-            "completion": "0.04"
-        }
-    },
     "model": "gemini-2.5-flash-image",
     "modelVersion": "gemini-2.5-flash-image",
     "provider": "Google",

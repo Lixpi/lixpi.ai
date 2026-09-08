@@ -22,14 +22,26 @@ const veoMeta = {
     provider: 'Google',
     model: 'veo-3.1',
     modelVersion: 'veo-3.1-generate-preview',
-    pricing: { currency: 'USD', video: { measuringUnit: 'seconds', pricePer: '1', price: '0.40' } },
+    inferenceProviderCalledByThePlatform: 'google',
+    inferenceProviders: {
+        google: {
+            isCalledByThePlatform: true,
+            pricing: { currency: 'USD', video: { measuringUnit: 'seconds', pricePer: '1', price: '0.40' } },
+        },
+    },
 } as unknown as AiModelMetaInfo
 
 const seedanceMeta = {
     provider: 'BytePlus',
     model: 'dreamina-seedance-2-0-260128',
     modelVersion: 'dreamina-seedance-2-0-260128',
-    pricing: { currency: 'USD', video: { measuringUnit: 'tokens', pricePer: '1000000', price: '4.30' } },
+    inferenceProviderCalledByThePlatform: 'byteplus',
+    inferenceProviders: {
+        byteplus: {
+            isCalledByThePlatform: true,
+            pricing: { currency: 'USD', video: { measuringUnit: 'tokens', pricePer: '1000000', price: '4.30' } },
+        },
+    },
 } as unknown as AiModelMetaInfo
 
 describe('UsageReporter.reportVideoUsage', () => {

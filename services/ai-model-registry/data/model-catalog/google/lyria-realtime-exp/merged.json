@@ -17,12 +17,12 @@
             "inferenceProviderTitle": "Google",
             "isCalledByThePlatform": true,
             "reportedBySources": [],
-            "modelKeyAtSource": {}
+            "modelKeyAtSource": {},
+            "pricing": {
+                "currency": "USD"
+            }
         }
     },
     "contextWindow": 0,
-    "maxCompletionSize": 0,
-    "pricing": {
-        "currency": "USD"
-    }
+    "maxCompletionSize": 0
 }

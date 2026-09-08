@@ -167,14 +167,18 @@
             "defaultValue": "8"
         }
     ],
-    "pricing": {
-        "text": {
-            "measuringUnit": "tokens",
-            "pricePer": "1000000",
-            "tiers": {
-                "default": {
-                    "prompt": "0.00",
-                    "completion": "0.00"
+    "byInferenceProvider": {
+        "google": {
+            "pricing": {
+                "text": {
+                    "measuringUnit": "tokens",
+                    "pricePer": "1000000",
+                    "tiers": {
+                        "default": {
+                            "prompt": "0.00",
+                            "completion": "0.00"
+                        }
+                    }
                 }
             }
         }

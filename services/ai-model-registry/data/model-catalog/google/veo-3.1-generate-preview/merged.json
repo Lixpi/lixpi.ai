@@ -178,24 +178,6 @@
             "defaultValue": "8"
         }
     ],
-    "pricing": {
-        "text": {
-            "measuringUnit": "tokens",
-            "pricePer": "1000000",
-            "tiers": {
-                "default": {
-                    "prompt": "0.00",
-                    "completion": "0.00"
-                }
-            }
-        },
-        "currency": "USD",
-        "video": {
-            "measuringUnit": "seconds",
-            "pricePer": "1",
-            "price": "0.40"
-        }
-    },
     "contextWindow": 1024,
     "maxCompletionSize": 8192,
     "model": "veo-3.1-generate-preview",
@@ -216,8 +198,17 @@
                 "models.dev": "veo-3.1-generate-preview",
                 "provider-api": "veo-3.1-generate-preview"
             },
-            "contextWindow": 1024,
             "pricing": {
+                "text": {
+                    "measuringUnit": "tokens",
+                    "pricePer": "1000000",
+                    "tiers": {
+                        "default": {
+                            "prompt": "0.00",
+                            "completion": "0.00"
+                        }
+                    }
+                },
                 "currency": "USD",
                 "video": {
                     "measuringUnit": "seconds",
@@ -225,6 +216,7 @@
                     "price": "0.40"
                 }
             },
+            "contextWindow": 1024,
             "maxCompletionSize": 8192,
             "title": "Veo 3.1"
         }

@@ -1,6 +1,6 @@
 {
     "modelFamily": "dreamina-seedance-2-0-fast",
-    "mergedAt": "2026-09-08T00:55:53.828Z",
+    "mergedAt": "2026-09-08T02:03:20.846Z",
     "baseSchemaVersion": 1,
     "syncStatus": "written-to-database",
     "sources": {
@@ -25,15 +25,15 @@
             "inferenceCapabilities.supportsSystemPrompt",
             "inferenceCapabilities.supportsTemperature",
             "inferenceCapabilities.thinkingMode",
+            "inferenceProviders.byteplus.pricing.video.measuringUnit",
+            "inferenceProviders.byteplus.pricing.video.price",
+            "inferenceProviders.byteplus.pricing.video.pricePer",
+            "inferenceProviders.byteplus.pricing.video.tiers.480p.withVideoInput",
+            "inferenceProviders.byteplus.pricing.video.tiers.480p.withoutVideoInput",
+            "inferenceProviders.byteplus.pricing.video.tiers.720p.withVideoInput",
+            "inferenceProviders.byteplus.pricing.video.tiers.720p.withoutVideoInput",
             "modalities",
             "model",
-            "pricing.video.measuringUnit",
-            "pricing.video.price",
-            "pricing.video.pricePer",
-            "pricing.video.tiers.480p.withVideoInput",
-            "pricing.video.tiers.480p.withoutVideoInput",
-            "pricing.video.tiers.720p.withVideoInput",
-            "pricing.video.tiers.720p.withoutVideoInput",
             "shortTitle",
             "sortingPosition",
             "title",
@@ -53,9 +53,9 @@
     },
     "requiredFieldsStillMissing": [],
     "fieldsFilledFromSchemaDefault": [
+        "inferenceProviders.byteplus.pricing.currency",
         "contextWindow",
-        "maxCompletionSize",
-        "pricing.currency"
+        "maxCompletionSize"
     ],
     "ratesRefusedBecauseUnitsDiffer": [],
     "fieldOrigins": {
@@ -164,37 +164,37 @@
             "sourceAgreement": "only-one-source-answered",
             "sourcesThatAnswered": []
         },
-        "pricing.video.measuringUnit": {
+        "inferenceProviders.byteplus.pricing.video.measuringUnit": {
             "valueCameFrom": "lixpi-authored-file",
             "sourceAgreement": "only-one-source-answered",
             "sourcesThatAnswered": []
         },
-        "pricing.video.pricePer": {
+        "inferenceProviders.byteplus.pricing.video.pricePer": {
             "valueCameFrom": "lixpi-authored-file",
             "sourceAgreement": "only-one-source-answered",
             "sourcesThatAnswered": []
         },
-        "pricing.video.price": {
+        "inferenceProviders.byteplus.pricing.video.price": {
             "valueCameFrom": "lixpi-authored-file",
             "sourceAgreement": "only-one-source-answered",
             "sourcesThatAnswered": []
         },
-        "pricing.video.tiers.480p.withoutVideoInput": {
+        "inferenceProviders.byteplus.pricing.video.tiers.480p.withoutVideoInput": {
             "valueCameFrom": "lixpi-authored-file",
             "sourceAgreement": "only-one-source-answered",
             "sourcesThatAnswered": []
         },
-        "pricing.video.tiers.480p.withVideoInput": {
+        "inferenceProviders.byteplus.pricing.video.tiers.480p.withVideoInput": {
             "valueCameFrom": "lixpi-authored-file",
             "sourceAgreement": "only-one-source-answered",
             "sourcesThatAnswered": []
         },
-        "pricing.video.tiers.720p.withoutVideoInput": {
+        "inferenceProviders.byteplus.pricing.video.tiers.720p.withoutVideoInput": {
             "valueCameFrom": "lixpi-authored-file",
             "sourceAgreement": "only-one-source-answered",
             "sourcesThatAnswered": []
         },
-        "pricing.video.tiers.720p.withVideoInput": {
+        "inferenceProviders.byteplus.pricing.video.tiers.720p.withVideoInput": {
             "valueCameFrom": "lixpi-authored-file",
             "sourceAgreement": "only-one-source-answered",
             "sourcesThatAnswered": []

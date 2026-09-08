@@ -76,5 +76,5 @@
         "prosemirror-view": "*",
         "@lixpi/ui-primitives": "workspace:*"
     },
-    "packageManager": "pnpm@11.6.0"
+    "packageManager": "pnpm@12.3.4"
 }

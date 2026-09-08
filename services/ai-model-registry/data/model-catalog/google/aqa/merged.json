@@ -26,10 +26,10 @@
             "title": "Model that performs Attributed Question Answering.",
             "contextWindow": 7168,
             "maxCompletionSize": 1024,
-            "defaultTemperature": 0.2
+            "defaultTemperature": 0.2,
+            "pricing": {
+                "currency": "USD"
+            }
         }
-    },
-    "pricing": {
-        "currency": "USD"
     }
 }

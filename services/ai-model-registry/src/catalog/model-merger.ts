@@ -12,8 +12,11 @@ import { validateModel } from './model-validator.ts'
 import {
     PROVIDER_DIRECTORIES,
     type Agreement,
+    type AuthoredInferenceProviderValues,
+    type ProviderDirectory,
     type DriftFinding,
     type FieldProvenance,
+    type LixpiModelRecord,
     type MergeStatus,
     type MergedModel,
     type MergedModelFile,
@@ -134,17 +137,30 @@ export class ModelMerger {
             && lixpiLeaves.get(perPath) === resolved.get(perPath)
     }
 
-    // One inference provider's own values, resolved from the sources that answered
-    // for it. Nothing about the provider the platform happens to be calling enters
-    // here, so every endpoint's rates survive the merge instead of the unused ones
-    // being dropped.
+    // One inference provider's own values: what the sources published for that
+    // endpoint, and what the authored file states for it. Rates resolve only here,
+    // because a price is a fact about an endpoint rather than about a model, so every
+    // endpoint's rates survive the merge instead of the unused ones being dropped.
     private resolveOneProvider(
         covered: SourceModelRecord[],
         inferenceProvider: InferenceProviderId,
         order: SourceId[],
         baseIndex: CatalogBaseIndex,
         isCalledByThePlatform: boolean,
-    ): MergedInferenceProvider {
+        authored: AuthoredInferenceProviderValues | undefined,
+        provider: ProviderDirectory,
+        modelId: string,
+    ): {
+        block: MergedInferenceProvider
+        fields: Record<string, FieldProvenance>
+        drift: DriftFinding[]
+        authoredOnly: string[]
+        overrides: string[]
+        conflicts: string[]
+        unitMismatches: string[]
+        usedFallback: string[]
+        missingRequired: string[]
+    } {
         const bySourcePerField = new Map<string, Map<SourceId, unknown>>()
         const reportedBySources: SourceId[] = []
         const modelKeyAtSource: Partial<Record<SourceId, string>> = {}
@@ -198,35 +214,259 @@ export class ModelMerger {
             }
         }
 
+        // For Bedrock the AWS price list is the account's own bill, so it outranks an
+        // aggregator's copy of the published rate. Everything else keeps the ordinary
+        // source order.
+        const winnerFor = (path: string): SourceId | undefined => {
+            const perSource = bySourcePerField.get(path)
+
+            if (!perSource)
+                return undefined
+
+            if (
+                inferenceProvider === 'aws-bedrock'
+                && path.startsWith('pricing')
+                && perSource.has('bedrock')
+            )
+                return 'bedrock'
+
+            return order.find(id => perSource.has(id))
+        }
+
+        const resolved = new Map<string, unknown>()
+
+        for (const [path, perSource] of bySourcePerField)
+            resolved.set(
+                path,
+                perSource.get(winnerFor(path)!),
+            )
+
+        const authoredLeaves = new Map<string, unknown>()
+        flattenLeaves(
+            authored ?? {},
+            [],
+            authoredLeaves,
+        )
+
         // An endpoint nobody publishes for still gets an entry. Every provider that
         // can serve this model is listed whether or not a source covers it, so an
         // empty one reads as "nobody prices this here" instead of the endpoint
         // looking as though it does not exist.
         const values: Record<string, unknown> = {}
+        const fields: Record<string, FieldProvenance> = {}
+        const drift: DriftFinding[] = []
+        const authoredOnly: string[] = []
+        const overrides: string[] = []
+        const conflicts: string[] = []
+        const unitMismatches: string[] = []
+        const usedFallback: string[] = []
+        const missingRequired: string[] = []
 
-        for (const [path, perSource] of bySourcePerField) {
-            // The same rule the top-level merge follows: for Bedrock, the AWS price
-            // list is the bill and outranks an aggregator's copy of it.
-            const winner = inferenceProvider === 'aws-bedrock'
-                && path.startsWith('pricing')
-                && perSource.has('bedrock')
-                ? 'bedrock'
-                : order.find(id => perSource.has(id))
+        // The provenance path names the endpoint, because the same field on two
+        // endpoints is two different facts.
+        const provenancePath = (path: string): string => `inferenceProviders.${inferenceProvider}.${path}`
 
+        const describe = (path: string): {
+            agreement: Agreement
+            answeredBy: SourceId[]
+        } => {
+            const perSource = bySourcePerField.get(path)
+
+            if (!perSource)
+                return {
+                    agreement: 'only-one-source-answered',
+                    answeredBy: [],
+                }
+
+            const distinct = new Set(
+                [...perSource.values()].map(value => JSON.stringify(value)),
+            )
+
+            return {
+                agreement: perSource.size === 1
+                    ? 'only-one-source-answered'
+                    : distinct.size === 1
+                        ? 'all-sources-agree'
+                        : 'sources-disagree',
+                answeredBy: [...perSource.keys()] as SourceId[],
+            }
+        }
+
+        const paths = new Set([
+            ...authoredLeaves.keys(),
+            ...resolved.keys(),
+        ])
+
+        for (const path of paths) {
+            const authoredValue = authoredLeaves.get(path)
+            const sourceValue = resolved.get(path)
+            const stated = authoredLeaves.has(path) && !isBlank(authoredValue)
+            const {
+                agreement,
+                answeredBy,
+            } = describe(path)
+
+            if (agreement === 'sources-disagree')
+                conflicts.push(
+                    provenancePath(path),
+                )
+
+            const keepAuthored = (): void => {
+                fields[provenancePath(path)] = {
+                    valueCameFrom: 'lixpi-authored-file',
+                    sourceAgreement: agreement,
+                    sourcesThatAnswered: answeredBy,
+                    ...(stated
+                        && sourceValue !== undefined
+                        && JSON.stringify(sourceValue) !== JSON.stringify(authoredValue)
+                        && { lixpiOverridesSource: true }),
+                }
+                setPath(
+                    values,
+                    path,
+                    authoredValue,
+                )
+            }
+
+            if (stated) {
+                const overridesSource = sourceValue !== undefined
+                    && JSON.stringify(sourceValue) !== JSON.stringify(authoredValue)
+
+                if (overridesSource) {
+                    overrides.push(
+                        provenancePath(path),
+                    )
+                    drift.push({
+                        provider,
+                        modelId,
+                        field: provenancePath(path),
+                        lixpiValue: authoredValue,
+                        fetchedValue: sourceValue,
+                        source: agreement === 'sources-disagree'
+                            ? `${winnerFor(path)} (sources differ)`
+                            : String(
+                                winnerFor(path),
+                            ),
+                        isPricing: path.startsWith('pricing'),
+                    })
+                }
+                else if (sourceValue === undefined)
+                    authoredOnly.push(
+                        provenancePath(path),
+                    )
+
+                keepAuthored()
+
+                continue
+            }
+
+            if (sourceValue === undefined) {
+                keepAuthored()
+
+                continue
+            }
+
+            // A rate only transfers when both sides measure the same thing. Dollars
+            // per image must never land in a field that means credits.
+            if (
+                RATE_KEYS.has(
+                    path.split('.').at(-1)!,
+                )
+                && authoredLeaves.has(path)
+                && !this.unitsAgree(
+                    path,
+                    authoredLeaves,
+                    resolved,
+                )
+            ) {
+                unitMismatches.push(
+                    provenancePath(path),
+                )
+                keepAuthored()
+
+                continue
+            }
+
+            fields[provenancePath(path)] = {
+                valueCameFrom: String(
+                    winnerFor(path),
+                ),
+                sourceAgreement: agreement,
+                sourcesThatAnswered: answeredBy,
+            }
             setPath(
                 values,
                 path,
-                perSource.get(winner!),
+                sourceValue,
             )
         }
 
+        // What the schema demands of an endpoint. Only the endpoint the platform is
+        // calling has to satisfy it: an endpoint nobody prices is a gap in the
+        // sources, not a broken model, and the model is still billable on the route
+        // it actually runs on.
+        for (const [name, field] of Object.entries(
+            this.schema.inferenceProviderFields(),
+        )) {
+            const value = getPath(values, name)
+            const empty = value === undefined
+                || isBlank(value)
+                || (Array.isArray(value) && value.length === 0)
+                || (isPlainObject(value) && Object.keys(value).length === 0)
+
+            if (!empty)
+                continue
+
+            if (field.defaultWhenNoSourceHasIt !== undefined) {
+                // A default on an endpoint nobody covers would dress an empty block up
+                // as a priced one, so it is only filled in where there is something to
+                // qualify.
+                if (
+                    !isCalledByThePlatform
+                    && Object.keys(values).length === 0
+                )
+                    continue
+
+                setPath(
+                    values,
+                    name,
+                    field.defaultWhenNoSourceHasIt,
+                )
+
+                if (
+                    field.ownedBy === 'source'
+                    && isCalledByThePlatform
+                )
+                    usedFallback.push(
+                        provenancePath(name),
+                    )
+
+                continue
+            }
+
+            if (isCalledByThePlatform)
+                missingRequired.push(
+                    provenancePath(name),
+                )
+        }
+
         return {
-            inferenceProviderTitle: baseIndex.titleOf(inferenceProvider),
-            isCalledByThePlatform,
-            reportedBySources,
-            modelKeyAtSource,
-            ...values,
-            ...(providerReportedFacts && { providerReportedFacts }),
+            block: {
+                inferenceProviderTitle: baseIndex.titleOf(inferenceProvider),
+                isCalledByThePlatform,
+                reportedBySources,
+                modelKeyAtSource,
+                ...values,
+                ...(providerReportedFacts && { providerReportedFacts }),
+            },
+            fields,
+            drift,
+            authoredOnly,
+            overrides,
+            conflicts,
+            unitMismatches,
+            usedFallback,
+            missingRequired,
         }
     }
 
@@ -261,17 +501,15 @@ export class ModelMerger {
             if (!activeFacts)
                 sourcesOnAnotherRoute.push(record._meta.sourceId)
 
-            // Only rates differ per inference provider. A model's context window,
-            // output ceiling, and name are the same whichever endpoint serves it, so
-            // those merge from any provider the source knows. Taking everything from
-            // the active one alone would throw away the vendor API's limits for a
-            // model Lixpi calls through Bedrock.
+            // A model's context window, output ceiling, and name are the same
+            // whichever endpoint serves it, so those merge from any provider the
+            // source knows. Taking them from the active one alone would throw away the
+            // vendor API's limits for a model Lixpi calls through Bedrock. Rates are
+            // the opposite and never merge here: they differ per endpoint and are
+            // resolved inside each endpoint's own block.
             const claimed = new Set<string>()
 
-            const collect = (
-                facts: typeof activeFacts,
-                pricingCountsToo: boolean,
-            ): void => {
+            const collect = (facts: typeof activeFacts): void => {
                 if (!facts)
                     return
 
@@ -290,10 +528,7 @@ export class ModelMerger {
                 )
 
                 for (const [path, value] of leaves) {
-                    if (
-                        !pricingCountsToo
-                        && path.startsWith('pricing')
-                    )
+                    if (path.startsWith('pricing'))
                         continue
 
                     if (claimed.has(path))
@@ -306,39 +541,23 @@ export class ModelMerger {
                 }
             }
 
-            collect(activeFacts, true)
+            collect(activeFacts)
 
             for (const inferenceProvider of inferenceProviders) {
                 if (inferenceProvider === activeProvider)
                     continue
 
-                collect(record.byInferenceProvider[inferenceProvider], false)
+                collect(record.byInferenceProvider[inferenceProvider])
             }
         }
 
         // Precedence is the order the source files were written in, which is the order
-        // the fetcher consulted them, with one exception. For AWS Bedrock the price
-        // list is not another catalog's copy of a published rate, it is the line item
-        // on the account's own bill, so it wins any pricing field it answers.
-        // Everything else, including Bedrock's own limits and names, keeps the
-        // ordinary order.
+        // the fetcher consulted them. The one exception, the AWS price list winning
+        // Bedrock's rates, lives in the per-endpoint resolution, because that is where
+        // rates are decided.
         const order = bundle.sources.map(record => record._meta.sourceId)
 
-        const winnerFor = (path: string): SourceId | undefined => {
-            const perSource = bySourcePerField.get(path)
-
-            if (!perSource)
-                return undefined
-
-            if (
-                activeProvider === 'aws-bedrock'
-                && path.startsWith('pricing')
-                && perSource.has('bedrock')
-            )
-                return 'bedrock'
-
-            return order.find(id => perSource.has(id))
-        }
+        const winnerFor = (path: string): SourceId | undefined => order.find(id => bySourcePerField.get(path)?.has(id))
 
         const resolvedFromSources = new Map<string, unknown>()
 
@@ -349,9 +568,19 @@ export class ModelMerger {
             )
         }
 
+        // The authored per-endpoint block is resolved into the endpoint it names, not
+        // onto the model, so it is held back from the top-level leaves. A rate stated
+        // on the model itself is held back too and reported: it would be a price with
+        // no endpoint attached, true for at most one of the endpoints serving it.
+        const {
+            byInferenceProvider: authoredByInferenceProvider,
+            pricing: rateStatedOnTheModel,
+            ...authoredModelFields
+        } = bundle.lixpi as LixpiModelRecord & { pricing?: unknown }
+
         const modelLeaves = new Map<string, unknown>()
         flattenLeaves(
-            bundle.lixpi,
+            authoredModelFields,
             [],
             modelLeaves,
         )
@@ -502,32 +731,6 @@ export class ModelMerger {
                 continue
             }
 
-            const leafKey = path.split('.').at(-1)!
-
-            if (
-                RATE_KEYS.has(leafKey)
-                && lixpiLeaves.has(path)
-                && !this.unitsAgree(
-                    path,
-                    lixpiLeaves,
-                    resolvedFromSources,
-                )
-            ) {
-                unitMismatches.push(path)
-                fields[path] = {
-                    valueCameFrom: fromLixpi,
-                    sourceAgreement: agreement,
-                    sourcesThatAnswered: answeredBy,
-                }
-                setPath(
-                    values,
-                    path,
-                    lixpiValue,
-                )
-
-                continue
-            }
-
             fields[path] = {
                 valueCameFrom: String(
                     winnerFor(path),
@@ -559,15 +762,30 @@ export class ModelMerger {
         // platform is calling it today. The top-level fields describe the current
         // call; these say what the same model costs and allows everywhere else.
         const perProvider: Partial<Record<InferenceProviderId, MergedInferenceProvider>> = {}
+        const missingPerProvider: string[] = []
+        const fallbackPerProvider: string[] = []
 
         for (const inferenceProvider of inferenceProviders) {
-            perProvider[inferenceProvider] = this.resolveOneProvider(
+            const resolvedProvider = this.resolveOneProvider(
                 covered,
                 inferenceProvider,
                 order,
                 baseIndex,
                 inferenceProvider === activeProvider,
+                authoredByInferenceProvider?.[inferenceProvider],
+                provider,
+                modelId,
             )
+
+            perProvider[inferenceProvider] = resolvedProvider.block
+            Object.assign(fields, resolvedProvider.fields)
+            drift.push(...resolvedProvider.drift)
+            authored.push(...resolvedProvider.authoredOnly)
+            overrides.push(...resolvedProvider.overrides)
+            conflicts.push(...resolvedProvider.conflicts)
+            unitMismatches.push(...resolvedProvider.unitMismatches)
+            fallbackPerProvider.push(...resolvedProvider.usedFallback)
+            missingPerProvider.push(...resolvedProvider.missingRequired)
         }
 
         values.inferenceProviderCalledByThePlatform = activeProvider
@@ -619,8 +837,10 @@ export class ModelMerger {
             ? (values.modalities as Array<{ modality?: string }>).map(entry => entry.modality ?? '')
             : []
         const expected = this.schema.fieldsForModalities(modalities)
-        const missingRequired: string[] = []
-        const usedFallback: string[] = []
+        // A gap on the endpoint the platform calls is a gap in the model: it cannot be
+        // billed on the route it runs on.
+        const missingRequired: string[] = [...missingPerProvider]
+        const usedFallback: string[] = [...fallbackPerProvider]
 
         for (const [name, field] of Object.entries(expected)) {
             const value = getPath(values, name)
@@ -687,6 +907,7 @@ export class ModelMerger {
             ...(excluded && { note: `Skipped by catalog-settings.json: ${index.reasonFor(modelId)}` }),
             ...(status === 'missing-required-fields' && { note: 'Not written to the database: its authored fields are not filled in yet.' }),
             ...(sourcesWithData.length === 0 && { note: 'No source has data for this model. Every field comes from the authored file.' }),
+            ...(rateStatedOnTheModel !== undefined && { note: `The authored file states a rate on the model itself, which was ignored: rates belong to one endpoint and go under byInferenceProvider.<${activeProvider}>.pricing.` }),
         }
 
         // Only a complete, included model becomes an AiModel. Anything else stays a

@@ -1,6 +1,6 @@
 {
     "modelFamily": "lyria-realtime-exp",
-    "mergedAt": "2026-09-08T00:55:53.771Z",
+    "mergedAt": "2026-09-08T02:03:20.792Z",
     "baseSchemaVersion": 1,
     "syncStatus": "missing-required-fields",
     "sources": {
@@ -30,17 +30,17 @@
         ]
     },
     "requiredFieldsStillMissing": [
+        "inferenceProviders.google.pricing",
         "title",
         "sortingPosition",
         "modalities",
         "defaultTemperature",
-        "inferenceCapabilities",
-        "pricing"
+        "inferenceCapabilities"
     ],
     "fieldsFilledFromSchemaDefault": [
+        "inferenceProviders.google.pricing.currency",
         "contextWindow",
-        "maxCompletionSize",
-        "pricing.currency"
+        "maxCompletionSize"
     ],
     "ratesRefusedBecauseUnitsDiffer": [],
     "fieldOrigins": {

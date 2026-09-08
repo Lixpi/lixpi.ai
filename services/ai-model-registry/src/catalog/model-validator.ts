@@ -1,4 +1,5 @@
 import {
+    activeInferenceProviderPricing,
     type AiModel,
     type AiModelInputKind,
 } from '@lixpi/constants'
@@ -35,7 +36,7 @@ const REQUIRED_FIELDS = [
     'maxCompletionSize',
     'defaultTemperature',
     'inferenceCapabilities',
-    'pricing',
+    'inferenceProviders',
 ] as const
 
 export const assertRequiredFields = (model: AiModel): AiModel => {
@@ -50,7 +51,10 @@ export const assertRequiredFields = (model: AiModel): AiModel => {
     )
         throw new Error(`MODEL_MODALITIES_INVALID:${model.provider}:${model.model}`)
 
-    if (!model.pricing.currency)
+    // Rates belong to an endpoint, so the one the platform is calling is the one that
+    // has to carry them. What the other endpoints cost is recorded but does not decide
+    // whether this model can be billed.
+    if (!activeInferenceProviderPricing(model)?.currency)
         throw new Error(`MODEL_PRICING_INVALID:${model.provider}:${model.model}`)
 
     return model

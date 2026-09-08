@@ -134,12 +134,16 @@
             "9:21"
         ]
     },
-    "pricing": {
-        "image": {
-            "measuringUnit": "credits",
-            "pricePer": "1",
-            "prompt": "0.00",
-            "completion": "6.50"
+    "byInferenceProvider": {
+        "stability": {
+            "pricing": {
+                "image": {
+                    "measuringUnit": "credits",
+                    "pricePer": "1",
+                    "prompt": "0.00",
+                    "completion": "6.50"
+                }
+            }
         }
     }
 }

@@ -1,4 +1,5 @@
 import {
+    activeInferenceProviderPricing,
     type MeasuringUnit,
     type Modality,
 } from '@lixpi/constants'
@@ -229,7 +230,11 @@ function catalogDurationSeconds(model: AiModelMetaInfo): number[] {
 // 'tokens' for vendor-token providers. Same field usage-reporter branches on when
 // it prices the confirm.
 function videoMeasuringUnit(model: AiModelMetaInfo): string {
-    const video = asRecord(asRecord(model.pricing)?.video)
+    const video = asRecord(
+        asRecord(
+            activeInferenceProviderPricing(model),
+        )?.video,
+    )
 
     return typeof video?.measuringUnit === 'string'
         && video.measuringUnit.length > 0

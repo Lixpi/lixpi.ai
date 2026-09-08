@@ -69,19 +69,6 @@
     ],
     "contextWindow": 1000000,
     "maxCompletionSize": 128000,
-    "pricing": {
-        "currency": "USD",
-        "text": {
-            "measuringUnit": "tokens",
-            "pricePer": "1000000",
-            "tiers": {
-                "default": {
-                    "prompt": "5.50",
-                    "completion": "27.50"
-                }
-            }
-        }
-    },
     "model": "claude-opus-5",
     "modelVersion": "claude-opus-5",
     "provider": "Anthropic",

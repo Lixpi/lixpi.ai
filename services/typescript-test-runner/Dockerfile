@@ -10,7 +10,7 @@ ARG NODE_VERSION=24
 
 FROM node:${NODE_VERSION}-alpine
 
-RUN npm install -g pnpm
+RUN npm install -g pnpm@12.3.4
 
 WORKDIR /usr/src/service
 

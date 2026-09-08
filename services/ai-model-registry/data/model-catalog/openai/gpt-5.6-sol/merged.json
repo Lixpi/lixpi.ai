@@ -136,19 +136,6 @@
     ],
     "contextWindow": 922000,
     "maxCompletionSize": 128000,
-    "pricing": {
-        "currency": "USD",
-        "text": {
-            "measuringUnit": "tokens",
-            "pricePer": "1000000",
-            "tiers": {
-                "default": {
-                    "prompt": "4.00",
-                    "completion": "20.00"
-                }
-            }
-        }
-    },
     "model": "gpt-5.6-sol",
     "modelVersion": "gpt-5.6-sol",
     "provider": "OpenAI",

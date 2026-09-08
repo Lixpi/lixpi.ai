@@ -37,19 +37,6 @@
     "reasoningGenerationControls": [],
     "contextWindow": 200000,
     "maxCompletionSize": 64000,
-    "pricing": {
-        "currency": "USD",
-        "text": {
-            "measuringUnit": "tokens",
-            "pricePer": "1000000",
-            "tiers": {
-                "default": {
-                    "prompt": "1.00",
-                    "completion": "5.00"
-                }
-            }
-        }
-    },
     "model": "claude-haiku-4-5",
     "modelVersion": "claude-haiku-4-5",
     "provider": "Anthropic",
