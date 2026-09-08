@@ -1,4 +1,30 @@
 {
+    "_meta": {
+        "sourceName": "Google Generative Language API",
+        "sourceId": "provider-api",
+        "queriedEndpoints": [
+            {
+                "endpoint": "GET https://generativelanguage.googleapis.com/v1beta/models",
+                "params": {
+                    "pageSize": 100,
+                    "pagesFetched": 1
+                },
+                "note": "Paged with pageToken until exhausted. The API key travels as a query parameter and is not recorded."
+            }
+        ],
+        "hasDataForThisModel": true,
+        "inferenceProvidersWithData": [
+            "google"
+        ],
+        "fetchedAt": "2026-09-07T23:42:12.489Z",
+        "publishedVersions": {
+            "currentVersion": "deep-research-max-preview",
+            "allPublishedVersions": [
+                "deep-research-max-preview",
+                "deep-research-max-preview-04-2026"
+            ]
+        }
+    },
     "byInferenceProvider": {
         "google": {
             "title": "Deep Research Max Preview (Apr-21-2026)",
@@ -8,21 +34,6 @@
             "model": "deep-research-max-preview",
             "modelVersion": "deep-research-max-preview",
             "modelKeyAtSource": "deep-research-max-preview-04-2026"
-        }
-    },
-    "_fetchedFrom": {
-        "sourceName": "provider-api",
-        "hasDataForThisModel": true,
-        "inferenceProvidersWithData": [
-            "google"
-        ],
-        "fetchedAt": "2026-09-06T22:40:47.163Z",
-        "publishedVersions": {
-            "currentVersion": "deep-research-max-preview",
-            "allPublishedVersions": [
-                "deep-research-max-preview",
-                "deep-research-max-preview-04-2026"
-            ]
         }
     }
 }

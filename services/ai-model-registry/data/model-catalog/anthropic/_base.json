@@ -1,10 +1,13 @@
 {
     "providerKey": "Anthropic",
-    "description": "Fields every Anthropic model in this directory inherits. A model's own -lixpi.json overrides anything stated here.",
+    "description": "Fields every Anthropic model in this directory inherits. A model's own -lixpi.json overrides anything stated here. shortTitleDropsLeadingWords is the default short title rule for this directory: a model with no authored shortTitle gets its title with these leading words removed.",
     "fieldsInheritedByEveryModel": {
         "providerTitle": "Anthropic",
         "color": "#D97757",
         "iconName": "claudeIcon",
         "colorIconName": "claudeIcon"
-    }
+    },
+    "shortTitleDropsLeadingWords": [
+        "Claude"
+    ]
 }

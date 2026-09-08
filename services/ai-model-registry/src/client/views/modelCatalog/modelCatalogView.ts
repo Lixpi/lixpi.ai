@@ -12,8 +12,10 @@ import {
     modelKey,
     type ModelCatalogFilters,
     type StatusFilter,
+    type SyncProgress,
 } from '$src/stores/modelCatalogStore.ts'
 import {
+    alertIcon,
     searchIcon,
     syncIcon,
 } from '$src/views/layouts/icons.ts'
@@ -73,6 +75,14 @@ export type ModelCatalogViewInstance = {
     destroy: () => void
 }
 
+// What the button says while a run is going. The phases are the run's own, so the
+// button reports where it has got to rather than spinning anonymously.
+const SYNC_PHASE_LABELS: Record<string, string> = {
+    fetching: 'Fetching…',
+    merging: 'Merging…',
+    writing: 'Writing…',
+}
+
 class ModelCatalogView implements ModelCatalogViewInstance {
     readonly el: HTMLElement
 
@@ -82,9 +92,14 @@ class ModelCatalogView implements ModelCatalogViewInstance {
     private readonly providerFilterEl: HTMLSelectElement
     private readonly statusFilterEl: HTMLSelectElement
     private readonly syncButtonEl: HTMLButtonElement
+    private readonly syncButtonIconEl: HTMLSpanElement
+    private readonly syncButtonLabelEl: HTMLSpanElement
+    // Providers a running sync is working through, read by the group headers.
+    private syncingProviders: string[] = []
     private readonly table: ModelTableInstance
     private readonly detailPanel: ModelDetailPanelInstance
     private readonly unsubscribeStore: () => void
+    private pendingRender: number | null = null
 
     // Read by the group headers as they are built, so a header knows whether a
     // write is in flight without the table having to carry that through.
@@ -109,9 +124,10 @@ class ModelCatalogView implements ModelCatalogViewInstance {
             <select
                 className="form-control"
                 aria-label="Filter by provider"
-                onchange=${() => modelCatalogStore.setFilters({
-                    provider: this.providerFilterEl.value as ModelCatalogFilters['provider'],
-                })}
+                onchange=${() =>
+                    modelCatalogStore.setFilters({
+                        provider: this.providerFilterEl.value as ModelCatalogFilters['provider'],
+                    })}
             >
                 <option value="all">Every provider</option>
             </select>
@@ -123,20 +139,20 @@ class ModelCatalogView implements ModelCatalogViewInstance {
                 aria-label="Filter by status"
                 onchange=${() => modelCatalogStore.setFilters({ status: this.statusFilterEl.value as StatusFilter })}
             >
-                ${STATUS_FILTER_OPTIONS.map(
-                    option => html`<option value=${option.value}>${option.label}</option>`,
-                )}
+                ${STATUS_FILTER_OPTIONS.map(option => html`<option value=${option.value}>${option.label}</option>`)}
             </select>
         ` as HTMLSelectElement
 
+        this.syncButtonIconEl = html`<span innerHTML=${syncIcon}></span>` as HTMLSpanElement
+        this.syncButtonLabelEl = html`<span>Run sync</span>` as HTMLSpanElement
         this.syncButtonEl = html`
             <button
                 className="btn btn-primary"
                 type="button"
                 onclick=${() => void modelCatalogService.runSync()}
             >
-                <span innerHTML=${syncIcon}></span>
-                Run sync
+                ${this.syncButtonIconEl}
+                ${this.syncButtonLabelEl}
             </button>
         ` as HTMLButtonElement
 
@@ -147,26 +163,18 @@ class ModelCatalogView implements ModelCatalogViewInstance {
                 shownModels: group.models.length,
                 totalModels: group.totalModels,
                 saving: this.saving,
+                syncing: this.syncingProviders.includes(group.provider.directory),
                 collapsed: group.collapsed,
                 onToggleCollapsed: provider => modelCatalogStore.toggleProviderCollapsed(provider),
-                onPatchIndex: async (
-                    provider,
-                    patch,
-                ) => await modelCatalogService.patchCatalogIndex(provider, patch),
-                onPatchBase: async (
-                    provider,
-                    fields,
-                ) => await modelCatalogService.patchProviderBase(provider, fields),
+                onPatchIndex: async (provider, patch) => await modelCatalogService.patchCatalogIndex(provider, patch),
+                onPatchBase: async (provider, fields) => await modelCatalogService.patchProviderBase(provider, fields),
             }).el,
         })
 
         this.detailPanel = createModelDetailPanel({
             onClose: () => modelCatalogStore.setDataValues({ selectedModelKey: null }),
             onSaveFields: async fields => await this.saveFields(fields),
-            onSkip: async (
-                model,
-                reason,
-            ) => await modelCatalogService.patchCatalogIndex(
+            onSkip: async (model, reason) => await modelCatalogService.patchCatalogIndex(
                 model.provider,
                 {
                     skipModels: [{
@@ -175,10 +183,7 @@ class ModelCatalogView implements ModelCatalogViewInstance {
                     }],
                 },
             ),
-            onUnskip: async model => await modelCatalogService.patchCatalogIndex(
-                model.provider,
-                { unskipModels: [model.modelId] },
-            ),
+            onUnskip: async model => await modelCatalogService.patchCatalogIndex(model.provider, { unskipModels: [model.modelId] }),
         })
 
         this.el = html`
@@ -224,7 +229,11 @@ class ModelCatalogView implements ModelCatalogViewInstance {
             </div>
         ` as HTMLElement
 
-        this.unsubscribeStore = modelCatalogStore.subscribe(() => this.render())
+        // A running sync reports every provider and every model twice, which is a few
+        // hundred store writes in a handful of seconds. Rendering on each one would
+        // rebuild the table faster than a screen can show it, so renders are
+        // coalesced to one a frame.
+        this.unsubscribeStore = modelCatalogStore.subscribe(() => this.scheduleRender())
     }
 
     // Nothing to do on mount: this view renders from the store, and the store
@@ -254,7 +263,10 @@ class ModelCatalogView implements ModelCatalogViewInstance {
         const overview = modelCatalogStore.getData('overview') as CatalogOverview | null
         const key = modelCatalogStore.getData('selectedModelKey') as string | null
 
-        if (!overview || !key)
+        if (
+            !overview
+            || !key
+        )
             return null
 
         return overview.models.find(model => modelKey(model) === key) ?? null
@@ -270,7 +282,10 @@ class ModelCatalogView implements ModelCatalogViewInstance {
             )
                 return false
 
-            if (filters.status === 'drifting' && model.drift.length === 0)
+            if (
+                filters.status === 'drifting'
+                && model.drift.length === 0
+            )
                 return false
 
             if (
@@ -309,14 +324,38 @@ class ModelCatalogView implements ModelCatalogViewInstance {
         return groups
     }
 
+    private scheduleRender(): void {
+        if (this.pendingRender !== null)
+            return
+
+        this.pendingRender = requestAnimationFrame(() => {
+            this.pendingRender = null
+            this.render()
+        })
+    }
+
     private render(): void {
         const meta = modelCatalogStore.getMeta()
         const overview = modelCatalogStore.getData('overview') as CatalogOverview | null
         const saving = meta.saving as boolean
         this.saving = saving
 
-        this.syncButtonEl.disabled = saving || !(overview?.syncEnabled ?? false)
-        this.renderStatus(meta, overview)
+        const progress = modelCatalogStore.getData('syncProgress') as SyncProgress
+        this.syncingProviders = progress.pendingProviders
+
+        // Pressing it again during a run would only join the run it is already
+        // showing, so it holds still until the run ends.
+        this.syncButtonEl.disabled = saving || progress.running
+        this.syncButtonIconEl.className = progress.running ? 'btn-spinner' : ''
+        this.syncButtonIconEl.innerHTML = progress.running ? '' : syncIcon
+        this.syncButtonLabelEl.textContent = progress.running
+            ? SYNC_PHASE_LABELS[progress.phase ?? 'fetching']
+            : 'Run sync'
+        this.renderStatus(
+            meta,
+            overview,
+            progress,
+        )
 
         if (!overview) {
             this.statsEl.replaceChildren()
@@ -333,13 +372,18 @@ class ModelCatalogView implements ModelCatalogViewInstance {
         this.table.render(
             this.groupsByProvider(overview),
             selectedKey,
+            progress.pendingModels,
         )
-        this.detailPanel.render(this.selectedModel(), saving)
+        this.detailPanel.render(
+            this.selectedModel(),
+            saving,
+        )
     }
 
     private renderStatus(
         meta: Record<string, any>,
         overview: CatalogOverview | null,
+        progress: SyncProgress,
     ): void {
         const notes: HTMLElement[] = []
 
@@ -347,20 +391,56 @@ class ModelCatalogView implements ModelCatalogViewInstance {
             notes.push(html`<div className="model-catalog-note">Loading the catalog…</div>` as HTMLElement)
 
         if (meta.error)
-            notes.push(html`<div className="banner model-catalog-error"><div className="banner-body">${meta.error}</div></div>` as HTMLElement)
+            notes.push(
+                html`
+                    <div className="banner banner-danger">
+                        <span
+                            className="banner-icon"
+                            innerHTML=${alertIcon}
+                        ></span>
+                        <div className="banner-body">${meta.error}</div>
+                    </div>
+                ` as HTMLElement,
+            )
+
+        const outcome = overview?.lastSyncOutcome ?? null
+
+        // A failed sync means every model below it is whatever the last run that
+        // finished left behind, which is not something to leave a reader to work out
+        // from a stale timestamp.
+        if (outcome?.status === 'failed') {
+            const failures = outcome.error?.sourceFailures ?? []
+            notes.push(
+                html`
+                    <div className="banner banner-danger model-catalog-sync-failure">
+                        <span
+                            className="banner-icon"
+                            innerHTML=${alertIcon}
+                        ></span>
+                        <div className="banner-body">
+                            <strong>The last sync did not complete.</strong>
+                            It started ${new Date(outcome.ranAt).toLocaleString()} and stopped without writing, so everything below is from the last run that finished.
+                            ${failures.length === 0
+                                ? html`<div className="model-catalog-failure">${outcome.error?.message ?? 'No detail was recorded.'}</div>`
+                                : failures.map(
+                                    failure => html`
+                                        <div className="model-catalog-failure">
+                                            <strong>${failure.sourceName}${failure.provider ? ` · ${failure.provider}` : ''}</strong>
+                                            <span>${failure.message}</span>
+                                        </div>
+                                    `,
+                                )}
+                        </div>
+                    </div>
+                ` as HTMLElement,
+            )
+        }
 
         if (meta.lastSaveMessage)
             notes.push(html`<div className="model-catalog-note">${meta.lastSaveMessage}</div>` as HTMLElement)
 
-        if (overview && !overview.syncEnabled)
-            notes.push(
-                html`
-                    <div className="model-catalog-note">
-                        Scheduled sync is off in this environment, so Run sync is disabled. Run one from the container with
-                        <code>node --experimental-transform-types ./src/catalog/cli.ts</code>.
-                    </div>
-                ` as HTMLElement,
-            )
+        if (progress.message)
+            notes.push(html`<div className="model-catalog-note">${progress.message}</div>` as HTMLElement)
 
         this.statusEl.replaceChildren(...notes)
     }
@@ -374,9 +454,7 @@ class ModelCatalogView implements ModelCatalogViewInstance {
             if (existing.has(provider.directory))
                 continue
 
-            this.providerFilterEl.append(
-                html`<option value=${provider.directory}>${provider.title}</option>` as HTMLOptionElement,
-            )
+            this.providerFilterEl.append(html`<option value=${provider.directory}>${provider.title}</option>` as HTMLOptionElement)
         }
 
         const filters = modelCatalogStore.getData('filters') as ModelCatalogFilters
@@ -408,7 +486,9 @@ class ModelCatalogView implements ModelCatalogViewInstance {
             },
             {
                 label: 'Drift findings',
-                value: String(overview.models.reduce((total, model) => total + model.drift.length, 0)),
+                value: String(
+                    overview.models.reduce((total, model) => total + model.drift.length, 0),
+                ),
                 tone: 'model-catalog-stat-warn',
             },
         ]
@@ -427,6 +507,10 @@ class ModelCatalogView implements ModelCatalogViewInstance {
 
     destroy(): void {
         this.unsubscribeStore()
+
+        if (this.pendingRender !== null)
+            cancelAnimationFrame(this.pendingRender)
+
         this.table.destroy()
         this.detailPanel.destroy()
         this.el.remove()

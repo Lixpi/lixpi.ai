@@ -8,6 +8,8 @@ import {
 import { indexBedrockKeys } from './bedrock-key.ts'
 import {
     type ModelSource,
+    type SourceEndpointQuery,
+    type SourceFailure,
     type SourceModelFacts,
     type SourceProviderFacts,
 } from './model-source.ts'
@@ -233,7 +235,26 @@ export class LiteLlmSource implements ModelSource {
         }
     }
 
+    // The whole catalog arrives in one request or not at all, so there is no state
+    // where this source is half-loaded.
+    failures(): SourceFailure[] {
+        return []
+    }
+
+    sourceName(): string {
+        return 'LiteLLM model_prices_and_context_window.json'
+    }
+
     listAvailable(): string[] | null {
         return Object.keys(this.catalog).sort()
+    }
+
+    // One file for every model of every vendor, fetched whole and then read by key.
+    // There is nothing to parameterise, and the same fetch answers every directory.
+    queriedEndpoints(): SourceEndpointQuery[] {
+        return [{
+            endpoint: CATALOG_URL,
+            note: 'Whole catalog fetched once per run and matched by model key.',
+        }]
     }
 }

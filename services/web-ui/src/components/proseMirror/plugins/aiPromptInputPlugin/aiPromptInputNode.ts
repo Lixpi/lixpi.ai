@@ -513,10 +513,12 @@ export const createAiPromptInputNodeView = (options: AiPromptInputNodeViewOption
         const contextTrayEl = options.createContextTray?.() ?? null
         const contentDOM = html`<div className="ai-prompt-input-content"></div>` as HTMLDivElement
         const controlsEl = html`<div className="ai-prompt-input-controls"></div>` as HTMLDivElement
-        const mediaModeSwitchHost = html`<div
+        const mediaModeSwitchHost = html`
+            <div
                 className="ai-prompt-media-mode-switch"
                 contenteditable="false"
-            ></div>` as HTMLDivElement
+            ></div>
+        ` as HTMLDivElement
         const mediaModeSwitchSvg = select(mediaModeSwitchHost)
             .append('svg')
             .attr('class', 'ai-prompt-media-mode-switch-svg')

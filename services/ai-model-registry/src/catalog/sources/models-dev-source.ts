@@ -11,6 +11,8 @@ import {
 import { indexBedrockKeys } from './bedrock-key.ts'
 import {
     type ModelSource,
+    type SourceEndpointQuery,
+    type SourceFailure,
     type SourceModelFacts,
     type SourceProviderFacts,
 } from './model-source.ts'
@@ -218,6 +220,29 @@ export class ModelsDevSource implements ModelSource {
                 ...(bedrock && { 'aws-bedrock': this.toFacts(bedrock.key, bedrock.entry) }),
             },
         }
+    }
+
+    // The whole catalog arrives in one request or not at all, so there is no state
+    // where this source is half-loaded.
+    failures(): SourceFailure[] {
+        return []
+    }
+
+    sourceName(): string {
+        return 'models.dev'
+    }
+
+    // One document for every provider, fetched whole. The directory decides which key
+    // inside it is read, which is what the note records.
+    queriedEndpoints(provider: ProviderDirectory): SourceEndpointQuery[] {
+        const key = PROVIDER_KEYS[provider]
+
+        return [{
+            endpoint: CATALOG_URL,
+            note: key
+                ? `Whole catalog fetched once per run; read under providers "${key}" and "${BEDROCK_PROVIDER_KEY}".`
+                : `Whole catalog fetched once per run; it publishes no provider for ${provider}, so only "${BEDROCK_PROVIDER_KEY}" is read.`,
+        }]
     }
 
     listAvailable(provider: ProviderDirectory): string[] | null {

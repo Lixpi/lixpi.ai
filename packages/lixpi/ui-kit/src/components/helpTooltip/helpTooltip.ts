@@ -155,10 +155,12 @@ class HelpTooltip implements HelpTooltipInstance {
         ` as HTMLElement
 
         if (this.config.triggerElement) {
-            return this.html`<span
+            return this.html`
+                <span
                     className=${rootClassName}
                     contenteditable="false"
-                >${content}</span>` as HTMLElement
+                >${content}</span>
+            ` as HTMLElement
         }
 
         return this.html`

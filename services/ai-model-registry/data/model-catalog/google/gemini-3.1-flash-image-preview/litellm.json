@@ -1,4 +1,19 @@
 {
+    "_meta": {
+        "sourceName": "LiteLLM model_prices_and_context_window.json",
+        "sourceId": "litellm",
+        "queriedEndpoints": [
+            {
+                "endpoint": "https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json",
+                "note": "Whole catalog fetched once per run and matched by model key."
+            }
+        ],
+        "hasDataForThisModel": true,
+        "inferenceProvidersWithData": [
+            "google"
+        ],
+        "fetchedAt": "2026-09-07T23:42:12.534Z"
+    },
     "byInferenceProvider": {
         "google": {
             "contextWindow": 65536,
@@ -24,13 +39,5 @@
             },
             "modelKeyAtSource": "gemini-3.1-flash-image-preview"
         }
-    },
-    "_fetchedFrom": {
-        "sourceName": "litellm",
-        "hasDataForThisModel": true,
-        "inferenceProvidersWithData": [
-            "google"
-        ],
-        "fetchedAt": "2026-09-06T22:40:47.207Z"
     }
 }

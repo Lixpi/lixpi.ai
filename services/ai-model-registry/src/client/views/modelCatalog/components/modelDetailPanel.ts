@@ -5,7 +5,7 @@
 
 import { html } from '@lixpi/ui-primitives/dom'
 
-import { closeIcon } from '$src/views/layouts/icons.ts'
+import { arrowLeftIcon } from '$src/views/layouts/icons.ts'
 import {
     createJsonViewer,
     type JsonViewerInstance,
@@ -124,16 +124,20 @@ const SCALAR_FIELDS: ScalarField[] = [
 const fieldList = (
     fields: string[],
     emptyLabel: string,
-): HTMLElement => fields.length === 0
-    ? html`<span className="model-catalog-muted">${emptyLabel}</span>` as HTMLElement
-    : html`
-        <div className="model-catalog-chips">
-            ${fields.map(field => html`<code className="model-catalog-field-chip">${field}</code>`)}
-        </div>
-    ` as HTMLElement
+): HTMLElement =>
+    fields.length === 0
+        ? html`<span className="model-catalog-muted">${emptyLabel}</span>` as HTMLElement
+        : html`
+            <div className="model-catalog-chips">
+                ${fields.map(field => html`<code className="model-catalog-field-chip">${field}</code>`)}
+            </div>
+        ` as HTMLElement
 
 const formatValue = (value: unknown): string => {
-    if (value === null || value === undefined)
+    if (
+        value === null
+        || value === undefined
+    )
         return '—'
 
     if (typeof value === 'object')
@@ -159,11 +163,12 @@ class ModelDetailPanel implements ModelDetailPanelInstance {
     // The viewer holds a CodeMirror instance, so it is torn down whenever the
     // body it lives in is rebuilt.
     private jsonViewer: JsonViewerInstance | null = null
+    private readonly onKeyDown: (event: KeyboardEvent) => void
 
     constructor(private readonly config: ModelDetailPanelConfig) {
         this.titleEl = html`<div className="drawer-title"></div>` as HTMLDivElement
         this.subtitleEl = html`<div className="model-catalog-drawer-subtitle"></div>` as HTMLDivElement
-        this.bodyEl = html`<div className="drawer-body"></div>` as HTMLDivElement
+        this.bodyEl = html`<div className="drawer-body model-catalog-drawer-sections"></div>` as HTMLDivElement
 
         this.backdropEl = html`
             <div
@@ -174,22 +179,41 @@ class ModelDetailPanel implements ModelDetailPanelInstance {
 
         this.el = html`
             <aside className="drawer model-catalog-drawer">
-                <div className="drawer-header">
-                    <div>
-                        ${this.titleEl}
-                        ${this.subtitleEl}
-                    </div>
+                <div className="model-catalog-drawer-header">
                     <button
-                        className="drawer-close"
+                        className="model-catalog-drawer-back"
                         type="button"
-                        aria-label="Close model details"
-                        innerHTML=${closeIcon}
+                        aria-label="Back to the model list"
+                        innerHTML=${arrowLeftIcon}
                         onclick=${() => this.config.onClose()}
                     ></button>
+                    ${this.titleEl}
+                    ${this.subtitleEl}
                 </div>
                 ${this.bodyEl}
             </aside>
         ` as HTMLElement
+
+        // Escape closes the panel, the way it closes anything laid over a page. It is
+        // bound on the document because the panel rarely holds focus: a reader is
+        // usually scrolling it, not typing in one of its fields.
+        this.onKeyDown = (event: KeyboardEvent): void => {
+            if (
+                event.key !== 'Escape'
+                || this.model === null
+            )
+                return
+
+            event.preventDefault()
+            this.config.onClose()
+        }
+        document.addEventListener('keydown', this.onKeyDown)
+
+        // The header holds its place at the top; the subtitle is the part that goes.
+        // It is driven from the scroll position rather than by scrolling out of view,
+        // because the rule under the header belongs to the header and has to stay
+        // whatever the subtitle is doing.
+        this.bodyEl.addEventListener('scroll', () => this.el.classList.toggle('model-catalog-drawer-scrolled', this.bodyEl.scrollTop > 0))
     }
 
     render(
@@ -211,7 +235,9 @@ class ModelDetailPanel implements ModelDetailPanelInstance {
             return
         }
 
-        this.titleEl.textContent = modelTitle(model)
+        // A model nobody has titled yet carries an empty string rather than nothing, so
+        // the header falls back to the id instead of opening with a blank line.
+        this.titleEl.textContent = modelTitle(model) || model.modelId
         this.subtitleEl.textContent = `${model.providerTitle} · ${model.modelId}`
 
         const signature = `${model.provider}/${model.modelId}:${model.mergedAt}:${saving}`
@@ -263,24 +289,28 @@ class ModelDetailPanel implements ModelDetailPanelInstance {
                     <span className=${`status ${STATUS_TONES[model.status]}`}>${STATUS_LABELS[model.status]}</span>
                     <span className="model-catalog-muted">Merged ${new Date(model.mergedAt).toLocaleString()}</span>
                 </div>
-                ${missing.length === 0
-                    ? html`<p className="model-catalog-muted">Every required field is filled in.</p>`
-                    : html`
-                        <div className="banner">
-                            <div className="banner-body">
-                                <strong>Missing required fields</strong>
-                                ${fieldList(missing, 'nothing')}
+                ${
+                    missing.length === 0
+                        ? html`<p className="model-catalog-muted">Every required field is filled in.</p>`
+                        : html`
+                            <div className="banner">
+                                <div className="banner-body">
+                                    <strong>Missing required fields</strong>
+                                    ${fieldList(missing, 'nothing')}
+                                </div>
                             </div>
-                        </div>
-                    `}
-                ${model.ratesRefusedBecauseUnitsDiffer.length === 0
-                    ? null
-                    : html`
-                        <p className="model-catalog-muted">
-                            Rates a source publishes in another unit, left for a human:
-                            ${model.ratesRefusedBecauseUnitsDiffer.join(', ')}
-                        </p>
-                    `}
+                        `
+                }
+                ${
+                    model.ratesRefusedBecauseUnitsDiffer.length === 0
+                        ? null
+                        : html`
+                            <p className="model-catalog-muted">
+                                Rates a source publishes in another unit, left for a human:
+                                ${model.ratesRefusedBecauseUnitsDiffer.join(', ')}
+                            </p>
+                        `
+                }
             </section>
         ` as HTMLElement
     }
@@ -346,26 +376,28 @@ class ModelDetailPanel implements ModelDetailPanelInstance {
         return html`
             <section className="model-catalog-section model-catalog-section-wide">
                 <h3 className="model-catalog-section-title">Inference providers</h3>
-                ${rows.length === 0
-                    ? html`<p className="model-catalog-muted">No source reports this model on any inference provider.</p>`
-                    : html`
-                        <div className="table-responsive">
-                            <table className="table">
-                                <thead>
-                                    <tr>
-                                        <th>Provider</th>
-                                        <th>Name</th>
-                                        <th></th>
-                                        <th>Pricing</th>
-                                        <th>Context</th>
-                                        <th>Max output</th>
-                                        <th>Reported by</th>
-                                    </tr>
-                                </thead>
-                                <tbody>${rows}</tbody>
-                            </table>
-                        </div>
-                    `}
+                ${
+                    rows.length === 0
+                        ? html`<p className="model-catalog-muted">No source reports this model on any inference provider.</p>`
+                        : html`
+                            <div className="table-responsive">
+                                <table className="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Provider</th>
+                                            <th>Name</th>
+                                            <th></th>
+                                            <th>Pricing</th>
+                                            <th>Context</th>
+                                            <th>Max output</th>
+                                            <th>Reported by</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>${rows}</tbody>
+                                </table>
+                            </div>
+                        `
+                }
             </section>
         ` as HTMLElement
     }
@@ -386,24 +418,26 @@ class ModelDetailPanel implements ModelDetailPanelInstance {
         return html`
             <section className="model-catalog-section model-catalog-section-wide">
                 <h3 className="model-catalog-section-title">Drift</h3>
-                ${model.drift.length === 0
-                    ? html`<p className="model-catalog-muted">The authored file and the sources agree.</p>`
-                    : html`
-                        <div className="table-responsive">
-                            <table className="table">
-                                <thead>
-                                    <tr>
-                                        <th>Field</th>
-                                        <th>Authored</th>
-                                        <th>Source</th>
-                                        <th>From</th>
-                                        <th></th>
-                                    </tr>
-                                </thead>
-                                <tbody>${rows}</tbody>
-                            </table>
-                        </div>
-                    `}
+                ${
+                    model.drift.length === 0
+                        ? html`<p className="model-catalog-muted">The authored file and the sources agree.</p>`
+                        : html`
+                            <div className="table-responsive">
+                                <table className="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Field</th>
+                                            <th>Authored</th>
+                                            <th>Source</th>
+                                            <th>From</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>${rows}</tbody>
+                                </table>
+                            </div>
+                        `
+                }
             </section>
         ` as HTMLElement
     }
@@ -421,7 +455,10 @@ class ModelDetailPanel implements ModelDetailPanelInstance {
                 <input
                     className="form-control"
                     type=${field.type}
-                    value=${current === undefined || current === null ? '' : String(current)}
+                    value=${current === undefined
+                        || current === null
+                        ? ''
+                        : String(current)}
                 />
             ` as HTMLInputElement
             inputs.set(field.key, input)
@@ -446,10 +483,16 @@ class ModelDetailPanel implements ModelDetailPanelInstance {
                         ? Number(raw)
                         : raw
 
-                if (next === null && before === undefined)
+                if (
+                    next === null
+                    && before === undefined
+                )
                     continue
 
-                if (next !== null && String(before) === String(next))
+                if (
+                    next !== null
+                    && String(before) === String(next)
+                )
                     continue
 
                 patch[field.key] = next
@@ -467,7 +510,11 @@ class ModelDetailPanel implements ModelDetailPanelInstance {
                 </p>
                 <div className="model-catalog-form-grid">${controls}</div>
                 <div className="form-actions">
-                    ${this.renderSaveButton('Save fields', 'btn btn-primary', save)}
+                    ${this.renderSaveButton(
+                        'Save fields',
+                        'btn btn-primary',
+                        save,
+                    )}
                 </div>
             </section>
         ` as HTMLElement
@@ -519,25 +566,31 @@ class ModelDetailPanel implements ModelDetailPanelInstance {
         return html`
             <section className="model-catalog-section">
                 <h3 className="model-catalog-section-title">Catalog index</h3>
-                ${isSkipped
-                    ? html`
-                        <div className="form-actions">
-                            ${this.renderSaveButton(
-                                'Stop skipping this model',
-                                'btn btn-primary',
-                                async () => await this.config.onUnskip(model),
-                            )}
-                        </div>
-                    `
-                    : html`
-                        <div className="form-group">
-                            <label className="form-label">Reason</label>
-                            ${reasonEl}
-                        </div>
-                        <div className="form-actions">
-                            ${this.renderSaveButton('Skip this model', 'btn btn-danger', skip)}
-                        </div>
-                    `}
+                ${
+                    isSkipped
+                        ? html`
+                            <div className="form-actions">
+                                ${this.renderSaveButton(
+                                    'Stop skipping this model',
+                                    'btn btn-primary',
+                                    async () => await this.config.onUnskip(model),
+                                )}
+                            </div>
+                        `
+                        : html`
+                            <div className="form-group">
+                                <label className="form-label">Reason</label>
+                                ${reasonEl}
+                            </div>
+                            <div className="form-actions">
+                                ${this.renderSaveButton(
+                                    'Skip this model',
+                                    'btn btn-danger',
+                                    skip,
+                                )}
+                            </div>
+                        `
+                }
                 <dl className="model-catalog-definitions">
                     <dt>Context window</dt>
                     <dd>${formatNumber(model.model?.contextWindow ?? model.file.contextWindow)}</dd>
@@ -550,6 +603,7 @@ class ModelDetailPanel implements ModelDetailPanelInstance {
 
     destroy(): void {
         this.model = null
+        document.removeEventListener('keydown', this.onKeyDown)
         document.documentElement.classList.remove(SCROLL_LOCK_CLASS)
         this.jsonViewer?.destroy()
         this.jsonViewer = null
@@ -558,5 +612,4 @@ class ModelDetailPanel implements ModelDetailPanelInstance {
     }
 }
 
-export const createModelDetailPanel = (config: ModelDetailPanelConfig): ModelDetailPanelInstance =>
-    new ModelDetailPanel(config)
+export const createModelDetailPanel = (config: ModelDetailPanelConfig): ModelDetailPanelInstance => new ModelDetailPanel(config)

@@ -1,10 +1,17 @@
 {
-    "byInferenceProvider": {},
-    "_fetchedFrom": {
-        "sourceName": "litellm",
+    "_meta": {
+        "sourceName": "LiteLLM model_prices_and_context_window.json",
+        "sourceId": "litellm",
+        "queriedEndpoints": [
+            {
+                "endpoint": "https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json",
+                "note": "Whole catalog fetched once per run and matched by model key."
+            }
+        ],
         "hasDataForThisModel": false,
         "inferenceProvidersWithData": [],
-        "fetchedAt": "2026-09-06T22:40:47.160Z",
+        "fetchedAt": "2026-09-07T23:42:12.485Z",
         "note": "This source has no entry for this model."
-    }
+    },
+    "byInferenceProvider": {}
 }

@@ -619,6 +619,8 @@ $radius-card: 8px;
     border-radius: 6px;
     background: var(--code-bg);
     overflow-x: auto;
+    // Sideways only, so a wheel over a long line still scrolls the page.
+    overscroll-behavior-x: none;
 }
 .usage-code code {
     color: var(--text);

@@ -13,11 +13,14 @@ export const syncIcon = '<svg viewBox="0 0 16 16" fill="none" stroke="currentCol
     + '<path d="M2.5 8a5.5 5.5 0 0 1 9.4-3.9L14 6"/><path d="M13.5 8a5.5 5.5 0 0 1-9.4 3.9L2 10"/>'
     + '<path d="M14 2.5V6h-3.5M2 13.5V10h3.5"/></svg>'
 
-export const closeIcon = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">'
-    + '<path d="M4 4l8 8M12 4l-8 8"/></svg>'
-
 export const searchIcon = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">'
     + '<circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg>'
+
+export const arrowLeftIcon = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">'
+    + '<path d="M16 10H4"/><path d="M9 5l-5 5 5 5"/></svg>'
+
+export const alertIcon = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">'
+    + '<path d="M8 2.8 1.8 13.2h12.4L8 2.8Z"/><path d="M8 6.6v3.1"/><circle cx="8" cy="11.4" r=".7" fill="currentColor" stroke="none"/></svg>'
 
 export const chevronIcon = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'
     + '<path d="M6 4l4 4-4 4"/></svg>'

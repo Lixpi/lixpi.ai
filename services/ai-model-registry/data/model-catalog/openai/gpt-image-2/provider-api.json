@@ -1,24 +1,31 @@
 {
-    "byInferenceProvider": {
-        "openai": {
-            "model": "gpt-image-2",
-            "modelVersion": "gpt-image-2",
-            "modelKeyAtSource": "gpt-image-2"
-        }
-    },
-    "_fetchedFrom": {
-        "sourceName": "provider-api",
+    "_meta": {
+        "sourceName": "OpenAI Models API",
+        "sourceId": "provider-api",
+        "queriedEndpoints": [
+            {
+                "endpoint": "GET https://api.openai.com/v1/models",
+                "note": "Takes no parameters. Authorized with a bearer token."
+            }
+        ],
         "hasDataForThisModel": true,
         "inferenceProvidersWithData": [
             "openai"
         ],
-        "fetchedAt": "2026-09-06T22:40:47.121Z",
+        "fetchedAt": "2026-09-07T23:42:12.428Z",
         "publishedVersions": {
             "currentVersion": "gpt-image-2",
             "allPublishedVersions": [
                 "gpt-image-2",
                 "gpt-image-2-2026-04-21"
             ]
+        }
+    },
+    "byInferenceProvider": {
+        "openai": {
+            "model": "gpt-image-2",
+            "modelVersion": "gpt-image-2",
+            "modelKeyAtSource": "gpt-image-2"
         }
     }
 }

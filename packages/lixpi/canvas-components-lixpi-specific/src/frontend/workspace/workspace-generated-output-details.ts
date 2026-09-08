@@ -198,7 +198,9 @@ export class WorkspaceGeneratedOutputDetails {
                     host.appendChild(this.activePanel.element)
                 } else
                     host.appendChild(
-                        this.html`<div className="workspace-generated-output-details-empty nopan">Select a media item or lineage marker to view its details.</div>` as HTMLDivElement,
+                        this.html`
+                            <div className="workspace-generated-output-details-empty nopan">Select a media item or lineage marker to view its details.</div>
+                        ` as HTMLDivElement,
                     )
             }
         } catch (error) {

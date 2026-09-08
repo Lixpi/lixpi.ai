@@ -1,4 +1,19 @@
 {
+    "_meta": {
+        "sourceName": "LiteLLM model_prices_and_context_window.json",
+        "sourceId": "litellm",
+        "queriedEndpoints": [
+            {
+                "endpoint": "https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json",
+                "note": "Whole catalog fetched once per run and matched by model key."
+            }
+        ],
+        "hasDataForThisModel": true,
+        "inferenceProvidersWithData": [
+            "openai"
+        ],
+        "fetchedAt": "2026-09-07T23:42:12.414Z"
+    },
     "byInferenceProvider": {
         "openai": {
             "contextWindow": 922000,
@@ -18,13 +33,5 @@
             },
             "modelKeyAtSource": "gpt-5.6-terra"
         }
-    },
-    "_fetchedFrom": {
-        "sourceName": "litellm",
-        "hasDataForThisModel": true,
-        "inferenceProvidersWithData": [
-            "openai"
-        ],
-        "fetchedAt": "2026-09-06T22:40:47.113Z"
     }
 }

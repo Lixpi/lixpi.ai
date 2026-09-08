@@ -5,13 +5,14 @@ import {
 // The model catalog is a directory tree, the same way the parameter registry is.
 // There is no database and no index of its own: the layout defines the catalog.
 //
-//   model-catalog/base-schema.json                     fields every model carries
+//   model-catalog/catalog-settings.json                catalog-wide settings
+//   model-catalog/schema.json                          fields every model carries
 //   model-catalog/<provider>/_base.json                  fields every model here inherits
 //   model-catalog/<provider>/_catalog-index.json         what to sync and what to skip
 //   model-catalog/<provider>/<model>/<source>.json       one file per source, always written
 //   model-catalog/<provider>/<model>/lixpi.json          authored, human-owned
 //   model-catalog/<provider>/<model>/merged.json         the resolved result
-//   model-catalog/<provider>/<model>/meta.json           how that result was arrived at
+//   model-catalog/<provider>/<model>/_meta.json          how that result was arrived at
 //
 // One directory per model, so everything about a model sits together.
 //
@@ -20,11 +21,13 @@ import {
 
 export const LIXPI_FILE = 'lixpi.json'
 export const MERGED_FILE = 'merged.json'
-export const META_FILE = 'meta.json'
+export const META_FILE = '_meta.json'
 export const INDEX_FILE = '_catalog-index.json'
 export const BASE_FILE = '_base.json'
-export const SCHEMA_FILE = 'base-schema.json'
-export const BASE_INDEX_FILE = '_base-index.json'
+export const SCHEMA_FILE = 'schema.json'
+export const BASE_INDEX_FILE = 'catalog-settings.json'
+// Beside the tree, not in it: it describes the last run rather than the catalog.
+export const LAST_SYNC_FILE = '_last-sync.json'
 
 // Directory name per provider. The `provider` field inside a model file keeps the
 // internal key the rest of the platform persists, e.g. `BytePlus`.
@@ -47,7 +50,7 @@ export type SourceId = 'models.dev' | 'litellm' | 'provider-api' | 'bedrock'
 // model, and the platform calls one of them, which is a separate question from what
 // the others cost.
 //
-// A vendor-API id is the same string as its catalog directory. `_base-index.json`
+// A vendor-API id is the same string as its catalog directory. `catalog-settings.json`
 // declares them, their titles, which directories each serves, and which flag hands a
 // directory to a platform provider.
 export type InferenceProviderId =
@@ -78,9 +81,9 @@ export type CatalogBaseIndexFile = {
 }
 
 // File name per source, inside the model's directory. `models.dev` cannot be a file
-// name as it stands.
+// name as it stands, and `models.dev` keeps the dot the source spells it with.
 export const SOURCE_FILE_NAMES: Record<SourceId, string> = {
-    'models.dev': 'models-dev.json',
+    'models.dev': 'models.dev.json',
     litellm: 'litellm.json',
     'provider-api': 'provider-api.json',
     bedrock: 'bedrock.json',
@@ -122,6 +125,11 @@ export type ProviderBase = {
     providerKey: string
     description?: string
     fieldsInheritedByEveryModel: Record<string, unknown>
+    // Leading words a default short title drops, beyond the provider's own name.
+    // Anthropic titles every model "Claude something" and shortens to "something", so
+    // it lists "Claude" here. A directory whose titles do not carry a brand prefix
+    // lists nothing and its titles are shortened only by the provider name.
+    shortTitleDropsLeadingWords?: string[]
 }
 
 // One entry per skipped model, holding the model and why it is skipped together.
@@ -163,12 +171,33 @@ export type InferenceProviderFacts = Partial<LixpiModelRecord> & {
     sourceOnlyFacts?: Record<string, unknown>
 }
 
+// One endpoint a source was asked, and what it was asked with. A source that reads a
+// whole-catalog file carries no parameters; one that queries per vendor or per region
+// carries the values it actually sent, so a number in the file can be traced back to
+// the request that produced it without reading the fetcher.
+export type SourceEndpointQuery = {
+    // A URL, or the API operation for an SDK call: `bedrock:ListFoundationModels`.
+    endpoint: string
+    // Absent when the endpoint takes none.
+    params?: Record<string, unknown>
+    // What the answer covers, when the endpoint answers for more than this model.
+    note?: string
+}
+
 export type SourceModelRecord = {
-    // One entry per inference provider the source publishes for. A source that only
-    // knows the vendor's own API carries only that one.
-    byInferenceProvider: Partial<Record<InferenceProviderId, InferenceProviderFacts>>
-    _fetchedFrom: {
-        sourceName: SourceId
+    // Provenance first, values second. `_meta` says who was asked, at which endpoint,
+    // with which parameters; it describes the fetch rather than the model, so the
+    // merge reads `byInferenceProvider` and never carries any of this into the merged
+    // record.
+    _meta: {
+        // What the thing being quoted actually calls itself: "Anthropic Models API",
+        // "AWS Bedrock", "models.dev". `sourceId` is the catalog's own key for it,
+        // which is what the merge and the file naming use.
+        sourceName: string
+        sourceId: SourceId
+        // Every endpoint consulted for this model's directory, in the order the
+        // source calls them.
+        queriedEndpoints: SourceEndpointQuery[]
         hasDataForThisModel: boolean
         // Inference providers this source published rates or limits for.
         inferenceProvidersWithData: InferenceProviderId[]
@@ -182,6 +211,9 @@ export type SourceModelRecord = {
         }
         note?: string
     }
+    // One entry per inference provider the source publishes for. A source that only
+    // knows the vendor's own API carries only that one.
+    byInferenceProvider: Partial<Record<InferenceProviderId, InferenceProviderFacts>>
 }
 
 // Whether the sources that answered for a field said the same thing.
@@ -300,7 +332,78 @@ export type MergedModel = {
     meta: ModelMetaFile
     model: AiModel | null
     drift: DriftFinding[]
+    // Fields the merge worked out a default for that belong to the authored file. The
+    // sync writes them there through the same API a person edits with, so the default
+    // becomes an authored value somebody can change rather than something the merge
+    // silently re-decides on every run. Only ever set for a field the authored file
+    // left blank.
+    authoredFieldsToBackfill?: Record<string, unknown>
 }
+
+// A source that could not answer, and for which directory. Every one of these stops
+// the fetch: a run missing a source is not a run, and the tree must keep what the
+// last complete one wrote.
+export type SourceFailure = {
+    sourceId: SourceId
+    sourceName: string
+    // Absent when the source failed outright rather than for one directory.
+    provider?: ProviderDirectory
+    message: string
+}
+
+// What the last run did, kept next to the tree so the page can say whether the
+// catalog it is showing is current, whoever ran the sync.
+export type LastSyncOutcome = {
+    ranAt: string
+    finishedAt: string
+    status: 'completed' | 'failed'
+    // Set when the run failed. Names what went wrong in the words the operator needs.
+    error?: {
+        name: string
+        message: string
+        sourceFailures: SourceFailure[]
+    }
+    models?: number
+    written?: number
+}
+
+// What a run is doing, as it does it. The page shows a sync happening rather than a
+// button that goes quiet for a minute, so every provider and every model reports when
+// it starts and when it is done.
+export type SyncProgressEvent =
+    | {
+        type: 'run-started'
+        ranAt: string
+    }
+    | {
+        type: 'phase'
+        phase: 'fetching' | 'merging' | 'writing'
+    }
+    | {
+        type: 'provider-started'
+        provider: ProviderDirectory
+    }
+    | {
+        type: 'provider-finished'
+        provider: ProviderDirectory
+    }
+    | {
+        type: 'model-started'
+        provider: ProviderDirectory
+        modelId: string
+    }
+    | {
+        type: 'model-finished'
+        provider: ProviderDirectory
+        modelId: string
+    }
+    | {
+        type: 'run-finished'
+        status: 'completed' | 'failed'
+        message?: string
+    }
+
+export type SyncProgressListener = (event: SyncProgressEvent) => void
 
 export type DiscoveredModel = {
     provider: ProviderDirectory

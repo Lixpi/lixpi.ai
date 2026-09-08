@@ -95,13 +95,13 @@ class CapabilityPromptReferencePreview implements ContextPreviewTileInstance {
         this.lifetime.own(() => this.contentLifetime.destroy())
         const trigger = this.html`
             <span className="prompt-reference-chip-content">
-            <span
-                className="prompt-reference-chip-icon"
-                aria-hidden="true"
-                innerHTML=${atomIcon}
-            ></span>
-            <span className="prompt-reference-chip-name">${reference.displayName}</span>
-        </span>
+                <span
+                    className="prompt-reference-chip-icon"
+                    aria-hidden="true"
+                    innerHTML=${atomIcon}
+                ></span>
+                <span className="prompt-reference-chip-name">${reference.displayName}</span>
+            </span>
         ` as HTMLSpanElement
         this.popover = createContextPreviewPopover({
             getPortal: getContextPreviewCanvasPortal,
@@ -183,10 +183,12 @@ class CapabilityPromptReferencePreview implements ContextPreviewTileInstance {
                 return
 
             this.status = 'error'
-            const retry = this.html`<button
+            const retry = this.html`
+                <button
                     type="button"
                     className="capability-description-retry"
-                >Retry</button>` as HTMLButtonElement
+                >Retry</button>
+            ` as HTMLButtonElement
             const click = () => void this.load()
             retry.addEventListener('click', click)
             this.contentLifetime.own(() => retry.removeEventListener('click', click))
@@ -197,8 +199,8 @@ class CapabilityPromptReferencePreview implements ContextPreviewTileInstance {
                             className="capability-description-status"
                             role="alert"
                         >
-                        <p>${this.reference.displayName} details are temporarily unavailable.</p>${retry}
-                    </div>
+                            <p>${this.reference.displayName} details are temporarily unavailable.</p>${retry}
+                        </div>
                     ` as HTMLElement,
                 ),
             )
@@ -251,10 +253,10 @@ export function renderCapabilityDescriptionCard(
                     input =>
                         html`
                             <div>
-                            <dt>${input.name} <span>${input.requirement}</span></dt>
-                            <dd>${input.description}</dd>
-                            <dd className="capability-description-accepts">Accepts: ${input.accepts.join(', ')}</dd>
-                        </div>
+                                <dt>${input.name} <span>${input.requirement}</span></dt>
+                                <dd>${input.description}</dd>
+                                <dd className="capability-description-accepts">Accepts: ${input.accepts.join(', ')}</dd>
+                            </div>
                         `,
                 )}
             </dl>

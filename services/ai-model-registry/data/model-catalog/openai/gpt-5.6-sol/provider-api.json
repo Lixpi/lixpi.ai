@@ -1,23 +1,30 @@
 {
-    "byInferenceProvider": {
-        "openai": {
-            "model": "gpt-5.6-sol",
-            "modelVersion": "gpt-5.6-sol",
-            "modelKeyAtSource": "gpt-5.6-sol"
-        }
-    },
-    "_fetchedFrom": {
-        "sourceName": "provider-api",
+    "_meta": {
+        "sourceName": "OpenAI Models API",
+        "sourceId": "provider-api",
+        "queriedEndpoints": [
+            {
+                "endpoint": "GET https://api.openai.com/v1/models",
+                "note": "Takes no parameters. Authorized with a bearer token."
+            }
+        ],
         "hasDataForThisModel": true,
         "inferenceProvidersWithData": [
             "openai"
         ],
-        "fetchedAt": "2026-09-06T22:40:47.112Z",
+        "fetchedAt": "2026-09-07T23:42:12.411Z",
         "publishedVersions": {
             "currentVersion": "gpt-5.6-sol",
             "allPublishedVersions": [
                 "gpt-5.6-sol"
             ]
+        }
+    },
+    "byInferenceProvider": {
+        "openai": {
+            "model": "gpt-5.6-sol",
+            "modelVersion": "gpt-5.6-sol",
+            "modelKeyAtSource": "gpt-5.6-sol"
         }
     }
 }

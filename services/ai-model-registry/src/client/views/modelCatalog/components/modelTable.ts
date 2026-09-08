@@ -37,6 +37,8 @@ export type ModelTableInstance = {
     render: (
         groups: ModelGroup[],
         selectedKey: string | null,
+        // `provider/modelId` of every model a running sync is working on.
+        syncingModels: string[],
     ) => void
     destroy: () => void
 }
@@ -80,7 +82,9 @@ class ModelTable implements ModelTableInstance {
     render(
         groups: ModelGroup[],
         selectedKey: string | null,
+        syncingModels: string[] = [],
     ): void {
+        const syncing = new Set(syncingModels)
         this.tableEl.replaceChildren(this.headEl)
 
         if (groups.length === 0) {
@@ -115,7 +119,10 @@ class ModelTable implements ModelTableInstance {
 
             for (const model of group.collapsed ? [] : group.models) {
                 const key = `${model.provider}/${model.modelId}`
-                const row = this.renderRow(model)
+                const row = this.renderRow(
+                    model,
+                    syncing.has(key),
+                )
                 row.classList.toggle('model-catalog-row-selected', key === selectedKey)
                 body.append(row)
             }
@@ -124,30 +131,47 @@ class ModelTable implements ModelTableInstance {
         }
     }
 
-    private renderRow(model: CatalogModel): HTMLTableRowElement {
+    private renderRow(
+        model: CatalogModel,
+        isSyncing: boolean,
+    ): HTMLTableRowElement {
         const modalities = modalityTitles(model)
         const contextWindow = model.model?.contextWindow ?? model.file.contextWindow
         const driftCount = model.drift.length
         const sources = model.sources.sourcesWithDataForThisModel
 
+        // A model held out of the database is not a row like the others, and a rate
+        // that disagrees with its source is money. Both are marked on the row itself:
+        // the status column alone is a word at the far right of a wide table, which is
+        // where a reader looks last.
+        const hasPricingDrift = model.drift.some(finding => finding.isPricing)
+        const rowTone = hasPricingDrift
+            ? 'model-catalog-row-error'
+            : model.status === 'missing-required-fields'
+                ? 'model-catalog-row-incomplete'
+                : ''
+
         return html`
             <tr
-                className="model-catalog-row"
+                className=${`model-catalog-row ${rowTone}`}
                 onclick=${() => this.config.onSelect(model)}
             >
                 <td>
                     <div className="model-catalog-cell-name">
-                        <span className="cell-strong">${modelTitle(model)}</span>
-                        <code className="model-catalog-model-id">${shortModel(model.modelId)}</code>
+                        ${isSyncing
+                            ? html`<span className="spinner spinner-sm model-catalog-row-spinner"></span>`
+                            : null}
+                        <div>
+                            <span className="cell-strong">${modelTitle(model)}</span>
+                            <code className="model-catalog-model-id">${shortModel(model.modelId)}</code>
+                        </div>
                     </div>
                 </td>
                 <td>
                     <div className="model-catalog-chips">
                         ${modalities.length === 0
                             ? html`<span className="model-catalog-muted">—</span>`
-                            : modalities.map(
-                                modality => html`<span className="chip">${modality}</span>`,
-                            )}
+                            : modalities.map(modality => html`<span className="chip">${modality}</span>`)}
                     </div>
                 </td>
                 <td className="cell-mono">${formatNumber(contextWindow)}</td>
@@ -159,13 +183,15 @@ class ModelTable implements ModelTableInstance {
                     >${sources.length}/${model.sources.sourcesQueried.length}</span>
                 </td>
                 <td>
-                    ${driftCount === 0
-                        ? html`<span className="model-catalog-muted">—</span>`
-                        : html`
-                            <span className=${model.drift.some(finding => finding.isPricing)
-                                ? 'status status-red'
-                                : 'status status-yellow'}>${driftCount}</span>
-                        `}
+                    ${
+                        driftCount === 0
+                            ? html`<span className="model-catalog-muted">—</span>`
+                            : html`
+                                <span className=${model.drift.some(finding => finding.isPricing)
+                                    ? 'status status-red'
+                                    : 'status status-yellow'}>${driftCount}</span>
+                            `
+                    }
                 </td>
                 <td><span className=${`status ${STATUS_TONES[model.status]}`}>${STATUS_LABELS[model.status]}</span></td>
             </tr>

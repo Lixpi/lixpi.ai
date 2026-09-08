@@ -11,34 +11,34 @@ The registry is an internal engineering service. It does not ship to users, but 
 `data/model-catalog/` holds the models:
 
 ```
-_base-index.json                    catalog-wide settings: the inference providers
-base-schema.json                    fields every model carries, and who owns each
+catalog-settings.json               catalog-wide settings: the inference providers
+schema.json                         fields every model carries, and who owns each
 <provider>/
   _base.json                        fields every model here inherits
   _catalog-index.json               which models sync, and which to skip
   <model>/
     litellm.json                    one file per source, always written
-    models-dev.json                 records "no data" when the source has none
+    models.dev.json                 records "no data" when the source has none
     provider-api.json               the vendor's own listing
     bedrock.json                    the AWS Bedrock catalog, where Lixpi routes through it
     lixpi.json                      authored: only what no source supplies
     merged.json                     the resolved model, values only
-    meta.json                       how that result was arrived at
+    _meta.json                      how that result was arrived at
 ```
 
 One directory per model, so everything about a model sits together.
 
 Every source gets a file for every model whether or not it had anything, so a gap reads as "this source has no data" rather than "this source was never asked".
 
-`_base-index.json` holds what is true for the whole catalog rather than for one directory or one model. Today that is the inference providers: every endpoint Lixpi can send a generation request to, which catalog directories each one serves, the name a platform provider files those models under, and the environment flag that hands a directory to it. Adding a Bedrock-served vendor is a change to this file, not to code, and it moves together with `services/api/src/llm/providers/bedrock-inference.ts`, which is what can actually route the call.
+`catalog-settings.json` holds what is true for the whole catalog rather than for one directory or one model. Today that is the inference providers: every endpoint Lixpi can send a generation request to, which catalog directories each one serves, the name a platform provider files those models under, and the environment flag that hands a directory to it. Adding a Bedrock-served vendor is a change to this file, not to code, and it moves together with `services/api/src/llm/providers/bedrock-inference.ts`, which is what can actually route the call.
 
-`base-schema.json` declares what every model carries whatever its provider or modality, and who owns each field: `lixpi` for what no source can supply, `source` for what an aggregator publishes, `derived` for what the tree decides. Conditional groups add fields by modality. The merge reads it to know what to demand; the fetch reads it to scaffold a new model's authored file.
+`schema.json` declares what every model carries whatever its provider or modality, and who owns each field: `lixpi` for what no source can supply, `source` for what an aggregator publishes, `derived` for what the tree decides. Conditional groups add fields by modality. The merge reads it to know what to demand; the fetch reads it to scaffold a new model's authored file.
 
 `_base.json` holds what every model in a directory shares: the brand name, the colour, the icon names. Stated once and inherited, and overridden by any model that states its own. A scaffold leaves these out, so a new model's authored file shows only what still needs a decision.
 
 `_catalog-index.json` decides what syncs. `syncMode: "all"` takes everything discovered except `modelsToSkip`; `syncMode: "onlyListed"` takes only what `modelsToSync` names.
 
-`<model>-meta.json` is the account of the merge and holds no values of its own: which sources were consulted and which had data, whether the model is corroborated by more than one catalog, which fields the sources disagreed on, and which fields Lixpi authored, overrode, or inherited. Per field it names who supplied the value, who else answered, and whether they agreed. The values are in the merged file and in each source's file, which is where you compare them.
+`_meta.json` is the account of the merge and holds no values of its own: which sources were consulted and which had data, whether the model is corroborated by more than one catalog, which fields the sources disagreed on, and which fields Lixpi authored, overrode, or inherited. Per field it names who supplied the value, who else answered, and whether they agreed. The values are in the merged file and in each source's file, which is where you compare them.
 
 ### One model, every endpoint that serves it
 
@@ -49,6 +49,14 @@ A source file keys its answers under `byInferenceProvider`, and the merged file 
 Switching the flag that chooses a provider therefore re-prices from data already in the tree and destroys nothing. An endpoint no source publishes for still gets an entry, so an empty one reads as "nobody prices this here" rather than the endpoint appearing not to exist. Authored overrides apply to the top-level record and are deliberately not folded into the per-provider block, which is what the sources say, per endpoint.
 
 The authored file holds what Lixpi owns and nothing else: capabilities, controls, modalities, icons, sort position, titles. Limits and prices are absent, because the sources publish them. A pricing block appears only as an override, and only when no source covers the field or a source measures it differently.
+
+It is edited through `PATCH /api/model-catalog/<provider>/models/<model>/lixpi`, which is what the catalog page's field form calls. The endpoint refuses a model the catalog has never discovered, keeps the previous version in `history/`, and reports which fields it actually changed. Editing the file by hand skips all of that.
+
+### The short title nobody wrote yet
+
+No source publishes a short title, so a newly discovered model has none and cannot reach the database without one. Rather than leaving a blank for someone to find, the merge derives one from the title and the sync writes it into the authored file through that same endpoint, where it shows up in the page and can be changed.
+
+The default is the title with the provider's name removed, plus any leading brand word the directory's `_base.json` lists in `shortTitleDropsLeadingWords`. Anthropic lists `Claude`, so "Claude Fable 5.1" becomes "Fable 5.1", matching the short titles authored there. Google lists nothing, so "Gemini 2.5 Pro" stays whole and "Google Veo 3.1" becomes "Veo 3.1". A short title that is already filled in is never touched, by this or by anything else in the sync.
 
 ### One entry per model family
 
@@ -78,11 +86,19 @@ A price-list failure downgrades the source instead of stopping the run, because 
 
 What Bedrock reports that no model field holds sits in `sourceOnlyFacts` on the route: the model ids behind the family, the id Lixpi would actually invoke and whether that is an inference profile, which price tier the rates were read from, the supported inference types and modalities, streaming support, the lifecycle status and end-of-life date, and every price-list tier with the usage types each rate came from. The merge ignores that block, so reading the file answers more than the merged record can carry.
 
-Both aggregators publish rates for both endpoints, and they differ: Claude Haiku 4.5 is 1.00/5.00 per million direct against 1.10/5.50 in a Bedrock region. The `*_USE_AWS_BEDROCK_INFERENCE` flags decide which one the top-level fields describe, and the meta file names it. Only rates are endpoint-specific: limits and names merge from whichever endpoint a source knows. A source that reports a model on an endpoint `_base-index.json` does not list for that directory is ignored, which is how LiteLLM's Bedrock rates for OpenAI models stay out of a tree whose adapters cannot route them.
+Both aggregators publish rates for both endpoints, and they differ: Claude Haiku 4.5 is 1.00/5.00 per million direct against 1.10/5.50 in a Bedrock region. The `*_USE_AWS_BEDROCK_INFERENCE` flags decide which one the top-level fields describe, and the meta file names it. Only rates are endpoint-specific: limits and names merge from whichever endpoint a source knows. A source that reports a model on an endpoint `catalog-settings.json` does not list for that directory is ignored, which is how LiteLLM's Bedrock rates for OpenAI models stay out of a tree whose adapters cannot route them.
 
 LiteLLM leads because it names each cost family separately, so an image model's image-token rate and its text rate are different fields. models.dev publishes one `cost` per model and cannot say which family it belongs to, so it only claims a rate when the model's output modalities make the family unambiguous. The provider endpoints answer what Lixpi's own account can reach, and they publish more than availability: Anthropic gives each model's display name and both token limits, Google gives the display name, both limits, and the default temperature. OpenAI's listing carries an id and a timestamp and nothing else.
 
-An expired or missing AWS session stops the run rather than being logged and skipped, because a sync that quietly drops everything Bedrock knows looks exactly like a successful one. The error names the profile and the `aws sso login` command to fix it, and the CLI exits with status 2.
+### A run that loses a source is not a run
+
+Any source that cannot answer fails the whole fetch. Not just a dead credential: a vendor listing that returns 500, a rate-limited key, a Bedrock call the account cannot make. The run collects every failure rather than stopping at the first, then raises before a single file is written or deleted, so the tree keeps exactly what the last complete run left.
+
+That is the point of failing rather than continuing. A source that is broken and a source that has nothing to say look identical once written to disk, and continuing would silently reprice models onto whichever sources still answered.
+
+An expired or missing AWS session goes through `err` and stops the run, naming the call that hit it, the profile, and the `aws sso login` command to fix it. The CLI exits with status 2.
+
+Every run records its outcome in `data/_last-sync.json`, whether it finished or failed and which sources failed. The catalog page reads it and shows a banner naming each failed source and what it said, so a stale catalog announces itself instead of looking current.
 
 Every source is recorded, including ones that had nothing. `_source.consulted` says who was asked, and `_source.fields` gives each field's value per source with an `agreement` of `single`, `identical`, or `differs`. Nothing looks corroborated when only one source carries it.
 

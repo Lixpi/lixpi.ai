@@ -2241,9 +2241,11 @@ const canonicalizeHtmlTemplateBoundaries = (
                 trailingWhitespaceStart--
 
             const indentation = getLineIndentation(source, nodeRange[0])
-            const isMultiline = node.loc != null
-                && node.loc.start.line !== node.loc.end.line
-            const inlineLength = (node.loc?.start.column ?? 0) + nodeRange[1] - nodeRange[0]
+            // The parser is asked for ranges only, so node.loc is never populated. Derive the
+            // multiline check and the starting column from the source offsets instead, or every
+            // template shorter than the inline budget collapses onto the tag line.
+            const isMultiline = source.slice(nodeRange[0], nodeRange[1]).includes('\n')
+            const inlineLength = nodeRange[1] - getLineStart(source, nodeRange[0])
             const shouldExpand = isMultiline
                 || inlineLength > maximumInlineArrowFunctionLength
             const leadingWhitespace = shouldExpand ? `\n${indentation}    ` : ''

@@ -27,6 +27,7 @@ import {
 import {
     type CatalogBaseIndex,
 } from './base-index.ts'
+import { deriveShortTitle } from './short-title.ts'
 import { familyId } from './model-identity.ts'
 
 // Resolves one model from its source files, the provider's shared `_base.json`, and
@@ -155,7 +156,7 @@ export class ModelMerger {
             if (!facts)
                 continue
 
-            const sourceName = record._fetchedFrom.sourceName
+            const sourceName = record._meta.sourceId
             reportedBySources.push(sourceName)
             modelKeyAtSource[sourceName] = facts.modelKeyAtSource
 
@@ -247,16 +248,18 @@ export class ModelMerger {
         const inferenceProviders = baseIndex.providersFor(provider)
         const activeProvider = baseIndex.calledByThePlatformFor(provider)
 
-        // What each source said for the provider being called, per leaf path.
+        // What each source said for the provider being called, per leaf path. A source
+        // file's `_meta` describes the fetch, not the model, so nothing in it is read
+        // here and nothing from it reaches the merged record.
         const bySourcePerField = new Map<string, Map<string, unknown>>()
-        const covered: SourceModelRecord[] = bundle.sources.filter(record => record._fetchedFrom.hasDataForThisModel)
+        const covered: SourceModelRecord[] = bundle.sources.filter(record => record._meta.hasDataForThisModel)
         const sourcesOnAnotherRoute: SourceId[] = []
 
         for (const record of covered) {
             const activeFacts = record.byInferenceProvider[activeProvider]
 
             if (!activeFacts)
-                sourcesOnAnotherRoute.push(record._fetchedFrom.sourceName)
+                sourcesOnAnotherRoute.push(record._meta.sourceId)
 
             // Only rates differ per inference provider. A model's context window,
             // output ceiling, and name are the same whichever endpoint serves it, so
@@ -298,7 +301,7 @@ export class ModelMerger {
 
                     claimed.add(path)
                     const perSource = bySourcePerField.get(path) ?? new Map<string, unknown>()
-                    perSource.set(record._fetchedFrom.sourceName, value)
+                    perSource.set(record._meta.sourceId, value)
                     bySourcePerField.set(path, perSource)
                 }
             }
@@ -319,7 +322,7 @@ export class ModelMerger {
         // on the account's own bill, so it wins any pricing field it answers.
         // Everything else, including Bedrock's own limits and names, keeps the
         // ordinary order.
-        const order = bundle.sources.map(record => record._fetchedFrom.sourceName)
+        const order = bundle.sources.map(record => record._meta.sourceId)
 
         const winnerFor = (path: string): SourceId | undefined => {
             const perSource = bySourcePerField.get(path)
@@ -462,7 +465,9 @@ export class ModelMerger {
                         fetchedValue: sourceValue,
                         source: agreement === 'sources-disagree'
                             ? `${winnerFor(path)} (sources differ)`
-                            : String(winnerFor(path)),
+                            : String(
+                                winnerFor(path),
+                            ),
                         isPricing: path.startsWith('pricing'),
                     })
                 }
@@ -524,7 +529,9 @@ export class ModelMerger {
             }
 
             fields[path] = {
-                valueCameFrom: String(winnerFor(path)),
+                valueCameFrom: String(
+                    winnerFor(path),
+                ),
                 sourceAgreement: agreement,
                 sourcesThatAnswered: answeredBy,
             }
@@ -539,8 +546,8 @@ export class ModelMerger {
         // is the current version the provider publishes, which the provider-api
         // record resolves. Without one, the authored file decides, and failing that
         // the family name is the id.
-        const providerApi = bundle.sources.find(record => record._fetchedFrom.sourceName === 'provider-api')
-        const resolvedId = providerApi?._fetchedFrom.publishedVersions?.currentVersion
+        const providerApi = bundle.sources.find(record => record._meta.sourceId === 'provider-api')
+        const resolvedId = providerApi?._meta.publishedVersions?.currentVersion
             ?? (typeof bundle.lixpi.model === 'string' ? bundle.lixpi.model : null)
             ?? modelId
 
@@ -574,11 +581,37 @@ export class ModelMerger {
 
         for (const identity of ['model', 'modelVersion']) {
             fields[identity] = {
-                valueCameFrom: providerApi?._fetchedFrom.publishedVersions
+                valueCameFrom: providerApi?._meta.publishedVersions
                     ? 'provider-api'
                     : 'lixpi-authored-file',
                 sourceAgreement: 'only-one-source-answered',
-                sourcesThatAnswered: providerApi?._fetchedFrom.publishedVersions ? ['provider-api'] : [],
+                sourcesThatAnswered: providerApi?._meta.publishedVersions ? ['provider-api'] : [],
+            }
+        }
+
+        // The short title nobody has authored yet. It is derived from the title the
+        // model already resolved to, so it is only available once the fields above
+        // have merged, and the sync writes it back into the authored file where a
+        // person can change it. An authored one is never touched.
+        const authoredShortTitle = lixpiLeaves.get('shortTitle')
+        const derivedShortTitle = isBlank(authoredShortTitle)
+            || authoredShortTitle === undefined
+            ? deriveShortTitle(
+                typeof values.title === 'string' ? values.title : '',
+                [
+                    typeof values.providerTitle === 'string' ? values.providerTitle : '',
+                    PROVIDER_DIRECTORIES[provider],
+                    ...(bundle.base?.shortTitleDropsLeadingWords ?? []),
+                ],
+            )
+            : null
+
+        if (derivedShortTitle) {
+            values.shortTitle = derivedShortTitle
+            fields.shortTitle = {
+                valueCameFrom: 'derived-from-title',
+                sourceAgreement: 'only-one-source-answered',
+                sourcesThatAnswered: [],
             }
         }
 
@@ -624,8 +657,8 @@ export class ModelMerger {
                 ? 'missing-required-fields'
                 : 'written-to-database'
 
-        const sourcesQueried = bundle.sources.map(record => record._fetchedFrom.sourceName)
-        const sourcesWithData = covered.map(record => record._fetchedFrom.sourceName)
+        const sourcesQueried = bundle.sources.map(record => record._meta.sourceId)
+        const sourcesWithData = covered.map(record => record._meta.sourceId)
 
         const file: MergedModelFile = values as MergedModelFile
 
@@ -676,6 +709,7 @@ export class ModelMerger {
             meta,
             model,
             drift,
+            ...(derivedShortTitle && { authoredFieldsToBackfill: { shortTitle: derivedShortTitle } }),
         }
     }
 }

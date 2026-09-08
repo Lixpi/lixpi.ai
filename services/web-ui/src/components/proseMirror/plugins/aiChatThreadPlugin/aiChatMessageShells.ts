@@ -52,10 +52,12 @@ export const createAiResponseMessageShell = (options: ResponseMessageShellOption
     const wrapperClassName = ['ai-response-message-wrapper', options.wrapperClassName].filter(Boolean).join(' ')
     const loadingIndicator = options.includeLoadingIndicator === false
         ? null
-        : html`<div
+        : html`
+            <div
                 className="ai-response-loading-spinner"
                 aria-hidden="true"
-            ></div>`
+            ></div>
+        `
     const wrapper = html`
         <div
             className=${wrapperClassName}

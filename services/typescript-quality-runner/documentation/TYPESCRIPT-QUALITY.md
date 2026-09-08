@@ -149,7 +149,7 @@ export type {
 
 dprint's Malva plugin formats first-party `.scss` and `.css` files with four spaces and the repository's shared formatting settings. Stylelint parses both formats through `postcss-scss` and enforces these parts of [`SASS-AND-CSS.md`](../../../documentation/coding-style-guides/SASS-AND-CSS.md):
 
-- Lixpi-owned classes use flat kebab-case names. BEM `__` and `--` punctuation, underscores, camelCase, and PascalCase are rejected. Explicit external contracts such as ProseMirror classes are exempt without weakening the application-class pattern.
+- Lixpi-owned classes use flat kebab-case names. BEM `__` and `--` punctuation, underscores, camelCase, and PascalCase are rejected. Explicit external contracts are exempt without weakening the application-class pattern: ProseMirror's classes, and CodeMirror's `cm-` set, which a stylesheet can only match because the editor renders those names itself.
 - CSS custom properties use kebab-case.
 - Nesting is limited to three levels. Blockless at-rules and nested pseudo-class qualifications do not consume the limit.
 - Component transition values must use `hoverTransition`, `standardTransition`, `pupOutTransition`, `overlayVisibilityTransition`, `panelSlideTransition`, or a custom property populated by one of those helpers. Raw transition durations, timing functions, and mixed helper/raw lists are rejected. The shared transition implementation file is the only rule exception.

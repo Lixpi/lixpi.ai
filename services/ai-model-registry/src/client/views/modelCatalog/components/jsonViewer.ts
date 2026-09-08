@@ -14,12 +14,8 @@ import {
     highlightingFor,
     syntaxHighlighting,
 } from '@codemirror/language'
-import {
-    EditorState as CodeMirrorEditorState,
-} from '@codemirror/state'
-import {
-    EditorView as CodeMirrorEditorView,
-} from '@codemirror/view'
+import { EditorState as CodeMirrorEditorState } from '@codemirror/state'
+import { EditorView as CodeMirrorEditorView } from '@codemirror/view'
 import { tags } from '@lezer/highlight'
 import { html } from '@lixpi/ui-primitives/dom'
 
@@ -33,11 +29,10 @@ import { CODE_THEMES } from '$src/views/modelCatalog/components/codeThemes.ts'
 // matches the `{` and `}` it stands in for and stays tied to whichever theme is
 // on. The style is queried through a throwaway state because the marker is built
 // before the viewer's own state exists.
-const accentClass = (highlight: Parameters<typeof syntaxHighlighting>[0]): string =>
-    highlightingFor(
-        CodeMirrorEditorState.create({ extensions: [syntaxHighlighting(highlight)] }),
-        [tags.brace],
-    ) ?? ''
+const accentClass = (highlight: Parameters<typeof syntaxHighlighting>[0]): string => highlightingFor(
+    CodeMirrorEditorState.create({ extensions: [syntaxHighlighting(highlight)] }),
+    [tags.brace],
+) ?? ''
 
 export type JsonViewerConfig = {
     value: unknown
@@ -69,7 +64,11 @@ class JsonViewer implements JsonViewerInstance {
 
         this.view = new CodeMirrorEditorView({
             state: CodeMirrorEditorState.create({
-                doc: JSON.stringify(config.value, null, 4),
+                doc: JSON.stringify(
+                    config.value,
+                    null,
+                    4,
+                ),
                 extensions: [
                     syntaxHighlighting(highlight),
                     json(),
@@ -90,7 +89,6 @@ class JsonViewer implements JsonViewerInstance {
                             ></span>
                         ` as HTMLElement,
                     }),
-                    CodeMirrorEditorView.lineWrapping,
                     // Read-only in both senses: no edits, and no cursor inviting
                     // one. The fields above the viewer are where a model changes.
                     CodeMirrorEditorView.editable.of(false),

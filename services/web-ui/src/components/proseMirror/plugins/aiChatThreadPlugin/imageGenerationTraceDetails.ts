@@ -219,10 +219,12 @@ const createReferenceTile = (
     // here: a hidden image is `display:none`, never intersects the viewport, so a
     // lazy image would never load — `onload` would never fire and the tile would
     // stay blank. Eager loading loads regardless of visibility.
-    const image = html`<img
+    const image = html`
+        <img
             className="ai-image-generation-reference-image"
             alt=${reference.label}
-        />` as HTMLImageElement
+        />
+    ` as HTMLImageElement
     const unavailable = html`<span className="ai-image-generation-reference-unavailable">Unavailable</span>` as HTMLSpanElement
     const tile = html`
         <figure

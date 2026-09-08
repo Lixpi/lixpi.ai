@@ -35,8 +35,29 @@ type Meta = {
     lastSaveMessage: string | null
 }
 
+// What a sync has left to do. Pressing the button marks every provider and every
+// model as waiting, and each one clears as the run reports it done, so the page shows
+// work being got through rather than a single spinner moving down the list.
+export type SyncProgress = {
+    running: boolean
+    phase: 'fetching' | 'merging' | 'writing' | null
+    pendingProviders: string[]
+    // `provider/modelId` of every model the run has not finished with.
+    pendingModels: string[]
+    message: string | null
+}
+
+export const idleSyncProgress: SyncProgress = {
+    running: false,
+    phase: null,
+    pendingProviders: [],
+    pendingModels: [],
+    message: null,
+}
+
 type Data = {
     overview: CatalogOverview | null
+    syncProgress: SyncProgress
     filters: ModelCatalogFilters
     // `provider/modelId` of the model open in the detail panel.
     selectedModelKey: string | null
@@ -84,6 +105,7 @@ const initial: ModelCatalogStore = {
     },
     data: {
         overview: null,
+        syncProgress: idleSyncProgress,
         filters: {
             query: '',
             provider: 'all',

@@ -1,4 +1,29 @@
 {
+    "_meta": {
+        "sourceName": "Google Generative Language API",
+        "sourceId": "provider-api",
+        "queriedEndpoints": [
+            {
+                "endpoint": "GET https://generativelanguage.googleapis.com/v1beta/models",
+                "params": {
+                    "pageSize": 100,
+                    "pagesFetched": 1
+                },
+                "note": "Paged with pageToken until exhausted. The API key travels as a query parameter and is not recorded."
+            }
+        ],
+        "hasDataForThisModel": true,
+        "inferenceProvidersWithData": [
+            "google"
+        ],
+        "fetchedAt": "2026-09-07T23:42:12.611Z",
+        "publishedVersions": {
+            "currentVersion": "gemma-4-26b-a4b-it",
+            "allPublishedVersions": [
+                "gemma-4-26b-a4b-it"
+            ]
+        }
+    },
     "byInferenceProvider": {
         "google": {
             "title": "Gemma 4 26B A4B IT",
@@ -8,20 +33,6 @@
             "model": "gemma-4-26b-a4b-it",
             "modelVersion": "gemma-4-26b-a4b-it",
             "modelKeyAtSource": "gemma-4-26b-a4b-it"
-        }
-    },
-    "_fetchedFrom": {
-        "sourceName": "provider-api",
-        "hasDataForThisModel": true,
-        "inferenceProvidersWithData": [
-            "google"
-        ],
-        "fetchedAt": "2026-09-06T22:40:47.279Z",
-        "publishedVersions": {
-            "currentVersion": "gemma-4-26b-a4b-it",
-            "allPublishedVersions": [
-                "gemma-4-26b-a4b-it"
-            ]
         }
     }
 }

@@ -7,30 +7,14 @@
 import {
     type HighlightStyle,
 } from '@codemirror/language'
-import {
-    basicDarkHighlightStyle,
-} from 'cm6-theme-basic-dark'
-import {
-    basicLightHighlightStyle,
-} from 'cm6-theme-basic-light'
-import {
-    gruvboxDarkHighlightStyle,
-} from 'cm6-theme-gruvbox-dark'
-import {
-    gruvboxLightHighlightStyle,
-} from 'cm6-theme-gruvbox-light'
-import {
-    materialDarkHighlightStyle,
-} from 'cm6-theme-material-dark'
-import {
-    nordHighlightStyle,
-} from 'cm6-theme-nord'
-import {
-    solarizedDarkHighlightStyle,
-} from 'cm6-theme-solarized-dark'
-import {
-    solarizedLightHighlightStyle,
-} from 'cm6-theme-solarized-light'
+import { basicDarkHighlightStyle } from 'cm6-theme-basic-dark'
+import { basicLightHighlightStyle } from 'cm6-theme-basic-light'
+import { gruvboxDarkHighlightStyle } from 'cm6-theme-gruvbox-dark'
+import { gruvboxLightHighlightStyle } from 'cm6-theme-gruvbox-light'
+import { materialDarkHighlightStyle } from 'cm6-theme-material-dark'
+import { nordHighlightStyle } from 'cm6-theme-nord'
+import { solarizedDarkHighlightStyle } from 'cm6-theme-solarized-dark'
+import { solarizedLightHighlightStyle } from 'cm6-theme-solarized-light'
 
 export const CODE_THEMES = {
     basicDark: basicDarkHighlightStyle,

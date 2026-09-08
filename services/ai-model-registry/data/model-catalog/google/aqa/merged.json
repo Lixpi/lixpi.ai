@@ -4,7 +4,6 @@
     "iconName": "geminiIcon",
     "colorIconName": "geminiColorIcon",
     "title": "Model that performs Attributed Question Answering.",
-    "shortTitle": "",
     "sortingPosition": null,
     "modalities": [],
     "defaultTemperature": 0.2,

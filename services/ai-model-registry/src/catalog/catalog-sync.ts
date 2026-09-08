@@ -1,4 +1,10 @@
 import {
+    readFile,
+    writeFile,
+} from 'node:fs/promises'
+import { join } from 'node:path'
+
+import {
     info,
     warn,
 } from '@lixpi/debug-tools'
@@ -7,6 +13,7 @@ import {
 } from '@lixpi/constants'
 
 import { CatalogBaseIndex } from './base-index.ts'
+import { CatalogConfigApi } from './catalog-config-api.ts'
 import { CatalogFetcher } from './catalog-fetcher.ts'
 import { CatalogSchema } from './base-schema.ts'
 import {
@@ -17,17 +24,27 @@ import {
     DynamoDbCatalogWriter,
     type CatalogWriteResult,
 } from './dynamodb-catalog-writer.ts'
+import { CatalogFetchIncomplete } from './fetch-incomplete-error.ts'
+import { CredentialsExpiredError } from './sources/credentials-error.ts'
 import { ModelCatalogStore } from './model-catalog-store.ts'
+import { redactSensitive } from './redact.ts'
 import { ModelMerger } from './model-merger.ts'
 import { ProviderCatalogIndex } from './catalog-index.ts'
 import {
+    LAST_SYNC_FILE,
     PROVIDER_DIRECTORIES,
+    type LastSyncOutcome,
     type MergedModel,
     type ProviderDirectory,
+    type SourceFailure,
+    type SyncProgressListener,
 } from './types.ts'
 
 export type CatalogSyncOptions = {
     catalogDir: string
+    // Whether to ask the sources at all. Off means merge the tree as it stands, which
+    // is a different question from whether the result may be written down.
+    fetchFromSources: boolean
     // Off in production, where the catalog tree ships with the image and is read
     // only. A production run merges what shipped and writes DynamoDB.
     writeCatalogFiles: boolean
@@ -63,12 +80,28 @@ export type CatalogSyncResult = {
 // field the schema demands is filled in.
 export class CatalogSync {
     private readonly store: ModelCatalogStore
+    private readonly lastSyncPath: string
 
     constructor(private readonly options: CatalogSyncOptions) {
         this.store = new ModelCatalogStore(options.catalogDir)
+        this.lastSyncPath = join(
+            options.catalogDir,
+            '..',
+            LAST_SYNC_FILE,
+        )
     }
 
-    private async mergeAll(): Promise<MergedModel[]> {
+    // What the last run did, for a caller that did not run it: the server reads this
+    // to tell the page whether the catalog in front of it is current.
+    async readLastOutcome(): Promise<LastSyncOutcome | null> {
+        try {
+            return JSON.parse(await readFile(this.lastSyncPath, 'utf8')) as LastSyncOutcome
+        } catch {
+            return null
+        }
+    }
+
+    private async mergeAll(onProgress?: SyncProgressListener): Promise<MergedModel[]> {
         const schema = await CatalogSchema.load(this.store.rootDir)
         const baseIndex = await CatalogBaseIndex.load(this.store.rootDir)
         const merger = new ModelMerger(schema)
@@ -77,7 +110,17 @@ export class CatalogSync {
         for (const provider of this.store.listProviders()) {
             const index = await ProviderCatalogIndex.load(this.store.rootDir, provider)
 
+            onProgress?.({
+                type: 'provider-started',
+                provider,
+            })
+
             for (const modelId of await this.store.listModels(provider)) {
+                onProgress?.({
+                    type: 'model-started',
+                    provider,
+                    modelId,
+                })
                 const bundle = await this.store.loadBundle(provider, modelId)
                 merged.push(
                     merger.merge(
@@ -86,7 +129,17 @@ export class CatalogSync {
                         baseIndex,
                     ),
                 )
+                onProgress?.({
+                    type: 'model-finished',
+                    provider,
+                    modelId,
+                })
             }
+
+            onProgress?.({
+                type: 'provider-finished',
+                provider,
+            })
         }
 
         return merged
@@ -109,20 +162,163 @@ export class CatalogSync {
         ).filter(entry => entry.detail.length > 0)
     }
 
-    async run(): Promise<CatalogSyncResult> {
-        const ranAt = new Date().toISOString()
+    // Defaults the merge worked out for fields the authored file owns, written back
+    // through the same endpoint the catalog page patches with, so they land in
+    // history/ and a person can change them afterwards. Only blank fields reach here,
+    // so an authored value is never overwritten.
+    private async backfillAuthoredFields(merged: MergedModel[]): Promise<string[]> {
+        const config = new CatalogConfigApi(
+            this.store.rootDir,
+            join(
+                this.store.rootDir,
+                '..',
+                'history',
+            ),
+        )
+        const filled: string[] = []
 
-        if (this.options.writeCatalogFiles) {
+        for (const entry of merged) {
+            if (
+                !entry.authoredFieldsToBackfill
+                || entry.meta.syncStatus === 'skipped-by-catalog-index'
+            )
+                continue
+
+            const knownModels = new Set(
+                merged.filter(candidate => candidate.provider === entry.provider).map(candidate => candidate.modelId),
+            )
+            const result = await config.patchModel(
+                entry.provider,
+                entry.modelId,
+                { fields: entry.authoredFieldsToBackfill },
+                knownModels,
+            )
+
+            if ('error' in result) {
+                warn(`Could not fill in ${entry.provider}/${entry.modelId}: ${result.error} ${result.detail}`)
+
+                continue
+            }
+
+            if (result.applied.length > 0)
+                filled.push(`${PROVIDER_DIRECTORIES[entry.provider]}:${entry.modelId} ${result.applied.join(', ')}`)
+        }
+
+        return filled
+    }
+
+    // The outcome of the last run, written beside the tree so the page can say whether
+    // what it is showing is current. A run started from the CLI, from the scheduled
+    // loop, or over HTTP all land in the same file, so the answer does not depend on
+    // which process happened to run it.
+    private async recordOutcome(outcome: LastSyncOutcome): Promise<void> {
+        // Redacted here as well as at each source. This file is served to the page, so
+        // it is the last point at which something identifying can be caught, and it
+        // catches whatever a message picked up on its way through.
+        const safe: LastSyncOutcome = {
+            ...outcome,
+            ...(outcome.error && {
+                error: {
+                    ...outcome.error,
+                    message: redactSensitive(outcome.error.message),
+                    sourceFailures: outcome.error.sourceFailures.map(
+                        failure => ({
+                            ...failure,
+                            message: redactSensitive(failure.message),
+                        }),
+                    ),
+                },
+            }),
+        }
+
+        try {
+            await writeFile(
+                this.lastSyncPath,
+                `${JSON.stringify(
+                    safe,
+                    null,
+                    4,
+                )}\n`,
+                'utf8',
+            )
+        } catch (error) {
+            warn(`Could not record the sync outcome: ${error instanceof Error ? error.message : String(error)}`)
+        }
+    }
+
+    async run(onProgress?: SyncProgressListener): Promise<CatalogSyncResult> {
+        const ranAt = new Date().toISOString()
+        onProgress?.({
+            type: 'run-started',
+            ranAt,
+        })
+
+        try {
+            const result = await this.runOrThrow(ranAt, onProgress)
+            onProgress?.({
+                type: 'run-finished',
+                status: 'completed',
+            })
+
+            return result
+        } catch (error) {
+            const sourceFailures: SourceFailure[] = error instanceof CatalogFetchIncomplete
+                ? error.failures
+                : []
+            await this.recordOutcome({
+                ranAt,
+                finishedAt: new Date().toISOString(),
+                status: 'failed',
+                error: {
+                    name: error instanceof Error ? error.name : 'Error',
+                    message: error instanceof Error ? error.message : String(error),
+                    sourceFailures: error instanceof CredentialsExpiredError
+                        ? [{
+                            sourceId: 'bedrock',
+                            sourceName: 'AWS Bedrock',
+                            message: error.message,
+                        }]
+                        : sourceFailures,
+                },
+            })
+            onProgress?.({
+                type: 'run-finished',
+                status: 'failed',
+                message: error instanceof Error ? redactSensitive(error.message) : String(error),
+            })
+
+            throw error
+        }
+    }
+
+    private async runOrThrow(
+        ranAt: string,
+        onProgress?: SyncProgressListener,
+    ): Promise<CatalogSyncResult> {
+        if (this.options.fetchFromSources) {
             const schema = await CatalogSchema.load(this.store.rootDir)
             const baseIndex = await CatalogBaseIndex.load(this.store.rootDir)
+            onProgress?.({
+                type: 'phase',
+                phase: 'fetching',
+            })
             await new CatalogFetcher(
                 this.store,
                 schema,
                 baseIndex,
-            ).run()
+            ).run(onProgress)
         }
 
-        const merged = await this.mergeAll()
+        onProgress?.({
+            type: 'phase',
+            phase: 'merging',
+        })
+        const merged = await this.mergeAll(onProgress)
+
+        if (this.options.writeCatalogFiles) {
+            for (const filled of await this.backfillAuthoredFields(merged))
+                info(`FILLED IN ${filled}: a default the merge worked out, now authored and editable`)
+        }
 
         // A model the catalog index skips is removed from the tree entirely, its
         // directory included, after everything in it is copied into history/. Leaving
@@ -194,6 +390,11 @@ export class CatalogSync {
 
         const write: Record<string, CatalogWriteResult> = {}
 
+        onProgress?.({
+            type: 'phase',
+            phase: 'writing',
+        })
+
         if (this.options.writeDynamoDb) {
             const writer = new DynamoDbCatalogWriter()
 
@@ -226,6 +427,14 @@ export class CatalogSync {
         info(
             `Catalog sync complete: ${merged.length} models in the tree, ${included} written, ${incomplete.length} incomplete, ${excluded.length} excluded, ${drift.total} drift findings`,
         )
+
+        await this.recordOutcome({
+            ranAt,
+            finishedAt: new Date().toISOString(),
+            status: 'completed',
+            models: merged.length,
+            written: included,
+        })
 
         return result
     }

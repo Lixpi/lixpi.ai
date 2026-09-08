@@ -14,19 +14,21 @@ Registry data and production code form one contract. A model or parameter fact i
 | Tree | What it holds | Who writes it |
 |---|---|---|
 | `data/params/` | Generation parameters per media type and provider: provider documentation, compatibility, implementation state, and the decision Lixpi made about each one. | Humans, through the container API |
-| `data/model-catalog/` | The models themselves. `_base-index.json` and `base-schema.json` at the root, then one directory per provider holding `_base.json` and `_catalog-index.json` and, per model, one file per source plus `lixpi.json`, `merged.json`, and `meta.json`. | The authored files by hand, everything else by the sync |
+| `data/model-catalog/` | The models themselves. `catalog-settings.json` and `schema.json` at the root, then one directory per provider holding `_base.json` and `_catalog-index.json` and, per model, one file per source plus `lixpi.json`, `merged.json`, and `_meta.json`. | The authored files by hand, everything else by the sync |
 
-`_base-index.json` holds the catalog-wide settings, which today are the inference providers: every endpoint Lixpi can send a generation request to, the catalog directories each serves, and the environment flag that hands a directory to a platform provider. It decides which endpoints a model file carries values for and which the platform is calling, so a routing change is a data change here plus the matching provider adapter.
+`catalog-settings.json` holds the catalog-wide settings, which today are the inference providers: every endpoint Lixpi can send a generation request to, the catalog directories each serves, and the environment flag that hands a directory to a platform provider. It decides which endpoints a model file carries values for and which the platform is calling, so a routing change is a data change here plus the matching provider adapter.
 
 Every model records its values per inference provider. A source file keys them under `byInferenceProvider` and the merged file carries an `inferenceProviders` block with one entry per endpoint, alongside `inferenceProviderCalledByThePlatform` and the top-level fields that describe that call. A price on an endpoint Lixpi is not calling today is still a fact about the model and is never dropped.
 
-`base-schema.json` declares the fields every model carries whatever its provider or modality, their types, and their owner: `lixpi` for what no source can supply, `source` for what an aggregator publishes, `derived` for what the tree itself decides. Conditional groups add fields by modality.
+`schema.json` declares the fields every model carries whatever its provider or modality, their types, and their owner: `lixpi` for what no source can supply, `source` for what an aggregator publishes, `derived` for what the tree itself decides. Conditional groups add fields by modality.
+
+The authored file is edited through `PATCH /api/model-catalog/<provider>/models/<model>/lixpi`, the endpoint the catalog page's field form calls, which validates the model, snapshots the previous version, and reports what changed. One field fills itself in: a model discovered without a short title gets the title with its provider name and any brand prefix in `_base.json`'s `shortTitleDropsLeadingWords` removed, written through that same endpoint so it is authored and editable rather than re-decided on every run. An authored short title is never overwritten.
 
 The authored `-lixpi.json` holds only the `lixpi` half: capability flags, generation controls, modalities, icons, sort position, and titles, stated in full with no inheritance and no shared fragment to look up. Limits and prices are absent, because the sources publish them.
 
 `_base.json` holds the fields every model in a directory shares, such as the brand name and icons. A model's own authored file overrides anything stated there.
 
-`<model>-meta.json` records how each model was resolved and carries no values: which sources were consulted and which had data, whether more than one corroborated it, which fields they disagreed on, and which fields Lixpi authored, overrode, or inherited. Per field it names who supplied the value and who else answered. The values live in the merged file and the source files.
+`_meta.json` records how each model was resolved and carries no values: which sources were consulted and which had data, whether more than one corroborated it, which fields they disagreed on, and which fields Lixpi authored, overrode, or inherited. Per field it names who supplied the value and who else answered. The values live in the merged file and the source files.
 
 `_catalog-index.json` decides which of a provider's models sync. Discovery is separate: a model a provider lists gets an empty scaffold, and the index says what to do about it. A model reaches DynamoDB only when the index includes it and every field the schema demands is filled in; each `-merged.json` records whether it is `included`, `incomplete`, or `excluded`.
 
@@ -59,6 +61,8 @@ Filling a blank is an override, and it is the only way a Lixpi file asserts a nu
 - A source covers it in a different unit. Stability prices in credits while LiteLLM publishes dollars per image, so the merge refuses the value rather than converting it by guesswork and logs `UNIT MISMATCH`.
 
 Once a file states a value, the sync reports every later disagreement with the source instead of resolving it. Price disagreements are reported separately, because pricing reaches billing over the `metrics.*` wire.
+
+A fetch is all or nothing. If any source fails, for any provider, the run raises before writing and the tree keeps what the last complete run left; a partial write would record a broken source as a source with nothing to say. Every run writes its outcome to `data/_last-sync.json`, and the catalog page shows a banner naming the sources that failed and what they said.
 
 ## Changes that require a registry review
 

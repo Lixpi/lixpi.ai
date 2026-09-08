@@ -80,11 +80,13 @@ const downloadViaFetch = async (
     const resolvedFilename = filename ?? deriveFilename(imageUrl, blob)
 
     const objectUrl = URL.createObjectURL(blob)
-    const anchor = html`<a
+    const anchor = html`
+        <a
             href=${objectUrl}
             download=${resolvedFilename}
             style=${{ display: 'none' }}
-        ></a>` as HTMLAnchorElement
+        ></a>
+    ` as HTMLAnchorElement
 
     document.body.appendChild(anchor)
     anchor.click()
@@ -121,10 +123,12 @@ const downloadViaNavigation = async (
     // Use a hidden iframe so the current page isn't disrupted.
     // The server responds with Content-Disposition: attachment which
     // triggers the browser's native save dialog.
-    const iframe = html`<iframe
+    const iframe = html`
+        <iframe
             src=${downloadUrl}
             style=${{ display: 'none' }}
-        ></iframe>` as HTMLIFrameElement
+        ></iframe>
+    ` as HTMLIFrameElement
     document.body.appendChild(iframe)
 
     setTimeout(() => void document.body.removeChild(iframe), 30000)

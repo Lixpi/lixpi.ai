@@ -39,6 +39,7 @@ export class CatalogSyncService {
             // production run fetches into memory and writes only DynamoDB. In
             // development the tree is bind-mounted and the fetched files are the
             // point of the run.
+            fetchFromSources: true,
             writeCatalogFiles: env.MODEL_CATALOG_WRITE_FILES?.trim().toLowerCase() === 'true',
             writeDynamoDb: env.MODEL_CATALOG_WRITE_DYNAMODB?.trim().toLowerCase() !== 'false',
         })

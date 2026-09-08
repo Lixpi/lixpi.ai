@@ -10,7 +10,7 @@ import {
     type ProviderDirectory,
 } from './types.ts'
 
-// `_base-index.json` holds what is true for the whole catalog rather than for one
+// `catalog-settings.json` holds what is true for the whole catalog rather than for one
 // directory or one model. Today that is the inference providers: which endpoints
 // Lixpi can call, which catalog directories each of them serves, and which
 // environment flag hands a directory to a platform provider.
@@ -47,10 +47,8 @@ export class CatalogBaseIndex {
     // first. This is the full set a model file carries values for; whether a
     // particular provider has any is a question for the sources.
     providersFor(directory: ProviderDirectory): InferenceProviderId[] {
-        return this.entries
-            .filter(([, entry]) => entry.servesCatalogDirectories.includes(directory))
-            .sort(([, left], [, right]) => Number(left.kind !== 'vendor-api') - Number(right.kind !== 'vendor-api'))
-            .map(([id]) => id)
+        return this.entries.filter(([, entry]) => entry.servesCatalogDirectories.includes(directory))
+            .sort(([, left], [, right]) => Number(left.kind !== 'vendor-api') - Number(right.kind !== 'vendor-api')).map(([id]) => id)
     }
 
     // The name a platform provider lists a directory's models under, when it uses one
@@ -61,8 +59,10 @@ export class CatalogBaseIndex {
 
     // The vendor's own API, which is the id matching the directory name.
     vendorApiFor(directory: ProviderDirectory): InferenceProviderId {
-        const found = this.entries.find(([, entry]) => entry.kind === 'vendor-api'
-            && entry.servesCatalogDirectories.includes(directory))
+        const found = this.entries.find(
+            ([, entry]) => entry.kind === 'vendor-api'
+                && entry.servesCatalogDirectories.includes(directory),
+        )
 
         if (!found)
             throw new Error(`NO_VENDOR_API_INFERENCE_PROVIDER:${directory}`)

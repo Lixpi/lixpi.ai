@@ -1,4 +1,20 @@
 {
+    "_meta": {
+        "sourceName": "LiteLLM model_prices_and_context_window.json",
+        "sourceId": "litellm",
+        "queriedEndpoints": [
+            {
+                "endpoint": "https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json",
+                "note": "Whole catalog fetched once per run and matched by model key."
+            }
+        ],
+        "hasDataForThisModel": true,
+        "inferenceProvidersWithData": [
+            "anthropic",
+            "aws-bedrock"
+        ],
+        "fetchedAt": "2026-09-07T23:42:12.433Z"
+    },
     "byInferenceProvider": {
         "anthropic": {
             "contextWindow": 1000000,
@@ -36,14 +52,5 @@
             },
             "modelKeyAtSource": "anthropic.claude-fable-5-1"
         }
-    },
-    "_fetchedFrom": {
-        "sourceName": "litellm",
-        "hasDataForThisModel": true,
-        "inferenceProvidersWithData": [
-            "anthropic",
-            "aws-bedrock"
-        ],
-        "fetchedAt": "2026-09-06T22:40:47.126Z"
     }
 }

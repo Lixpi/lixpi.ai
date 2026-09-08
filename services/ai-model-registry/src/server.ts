@@ -28,9 +28,13 @@ import {
     type Status,
 } from './store.ts'
 import { CatalogConfigApi } from './catalog/catalog-config-api.ts'
-import { PROVIDER_DIRECTORIES } from './catalog/types.ts'
+import {
+    PROVIDER_DIRECTORIES,
+    type SyncProgressEvent,
+} from './catalog/types.ts'
 import { CatalogSync } from './catalog/catalog-sync.ts'
 import { CatalogSyncService } from './catalog/catalog-sync-service.ts'
+import { SyncRunner } from './catalog/sync-runner.ts'
 
 const HERE = dirname(
     fileURLToPath(import.meta.url),
@@ -133,18 +137,21 @@ class AiModelRegistryServer {
     private readonly catalogSync: CatalogSync
     private readonly catalogConfig: CatalogConfigApi
     private readonly syncService: CatalogSyncService | null
+    private readonly syncRunner: SyncRunner
     constructor(
         tree: ParamTree,
         port: number,
         catalogSync: CatalogSync,
         catalogConfig: CatalogConfigApi,
         syncService: CatalogSyncService | null,
+        syncRunner: SyncRunner,
     ) {
         this.tree = tree
         this.port = port
         this.catalogSync = catalogSync
         this.catalogConfig = catalogConfig
         this.syncService = syncService
+        this.syncRunner = syncRunner
     }
 
     // Assembles the catalog the page renders. Every parameter carries the models
@@ -235,7 +242,8 @@ class AiModelRegistryServer {
         // Client routes such as /model-parameters and /model-catalog are not files.
         // Anything without a file extension is the single-page app, so a reload or a
         // pasted link lands on the page rather than a 404.
-        const relative = pathname === '/' || extname(pathname) === ''
+        const relative = pathname === '/'
+            || extname(pathname) === ''
             ? 'index.html'
             : normalize(pathname).replace(/^(\.\.[/\\])+/u, '').replace(/^[/\\]+/u, '')
         const filePath = join(PUBLIC_DIR, relative)
@@ -418,8 +426,10 @@ class AiModelRegistryServer {
                     baseIndex: await this.catalogConfig.readBaseIndex(),
                     providers,
                     models,
-                    syncEnabled: this.syncService !== null,
                     lastSync: this.syncService?.getLastResult()?.ranAt ?? null,
+                    // Whoever ran the last sync, the page needs to know whether the
+                    // catalog it is showing came from a run that finished.
+                    lastSyncOutcome: await this.catalogSync.readLastOutcome(),
                 },
             )
 
@@ -543,26 +553,59 @@ class AiModelRegistryServer {
             }
         }
 
+        // Starts a run and answers at once. What the run is doing goes back over the
+        // event stream below, so the page shows a sync happening instead of a button
+        // that goes quiet for a minute.
         if (
             req.method === 'POST'
             && pathname === '/api/models/sync'
         ) {
-            if (!this.syncService) {
-                AiModelRegistryServer.sendJson(
-                    res,
-                    409,
-                    { error: 'Catalog sync is disabled. Set MODEL_CATALOG_SYNC_ENABLED=true to run it from this service.' },
-                )
-
-                return
-            }
-
-            const result = await this.syncService.runOnce()
+            const {
+                started,
+            } = this.syncRunner.start()
             AiModelRegistryServer.sendJson(
                 res,
-                result ? 200 : 409,
-                result ?? { error: 'A catalog sync is already running' },
+                200,
+                {
+                    started,
+                    // Not an error: pressing the button during a run joins that run.
+                    alreadyRunning: !started,
+                },
             )
+
+            return
+        }
+
+        // Server-sent events. Every subscriber gets what has already happened in the
+        // current run before it sees anything live, so a page opened or reloaded
+        // mid-run catches up rather than showing an idle button.
+        if (
+            req.method === 'GET'
+            && pathname === '/api/models/sync/events'
+        ) {
+            res.writeHead(
+                200,
+                {
+                    'content-type': 'text/event-stream',
+                    'cache-control': 'no-cache',
+                    connection: 'keep-alive',
+                },
+            )
+
+            const send = (event: SyncProgressEvent): void => void res.write(`data: ${JSON.stringify(event)}\n\n`)
+
+            for (const event of this.syncRunner.history())
+                send(event)
+
+            if (!this.syncRunner.isRunning()) {
+                send({
+                    type: 'run-finished',
+                    status: 'completed',
+                })
+            }
+
+            const unsubscribe = this.syncRunner.subscribe(send)
+            req.on('close', unsubscribe)
 
             return
         }
@@ -950,6 +993,7 @@ new AiModelRegistryServer(
     PORT,
     new CatalogSync({
         catalogDir: MODEL_CATALOG_DIR,
+        fetchFromSources: false,
         writeCatalogFiles: false,
         writeDynamoDb: false,
     }),
@@ -962,4 +1006,5 @@ new AiModelRegistryServer(
         ),
     ),
     CATALOG_SYNC_ENABLED ? new CatalogSyncService() : null,
+    new SyncRunner(MODEL_CATALOG_DIR),
 ).start()

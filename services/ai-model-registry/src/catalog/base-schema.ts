@@ -8,7 +8,7 @@ import {
     type SchemaField,
 } from './types.ts'
 
-// base-schema.json says which fields every model carries and who owns each one.
+// schema.json says which fields every model carries and who owns each one.
 // The merge uses it to know what to demand and what to leave to a source, and the
 // fetch uses it to scaffold a -lixpi.json for a model nobody has authored yet.
 export class CatalogSchema {

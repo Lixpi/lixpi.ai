@@ -71,9 +71,7 @@ class Layout implements LayoutInstance {
             </div>
         ` as HTMLElement
 
-        this.unsubscribeRouter = routerStore.subscribe(
-            ({ data }) => void this.renderRoute(data.currentRoute.path),
-        )
+        this.unsubscribeRouter = routerStore.subscribe(({ data }) => void this.renderRoute(data.currentRoute.path))
     }
 
     private renderSidebar(): HTMLElement {

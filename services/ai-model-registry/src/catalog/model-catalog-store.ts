@@ -241,11 +241,65 @@ export class ModelCatalogStore {
                 ),
             )
 
-            if (record)
-                records.push(record)
+            if (!record)
+                continue
+
+            // A file written before the current shape has no `_meta`, and merging it
+            // would fail somewhere further in with nothing pointing at the file. The
+            // fix is always the same: fetch again.
+            if (!record._meta) {
+                throw new Error(
+                    `SOURCE_FILE_SHAPE_OUTDATED:${provider}/${modelId}/${SOURCE_FILE_NAMES[source]}: no _meta section. Run the sync with fetching enabled to rewrite it.`,
+                )
+            }
+
+            records.push(record)
         }
 
         return records
+    }
+
+    // Deletes every fetched file in a model's directory that this run did not write.
+    // A source file states what a source said on the run that produced it, so one left
+    // behind by a source that was skipped, renamed, or removed is a claim nobody
+    // stands behind any more. The authored, merged, and meta files are the tree's own
+    // and are never touched here.
+    async removeUnwrittenSourceFiles(
+        provider: ProviderDirectory,
+        modelId: string,
+        written: Set<string>,
+    ): Promise<string[]> {
+        const dir = this.modelDir(provider, modelId)
+        const kept = new Set([
+            LIXPI_FILE,
+            MERGED_FILE,
+            META_FILE,
+            ...written,
+        ])
+        const removed: string[] = []
+
+        let entries: string[] = []
+
+        try {
+            entries = await readdir(dir)
+        } catch {
+            return removed
+        }
+
+        for (const entry of entries) {
+            if (
+                !entry.endsWith('.json')
+                || kept.has(entry)
+            )
+                continue
+
+            await unlink(
+                join(dir, entry),
+            ).catch(() => undefined)
+            removed.push(`${provider}/${modelId}/${entry}`)
+        }
+
+        return removed
     }
 
     async readProviderBase(provider: ProviderDirectory): Promise<ProviderBase | null> {

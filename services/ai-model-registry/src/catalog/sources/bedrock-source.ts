@@ -9,12 +9,14 @@ import { fromSSO } from '@aws-sdk/credential-providers'
 import process from 'node:process'
 
 import {
+    err,
     info,
-    warn,
 } from '@lixpi/debug-tools'
 
 import {
     BedrockPricing,
+    PRICE_LIST_SERVICE_CODES,
+    PRICING_API_REGION,
     type BedrockModelRates,
     type BedrockRateTier,
 } from './bedrock-pricing.ts'
@@ -22,6 +24,7 @@ import {
     CredentialsExpiredError,
     isCredentialsProblem,
 } from './credentials-error.ts'
+import { redactSensitive } from '../redact.ts'
 import {
     type LixpiModelRecord,
     type ProviderDirectory,
@@ -29,6 +32,8 @@ import {
 } from '../types.ts'
 import {
     type ModelSource,
+    type SourceEndpointQuery,
+    type SourceFailure,
     type SourceModelFacts,
 } from './model-source.ts'
 
@@ -104,11 +109,13 @@ export class BedrockSource implements ModelSource {
     readonly id: SourceId = 'bedrock'
 
     private readonly facts = new Map<ProviderDirectory, BedrockModelFacts | null>()
+    private readonly queries = new Map<ProviderDirectory, SourceEndpointQuery[]>()
+    private readonly loadFailures: SourceFailure[] = []
     private readonly pricing = new BedrockPricing(process.env.AWS_REGION ?? 'us-east-1')
     private profiles: InferenceProfileSummary[] = []
 
     // Which catalog directory Bedrock serves, and the name it lists each one's models
-    // under. It comes from `_base-index.json` rather than a constant here, so adding a
+    // under. It comes from `catalog-settings.json` rather than a constant here, so adding a
     // Bedrock-served vendor is a data change. Every directory named is fetched on
     // every run whatever the `*_USE_AWS_BEDROCK_INFERENCE` flags say: a model's Bedrock
     // rates belong in the catalog whether or not Lixpi is billing on them today, so
@@ -135,16 +142,25 @@ export class BedrockSource implements ModelSource {
         }
     }
 
-    // The price list is a separate API behind its own `pricing:GetProducts`
-    // permission, so losing it means the account cannot read rates, not that the
-    // session is gone. It downgrades the source and the sync carries on with the
-    // aggregators' rates. An expired session is caught by the model listing, which
-    // stops the run for every source at once.
+    // Losing the price list to its own `pricing:GetProducts` permission means the
+    // account cannot read rates, and the sync carries on with the aggregators'. An
+    // expired session is a different thing entirely and is never downgraded to a
+    // warning: it is logged as an error and stops the run, because a catalog quietly
+    // missing every Bedrock rate looks exactly like a successful one.
     private async loadPricing(): Promise<void> {
         try {
             await this.pricing.load()
         } catch (error) {
-            warn(`Bedrock price list skipped: ${error instanceof Error ? error.message : String(error)}. Bedrock-route rates fall back to the aggregators.`)
+            if (isCredentialsProblem(error)) {
+                const expired = new CredentialsExpiredError(error)
+                err(`AWS price list unreachable. ${expired.message}`)
+
+                throw expired
+            }
+
+            const message = redactSensitive(error instanceof Error ? error.message : String(error))
+            err(`AWS price list failed, so no Bedrock rate is current: ${message}`)
+            this.recordFailure(`Price list (pricing:GetProducts): ${message}`)
         }
     }
 
@@ -155,7 +171,9 @@ export class BedrockSource implements ModelSource {
 
         try {
             do {
-                const response = await client.send(new ListInferenceProfilesCommand({ nextToken }))
+                const response = await client.send(
+                    new ListInferenceProfilesCommand({ nextToken }),
+                )
                 profiles.push(...(response.inferenceProfileSummaries ?? []))
                 nextToken = response.nextToken
             } while (nextToken)
@@ -163,18 +181,89 @@ export class BedrockSource implements ModelSource {
             info(`Bedrock returned ${profiles.length} inference profiles`)
         } catch (error) {
             if (isCredentialsProblem(error))
-                throw new CredentialsExpiredError(process.env.AWS_PROFILE ?? 'default', error)
+                throw this.credentialsExpired('Bedrock inference profiles unreachable', error)
 
-            warn(`Bedrock inference profiles skipped: ${error instanceof Error ? error.message : String(error)}`)
+            const message = redactSensitive(error instanceof Error ? error.message : String(error))
+            err(`Bedrock inference profiles failed: ${message}`)
+            this.recordFailure(`Inference profiles (bedrock:ListInferenceProfiles): ${message}`)
         }
 
         return profiles
+    }
+
+    // Logged here rather than only at the top of the run, so the console names which
+    // AWS call hit the expired session.
+    private credentialsExpired(
+        what: string,
+        cause: unknown,
+    ): CredentialsExpiredError {
+        const expired = new CredentialsExpiredError(cause)
+        err(`${what}. ${expired.message}`)
+
+        return expired
+    }
+
+    sourceName(): string {
+        return 'AWS Bedrock'
+    }
+
+    failures(): SourceFailure[] {
+        return this.loadFailures
+    }
+
+    private recordFailure(
+        message: string,
+        provider?: ProviderDirectory,
+    ): void {
+        this.loadFailures.push({
+            sourceId: this.id,
+            sourceName: 'AWS Bedrock',
+            ...(provider && { provider }),
+            message,
+        })
+    }
+
+    // Three AWS calls stand behind every Bedrock file, and the file states all three
+    // with the arguments this run used: the region, the vendor name the listing was
+    // filtered by, and the price-list service codes.
+    queriedEndpoints(provider: ProviderDirectory): SourceEndpointQuery[] {
+        return this.queries.get(provider) ?? []
     }
 
     private async loadProvider(
         provider: ProviderDirectory,
         bedrockProvider: string,
     ): Promise<BedrockModelFacts | null> {
+        const region = process.env.AWS_REGION ?? 'us-east-1'
+        this.queries.set(
+            provider,
+            [
+                {
+                    endpoint: 'bedrock:ListFoundationModels',
+                    params: {
+                        region,
+                        byProvider: bedrockProvider,
+                    },
+                },
+                {
+                    endpoint: 'bedrock:ListInferenceProfiles',
+                    params: { region },
+                    note: 'Fetched once per run for every vendor, and read here to resolve the id an on-demand-less model is invoked through.',
+                },
+                {
+                    endpoint: 'pricing:GetProducts',
+                    params: {
+                        region: PRICING_API_REGION,
+                        serviceCodes: PRICE_LIST_SERVICE_CODES,
+                        filters: { regionCode: region },
+                    },
+                    note: this.pricing.isLoaded()
+                        ? 'Rates read from the AWS price list for that region.'
+                        : 'The price list was unavailable on this run, so no rate came from here.',
+                },
+            ],
+        )
+
         try {
             const response = await this.client().send(
                 new ListFoundationModelsCommand({ byProvider: bedrockProvider }),
@@ -187,10 +276,7 @@ export class BedrockSource implements ModelSource {
                 if (!modelId)
                     continue
 
-                summaries.set(
-                    modelId,
-                    [...(summaries.get(modelId) ?? []), summary],
-                )
+                summaries.set(modelId, [...(summaries.get(modelId) ?? []), summary])
             }
 
             const facts: BedrockModelFacts = new Map()
@@ -207,11 +293,14 @@ export class BedrockSource implements ModelSource {
             return facts
         } catch (error) {
             // An expired session is not a provider outage. Continuing would produce a
-            // catalog quietly missing everything Bedrock knows, so the run stops.
+            // catalog quietly missing everything Bedrock knows, so it is logged as an
+            // error and the run stops.
             if (isCredentialsProblem(error))
-                throw new CredentialsExpiredError(process.env.AWS_PROFILE ?? 'default', error)
+                throw this.credentialsExpired(`Bedrock ${bedrockProvider} catalog unreachable`, error)
 
-            warn(`Bedrock ${bedrockProvider} catalog skipped: ${error instanceof Error ? error.message : String(error)}`)
+            const message = redactSensitive(error instanceof Error ? error.message : String(error))
+            err(`Bedrock ${bedrockProvider} catalog failed: ${message}`)
+            this.recordFailure(`Foundation models (bedrock:ListFoundationModels, byProvider ${bedrockProvider}): ${message}`, provider)
 
             return null
         }
@@ -230,7 +319,9 @@ export class BedrockSource implements ModelSource {
         const profile = onDemand
             ? undefined
             : this.profileFor(selected.modelId)
-        const modelIdToInvoke = profile?.inferenceProfileId ?? selected.modelId ?? modelId
+        const modelIdToInvoke = profile?.inferenceProfileId
+            ?? selected.modelId
+            ?? modelId
         const rates = this.pricing.isLoaded()
             ? this.pricing.lookup([
                 modelId,
@@ -246,7 +337,9 @@ export class BedrockSource implements ModelSource {
         const tier: BedrockRateTier = modelIdToInvoke.startsWith('global.')
             ? 'global-profile'
             : 'regional'
-        const chosen = rates?.get(tier) ?? rates?.values().next().value ?? null
+        const chosen = rates?.get(tier)
+            ?? rates?.values().next().value
+            ?? null
 
         const fields: Partial<LixpiModelRecord> = {
             ...(selected.modelName && { title: selected.modelName }),

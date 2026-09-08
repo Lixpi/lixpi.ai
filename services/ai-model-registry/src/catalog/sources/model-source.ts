@@ -2,6 +2,8 @@ import {
     type InferenceProviderId,
     type LixpiModelRecord,
     type ProviderDirectory,
+    type SourceEndpointQuery,
+    type SourceFailure,
     type SourceId,
 } from '../types.ts'
 
@@ -27,12 +29,27 @@ export type SourceModelFacts = {
 // Every source implements this. `load` runs once per sync, `lookup` is pure after
 // that, and `listAvailable` reports what the source sees so models nobody has
 // reviewed can be surfaced instead of silently ignored.
+//
+// `queriedEndpoints` reports what was actually asked for a directory, with the
+// parameters that were sent, and it is written into every file the source produces.
+// A source answers it after `load`, so the values are the ones the run used rather
+// than what the code would use in principle.
 export type ModelSource = {
     readonly id: SourceId
+    // What this source calls itself for that directory. The provider listings are a
+    // different API per vendor, so "provider-api" names a slot in this catalog and
+    // never appears in a file as the thing that answered.
+    sourceName: (provider: ProviderDirectory) => string
     load: () => Promise<void>
     lookup: (
         provider: ProviderDirectory,
         modelId: string,
     ) => SourceModelFacts | null
     listAvailable: (provider: ProviderDirectory) => string[] | null
+    queriedEndpoints: (provider: ProviderDirectory) => SourceEndpointQuery[]
+    // Anything that stopped this source answering fully, per directory. A source that
+    // loaded cleanly returns none. One that returns any stops the fetch, because a
+    // tree written from a partial run records a broken source as a source with
+    // nothing to say.
+    failures: () => SourceFailure[]
 }

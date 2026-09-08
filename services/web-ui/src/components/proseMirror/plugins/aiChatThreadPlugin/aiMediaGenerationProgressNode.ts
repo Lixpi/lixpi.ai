@@ -44,10 +44,12 @@ export const aiMediaGenerationProgressNodeView = (
             showSummaryWhenCollapsedItemIds,
         })
         : null
-    const dom = rendered?.element ?? html`<div
+    const dom = rendered?.element ?? html`
+        <div
             className="ai-media-generation-progress"
             data=${{ mediaGenerationProgressId: id }}
-        ></div>` as HTMLElement
+        ></div>
+    ` as HTMLElement
     dom.classList.add('ai-media-generation-progress')
     dom.dataset.mediaGenerationProgressId = id
 

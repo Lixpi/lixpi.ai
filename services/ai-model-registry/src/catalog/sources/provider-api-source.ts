@@ -1,8 +1,8 @@
 import process from 'node:process'
 
 import {
+    err,
     info,
-    warn,
 } from '@lixpi/debug-tools'
 
 import {
@@ -10,8 +10,11 @@ import {
     type ProviderDirectory,
     type SourceId,
 } from '../types.ts'
+import { redactSensitive } from '../redact.ts'
 import {
     type ModelSource,
+    type SourceEndpointQuery,
+    type SourceFailure,
     type SourceModelFacts,
 } from './model-source.ts'
 
@@ -26,35 +29,82 @@ import {
 // Stability and BytePlus publish no listing endpoint, so they return null and their
 // models carry no facts from here at all.
 
+// What each vendor's listing is actually called. "provider-api" is this catalog's
+// slot for "the vendor's own API"; it is not the name of anything a request is sent
+// to, so it never appears in a file as the source that answered.
+const LISTING_API_NAMES: Record<ProviderDirectory, string> = {
+    openai: 'OpenAI Models API',
+    anthropic: 'Anthropic Models API',
+    google: 'Google Generative Language API',
+    stability: 'Stability AI Platform API',
+    byteplus: 'BytePlus ModelArk API',
+}
+
 type ProviderModelFacts = Map<string, Partial<LixpiModelRecord>>
 
 export class ProviderApiSource implements ModelSource {
     readonly id: SourceId = 'provider-api'
 
     private readonly facts = new Map<ProviderDirectory, ProviderModelFacts | null>()
+    private readonly queries = new Map<ProviderDirectory, SourceEndpointQuery[]>()
+    private readonly loadFailures: SourceFailure[] = []
 
     async load(): Promise<void> {
-        this.facts.set('openai', await this.safeLoad('OpenAI', () => this.loadOpenAI()))
-        this.facts.set('anthropic', await this.safeLoad('Anthropic', () => this.loadAnthropic()))
-        this.facts.set('google', await this.safeLoad('Google', () => this.loadGoogle()))
+        this.facts.set('openai', await this.safeLoad('openai', () => this.loadOpenAI()))
+        this.facts.set('anthropic', await this.safeLoad('anthropic', () => this.loadAnthropic()))
+        this.facts.set('google', await this.safeLoad('google', () => this.loadGoogle()))
+        // Neither publishes a listing endpoint. Nothing was asked, so nothing failed.
         this.facts.set('stability', null)
         this.facts.set('byteplus', null)
     }
 
-    // One provider being unreachable must never take the whole sync down. A null
-    // result reads the same as "this provider publishes no listing", which keeps the
-    // authored catalog authoritative either way.
+    failures(): SourceFailure[] {
+        return this.loadFailures
+    }
+
+    // Recorded as each listing runs, so a file states the request that produced it.
+    // The credential is never recorded, whether it travelled in a header or, as
+    // Google's does, in the query string.
+    private record(
+        provider: ProviderDirectory,
+        query: SourceEndpointQuery,
+    ): void {
+        this.queries.set(provider, [...(this.queries.get(provider) ?? []), query])
+    }
+
+    sourceName(provider: ProviderDirectory): string {
+        return LISTING_API_NAMES[provider]
+    }
+
+    queriedEndpoints(provider: ProviderDirectory): SourceEndpointQuery[] {
+        return this.queries.get(provider) ?? []
+    }
+
+    // A listing that fails is recorded as a failure of the whole fetch, not shrugged
+    // off as "this provider publishes nothing". The two look identical in the tree,
+    // and treating the first as the second is how a vendor's own facts disappear from
+    // the catalog without anyone noticing. The run carries on far enough to collect
+    // every other failure, then stops before writing.
     private async safeLoad(
-        label: string,
+        provider: ProviderDirectory,
         load: () => Promise<ProviderModelFacts>,
     ): Promise<ProviderModelFacts | null> {
+        const label = LISTING_API_NAMES[provider]
+
         try {
             const result = await load()
-            info(`${label} listing returned ${result.size} models`)
+            info(`${label} returned ${result.size} models`)
 
             return result
         } catch (error) {
-            warn(`${label} listing skipped: ${error instanceof Error ? error.message : String(error)}`)
+            const message = redactSensitive(error instanceof Error ? error.message : String(error))
+            err(`${label} failed, so nothing from it reaches the catalog: ${message}`)
+            this.loadFailures.push({
+                sourceId: this.id,
+                sourceName: label,
+                provider,
+                message,
+            })
 
             return null
         }
@@ -67,6 +117,14 @@ export class ProviderApiSource implements ModelSource {
 
         if (!apiKey)
             throw new Error('OPENAI_API_KEY is not set')
+
+        this.record(
+            'openai',
+            {
+                endpoint: 'GET https://api.openai.com/v1/models',
+                note: 'Takes no parameters. Authorized with a bearer token.',
+            },
+        )
 
         const response = await fetch('https://api.openai.com/v1/models', { headers: { Authorization: `Bearer ${apiKey}` } })
 
@@ -87,6 +145,17 @@ export class ProviderApiSource implements ModelSource {
 
         if (!apiKey)
             throw new Error('ANTHROPIC_API_KEY is not set')
+
+        this.record(
+            'anthropic',
+            {
+                endpoint: 'GET https://api.anthropic.com/v1/models',
+                params: {
+                    limit: 1000,
+                    'anthropic-version': '2023-06-01',
+                },
+            },
+        )
 
         const response = await fetch(
             'https://api.anthropic.com/v1/models?limit=1000',
@@ -137,8 +206,10 @@ export class ProviderApiSource implements ModelSource {
 
         const facts: ProviderModelFacts = new Map()
         let pageToken: string | undefined
+        let pages = 0
 
         do {
+            pages += 1
             const url = new URL('https://generativelanguage.googleapis.com/v1beta/models')
             url.searchParams.set('key', apiKey)
             url.searchParams.set('pageSize', '100')
@@ -187,6 +258,18 @@ export class ProviderApiSource implements ModelSource {
 
             pageToken = body.nextPageToken
         } while (pageToken)
+
+        this.record(
+            'google',
+            {
+                endpoint: 'GET https://generativelanguage.googleapis.com/v1beta/models',
+                params: {
+                    pageSize: 100,
+                    pagesFetched: pages,
+                },
+                note: 'Paged with pageToken until exhausted. The API key travels as a query parameter and is not recorded.',
+            },
+        )
 
         return facts
     }

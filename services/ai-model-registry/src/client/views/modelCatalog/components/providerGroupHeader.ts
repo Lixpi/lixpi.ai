@@ -19,6 +19,8 @@ export type ProviderGroupHeaderConfig = {
     shownModels: number
     totalModels: number
     saving: boolean
+    // True while a running sync is working through this provider.
+    syncing: boolean
     collapsed: boolean
     onToggleCollapsed: (provider: ProviderDirectory) => void
     onPatchIndex: (
@@ -58,6 +60,9 @@ class ProviderGroupHeader implements ProviderGroupHeaderInstance {
                     className="model-catalog-group-chevron"
                     innerHTML=${chevronIcon}
                 ></span>
+                ${this.config.syncing
+                    ? html`<span className="spinner spinner-sm model-catalog-group-spinner"></span>`
+                    : null}
                 <span className="model-catalog-group-name">${provider.title}</span>
                 <span className="model-catalog-group-count">
                     ${shownModels === totalModels
@@ -89,13 +94,15 @@ class ProviderGroupHeader implements ProviderGroupHeaderInstance {
             <details className="model-catalog-group-settings">
                 <summary>Skipped models and inherited fields</summary>
                 <div className="model-catalog-group-settings-body">
-                    ${skipped.length === 0
-                        ? html`<p className="model-catalog-muted">Nothing is skipped.</p>`
-                        : html`
-                            <div className="model-catalog-skip-list">
-                                ${skipped.map(entry => this.renderSkippedModel(provider.directory, entry))}
-                            </div>
-                        `}
+                    ${
+                        skipped.length === 0
+                            ? html`<p className="model-catalog-muted">Nothing is skipped.</p>`
+                            : html`
+                                <div className="model-catalog-skip-list">
+                                    ${skipped.map(entry => this.renderSkippedModel(provider.directory, entry))}
+                                </div>
+                            `
+                    }
                     ${this.renderBaseEditor(provider)}
                 </div>
             </details>
@@ -134,14 +141,23 @@ class ProviderGroupHeader implements ProviderGroupHeaderInstance {
     // deletes one.
     private renderBaseEditor(provider: CatalogProvider): HTMLElement {
         const current = provider.base?.fieldsInheritedByEveryModel ?? {}
-        const errorEl = html`<p className="form-error" hidden></p>` as HTMLParagraphElement
+        const errorEl = html`
+            <p
+                className="form-error"
+                hidden
+            ></p>
+        ` as HTMLParagraphElement
         const textarea = html`
             <textarea
                 className="form-control model-catalog-json"
                 spellcheck="false"
                 rows="8"
                 aria-label=${`Fields inherited by every ${provider.title} model`}
-            >${JSON.stringify(current, null, 4)}</textarea>
+            >${JSON.stringify(
+                current,
+                null,
+                4,
+            )}</textarea>
         ` as HTMLTextAreaElement
 
         const save = async (): Promise<void> => {
@@ -197,5 +213,4 @@ class ProviderGroupHeader implements ProviderGroupHeaderInstance {
     }
 }
 
-export const createProviderGroupHeader = (config: ProviderGroupHeaderConfig): ProviderGroupHeaderInstance =>
-    new ProviderGroupHeader(config)
+export const createProviderGroupHeader = (config: ProviderGroupHeaderConfig): ProviderGroupHeaderInstance => new ProviderGroupHeader(config)

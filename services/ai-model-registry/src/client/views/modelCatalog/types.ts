@@ -94,18 +94,65 @@ export type InferenceProviderEntry = {
     selectedForDirectoryWhenEnvFlagIsTrue?: Record<string, string>
 }
 
-// `_base-index.json`: the settings that belong to the whole catalog rather than to
+// `catalog-settings.json`: the settings that belong to the whole catalog rather than to
 // one provider directory.
 export type CatalogBaseIndex = {
     description?: string
     inferenceProviders: Record<string, InferenceProviderEntry>
 }
 
+export type SourceFailure = {
+    sourceId: SourceId
+    sourceName: string
+    provider?: string
+    message: string
+}
+
+// What the last sync did. A failed one means every model on the page is whatever the
+// last run that finished left behind.
+export type LastSyncOutcome = {
+    ranAt: string
+    finishedAt: string
+    status: 'completed' | 'failed'
+    error?: {
+        name: string
+        message: string
+        sourceFailures: SourceFailure[]
+    }
+    models?: number
+    written?: number
+}
+
+// What the server reports while a sync runs, over `/api/models/sync/events`.
+export type SyncProgressEvent =
+    | {
+        type: 'run-started'
+        ranAt: string
+    }
+    | {
+        type: 'phase'
+        phase: 'fetching' | 'merging' | 'writing'
+    }
+    | {
+        type: 'provider-started' | 'provider-finished'
+        provider: ProviderDirectory
+    }
+    | {
+        type: 'model-started' | 'model-finished'
+        provider: ProviderDirectory
+        modelId: string
+    }
+    | {
+        type: 'run-finished'
+        status: 'completed' | 'failed'
+        message?: string
+    }
+
 export type CatalogOverview = {
     baseIndex: CatalogBaseIndex | null
+    lastSyncOutcome: LastSyncOutcome | null
     providers: CatalogProvider[]
     models: CatalogModel[]
-    syncEnabled: boolean
     lastSync: string | null
 }
 

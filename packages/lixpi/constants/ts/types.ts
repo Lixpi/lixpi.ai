@@ -2341,7 +2341,7 @@ export type AiModel = {
     // model costs and allows through every endpoint it can be reached on. The
     // top-level fields describe the current call; this says what the alternatives
     // are, so a routing change is a lookup rather than a re-fetch. Written by the
-    // AI Model Registry from `_base-index.json`.
+    // AI Model Registry from `catalog-settings.json`.
     inferenceProviderCalledByThePlatform?: string
     inferenceProviders?: Record<string, {
         inferenceProviderTitle: string

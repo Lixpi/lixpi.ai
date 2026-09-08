@@ -15,7 +15,7 @@ import { info } from '@lixpi/debug-tools'
 // The Price List API answers only in us-east-1, ap-south-1, and eu-central-1
 // whatever region it is asked about, so the client is pinned there and the region
 // under discussion is a filter instead.
-const PRICING_API_REGION = 'us-east-1'
+export const PRICING_API_REGION = 'us-east-1'
 
 // Bedrock rates are spread across three service codes and no single one of them is
 // enough. `AmazonBedrock` carries only the models sold before roughly 2024, the
@@ -23,7 +23,7 @@ const PRICING_API_REGION = 'us-east-1'
 // bills through the marketplace, which is every Stability endpoint, are per-image
 // SKUs under `AmazonBedrockFoundationModels`. Reading one and calling it the Bedrock
 // price list is how a current model ends up looking free.
-const SERVICE_CODES = [
+export const PRICE_LIST_SERVICE_CODES = [
     'AmazonBedrock',
     'AmazonBedrockService',
     'AmazonBedrockFoundationModels',
@@ -209,8 +209,7 @@ const parseMarketplaceUsageType = (body: string): ParsedUsageType | null => {
 
     // `standard` is the marketplace's word for the ordinary tier and says nothing
     // about the model, so it drops out along with `global`, which is the tier itself.
-    const role = words
-        .filter(word => word !== 'global' && word !== 'standard')
+    const role = words.filter(word => word !== 'global' && word !== 'standard')
         .join('')
 
     const matched = MARKETPLACE_ROLES.find(([pattern]) => pattern.test(role))
@@ -247,7 +246,6 @@ const parseUsageType = (usageType: string): ParsedUsageType | null => {
 
     if (!TOKEN_ROLES.has(role!))
         return null
-
 
     // Matched against the whole usage type, not only the tail. AWS puts the commitment
     // in the middle of the name (`Claude4.5Sonnet-reserved-3-month-input-tokens-per-
@@ -347,7 +345,7 @@ export class BedrockPricing {
         const client = this.client()
         let skus = 0
 
-        for (const serviceCode of SERVICE_CODES) {
+        for (const serviceCode of PRICE_LIST_SERVICE_CODES) {
             let nextToken: string | undefined
 
             do {
@@ -368,7 +366,9 @@ export class BedrockPricing {
 
                 for (const entry of response.PriceList ?? []) {
                     skus += 1
-                    this.absorb(JSON.parse(String(entry)) as PriceListProduct)
+                    this.absorb(JSON.parse(
+                        String(entry),
+                    ) as PriceListProduct)
                 }
 
                 nextToken = response.NextToken
@@ -376,7 +376,9 @@ export class BedrockPricing {
         }
 
         this.loaded = true
-        info(`Bedrock price list loaded for ${this.region}: ${skus} SKUs across ${SERVICE_CODES.length} service codes, ${this.byModelKey.size} models priced`)
+        info(
+            `Bedrock price list loaded for ${this.region}: ${skus} SKUs across ${PRICE_LIST_SERVICE_CODES.length} service codes, ${this.byModelKey.size} models priced`,
+        )
     }
 
     private absorb(product: PriceListProduct): void {
@@ -435,14 +437,19 @@ export class BedrockPricing {
         // stripped form, because the catalog looks a model up by the vendor's own id
         // and would otherwise miss the dotted keys entirely.
         const withoutVendor = modelKey.includes('.')
-            ? normalizeName(modelKey.slice(modelKey.indexOf('.') + 1))
+            ? normalizeName(
+                modelKey.slice(modelKey.indexOf('.') + 1),
+            )
             : ''
 
         if (withoutVendor)
             this.byModelKey.set(withoutVendor, builder)
 
         if (displayName)
-            this.byModelKey.set(normalizeName(displayName), builder)
+            this.byModelKey.set(
+                normalizeName(displayName),
+                builder,
+            )
 
         return builder
     }
@@ -493,8 +500,7 @@ export class BedrockPricing {
             if (key.length < 6)
                 continue
 
-            const matches = [...this.byModelKey.keys()]
-                .filter(indexed => indexed.startsWith(key))
+            const matches = [...this.byModelKey.keys()].filter(indexed => indexed.startsWith(key))
                 .sort((left, right) => left.length - right.length)
 
             for (const match of matches) {

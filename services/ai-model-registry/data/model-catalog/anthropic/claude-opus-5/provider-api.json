@@ -1,4 +1,28 @@
 {
+    "_meta": {
+        "sourceName": "Anthropic Models API",
+        "sourceId": "provider-api",
+        "queriedEndpoints": [
+            {
+                "endpoint": "GET https://api.anthropic.com/v1/models",
+                "params": {
+                    "limit": 1000,
+                    "anthropic-version": "2023-06-01"
+                }
+            }
+        ],
+        "hasDataForThisModel": true,
+        "inferenceProvidersWithData": [
+            "anthropic"
+        ],
+        "fetchedAt": "2026-09-07T23:42:12.444Z",
+        "publishedVersions": {
+            "currentVersion": "claude-opus-5",
+            "allPublishedVersions": [
+                "claude-opus-5"
+            ]
+        }
+    },
     "byInferenceProvider": {
         "anthropic": {
             "title": "Claude Opus 5",
@@ -7,20 +31,6 @@
             "model": "claude-opus-5",
             "modelVersion": "claude-opus-5",
             "modelKeyAtSource": "claude-opus-5"
-        }
-    },
-    "_fetchedFrom": {
-        "sourceName": "provider-api",
-        "hasDataForThisModel": true,
-        "inferenceProvidersWithData": [
-            "anthropic"
-        ],
-        "fetchedAt": "2026-09-06T22:40:47.134Z",
-        "publishedVersions": {
-            "currentVersion": "claude-opus-5",
-            "allPublishedVersions": [
-                "claude-opus-5"
-            ]
         }
     }
 }

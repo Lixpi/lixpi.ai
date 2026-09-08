@@ -1,23 +1,30 @@
 {
-    "byInferenceProvider": {
-        "openai": {
-            "model": "gpt-6-astra",
-            "modelVersion": "gpt-6-astra",
-            "modelKeyAtSource": "gpt-6-astra"
-        }
-    },
-    "_fetchedFrom": {
-        "sourceName": "provider-api",
+    "_meta": {
+        "sourceName": "OpenAI Models API",
+        "sourceId": "provider-api",
+        "queriedEndpoints": [
+            {
+                "endpoint": "GET https://api.openai.com/v1/models",
+                "note": "Takes no parameters. Authorized with a bearer token."
+            }
+        ],
         "hasDataForThisModel": true,
         "inferenceProvidersWithData": [
             "openai"
         ],
-        "fetchedAt": "2026-09-06T22:40:47.118Z",
+        "fetchedAt": "2026-09-07T23:42:12.422Z",
         "publishedVersions": {
             "currentVersion": "gpt-6-astra",
             "allPublishedVersions": [
                 "gpt-6-astra"
             ]
+        }
+    },
+    "byInferenceProvider": {
+        "openai": {
+            "model": "gpt-6-astra",
+            "modelVersion": "gpt-6-astra",
+            "modelKeyAtSource": "gpt-6-astra"
         }
     }
 }

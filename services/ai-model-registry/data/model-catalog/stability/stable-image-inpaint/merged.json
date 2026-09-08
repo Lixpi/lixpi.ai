@@ -4,7 +4,7 @@
     "iconName": "stabilityIcon",
     "colorIconName": "stabilityIcon",
     "title": "Stable Image Inpaint",
-    "shortTitle": "",
+    "shortTitle": "Stable Image Inpaint",
     "sortingPosition": null,
     "modalities": [],
     "defaultTemperature": null,
