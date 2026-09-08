@@ -12,6 +12,8 @@ import {
     log,
 } from '@lixpi/debug-tools'
 
+// This runner owns the repository-specific import and export layout that Oxfmt cannot
+// express: values come before types, and type-only named imports stay multiline.
 const ignoredDirectoryNames = new Set([
     'coverage',
     'dist',
@@ -51,10 +53,16 @@ type CanonicalizationResult = {
     violations: number[]
 }
 
+// Oxc nodes share a loose object shape here because this runner only needs node types
+// and source ranges, not the parser's complete generated type hierarchy.
 const isAstNode = (value: unknown): value is AstNode => Boolean(value && typeof value === 'object' && typeof (value as AstNode).type === 'string')
 
+// Missing ranges make a declaration unsafe to rewrite, so callers handle null instead
+// of guessing where syntax begins or ends.
 const getNodeRange = (node: AstNode | null | undefined): [number, number] | null => node?.range ?? null
 
+// Walk only authored TypeScript sources. JSX files are collected separately so the CLI
+// can reject them with the repository's migration guidance.
 const collectTypeScriptFiles = async (inputPaths: string[]): Promise<CollectedTypeScriptFiles> => {
     const files: string[] = []
     const prohibitedFiles: string[] = []
@@ -103,6 +111,8 @@ const collectTypeScriptFiles = async (inputPaths: string[]): Promise<CollectedTy
     }
 }
 
+// Replacements are produced in source order and cannot overlap. Building the result in
+// one pass keeps every untouched byte, including whitespace outside declarations.
 const applyReplacements = (
     source: string,
     replacements: Replacement[],
@@ -122,11 +132,15 @@ const applyReplacements = (
     return output + source.slice(cursor)
 }
 
+// Declaration rewrites are withheld when comments sit inside the declaration because
+// rebuilding a named clause cannot preserve a comment's exact attachment reliably.
 const hasComment = (
     range: [number, number],
     comments: AstComment[],
 ): boolean => comments.some(comment => comment.start >= range[0] && comment.end <= range[1])
 
+// Render the shared named-specifier shape after grouping runtime bindings before type
+// bindings. A lone type import remains multiline to match the TypeScript style guide.
 const getNamedSpecifierBlock = (
     specifiers: NamedSpecifier[],
     singleTypeMustBeMultiline: boolean,
@@ -145,6 +159,8 @@ const getNamedSpecifierBlock = (
     return `{\n${ordered.map(specifier => `    ${specifier.text},`).join('\n')}\n}`
 }
 
+// All reconstructed syntax comes from source ranges so aliases and quoted export names
+// retain the spelling the author used.
 const getNodeText = (
     node: AstNode,
     source: string,
@@ -157,6 +173,8 @@ const getNodeText = (
     return source.slice(range[0], range[1]).trim()
 }
 
+// Equal identifier bindings do not need an `as` clause; non-identifiers deliberately
+// return false so their exact source text is retained on both sides.
 const hasSameIdentifierName = (
     left: AstNode,
     right: AstNode,
@@ -165,6 +183,8 @@ const hasSameIdentifierName = (
     && typeof left.name === 'string'
     && left.name === right.name
 
+// Rebuild one import specifier and add inline `type` only when the declaration itself
+// is not already introduced by `import type`.
 const getImportSpecifierText = (
     specifier: AstNode,
     source: string,
@@ -188,6 +208,8 @@ const getImportSpecifierText = (
     return typeKeywordRequired ? `type ${binding}` : binding
 }
 
+// Export specifiers use local-to-exported alias order, which is the reverse naming role
+// of an import specifier even though both render with `as`.
 const getExportSpecifierText = (
     specifier: AstNode,
     source: string,
@@ -211,6 +233,8 @@ const getExportSpecifierText = (
     return typeKeywordRequired ? `type ${binding}` : binding
 }
 
+// Canonicalize only named portions of an import. Default and namespace specifiers stay
+// intact and remain ahead of the rebuilt named block.
 const canonicalizeImportDeclaration = (
     node: AstNode,
     source: string,
@@ -257,6 +281,8 @@ const canonicalizeImportDeclaration = (
     return `import${declarationIsTypeOnly ? ' type' : ''} ${clauseParts.join(', ')} from ${sourceText}${suffix}`
 }
 
+// Canonicalize specifier exports, but leave `export const`, `export class`, and other
+// declaration exports alone because they do not contain a named-specifier list.
 const canonicalizeExportDeclaration = (
     node: AstNode,
     source: string,
@@ -297,6 +323,8 @@ const canonicalizeExportDeclaration = (
     return `export${declarationIsTypeOnly ? ' type' : ''} ${getNamedSpecifierBlock(named, false)}${sourceClause}${suffix}`
 }
 
+// Parse one module, report every declaration whose layout differs, and optionally apply
+// the same canonical text. Check and fix therefore use one definition of correctness.
 export const canonicalizeImportLayout = (
     source: string,
     fix: boolean,
@@ -361,6 +389,8 @@ export const canonicalizeImportLayout = (
     }
 }
 
+// The standalone CLI applies the canonicalizer recursively and turns collected line
+// numbers into actionable diagnostics during check mode.
 const runCli = async (): Promise<void> => {
     const [mode, ...inputPaths] = process.argv.slice(2)
 
@@ -426,6 +456,8 @@ const runCli = async (): Promise<void> => {
     }
 }
 
+// Keep the canonicalizer importable by the TypeScript formatter without running its CLI
+// entry point as a side effect.
 const invokedPath = process.argv[1]
 
 if (

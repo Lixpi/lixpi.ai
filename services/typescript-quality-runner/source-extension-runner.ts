@@ -16,6 +16,8 @@ import {
     log,
 } from '@lixpi/debug-tools'
 
+// This pass enforces TypeScript-only source extensions before formatting and linting.
+// In fix mode it renames JavaScript modules and updates imports that target those files.
 const repositoryDirectory = '/usr/src/repository'
 const ignoredDirectoryNames = new Set([
     'coverage',
@@ -58,10 +60,15 @@ type SourceReplacement = {
     value: string
 }
 
+// The parser result is intentionally narrowed to the properties used while walking
+// module references, which keeps this migration pass independent of generated AST types.
 const isAstNode = (value: unknown): value is AstNode => Boolean(value && typeof value === 'object' && typeof (value as AstNode).type === 'string')
 
+// A missing range means the parser did not provide a safe source boundary for a rewrite.
 const getNodeRange = (node: AstNode | null | undefined): [number, number] | null => node?.range ?? null
 
+// Test TypeScript is excluded from import rewriting because test sources are outside the
+// production quality target even when they live below a selected directory.
 const isTestFile = (path: string): boolean => {
     if (
         path.endsWith('.spec.ts')
@@ -72,6 +79,8 @@ const isTestFile = (path: string): boolean => {
     return path.split('/').some(segment => testDirectoryNames.has(segment))
 }
 
+// Collect files once so validation, collision checks, renames, and importer updates all
+// operate on the same deterministic set of paths.
 const collectSourceFiles = async (inputPaths: string[]): Promise<SourceFiles> => {
     const importers: string[] = []
     const javaScriptFiles: string[] = []
@@ -127,8 +136,11 @@ const collectSourceFiles = async (inputPaths: string[]): Promise<SourceFiles> =>
     }
 }
 
+// Preserve the complete basename and replace only the final JavaScript extension.
 const getTypeScriptPath = (path: string): string => `${path.slice(0, -extname(path).length)}.ts`
 
+// Resolve only module forms whose filesystem target is known here. Package imports and
+// other aliases are left unchanged because this runner cannot prove what they resolve to.
 const resolveModuleSpecifier = (
     importer: string,
     specifier: string,
@@ -152,6 +164,9 @@ const resolveModuleSpecifier = (
     return null
 }
 
+// Find static imports, re-exports, dynamic imports, and type imports through one AST walk.
+// Range de-duplication prevents syntax exposed through two parser properties from being
+// rewritten twice.
 const getModuleSpecifierNodes = (
     file: string,
     source: string,
@@ -216,6 +231,7 @@ const getModuleSpecifierNodes = (
     return specifiers
 }
 
+// Apply edits from right to left so earlier source offsets remain valid after each edit.
 const applySourceReplacements = (
     source: string,
     replacements: SourceReplacement[],
@@ -228,6 +244,8 @@ const applySourceReplacements = (
     return output
 }
 
+// Rewrite only specifiers whose resolved source file appears in the completed rename map.
+// Returning whether the file changed lets the CLI report useful fix counts.
 const updateModuleSpecifiers = async (
     importer: string,
     renamedFiles: Map<string, string>,
@@ -272,6 +290,8 @@ const updateModuleSpecifiers = async (
     return true
 }
 
+// Validate the invocation before touching the repository. Check mode reports prohibited
+// extensions; fix mode performs collision checks before any rename begins.
 const [mode, ...inputPaths] = process.argv.slice(2)
 
 if (
@@ -309,6 +329,8 @@ const renamedFiles = new Map(
     javaScriptFiles.map(file => [file, getTypeScriptPath(file)]),
 )
 
+// Abort the whole migration if any destination already exists. This prevents a partial
+// rename from overwriting an authored TypeScript module.
 for (const target of renamedFiles.values()) {
     try {
         await stat(target)
@@ -320,6 +342,8 @@ for (const target of renamedFiles.values()) {
     }
 }
 
+// Rename every source before rewriting importers so all subsequent paths refer to the
+// final filesystem layout.
 for (const [source, target] of renamedFiles)
     await rename(source, target)
 

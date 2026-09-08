@@ -9,6 +9,8 @@ import { pathToFileURL } from 'node:url'
 import stylelint from 'stylelint'
 import lixpiStylelintPlugins from './stylelint-lixpi-plugin.ts'
 
+// This adapter turns repository-relative CLI paths into the file and glob inputs Stylelint
+// expects inside the quality-runner container.
 const repositoryDirectory = '/usr/src/repository'
 const toolDirectory = '/usr/src/quality-runner'
 const configFile = path.join(toolDirectory, 'stylelint.config.ts')
@@ -17,6 +19,8 @@ const supportedExtensions = new Set([
     '.scss',
 ])
 
+// Missing paths and non-stylesheet files are harmless because one quality command receives
+// mixed TypeScript, HTML, Sass, and CSS targets. Directories expand to both stylesheet forms.
 const collectStylesheetPaths = async (
     inputPath: string,
     stylesheetPaths: string[],
@@ -58,6 +62,8 @@ const collectStylesheetPaths = async (
     )
 }
 
+// Stylelint exposes fixing as an option on the same lint operation, so the adapter accepts
+// only the two modes used by the parent quality runner.
 const action = process.argv[2]
 
 if (
@@ -76,6 +82,8 @@ if (stylesheetPaths.length === 0)
 
 const { default: repositoryConfig } = await import(pathToFileURL(configFile).href)
 
+// Merge local plugin factories with configured package plugins without mutating the loaded
+// configuration object, which can be cached by the module loader.
 const result = await stylelint.lint({
     allowEmptyInput: true,
     config: {
@@ -90,6 +98,8 @@ const result = await stylelint.lint({
     maxWarnings: 0,
 })
 
+// Stylelint's string formatter already includes file locations and rule names. Print it
+// only for failures and mirror the failure through the process exit code.
 if (
     result.errored
     && result.report

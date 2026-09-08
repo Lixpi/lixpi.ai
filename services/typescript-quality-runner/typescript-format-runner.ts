@@ -23,6 +23,8 @@ import {
 } from '@lixpi/debug-tools'
 import { canonicalizeImportLayout } from './import-specifier-order.ts'
 
+// Oxfmt provides the baseline parse-aware format. This runner layers repository layouts
+// that Oxfmt cannot configure and preserves deliberate multiline structures it would fold.
 const ignoredDirectoryNames = new Set([
     'coverage',
     'dist',
@@ -65,8 +67,14 @@ const separatedControlFlowStatementTypes = new Set([
     'ReturnStatement',
     'ThrowStatement',
 ])
+
+// Statement spacing uses the same classification for block constructs and terminating
+// control flow so a blank line is required when either neighboring statement forms a group.
 const isSeparatedStatementType = (type: string): boolean => separatedBlockStatementTypes.has(type)
     || separatedControlFlowStatementTypes.has(type)
+
+// Iterator calls are the only fluent chains this runner length-wraps. Other member chains
+// retain Oxfmt's layout unless another explicit repository rule owns them.
 const iteratorMethodNames = new Set([
     'drop',
     'entries',
@@ -96,6 +104,8 @@ const indentationWidth = 4
 const maximumInlineCallLength = 150
 const maximumInlineIteratorChainLength = 150
 
+// These shared shapes describe source spans and the small AST and HTML subsets used by the
+// formatter passes. Every rewrite is range-based so unrelated source remains byte-for-byte.
 type FormattingFiles = {
     files: string[]
     prohibitedFiles: string[]
@@ -182,6 +192,8 @@ type TypeScriptLayouts = {
     types: LayoutSpan[]
 }
 
+// Production formatting excludes tests even when a selected source root contains them.
+// Tests have their own runner and formatting contract.
 const isTestFile = (path: string): boolean => {
     if (
         path.endsWith('.spec.ts')
@@ -192,6 +204,8 @@ const isTestFile = (path: string): boolean => {
     return path.split('/').some(segment => testDirectoryNames.has(segment))
 }
 
+// Recursively collect supported authored sources and separately record JSX, which the
+// repository prohibits and must diagnose instead of silently ignoring.
 const collectFormattingFiles = async (inputPaths: string[]): Promise<FormattingFiles> => {
     const files: string[] = []
     const prohibitedFiles: string[] = []
@@ -245,6 +259,8 @@ const collectFormattingFiles = async (inputPaths: string[]): Promise<FormattingF
     }
 }
 
+// Oxfmt's API rejects CLI-only metadata, so remove schema and ignore settings after loading
+// the shared JSON config. File selection is already handled by this runner.
 const readFormatConfig = async (): Promise<FormatConfig> => {
     const config = JSON.parse(await readFile('/usr/src/quality-runner/oxfmt.json', 'utf8')) as FormatConfig
     delete config.$schema
@@ -253,13 +269,17 @@ const readFormatConfig = async (): Promise<FormatConfig> => {
     return config
 }
 
+// A null range forces callers to skip or fail a rewrite instead of inventing source bounds.
 const getNodeRange = (node: AstNode | null | undefined): [number, number] | null => node?.range ?? null
 
+// Line-boundary helpers are offset-based because every parser node is represented by source
+// ranges rather than line-oriented text matches.
 const getLineStart = (
     source: string,
     offset: number,
 ): number => source.lastIndexOf('\n', offset - 1) + 1
 
+// Return the first source offset after the next line break, or -1 when no later line exists.
 const getNextLineStart = (
     source: string,
     offset: number,
@@ -269,6 +289,8 @@ const getNextLineStart = (
     return lineBreak < 0 ? -1 : lineBreak + 1
 }
 
+// Read the existing indentation prefix so local layout fixes do not impose whitespace on
+// neighboring syntax that they do not own.
 const getLineIndentation = (
     source: string,
     offset: number,
@@ -285,11 +307,14 @@ const getLineIndentation = (
     return source.slice(lineStart, cursor)
 }
 
+// Whitespace boundary scans include newlines because layout spans deliberately absorb the
+// padding that their replacement is responsible for rebuilding.
 const isWhitespaceCharacter = (character: string | undefined): boolean => character === ' '
     || character === '\t'
     || character === '\n'
     || character === '\r'
 
+// Move backward to the last non-whitespace byte within a bounded syntax region.
 const getTrailingWhitespaceStart = (
     source: string,
     start: number,
@@ -306,6 +331,7 @@ const getTrailingWhitespaceStart = (
     return cursor
 }
 
+// Move forward past leading whitespace without crossing the caller's syntax boundary.
 const getLeadingWhitespaceEnd = (
     source: string,
     start: number,
@@ -322,6 +348,8 @@ const getLeadingWhitespaceEnd = (
     return cursor
 }
 
+// Capture replacement text together with stable source bounds. `preserve` records layouts
+// whose multiline shape matters even when their text happens to fit on one line.
 const getLayoutSpan = (
     start: number,
     end: number,
@@ -334,6 +362,8 @@ const getLayoutSpan = (
     text: source.slice(start, end),
 })
 
+// Shift continuation lines by the difference between old and new base indentation while
+// never removing indentation that is part of a nested line's own structure.
 const reindentNodeText = (
     source: string,
     nodeRange: [number, number],
@@ -357,6 +387,8 @@ const reindentNodeText = (
     return lines.join('\n')
 }
 
+// Function parameter spans authored across lines are always preserved through Oxfmt so a
+// deliberate expanded signature is not collapsed based on width.
 const hasMultilineFunctionParameters = (
     node: AstNode,
     source: string,
@@ -377,6 +409,8 @@ const hasMultilineFunctionParameters = (
     )
 }
 
+// Preserve a function signature only through its last non-whitespace byte before the body;
+// the body and its separating whitespace belong to later formatter passes.
 const getFunctionParameterSpan = (
     node: AstNode,
     source: string,
@@ -404,6 +438,8 @@ const getFunctionParameterSpan = (
     )
 }
 
+// Calls and constructors use their complete node range because their closing parenthesis is
+// part of argument-list layout and must move with the list.
 const getCallArgumentSpan = (
     node: AstNode,
     source: string,
@@ -420,8 +456,12 @@ const getCallArgumentSpan = (
     )
 }
 
+// AST traversal uses a minimal structural predicate instead of relying on generated Oxc
+// unions for every syntax proposal supported by the parser.
 const isAstNode = (value: unknown): value is AstNode => Boolean(value && typeof value === 'object' && typeof (value as AstNode).type === 'string')
 
+// Type annotations and generic arguments retain authored expansion. Alias right-hand sides
+// are included because union and object type layout carries meaning beyond print width.
 const isPreservedTypeNode = (
     node: AstNode,
     parent: AstNode | null,
@@ -438,6 +478,8 @@ let lastParsedFile: string | null = null
 let lastParsedSource: string | null = null
 let lastParseResult: ReturnType<typeof parseSync> | null = null
 
+// Parse with parentheses and ranges preserved because later rules use both to distinguish
+// authored grouping from parser precedence and to produce surgical replacements.
 const parseTypeScript = (
     file: string,
     source: string,
@@ -465,6 +507,8 @@ const parseTypeScript = (
     return parseResult
 }
 
+// Record every syntax region whose multiline shape may need restoration after Oxfmt. Nodes
+// inside control-flow tests are excluded because the condition formatter owns those ranges.
 const collectTypeScriptLayouts = (
     file: string,
     source: string,
@@ -679,6 +723,8 @@ const collectTypeScriptLayouts = (
     return layouts
 }
 
+// Restore preserved text at its new base indentation and enforce enough indentation for
+// continuation content to remain visibly nested beneath its opening syntax.
 const reindentLayoutText = (
     originalSource: string,
     original: LayoutSpan,
@@ -724,6 +770,8 @@ const reindentLayoutText = (
     return lines.join('\n')
 }
 
+// Match original and formatted layouts by AST traversal order, then restore only outermost
+// non-overlapping spans. This preserves authored expansion without producing conflicting edits.
 const preserveExpandedTypeScriptLayouts = (
     file: string,
     source: string,
@@ -787,6 +835,8 @@ const preserveExpandedTypeScriptLayouts = (
     return output
 }
 
+// Extract the parameter or argument nodes from syntax that owns a parenthesized list. Other
+// node kinds return null so list canonicalization does not claim unrelated parentheses.
 const getDelimitedListItems = (node: AstNode): AstNode[] | null => {
     if (Array.isArray(node.params))
         return node.params.filter(isAstNode)
@@ -843,6 +893,8 @@ const getDelimitedListAnchor = (
 const isCallLikeNode = (node: AstNode | null | undefined): boolean => node?.type === 'CallExpression'
     || node?.type === 'NewExpression'
 
+// Collection constructors delegate layout to the array initializer inside them, preventing
+// the generic argument formatter from adding a redundant outer level of expansion.
 const collectionConstructorNames = new Set([
     'Map',
     'Set',
@@ -911,6 +963,8 @@ const isAtomicItem = (node: AstNode | null | undefined): boolean => {
         )
 }
 
+// A trailing block callback supplies its own visual boundary, so the surrounding argument
+// list does not need to split solely because the callback spans lines.
 const endsWithBlockBodiedFunction = (items: AstNode[]): boolean => {
     const last = items.at(-1)
 
@@ -921,6 +975,8 @@ const endsWithBlockBodiedFunction = (items: AstNode[]): boolean => {
         && (last.body as AstNode | undefined)?.type === 'BlockStatement'
 }
 
+// A sole object, array, destructuring pattern, or inline object type can hug the surrounding
+// parentheses because its own delimiters already expose the nested structure.
 const isHuggableItem = (node: AstNode | null | undefined): boolean => {
     if (
         node?.type === 'ObjectExpression'
@@ -936,6 +992,8 @@ const isHuggableItem = (node: AstNode | null | undefined): boolean => {
     return annotatedType?.type === 'TSTypeLiteral'
 }
 
+// Recognize collection constructors whose sole array argument is formatted by the dedicated
+// collection rule, so this pass does not create a second incompatible layout.
 const isCollectionInitializer = (node: AstNode): boolean => {
     if (node.type !== 'NewExpression')
         return false
@@ -1010,11 +1068,15 @@ const getInlineNodeText = (
     return output
 }
 
+// Statement-like nodes reset the line-width anchor used for nested argument lists. Class
+// fields and methods count because their initializers and signatures begin new source lines.
 const isStatementNode = (node: AstNode): boolean => node.type.endsWith('Statement')
     || node.type.endsWith('Declaration')
     || node.type === 'PropertyDefinition'
     || node.type === 'MethodDefinition'
 
+// Range-based multiline detection is used after parsing so comments and string contents do
+// not get mistaken for structural line breaks outside the node.
 const spansLines = (
     source: string,
     node: AstNode,
@@ -1036,6 +1098,8 @@ const getInlineListWidth = (
     + itemRanges.map(range => getInlineNodeText(source, range)).join(', ').length
     + 1
 
+// Canonicalize one AST snapshot of every parameter and argument list. Only non-overlapping
+// outer replacements are applied because nested widths must be recalculated on the next pass.
 const canonicalizeDelimitedListsOnce = (
     file: string,
     source: string,
@@ -1247,6 +1311,8 @@ const canonicalizeDelimitedListsOnce = (
     return output
 }
 
+// Repeat list formatting until nesting settles. The pass limit converts any disagreement
+// between layout rules into an explicit error instead of silently oscillating forever.
 const canonicalizeDelimitedLists = (
     file: string,
     source: string,
@@ -1270,6 +1336,8 @@ const canonicalizeDelimitedLists = (
     throw new Error(`Could not stabilize function parameter and argument formatting in ${file}`)
 }
 
+// Recognize both directly imported `html` tags and namespaced `.html` tags used by the DOM
+// template API; ordinary template literals must remain untouched.
 const isHtmlTemplateTag = (tag: AstNode | undefined): boolean => tag?.type === 'Identifier' && tag.name === 'html'
     || tag?.type === 'MemberExpression'
     && tag.computed === false
@@ -1277,6 +1345,8 @@ const isHtmlTemplateTag = (tag: AstNode | undefined): boolean => tag?.type === '
     && tag.property.type === 'Identifier'
     && tag.property.name === 'html'
 
+// Collect every raw quasi in tagged HTML templates and associate it with the template's
+// start. Interpolations divide templates into quasis that must be restored independently.
 const collectHtmlTemplateQuasis = (
     file: string,
     source: string,
@@ -1339,6 +1409,8 @@ const collectHtmlTemplateQuasis = (
     return layouts
 }
 
+// Shift continuation lines in one template quasi without changing its first line, which
+// may resume immediately after an interpolation rather than at an HTML indentation level.
 const reindentHtmlTemplate = (
     text: string,
     indentationDifference: number,
@@ -1359,6 +1431,8 @@ const reindentHtmlTemplate = (
     return lines.join('\n')
 }
 
+// Transfer Oxfmt's HTML-aware template result back into the TypeScript-formatted module by
+// matching quasis in AST order and aligning each template body to its TypeScript location.
 const applyHtmlTemplateFormatting = (
     file: string,
     formatted: string,
@@ -1415,6 +1489,8 @@ const applyHtmlTemplateFormatting = (
     return output
 }
 
+// Describe each tagged template's raw content and interpolation gaps in absolute source
+// offsets. Later HTML parsing uses this map to separate markup from embedded TypeScript.
 const collectHtmlTemplateContents = (
     file: string,
     source: string,
@@ -1495,6 +1571,8 @@ const collectHtmlTemplateContents = (
     return contents
 }
 
+// Replace interpolation bytes with inert characters while preserving length and newlines.
+// Parse5 can then locate HTML attributes without interpreting TypeScript as markup.
 const maskHtmlInterpolations = (
     source: string,
     content: HtmlTemplateContent,
@@ -1511,6 +1589,8 @@ const maskHtmlInterpolations = (
     return characters.join('')
 }
 
+// Rebuild a multi-attribute start tag with one attribute per line while preserving the tag
+// name, exact attribute source, and whether the element closes with `>` or `/>`.
 const getExpandedHtmlStartTag = (
     source: string,
     startTag: HtmlAttributeLocation,
@@ -1542,6 +1622,8 @@ const getExpandedHtmlStartTag = (
     return `${source.slice(start, prefixEnd)}\n${attributeText}\n${indentation}${closing}`
 }
 
+// Walk a Parse5 tree and produce source-relative replacements for every start tag with more
+// than one attribute. Inline tags derive indentation from HTML depth.
 const collectExpandedHtmlStartTags = (
     source: string,
     root: HtmlNode,
@@ -1598,6 +1680,8 @@ const collectExpandedHtmlStartTags = (
     return replacements
 }
 
+// HTML replacements are independent and use Parse5 source locations, so applying them from
+// right to left keeps all earlier offsets valid.
 const applyHtmlAttributeReplacements = (
     source: string,
     replacements: LayoutSpan[],
@@ -1610,6 +1694,8 @@ const applyHtmlAttributeReplacements = (
     return output
 }
 
+// Format start tags inside tagged templates after masking their TypeScript interpolations.
+// Absolute offsets map Parse5 fragment locations back into the containing module.
 const canonicalizeEmbeddedHtmlAttributes = (
     file: string,
     source: string,
@@ -1630,6 +1716,8 @@ const canonicalizeEmbeddedHtmlAttributes = (
     return applyHtmlAttributeReplacements(source, replacements)
 }
 
+// Reindent multiline TypeScript interpolations relative to `${` after HTML formatting. This
+// pass moves only indentation and preserves the expression's internal line structure.
 const canonicalizeHtmlTemplateInterpolations = (
     file: string,
     source: string,
@@ -1684,6 +1772,8 @@ const canonicalizeHtmlTemplateInterpolations = (
     return applyHtmlAttributeReplacements(source, replacements)
 }
 
+// Standalone HTML has no interpolation gaps, so Parse5 can collect and rewrite start tags
+// directly from the complete document.
 const canonicalizeStandaloneHtmlAttributes = (source: string): string => {
     const document = parse(source, { sourceCodeLocationInfo: true }) as HtmlNode
 
@@ -1697,6 +1787,8 @@ const canonicalizeStandaloneHtmlAttributes = (source: string): string => {
     )
 }
 
+// Normalize the several AST node shapes that bind a value on their right side. Returning
+// null keeps assignment-boundary formatting limited to initialized declarations and fields.
 const getAssignmentValue = (node: AstNode): AstNode | null => {
     if (
         node.type === 'AssignmentExpression'
@@ -1717,6 +1809,8 @@ const getAssignmentValue = (node: AstNode): AstNode | null => {
     return null
 }
 
+// Keep an assignment operator and its value on the same line. When Oxfmt had indented a
+// multiline value beneath the assignment, remove that extra level from its continuation lines.
 const canonicalizeAssignmentBoundaries = (
     file: string,
     source: string,
@@ -1832,6 +1926,8 @@ const hasBareArrowParameter = (node: AstNode): boolean => {
         && !node.typeParameters
 }
 
+// Remove optional parentheses around exactly one bare arrow parameter. Commented parameter
+// boundaries are preserved because deleting their brackets could move the comment.
 const canonicalizeArrowParameters = (
     file: string,
     source: string,
@@ -1909,6 +2005,8 @@ const canonicalizeArrowParameters = (
     return output
 }
 
+// Keep a concise arrow body beside its arrow until the complete line crosses the repository
+// limit, then place the intact expression on one indented continuation line.
 const canonicalizeExpressionArrowBodies = (
     file: string,
     source: string,
@@ -1978,6 +2076,8 @@ const canonicalizeExpressionArrowBodies = (
     return output
 }
 
+// Only an outermost call owns the whitespace boundaries of a complete fluent chain. Nested
+// call links are collected as segments of that one chain.
 const isNestedCallChain = (
     node: AstNode,
     parent: AstNode | null,
@@ -1987,6 +2087,8 @@ const isNestedCallChain = (
     && grandparent?.type === 'CallExpression'
     && grandparent.callee === parent
 
+// Decompose a fluent chain into its base and exact source segments, marking recognized
+// iterator methods so only those boundaries are eligible for line breaks.
 const getCallChain = (
     node: AstNode,
     source: string,
@@ -2047,6 +2149,8 @@ const getCallChain = (
     }
 }
 
+// Measure the lines containing iterator segments as though iterator boundaries were inline.
+// This gives expansion a stable answer independent of the chain's current whitespace.
 const getLongestIteratorLineLength = (
     chain: CallChain,
     source: string,
@@ -2088,6 +2192,8 @@ const getLongestIteratorLineLength = (
     return longestLineLength
 }
 
+// Canonicalize iterator boundaries in one AST snapshot. More than two iterator calls always
+// expand; one expands only when its line exceeds the configured limit.
 const canonicalizeIteratorChainsOnce = (
     file: string,
     source: string,
@@ -2181,6 +2287,8 @@ const canonicalizeIteratorChainsOnce = (
     return output
 }
 
+// Iterate because expanding an outer chain changes the line measurement of nested chains.
+// A hard pass limit surfaces conflicting layout rules instead of looping indefinitely.
 const canonicalizeIteratorChains = (
     file: string,
     source: string,
@@ -2199,6 +2307,8 @@ const canonicalizeIteratorChains = (
     throw new Error(`Could not stabilize iterator chain formatting in ${file}`)
 }
 
+// Put non-empty tagged HTML template content on lines between the backticks and align those
+// boundaries with the tagged expression. Empty templates remain compact.
 const canonicalizeHtmlTemplateBoundaries = (
     file: string,
     source: string,
@@ -2304,6 +2414,8 @@ const canonicalizeHtmlTemplateBoundaries = (
     return output
 }
 
+// Unwrap only grouping parentheses and return the conditional expression they contain.
+// Other wrappers remain leaves because rewriting through them could change TypeScript syntax.
 const getConditionalExpression = (node: AstNode | null | undefined): AstNode | null => {
     let current = node
 
@@ -2316,12 +2428,16 @@ const getConditionalExpression = (node: AstNode | null | undefined): AstNode | n
     return current?.type === 'ConditionalExpression' ? current : null
 }
 
+// A conditional needs hierarchical layout when any of its three branches is another
+// conditional expression after removing grouping parentheses.
 const hasNestedConditionalExpression = (node: AstNode): boolean => Boolean(
     getConditionalExpression(node.test as AstNode)
     || getConditionalExpression(node.consequent as AstNode)
     || getConditionalExpression(node.alternate as AstNode),
 )
 
+// Leaf text is copied directly from its range so casts, non-null assertions, and authored
+// grouping inside a branch remain intact.
 const getConditionalLeafText = (
     node: AstNode,
     source: string,
@@ -2336,6 +2452,8 @@ const getConditionalLeafText = (
     return text || null
 }
 
+// Render nested conditionals recursively with each inner `?` and `:` one level deeper.
+// Parenthesized tests retain explicit grouping around their multiline nested expression.
 const getCanonicalConditionalText = (
     node: AstNode,
     source: string,
@@ -2392,6 +2510,8 @@ const getCanonicalConditionalText = (
     return `${canonicalTest}\n${operatorIndentation}? ${consequentText}\n${operatorIndentation}: ${alternateText}`
 }
 
+// Replace only outermost nested conditional expressions. Returning after queuing a parent
+// prevents overlapping child fixes, and comments disable the rewrite to preserve attachment.
 const canonicalizeNestedConditionalExpressions = (
     file: string,
     source: string,
@@ -2453,6 +2573,8 @@ const canonicalizeNestedConditionalExpressions = (
     return output
 }
 
+// Count logical operands rather than AST operator nodes so formatting thresholds reflect
+// the number of conditions a reader evaluates.
 const countLogicalEvaluations = (node: AstNode): number => {
     if (
         node.type === 'ParenthesizedExpression'
@@ -2475,6 +2597,7 @@ type LogicalConditionParts = {
     operators: string[]
 }
 
+// Grouping parentheses do not change which homogeneous logical chain is being flattened.
 const unwrapParenthesizedExpression = (node: AstNode): AstNode => {
     let current = node
 
@@ -2487,6 +2610,8 @@ const unwrapParenthesizedExpression = (node: AstNode): AstNode => {
     return current
 }
 
+// Reconstruct logical expressions from AST children while copying every non-logical leaf
+// directly from source. This avoids operator discovery through fragile string searches.
 const getAstExpressionText = (
     node: AstNode,
     source: string,
@@ -2527,6 +2652,8 @@ const getAstExpressionText = (
     return expression || null
 }
 
+// Flatten a chain using one root operator. Mixed operators stay inside a leaf operand so
+// parser precedence and authored grouping are preserved.
 const getLogicalConditionParts = (node: AstNode): LogicalConditionParts | null => {
     const operands: AstNode[] = []
     const operators: string[] = []
@@ -2643,6 +2770,7 @@ const getContinuedConditionText = (
     return condition == null ? null : condition.trimStart()
 }
 
+// Assigned logical values use continuation layout without a control-flow keyword wrapper.
 const getMultilineAssignedLogicalExpressionText = (
     node: AstNode,
     source: string,
@@ -2653,6 +2781,8 @@ const getMultilineAssignedLogicalExpressionText = (
     indentation,
 )
 
+// Build a complete `if`, `while`, or `switch` condition header. A single operand remains
+// inline, while compound conditions put one logical operand on each line.
 const getConditionContainerText = (
     keyword: string,
     node: AstNode,
@@ -2678,11 +2808,15 @@ const getConditionContainerText = (
         : null
 }
 
+// Comment-sensitive formatters skip a range when moving its syntax could change which node
+// a comment describes.
 const hasCommentWithinRange = (
     comments: AstComment[],
     range: [number, number],
 ): boolean => comments.some(comment => comment.start >= range[0] && comment.end <= range[1])
 
+// Split assigned logical chains with more than two operands. The assignment stays inline
+// with the first operand and later operands align as continuations.
 const canonicalizeAssignedLogicalExpressions = (
     file: string,
     source: string,
@@ -2748,6 +2882,8 @@ const canonicalizeAssignedLogicalExpressions = (
     return output
 }
 
+// Normalize AST containers that own ordered statements so spacing logic works across modules,
+// blocks, namespace bodies, static blocks, and switch-case consequents.
 const getStatementList = (node: AstNode): AstNode[] | null => {
     if (
         node.type !== 'BlockStatement'
@@ -2770,6 +2906,8 @@ const getStatementList = (node: AstNode): AstNode[] | null => {
     return node.body.filter(isAstNode)
 }
 
+// Return only whitespace that may be replaced between statements. Comments remain attached
+// to the following statement, and any other syntax makes the gap unsafe to edit.
 const getStatementGap = (
     source: string,
     comments: AstComment[],
@@ -2798,6 +2936,8 @@ const getStatementGap = (
     return [gapStart, nextStart]
 }
 
+// Require blank lines around grouped or terminating statements and remove blank lines between
+// adjacent switch cases. All edits inherit the following statement's indentation.
 const canonicalizeStatementSpacing = (
     file: string,
     source: string,
@@ -2903,6 +3043,8 @@ const canonicalizeStatementSpacing = (
     return output
 }
 
+// Canonicalize control-flow headers, compound logical tests, compact bodies, `else` placement,
+// and conditional-expression branches through one AST pass so their shared boundaries agree.
 const canonicalizeConditionStatements = (
     file: string,
     source: string,
@@ -3239,6 +3381,8 @@ const canonicalizeConditionStatements = (
     return output
 }
 
+// Return the child nodes that should sit one indentation level inside a syntax container.
+// The supported shapes cover statements, classes, types, switch cases, and literal members.
 const getIndentedContainerChildren = (node: AstNode): AstNode[] | null => {
     if (node.type === 'Program')
         return Array.isArray(node.body) ? node.body.filter(isAstNode) : null
@@ -3292,6 +3436,8 @@ const getIndentedContainerChildren = (node: AstNode): AstNode[] | null => {
     return null
 }
 
+// Locate the closing delimiter that aligns with a container's opening indentation. Pattern
+// type annotations are excluded because they extend beyond the pattern's own closing bracket.
 const getIndentedContainerClosingOffset = (
     node: AstNode,
     source: string,
@@ -3340,6 +3486,8 @@ const getIndentedContainerClosingOffset = (
     return source[closingOffset] === expectedCharacter ? closingOffset : null
 }
 
+// Align direct children and closing delimiters for one AST snapshot. Duplicate requests for
+// the same whitespace range must agree, otherwise two container rules are in conflict.
 const canonicalizeContainerIndentationOnce = (
     file: string,
     source: string,
@@ -3447,6 +3595,8 @@ const canonicalizeContainerIndentationOnce = (
     return output
 }
 
+// Repeat indentation because correcting an outer container changes the desired indentation
+// of every nested container. The pass limit exposes non-converging ownership rules.
 const canonicalizeContainerIndentation = (
     file: string,
     source: string,
@@ -3465,6 +3615,8 @@ const canonicalizeContainerIndentation = (
     throw new Error(`Could not stabilize container indentation in ${file}`)
 }
 
+// Run all repository layout passes until they reach a common fixed point. The ordering gives
+// structural passes first claim, then repairs shared boundaries after imports and spacing move.
 const canonicalizeTypeScriptLayout = (
     file: string,
     source: string,
@@ -3515,6 +3667,9 @@ const canonicalizeTypeScriptLayout = (
     throw new Error(`Could not stabilize TypeScript formatting in ${file}`)
 }
 
+// Use Oxfmt for the baseline result, preserve authored TypeScript expansion, then apply the
+// repository passes. A wider second Oxfmt result supplies HTML template formatting without
+// forcing TypeScript arrow expressions to wrap at the normal print width.
 const formatSource = async (
     file: string,
     source: string,
@@ -3567,6 +3722,8 @@ const formatSource = async (
     )
 }
 
+// Check mode reports the first differing line with current and expected text, which gives a
+// useful diagnostic without dumping an entire formatted file.
 const describeFirstFormattingDifference = (
     file: string,
     source: string,
@@ -3594,6 +3751,8 @@ const describeFirstFormattingDifference = (
     )}`)
 }
 
+// Validate arguments and prohibited extensions before formatting any file. Fix mode writes
+// canonical text; check mode reports differences and fails after scanning every selected file.
 const [mode, ...inputPaths] = process.argv.slice(2)
 
 if (
