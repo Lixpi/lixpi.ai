@@ -21,6 +21,7 @@
         "@codemirror/state": "*",
         "@codemirror/view": "*",
         "@lezer/highlight": "*",
+        "@lixpi/ui-kit-gentelella": "workspace:*",
         "@lixpi/ui-primitives": "workspace:*",
         "@lixpi/usage-reporter": "workspace:*",
         "@nats-io/nats-core": "*",
@@ -36,7 +37,6 @@
         "nanostores": "*"
     },
     "devDependencies": {
-        "gentelella": "^4",
         "sass": "*",
         "vite": "^6"
     }

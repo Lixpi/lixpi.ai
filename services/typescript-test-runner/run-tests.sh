@@ -56,6 +56,10 @@ run_domain() {
 }
 
 run_shared() {
+    # pnpm may update the workspace manifest with dependency build decisions.
+    # Keep those install-only writes in the disposable container filesystem.
+    cp /usr/src/service/shared-workspace/pnpm-workspace.yaml /usr/src/service/shared/pnpm-workspace.yaml
+
     pkg_filter=""
     case "$1" in
         ""|-*) ;;

@@ -2,6 +2,27 @@
 // band, which carries its counts and its sync configuration, and is followed by
 // that provider's models. Clicking a row opens the detail panel.
 
+import {
+    createGentelellaChip,
+    type GentelellaChipInstance,
+} from '@lixpi/ui-kit-gentelella/components/chip'
+import {
+    createGentelellaEmptyState,
+    type GentelellaEmptyStateInstance,
+} from '@lixpi/ui-kit-gentelella/components/empty-state'
+import {
+    createGentelellaSpinner,
+    type GentelellaSpinnerInstance,
+} from '@lixpi/ui-kit-gentelella/components/spinner'
+import {
+    createGentelellaStatus,
+    type GentelellaStatusInstance,
+} from '@lixpi/ui-kit-gentelella/components/status'
+import {
+    createGentelellaTable,
+    type GentelellaTableInstance,
+} from '@lixpi/ui-kit-gentelella/components/table'
+import { gentelellaClasses } from '@lixpi/ui-kit-gentelella/class-names'
 import { html } from '@lixpi/ui-primitives/dom'
 
 import {
@@ -48,8 +69,15 @@ const COLUMN_COUNT = 7
 class ModelTable implements ModelTableInstance {
     readonly el: HTMLElement
 
+    private readonly table: GentelellaTableInstance
     private readonly tableEl: HTMLTableElement
     private readonly headEl: HTMLTableSectionElement
+    private renderedComponents: Array<
+        | GentelellaChipInstance
+        | GentelellaEmptyStateInstance
+        | GentelellaSpinnerInstance
+        | GentelellaStatusInstance
+    > = []
 
     constructor(private readonly config: ModelTableConfig) {
         this.headEl = html`
@@ -66,17 +94,10 @@ class ModelTable implements ModelTableInstance {
             </thead>
         ` as HTMLTableSectionElement
 
-        this.tableEl = html`
-            <table className="table model-catalog-table">
-                ${this.headEl}
-            </table>
-        ` as HTMLTableElement
-
-        this.el = html`
-            <div className="table-responsive">
-                ${this.tableEl}
-            </div>
-        ` as HTMLElement
+        this.table = createGentelellaTable({ className: 'model-catalog-table' })
+        this.tableEl = this.table.tableEl
+        this.tableEl.append(this.headEl)
+        this.el = this.table.el
     }
 
     render(
@@ -85,18 +106,25 @@ class ModelTable implements ModelTableInstance {
         syncingModels: string[] = [],
     ): void {
         const syncing = new Set(syncingModels)
+
+        for (const component of this.renderedComponents)
+            component.destroy()
+
+        this.renderedComponents = []
         this.tableEl.replaceChildren(this.headEl)
 
         if (groups.length === 0) {
+            const emptyState = createGentelellaEmptyState({
+                description: 'Loosen the filters, or clear the search box.',
+                title: 'No models match',
+            })
+            this.renderedComponents.push(emptyState)
             this.tableEl.append(
                 html`
                     <tbody>
                         <tr>
                             <td colspan=${COLUMN_COUNT}>
-                                <div className="empty-state">
-                                    <div className="empty-state-title">No models match</div>
-                                    <div className="empty-state-desc">Loosen the filters, or clear the search box.</div>
-                                </div>
+                                ${emptyState.el}
                             </td>
                         </tr>
                     </tbody>
@@ -139,6 +167,38 @@ class ModelTable implements ModelTableInstance {
         const contextWindow = model.model?.contextWindow ?? model.file.contextWindow
         const driftCount = model.drift.length
         const sources = model.sources.sourcesWithDataForThisModel
+        const spinner = isSyncing
+            ? createGentelellaSpinner({
+                className: 'model-catalog-row-spinner',
+                label: `Syncing ${model.modelId}`,
+                size: 'small',
+            })
+            : null
+
+        if (spinner)
+            this.renderedComponents.push(spinner)
+
+        const modalityChips = modalities.map(modality => {
+            const chip = createGentelellaChip({ label: modality })
+            this.renderedComponents.push(chip)
+
+            return chip.el
+        })
+        const driftStatus = driftCount === 0
+            ? null
+            : createGentelellaStatus({
+                label: String(driftCount),
+                tone: model.drift.some(finding => finding.isPricing) ? 'red' : 'yellow',
+            })
+
+        if (driftStatus)
+            this.renderedComponents.push(driftStatus)
+
+        const modelStatus = createGentelellaStatus({
+            className: STATUS_TONES[model.status],
+            label: STATUS_LABELS[model.status],
+        })
+        this.renderedComponents.push(modelStatus)
 
         // A model held out of the database is not a row like the others, and a rate
         // that disagrees with its source is money. Both are marked on the row itself:
@@ -158,11 +218,9 @@ class ModelTable implements ModelTableInstance {
             >
                 <td>
                     <div className="model-catalog-cell-name">
-                        ${isSyncing
-                            ? html`<span className="spinner spinner-sm model-catalog-row-spinner"></span>`
-                            : null}
+                        ${spinner?.el}
                         <div>
-                            <span className="cell-strong">${modelTitle(model)}</span>
+                            <span className=${gentelellaClasses.table.cellStrong}>${modelTitle(model)}</span>
                             <code className="model-catalog-model-id">${shortModel(model.modelId)}</code>
                             ${model.excludedReason
                                 ? html`<div className="model-catalog-muted">${model.excludedReason}</div>`
@@ -174,10 +232,10 @@ class ModelTable implements ModelTableInstance {
                     <div className="model-catalog-chips">
                         ${modalities.length === 0
                             ? html`<span className="model-catalog-muted">—</span>`
-                            : modalities.map(modality => html`<span className="chip">${modality}</span>`)}
+                            : modalityChips}
                     </div>
                 </td>
-                <td className="cell-mono">${formatNumber(contextWindow)}</td>
+                <td className=${gentelellaClasses.table.cellMono}>${formatNumber(contextWindow)}</td>
                 <td className="model-catalog-muted">${pricingSummary(model)}</td>
                 <td>
                     <span
@@ -186,23 +244,19 @@ class ModelTable implements ModelTableInstance {
                     >${sources.length}/${model.sources.sourcesQueried.length}</span>
                 </td>
                 <td>
-                    ${
-                        driftCount === 0
-                            ? html`<span className="model-catalog-muted">—</span>`
-                            : html`
-                                <span className=${model.drift.some(finding => finding.isPricing)
-                                    ? 'status status-red'
-                                    : 'status status-yellow'}>${driftCount}</span>
-                            `
-                    }
+                    ${driftStatus?.el ?? html`<span className="model-catalog-muted">—</span>`}
                 </td>
-                <td><span className=${`status ${STATUS_TONES[model.status]}`}>${STATUS_LABELS[model.status]}</span></td>
+                <td>${modelStatus.el}</td>
             </tr>
         ` as HTMLTableRowElement
     }
 
     destroy(): void {
-        this.el.remove()
+        for (const component of this.renderedComponents)
+            component.destroy()
+
+        this.renderedComponents = []
+        this.table.destroy()
     }
 }
 

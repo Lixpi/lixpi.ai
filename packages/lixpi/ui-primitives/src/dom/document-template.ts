@@ -1,6 +1,6 @@
 import htm from 'htm/mini'
 
-type TemplateProperties = Record<string, unknown> & {
+export type DocumentElementProperties = Record<string, unknown> & {
     class?: string
     className?: string
     data?: Record<string, string | number>
@@ -12,7 +12,7 @@ class DocumentTemplateBuilder {
 
     private buildElement = (
         tagName: string,
-        properties?: TemplateProperties,
+        properties?: DocumentElementProperties,
         ...children: unknown[]
     ): HTMLElement => {
         const element = this.document.createElement(tagName)
@@ -96,6 +96,12 @@ class DocumentTemplateBuilder {
     getTemplateFunction() {
         return (htm as unknown as typeof htm.default).bind(this.buildElement)
     }
+
+    getCreateElementFunction() {
+        return this.buildElement
+    }
 }
 
 export const createDocumentHtml = (document: Document) => new DocumentTemplateBuilder(document).getTemplateFunction()
+
+export const createDocumentEl = (document: Document) => new DocumentTemplateBuilder(document).getCreateElementFunction()

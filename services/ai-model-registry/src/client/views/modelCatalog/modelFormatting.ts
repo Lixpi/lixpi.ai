@@ -2,6 +2,7 @@
 // panel so both describe a model the same way.
 
 import { pricingForCalledInferenceProvider } from '@lixpi/usage-reporter'
+import { gentelellaClasses } from '@lixpi/ui-kit-gentelella/class-names'
 
 import {
     type CatalogModel,
@@ -19,9 +20,9 @@ export const STATUS_LABELS: Record<MergeStatus, string> = {
 // yellow because the theme's yellow status text is a dark amber meant for light
 // backgrounds, which on this page reads as muted rather than as a flag.
 export const STATUS_TONES: Record<MergeStatus, string> = {
-    'written-to-database': 'status-green',
+    'written-to-database': gentelellaClasses.status.green,
     'missing-required-fields': 'model-catalog-status-incomplete',
-    'skipped-by-catalog-index': 'status-blue',
+    'skipped-by-catalog-index': gentelellaClasses.status.blue,
 }
 
 // Trailing build stamps carry no meaning in a list, so

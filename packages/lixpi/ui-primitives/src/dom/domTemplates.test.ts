@@ -8,6 +8,7 @@ import {
 import {
     html,
     createEl,
+    createDocumentEl,
     applyStyle,
     createDocumentHtml,
 } from './index.ts'
@@ -42,6 +43,24 @@ describe('DOM templates', () => {
         expect(element.hasAttribute('disabled')).toBe(true)
         expect(element.hasAttribute('required')).toBe(false)
         expect(element.dataset.index).toBe('0')
+    })
+
+    it('binds document-scoped element factories to their supplied document', () => {
+        const scopedDocument = document.implementation.createHTMLDocument('Embedded')
+        const createScopedElement = createDocumentEl(scopedDocument)
+        const element = createScopedElement(
+            'button',
+            {
+                className: 'action',
+                disabled: true,
+            },
+            'Save',
+        ) as HTMLButtonElement
+
+        expect(element.ownerDocument).toBe(scopedDocument)
+        expect(element.className).toBe('action')
+        expect(element.disabled).toBe(true)
+        expect(element.textContent).toBe('Save')
     })
 
     it('preserves document-scoped nested children and textContent semantics', () => {

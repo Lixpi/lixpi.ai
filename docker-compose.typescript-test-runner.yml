@@ -218,7 +218,10 @@ services:
             #     pnpm-lock.yaml straight onto the host through the bind
             #     mount; enumerating files keeps those install artifacts
             #     inside the container filesystem only ---
-            - ./packages/lixpi/pnpm-workspace.yaml:/usr/src/service/shared/pnpm-workspace.yaml:cached
+            # pnpm records ignored dependency build scripts in this manifest.
+            # Stage it outside the workspace so the runner can copy it into its
+            # disposable filesystem instead of rewriting the host bind mount.
+            - ./packages/lixpi/pnpm-workspace.yaml:/usr/src/service/shared-workspace/pnpm-workspace.yaml:ro,cached
             - ./packages/lixpi/auth-service/package.json:/usr/src/service/shared/auth-service/package.json:cached
             - ./packages/lixpi/auth-service/src:/usr/src/service/shared/auth-service/src:cached
             - ./packages/lixpi/capability-system/package.json:/usr/src/service/shared/capability-system/package.json:cached
@@ -264,6 +267,10 @@ services:
             - ./packages/lixpi/ui-kit/src:/usr/src/service/shared/ui-kit/src:cached
             - ./packages/lixpi/ui-kit/styles:/usr/src/service/shared/ui-kit/styles:cached
             - ./packages/lixpi/ui-kit/vitest.config.ts:/usr/src/service/shared/ui-kit/vitest.config.ts:cached
+            - ./packages/lixpi/ui-kit-gentelella/package.json:/usr/src/service/shared/ui-kit-gentelella/package.json:cached
+            - ./packages/lixpi/ui-kit-gentelella/src:/usr/src/service/shared/ui-kit-gentelella/src:cached
+            - ./packages/lixpi/ui-kit-gentelella/styles:/usr/src/service/shared/ui-kit-gentelella/styles:cached
+            - ./packages/lixpi/ui-kit-gentelella/vitest.config.ts:/usr/src/service/shared/ui-kit-gentelella/vitest.config.ts:cached
             - ./packages/lixpi/usage-reporter/package.json:/usr/src/service/shared/usage-reporter/package.json:cached
             - ./packages/lixpi/usage-reporter/src:/usr/src/service/shared/usage-reporter/src:cached
 
@@ -283,6 +290,7 @@ services:
             - typescript-test-runner-node-modules-shared-prosemirror:/usr/src/service/shared/prosemirror/node_modules
             - typescript-test-runner-node-modules-shared-test-utils:/usr/src/service/shared/test-utils/node_modules
             - typescript-test-runner-node-modules-shared-ui-kit:/usr/src/service/shared/ui-kit/node_modules
+            - typescript-test-runner-node-modules-shared-ui-kit-gentelella:/usr/src/service/shared/ui-kit-gentelella/node_modules
             - typescript-test-runner-node-modules-shared-usage-reporter:/usr/src/service/shared/usage-reporter/node_modules
         networks:
             - nats
@@ -346,3 +354,4 @@ volumes:
     typescript-test-runner-node-modules-shared-prosemirror:
     typescript-test-runner-node-modules-shared-test-utils:
     typescript-test-runner-node-modules-shared-ui-kit:
+    typescript-test-runner-node-modules-shared-ui-kit-gentelella:

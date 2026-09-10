@@ -69,7 +69,7 @@ The docs build can validate heading IDs and anchor fragments when a human explic
 
 ## Package Documentation
 
-Rendering-engine manuals live in `packages/lixpi/canvas-engine/docs/`; reusable canvas surface and effect manuals live in `packages/lixpi/canvas-components/docs/`. Lixpi workspace composition belongs in `packages/lixpi/canvas-components-lixpi-specific/docs/`. Shared DOM, SVG and gradient guidance belongs in `ui-primitives`; generic control guidance belongs in `ui-kit`. Each package README introduces its contracts and links to its manuals. Central canvas pages describe product behavior and persistence, then link to those package entry points.
+Rendering-engine manuals live in `packages/lixpi/canvas-engine/docs/`; reusable canvas surface and effect manuals live in `packages/lixpi/canvas-components/docs/`. Lixpi workspace composition belongs in `packages/lixpi/canvas-components-lixpi-specific/docs/`. Shared DOM, SVG and gradient guidance belongs in `ui-primitives`; generic control guidance belongs in `ui-kit`; Gentelella theme integration and upgrade guidance belongs in `ui-kit-gentelella/documentation/`. Each package README introduces its contracts and links to its manuals. Central canvas pages describe product behavior and persistence, then link to those package entry points.
 
 The [site source registry](site/source-registry.mjs) records authored source paths and output routes. Register package documentation explicitly; do not copy manuals into `documentation/` or ingest an entire package source tree. Keep package links relative to the original file. The same resolver validates and renders links, including package assets and heading fragments.
 

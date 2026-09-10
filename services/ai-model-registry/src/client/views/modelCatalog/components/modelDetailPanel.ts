@@ -3,6 +3,30 @@
 // half through the server API, which validates the change and keeps the previous
 // version; nothing here touches a catalog file directly.
 
+import {
+    gentelellaClasses,
+    type GentelellaButtonVariant,
+} from '@lixpi/ui-kit-gentelella/class-names'
+import {
+    type GentelellaComponentInstance,
+} from '@lixpi/ui-kit-gentelella/component'
+import { createGentelellaBanner } from '@lixpi/ui-kit-gentelella/components/banner'
+import { createGentelellaButton } from '@lixpi/ui-kit-gentelella/components/button'
+import { createGentelellaChip } from '@lixpi/ui-kit-gentelella/components/chip'
+import { createGentelellaDataTable } from '@lixpi/ui-kit-gentelella/components/data-table'
+import {
+    createGentelellaDrawer,
+    type GentelellaDrawerInstance,
+} from '@lixpi/ui-kit-gentelella/components/drawer'
+import {
+    createGentelellaFormActions,
+    createGentelellaFormField,
+} from '@lixpi/ui-kit-gentelella/components/form'
+import { createGentelellaStatus } from '@lixpi/ui-kit-gentelella/components/status'
+import {
+    createGentelellaTabs,
+    type GentelellaTabsInstance,
+} from '@lixpi/ui-kit-gentelella/components/tabs'
 import { html } from '@lixpi/ui-primitives/dom'
 
 import {
@@ -133,7 +157,12 @@ const fieldList = (
         ? html`<span className="model-catalog-muted">${emptyLabel}</span>` as HTMLElement
         : html`
             <div className="model-catalog-chips">
-                ${fields.map(field => html`<code className="model-catalog-field-chip">${field}</code>`)}
+                ${fields.map(
+                    field => createGentelellaChip({
+                        className: 'model-catalog-field-chip',
+                        label: field,
+                    }).el,
+                )}
             </div>
         ` as HTMLElement
 
@@ -157,6 +186,7 @@ class ModelDetailPanel implements ModelDetailPanelInstance {
     private readonly titleEl: HTMLDivElement
     private readonly subtitleEl: HTMLDivElement
     readonly backdropEl: HTMLDivElement
+    private readonly drawer: GentelellaDrawerInstance
 
     private model: CatalogModel | null = null
     private saving = false
@@ -174,7 +204,9 @@ class ModelDetailPanel implements ModelDetailPanelInstance {
     // A tab press swaps the pane's contents and nothing else: rebuilding the body
     // would send the panel back to the top of its scroll and rebuild the form above.
     private fileTabsEl: HTMLElement | null = null
+    private fileTabs: GentelellaTabsInstance | null = null
     private filePaneEl: HTMLElement | null = null
+    private renderedComponents: GentelellaComponentInstance[] = []
     // The file on show. Null means the first one, which is the merged record. It
     // survives a save: the body is rebuilt when the model resolves again, and
     // dropping back to the merged tab there would undo a deliberate choice.
@@ -183,33 +215,31 @@ class ModelDetailPanel implements ModelDetailPanelInstance {
     private readonly onKeyDown: (event: KeyboardEvent) => void
 
     constructor(private readonly config: ModelDetailPanelConfig) {
-        this.titleEl = html`<div className="drawer-title"></div>` as HTMLDivElement
+        this.titleEl = html`<div className=${gentelellaClasses.drawer.title}></div>` as HTMLDivElement
         this.subtitleEl = html`<div className="model-catalog-drawer-subtitle"></div>` as HTMLDivElement
-        this.bodyEl = html`<div className="drawer-body model-catalog-drawer-sections"></div>` as HTMLDivElement
-
-        this.backdropEl = html`
-            <div
-                className="drawer-backdrop"
-                onclick=${() => this.config.onClose()}
-            ></div>
+        const header = html`
+            <div className="model-catalog-drawer-header">
+                <button
+                    className="model-catalog-drawer-back"
+                    type="button"
+                    aria-label="Back to the model list"
+                    innerHTML=${arrowLeftIcon}
+                    onclick=${() => this.config.onClose()}
+                ></button>
+                ${this.titleEl}
+                ${this.subtitleEl}
+            </div>
         ` as HTMLDivElement
-
-        this.el = html`
-            <aside className="drawer model-catalog-drawer">
-                <div className="model-catalog-drawer-header">
-                    <button
-                        className="model-catalog-drawer-back"
-                        type="button"
-                        aria-label="Back to the model list"
-                        innerHTML=${arrowLeftIcon}
-                        onclick=${() => this.config.onClose()}
-                    ></button>
-                    ${this.titleEl}
-                    ${this.subtitleEl}
-                </div>
-                ${this.bodyEl}
-            </aside>
-        ` as HTMLElement
+        this.drawer = createGentelellaDrawer({
+            body: [],
+            bodyClassName: 'model-catalog-drawer-sections',
+            className: 'model-catalog-drawer',
+            header,
+            onBackdropClick: () => this.config.onClose(),
+        })
+        this.bodyEl = this.drawer.bodyEl
+        this.backdropEl = this.drawer.backdropEl
+        this.el = this.drawer.el
 
         // Escape closes the panel, the way it closes anything laid over a page. It is
         // bound on the document because the panel rarely holds focus: a reader is
@@ -240,8 +270,7 @@ class ModelDetailPanel implements ModelDetailPanelInstance {
     ): void {
         this.model = model
         this.saving = saving
-        this.el.classList.toggle('open', model !== null)
-        this.backdropEl.classList.toggle('open', model !== null)
+        this.drawer.setOpen(model !== null)
         document.documentElement.classList.toggle(SCROLL_LOCK_CLASS, model !== null)
 
         if (!model) {
@@ -252,7 +281,14 @@ class ModelDetailPanel implements ModelDetailPanelInstance {
             this.renderedModelKey = null
             this.files = null
             this.fileTabsEl = null
+            this.fileTabs?.destroy()
+            this.fileTabs = null
             this.filePaneEl = null
+
+            for (const component of this.renderedComponents)
+                component.destroy()
+
+            this.renderedComponents = []
 
             return
         }
@@ -285,6 +321,13 @@ class ModelDetailPanel implements ModelDetailPanelInstance {
         this.renderedSignature = signature
         this.jsonViewer?.destroy()
         this.jsonViewer = null
+        this.fileTabs?.destroy()
+        this.fileTabs = null
+
+        for (const component of this.renderedComponents)
+            component.destroy()
+
+        this.renderedComponents = []
         this.bodyEl.replaceChildren(
             this.renderStatus(model),
             this.renderProvenance(model),
@@ -310,19 +353,18 @@ class ModelDetailPanel implements ModelDetailPanelInstance {
     // element exists.
     private renderSaveButton(
         label: string,
-        className: string,
+        variant: GentelellaButtonVariant,
         onClick: () => Promise<void>,
     ): HTMLButtonElement {
-        const button = html`
-            <button
-                className=${className}
-                type="button"
-                onclick=${() => void onClick()}
-            >${label}</button>
-        ` as HTMLButtonElement
-        button.disabled = this.saving
+        const button = createGentelellaButton({
+            disabled: this.saving,
+            label,
+            onClick: () => void onClick(),
+            variant,
+        })
+        this.renderedComponents.push(button)
 
-        return button
+        return button.el
     }
 
     private renderStatus(model: CatalogModel): HTMLElement {
@@ -330,30 +372,37 @@ class ModelDetailPanel implements ModelDetailPanelInstance {
         // An excluded model has no merged record and no directory: the sync deletes
         // it. There is no merge to date, so the panel says why it is out instead.
         const notInTree = model.mergedAt === ''
+        const status = createGentelellaStatus({
+            className: STATUS_TONES[model.status],
+            label: STATUS_LABELS[model.status],
+        })
+        this.renderedComponents.push(status)
+        let statusDetail: HTMLElement
+
+        if (notInTree)
+            statusDetail = html`<p className="model-catalog-muted">${model.excludedReason ?? "Kept out by the provider's catalog settings."}</p>` as HTMLElement
+        else if (missing.length === 0)
+            statusDetail = html`<p className="model-catalog-muted">Every required field is filled in.</p>` as HTMLElement
+        else {
+            const banner = createGentelellaBanner({
+                body: fieldList(missing, 'nothing'),
+                title: 'Missing required fields',
+                variant: 'warning',
+            })
+            this.renderedComponents.push(banner)
+            statusDetail = banner.el
+        }
 
         return html`
             <section className="model-catalog-section">
                 <h3 className="model-catalog-section-title">Status</h3>
                 <div className="model-catalog-facts">
-                    <span className=${`status ${STATUS_TONES[model.status]}`}>${STATUS_LABELS[model.status]}</span>
+                    ${status.el}
                     <span className="model-catalog-muted">${notInTree
                         ? 'Not in the tree'
                         : `Merged ${new Date(model.mergedAt).toLocaleString()}`}</span>
                 </div>
-                ${
-                    notInTree
-                        ? html`<p className="model-catalog-muted">${model.excludedReason ?? 'Kept out by the provider\'s catalog settings.'}</p>`
-                        : missing.length === 0
-                            ? html`<p className="model-catalog-muted">Every required field is filled in.</p>`
-                            : html`
-                                <div className="banner">
-                                    <div className="banner-body">
-                                        <strong>Missing required fields</strong>
-                                        ${fieldList(missing, 'nothing')}
-                                    </div>
-                                </div>
-                            `
-                }
+                ${statusDetail}
                 ${
                     model.ratesRefusedBecauseUnitsDiffer.length === 0
                         ? null
@@ -412,85 +461,103 @@ class ModelDetailPanel implements ModelDetailPanelInstance {
     // costs everywhere else, which is the question a routing change asks.
     private renderInferenceProviders(model: CatalogModel): HTMLElement {
         const providers = Object.entries(model.file.inferenceProviders ?? {}) as Array<[string, Record<string, any>]>
-        const rows = providers.map(
-            ([id, entry]) => html`
-                <tr>
-                    <td className="cell-mono">${id}</td>
-                    <td>${entry.inferenceProviderTitle ?? ''}</td>
-                    <td>${entry.isCalledByThePlatform ? html`<span className="status status-green">Called</span>` : ''}</td>
-                    <td>${formatValue(entry.pricing ?? null)}</td>
-                    <td>${formatValue(entry.contextWindow ?? null)}</td>
-                    <td>${formatValue(entry.maxCompletionSize ?? null)}</td>
-                    <td>${(entry.reportedBySources ?? []).join(', ')}</td>
-                </tr>
-            `,
-        )
+        const table = providers.length === 0
+            ? null
+            : createGentelellaDataTable({
+                ariaLabel: `Inference providers for ${model.modelId}`,
+                columns: [{
+                    header: 'Provider',
+                    render: ([id]) => html`<span className=${gentelellaClasses.table.cellMono}>${id}</span>`,
+                }, {
+                    header: 'Name',
+                    render: ([, entry]) => entry.inferenceProviderTitle ?? '',
+                }, {
+                    header: '',
+                    orderable: false,
+                    render: ([, entry]) => {
+                        if (!entry.isCalledByThePlatform)
+                            return null
+
+                        const status = createGentelellaStatus({
+                            label: 'Called',
+                            tone: 'green',
+                        })
+                        this.renderedComponents.push(status)
+
+                        return status.el
+                    },
+                }, {
+                    header: 'Pricing',
+                    render: ([, entry]) => formatValue(entry.pricing ?? null),
+                }, {
+                    header: 'Context',
+                    render: ([, entry]) => formatValue(entry.contextWindow ?? null),
+                }, {
+                    header: 'Max output',
+                    render: ([, entry]) => formatValue(entry.maxCompletionSize ?? null),
+                }, {
+                    header: 'Reported by',
+                    render: ([, entry]) => (entry.reportedBySources ?? []).join(', '),
+                }],
+                getRowId: ([id]) => id,
+                rows: providers,
+            })
+
+        if (table)
+            this.renderedComponents.push(table)
 
         return html`
             <section className="model-catalog-section model-catalog-section-wide">
                 <h3 className="model-catalog-section-title">Inference providers</h3>
-                ${
-                    rows.length === 0
-                        ? html`<p className="model-catalog-muted">No source reports this model on any inference provider.</p>`
-                        : html`
-                            <div className="table-responsive">
-                                <table className="table">
-                                    <thead>
-                                        <tr>
-                                            <th>Provider</th>
-                                            <th>Name</th>
-                                            <th></th>
-                                            <th>Pricing</th>
-                                            <th>Context</th>
-                                            <th>Max output</th>
-                                            <th>Reported by</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>${rows}</tbody>
-                                </table>
-                            </div>
-                        `
-                }
+                ${table?.el ?? html`<p className="model-catalog-muted">No source reports this model on any inference provider.</p>`}
             </section>
         ` as HTMLElement
     }
 
     private renderDrift(model: CatalogModel): HTMLElement {
-        const rows = model.drift.map(
-            (finding: DriftFinding) => html`
-                <tr>
-                    <td className="cell-mono">${finding.field}</td>
-                    <td>${formatValue(finding.lixpiValue)}</td>
-                    <td>${formatValue(finding.fetchedValue)}</td>
-                    <td>${finding.source}</td>
-                    <td>${finding.isPricing ? html`<span className="status status-red">Pricing</span>` : ''}</td>
-                </tr>
-            `,
-        )
+        const table = model.drift.length === 0
+            ? null
+            : createGentelellaDataTable<DriftFinding>({
+                ariaLabel: `Drift findings for ${model.modelId}`,
+                columns: [{
+                    header: 'Field',
+                    render: finding => html`<span className=${gentelellaClasses.table.cellMono}>${finding.field}</span>`,
+                }, {
+                    header: 'Authored',
+                    render: finding => formatValue(finding.lixpiValue),
+                }, {
+                    header: 'Source',
+                    render: finding => formatValue(finding.fetchedValue),
+                }, {
+                    header: 'From',
+                    render: finding => finding.source,
+                }, {
+                    header: '',
+                    orderable: false,
+                    render: finding => {
+                        if (!finding.isPricing)
+                            return null
+
+                        const status = createGentelellaStatus({
+                            label: 'Pricing',
+                            tone: 'red',
+                        })
+                        this.renderedComponents.push(status)
+
+                        return status.el
+                    },
+                }],
+                getRowId: finding => `${finding.source}:${finding.field}`,
+                rows: model.drift,
+            })
+
+        if (table)
+            this.renderedComponents.push(table)
 
         return html`
             <section className="model-catalog-section model-catalog-section-wide">
                 <h3 className="model-catalog-section-title">Drift</h3>
-                ${
-                    model.drift.length === 0
-                        ? html`<p className="model-catalog-muted">The authored file and the sources agree.</p>`
-                        : html`
-                            <div className="table-responsive">
-                                <table className="table">
-                                    <thead>
-                                        <tr>
-                                            <th>Field</th>
-                                            <th>Authored</th>
-                                            <th>Source</th>
-                                            <th>From</th>
-                                            <th></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>${rows}</tbody>
-                                </table>
-                            </div>
-                        `
-                }
+                ${table?.el ?? html`<p className="model-catalog-muted">The authored file and the sources agree.</p>`}
             </section>
         ` as HTMLElement
     }
@@ -506,7 +573,6 @@ class ModelDetailPanel implements ModelDetailPanelInstance {
             const current = authored[field.key]
             const input = html`
                 <input
-                    className="form-control"
                     type=${field.type}
                     value=${current === undefined
                         || current === null
@@ -515,13 +581,13 @@ class ModelDetailPanel implements ModelDetailPanelInstance {
                 />
             ` as HTMLInputElement
             inputs.set(field.key, input)
+            const formField = createGentelellaFormField({
+                control: input,
+                label: field.label,
+            })
+            this.renderedComponents.push(formField)
 
-            return html`
-                <div className="form-group">
-                    <label className="form-label">${field.label}</label>
-                    ${input}
-                </div>
-            `
+            return formField.el
         })
 
         const save = async (): Promise<void> => {
@@ -554,6 +620,14 @@ class ModelDetailPanel implements ModelDetailPanelInstance {
             if (Object.keys(patch).length > 0)
                 await this.config.onSaveFields(patch)
         }
+        const actions = createGentelellaFormActions({
+            content: this.renderSaveButton(
+                'Save fields',
+                'primary',
+                save,
+            ),
+        })
+        this.renderedComponents.push(actions)
 
         return html`
             <section className="model-catalog-section model-catalog-section-wide">
@@ -562,13 +636,7 @@ class ModelDetailPanel implements ModelDetailPanelInstance {
                     These live in the model's own file. Clearing a box removes the field, which hands it back to the sources.
                 </p>
                 <div className="model-catalog-form-grid">${controls}</div>
-                <div className="form-actions">
-                    ${this.renderSaveButton(
-                        'Save fields',
-                        'btn btn-primary',
-                        save,
-                    )}
-                </div>
+                ${actions.el}
             </section>
         ` as HTMLElement
     }
@@ -587,20 +655,19 @@ class ModelDetailPanel implements ModelDetailPanelInstance {
             ? this.activeFileName
             : names[0] ?? null
         this.activeFileName = active
-        this.fileTabsEl = html`
-            <div
-                className="tabs-underline model-catalog-file-tabs"
-                role="tablist"
-            >
-                ${(loaded?.files ?? []).map(
-                    file => this.renderFileTab(
-                        model,
-                        file.name,
-                        file.name === active,
-                    ),
-                )}
-            </div>
-        ` as HTMLElement
+        this.fileTabs = createGentelellaTabs({
+            activeValue: active ?? undefined,
+            ariaLabel: `Files for ${model.modelId}`,
+            className: 'model-catalog-file-tabs',
+            items: (loaded?.files ?? []).map(
+                file => ({
+                    label: file.name,
+                    value: file.name,
+                }),
+            ),
+            onSelect: name => this.showFile(model, name),
+        })
+        this.fileTabsEl = this.fileTabs.el
         this.filePaneEl = html`
             <div className="model-catalog-file-pane">
                 ${this.renderFilePane(
@@ -623,23 +690,6 @@ class ModelDetailPanel implements ModelDetailPanelInstance {
         ` as HTMLElement
     }
 
-    private renderFileTab(
-        model: CatalogModel,
-        name: string,
-        isActive: boolean,
-    ): HTMLElement {
-        return html`
-            <button
-                className=${isActive ? 'tab active' : 'tab'}
-                type="button"
-                role="tab"
-                aria-selected=${String(isActive)}
-                data=${{ file: name }}
-                onclick=${() => this.showFile(model, name)}
-            >${name}</button>
-        ` as HTMLElement
-    }
-
     // Swaps the file on show without touching the rest of the panel: the tabs keep
     // their elements and only their state changes, and the pane's contents are
     // replaced. Nothing above moves, so the panel stays where it was scrolled to.
@@ -655,15 +705,7 @@ class ModelDetailPanel implements ModelDetailPanelInstance {
             return
 
         this.activeFileName = name
-
-        for (const tab of [...this.fileTabsEl.children]) {
-            const isActive = (tab as HTMLElement).dataset.file === name
-            tab.className = isActive ? 'tab active' : 'tab'
-            tab.setAttribute(
-                'aria-selected',
-                String(isActive),
-            )
-        }
+        this.fileTabs?.setActiveValue(name)
 
         this.jsonViewer?.destroy()
         this.jsonViewer = null
@@ -689,15 +731,16 @@ class ModelDetailPanel implements ModelDetailPanelInstance {
         )
             return html`<p className="model-catalog-muted">Reading the model's files…</p>` as HTMLElement
 
-        if (loaded.error)
-            return html`
-                <div className="banner">
-                    <div className="banner-body">
-                        <strong>The files could not be read</strong>
-                        <p className="model-catalog-muted">${loaded.error}</p>
-                    </div>
-                </div>
-            ` as HTMLElement
+        if (loaded.error) {
+            const banner = createGentelellaBanner({
+                body: loaded.error,
+                title: 'The files could not be read',
+                variant: 'danger',
+            })
+            this.renderedComponents.push(banner)
+
+            return banner.el
+        }
 
         const file = loaded.files.find(entry => entry.name === active)
 
@@ -722,7 +765,6 @@ class ModelDetailPanel implements ModelDetailPanelInstance {
         const isSkipped = model.status === 'skipped-by-catalog-index'
         const reasonEl = html`
             <input
-                className="form-control"
                 type="text"
                 placeholder="Why this model is not shipped"
             />
@@ -739,6 +781,24 @@ class ModelDetailPanel implements ModelDetailPanelInstance {
 
             await this.config.onSkip(model, reason)
         }
+        const action = this.renderSaveButton(
+            isSkipped ? 'Stop skipping and sync' : 'Skip this model',
+            isSkipped ? 'primary' : 'danger',
+            isSkipped
+                ? async () => await this.config.onUnskip(model)
+                : skip,
+        )
+        const actions = createGentelellaFormActions({ content: action })
+        this.renderedComponents.push(actions)
+        const reasonField = isSkipped
+            ? null
+            : createGentelellaFormField({
+                control: reasonEl,
+                label: 'Reason',
+            })
+
+        if (reasonField)
+            this.renderedComponents.push(reasonField)
 
         return html`
             <section className="model-catalog-section">
@@ -749,26 +809,11 @@ class ModelDetailPanel implements ModelDetailPanelInstance {
                             <p className="model-catalog-muted">
                                 Bringing it back takes it out of the provider's skip list and runs a sync, which is what fetches the model and puts it in the tree.
                             </p>
-                            <div className="form-actions">
-                                ${this.renderSaveButton(
-                                    'Stop skipping and sync',
-                                    'btn btn-primary',
-                                    async () => await this.config.onUnskip(model),
-                                )}
-                            </div>
+                            ${actions.el}
                         `
                         : html`
-                            <div className="form-group">
-                                <label className="form-label">Reason</label>
-                                ${reasonEl}
-                            </div>
-                            <div className="form-actions">
-                                ${this.renderSaveButton(
-                                    'Skip this model',
-                                    'btn btn-danger',
-                                    skip,
-                                )}
-                            </div>
+                            ${reasonField?.el}
+                            ${actions.el}
                         `
                 }
                 <dl className="model-catalog-definitions">
@@ -785,13 +830,19 @@ class ModelDetailPanel implements ModelDetailPanelInstance {
         this.model = null
         this.files = null
         this.fileTabsEl = null
+        this.fileTabs?.destroy()
+        this.fileTabs = null
         this.filePaneEl = null
         document.removeEventListener('keydown', this.onKeyDown)
         document.documentElement.classList.remove(SCROLL_LOCK_CLASS)
         this.jsonViewer?.destroy()
         this.jsonViewer = null
-        this.backdropEl.remove()
-        this.el.remove()
+
+        for (const component of this.renderedComponents)
+            component.destroy()
+
+        this.renderedComponents = []
+        this.drawer.destroy()
     }
 }
 

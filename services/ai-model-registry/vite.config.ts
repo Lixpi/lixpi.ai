@@ -32,6 +32,7 @@ export default defineConfig({
         // Pre-bundling them caches a copy that an edit no longer reaches.
         exclude: [
             '@lixpi/constants',
+            '@lixpi/ui-kit-gentelella',
             '@lixpi/ui-primitives',
         ],
         // CodeMirror ships many small ES modules. Pre-bundling them keeps the
