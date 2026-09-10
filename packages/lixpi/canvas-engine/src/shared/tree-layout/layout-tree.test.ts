@@ -14,16 +14,35 @@ import {
 
 // Geometry helpers used by the invariant assertions below.
 const rectOf = (
-    positions: Map<string, { x: number; y: number }>,
+    positions: Map<string, {
+        x: number
+        y: number
+    }>,
     node: TreeLayoutNode,
 ) => {
     const pos = positions.get(node.id)!
-    return { x: pos.x, y: pos.y, width: node.width, height: node.height }
+
+    return {
+        x: pos.x,
+        y: pos.y,
+        width: node.width,
+        height: node.height,
+    }
 }
 
 const overlaps = (
-    a: { x: number; y: number; width: number; height: number },
-    b: { x: number; y: number; width: number; height: number },
+    a: {
+        x: number
+        y: number
+        width: number
+        height: number
+    },
+    b: {
+        x: number
+        y: number
+        width: number
+        height: number
+    },
 ): boolean =>
     a.x < b.x + b.width
     && a.x + a.width > b.x
@@ -31,40 +50,81 @@ const overlaps = (
     && a.y + a.height > b.y
 
 const centerY = (
-    positions: Map<string, { x: number; y: number }>,
+    positions: Map<string, {
+        x: number
+        y: number
+    }>,
     node: TreeLayoutNode,
 ): number => positions.get(node.id)!.y + node.height / 2
 
-const OPTS = { depthGap: 100, siblingGap: 40 }
+const OPTS = {
+    depthGap: 100,
+    siblingGap: 40,
+}
 
 describe('layoutTree', () => {
     it('returns an empty result for no nodes', () => {
         const result = layoutTree([], OPTS)
         expect(result.rootId).toBe('')
         expect(result.positions.size).toBe(0)
-        expect(result.bounds).toEqual({ width: 0, height: 0 })
+        expect(result.bounds).toEqual({
+            width: 0,
+            height: 0,
+        })
     })
 
     it('places a single root at the origin (no-op tree)', () => {
-        const root: TreeLayoutNode = { id: 'R', parentId: null, width: 800, height: 600 }
+        const root: TreeLayoutNode = {
+            id: 'R',
+            parentId: null,
+            width: 800,
+            height: 600,
+        }
         const result = layoutTree([root], OPTS)
 
         expect(result.rootId).toBe('R')
-        expect(result.positions.get('R')).toEqual({ x: 0, y: 0 })
-        expect(result.bounds).toEqual({ width: 800, height: 600 })
+        expect(result.positions.get('R')).toEqual({
+            x: 0,
+            y: 0,
+        })
+        expect(result.bounds).toEqual({
+            width: 800,
+            height: 600,
+        })
     })
 
     it('keeps a linear chain perfectly collinear', () => {
         const nodes: TreeLayoutNode[] = [
-            { id: 'R', parentId: null, width: 800, height: 800 },
-            { id: 'A', parentId: 'R', width: 800, height: 800 },
-            { id: 'B', parentId: 'A', width: 800, height: 800 },
-            { id: 'C', parentId: 'B', width: 800, height: 800 },
+            {
+                id: 'R',
+                parentId: null,
+                width: 800,
+                height: 800,
+            },
+            {
+                id: 'A',
+                parentId: 'R',
+                width: 800,
+                height: 800,
+            },
+            {
+                id: 'B',
+                parentId: 'A',
+                width: 800,
+                height: 800,
+            },
+            {
+                id: 'C',
+                parentId: 'B',
+                width: 800,
+                height: 800,
+            },
         ]
         const { positions } = layoutTree(nodes, OPTS)
 
         // Same Y for every node, X increases by width + depthGap each step.
         for (const id of ['R', 'A', 'B', 'C']) expect(positions.get(id)!.y).toBe(0)
+
         expect(positions.get('R')!.x).toBe(0)
         expect(positions.get('A')!.x).toBe(900)
         expect(positions.get('B')!.x).toBe(1800)
@@ -73,14 +133,32 @@ describe('layoutTree', () => {
 
     it('places a two-child fork symmetrically around the root center', () => {
         const nodes: TreeLayoutNode[] = [
-            { id: 'R', parentId: null, width: 800, height: 800 },
-            { id: 'A', parentId: 'R', width: 800, height: 800 },
-            { id: 'B', parentId: 'R', width: 800, height: 800 },
+            {
+                id: 'R',
+                parentId: null,
+                width: 800,
+                height: 800,
+            },
+            {
+                id: 'A',
+                parentId: 'R',
+                width: 800,
+                height: 800,
+            },
+            {
+                id: 'B',
+                parentId: 'R',
+                width: 800,
+                height: 800,
+            },
         ]
         const { positions } = layoutTree(nodes, OPTS)
 
         // Root holds the origin; both children share one column to its right.
-        expect(positions.get('R')).toEqual({ x: 0, y: 0 })
+        expect(positions.get('R')).toEqual({
+            x: 0,
+            y: 0,
+        })
         expect(positions.get('A')!.x).toBe(900)
         expect(positions.get('B')!.x).toBe(900)
 
@@ -99,10 +177,30 @@ describe('layoutTree', () => {
 
     it('aligns the middle of three children with the root center', () => {
         const nodes: TreeLayoutNode[] = [
-            { id: 'R', parentId: null, width: 800, height: 800 },
-            { id: 'A', parentId: 'R', width: 800, height: 800 },
-            { id: 'B', parentId: 'R', width: 800, height: 800 },
-            { id: 'C', parentId: 'R', width: 800, height: 800 },
+            {
+                id: 'R',
+                parentId: null,
+                width: 800,
+                height: 800,
+            },
+            {
+                id: 'A',
+                parentId: 'R',
+                width: 800,
+                height: 800,
+            },
+            {
+                id: 'B',
+                parentId: 'R',
+                width: 800,
+                height: 800,
+            },
+            {
+                id: 'C',
+                parentId: 'R',
+                width: 800,
+                height: 800,
+            },
         ]
         const { positions } = layoutTree(nodes, OPTS)
 
@@ -115,12 +213,42 @@ describe('layoutTree', () => {
     it('never overlaps any pair of nodes in a deep, unbalanced tree', () => {
         // R → { A → {A1, A2, A3}, B }: A's tall subtree must not collide with B.
         const nodes: TreeLayoutNode[] = [
-            { id: 'R', parentId: null, width: 800, height: 800 },
-            { id: 'A', parentId: 'R', width: 800, height: 800 },
-            { id: 'B', parentId: 'R', width: 800, height: 800 },
-            { id: 'A1', parentId: 'A', width: 800, height: 800 },
-            { id: 'A2', parentId: 'A', width: 800, height: 800 },
-            { id: 'A3', parentId: 'A', width: 800, height: 800 },
+            {
+                id: 'R',
+                parentId: null,
+                width: 800,
+                height: 800,
+            },
+            {
+                id: 'A',
+                parentId: 'R',
+                width: 800,
+                height: 800,
+            },
+            {
+                id: 'B',
+                parentId: 'R',
+                width: 800,
+                height: 800,
+            },
+            {
+                id: 'A1',
+                parentId: 'A',
+                width: 800,
+                height: 800,
+            },
+            {
+                id: 'A2',
+                parentId: 'A',
+                width: 800,
+                height: 800,
+            },
+            {
+                id: 'A3',
+                parentId: 'A',
+                width: 800,
+                height: 800,
+            },
         ]
         const { positions } = layoutTree(nodes, OPTS)
 
@@ -133,9 +261,24 @@ describe('layoutTree', () => {
 
     it('honors variable node sizes when computing depth columns', () => {
         const nodes: TreeLayoutNode[] = [
-            { id: 'R', parentId: null, width: 400, height: 300 },
-            { id: 'A', parentId: 'R', width: 1000, height: 500 },
-            { id: 'B', parentId: 'A', width: 200, height: 200 },
+            {
+                id: 'R',
+                parentId: null,
+                width: 400,
+                height: 300,
+            },
+            {
+                id: 'A',
+                parentId: 'R',
+                width: 1000,
+                height: 500,
+            },
+            {
+                id: 'B',
+                parentId: 'A',
+                width: 200,
+                height: 200,
+            },
         ]
         const { positions } = layoutTree(nodes, OPTS)
 
@@ -153,9 +296,19 @@ describe('layoutTree', () => {
             height: 800,
         }))
         const nodes: TreeLayoutNode[] = [
-            { id: 'R', parentId: null, width: 800, height: 800 },
+            {
+                id: 'R',
+                parentId: null,
+                width: 800,
+                height: 800,
+            },
             ...children,
-            { id: 'C1A', parentId: 'C1', width: 800, height: 800 },
+            {
+                id: 'C1A',
+                parentId: 'C1',
+                width: 800,
+                height: 800,
+            },
         ]
         const { positions } = layoutTree(nodes, {
             ...OPTS,
@@ -163,14 +316,26 @@ describe('layoutTree', () => {
         })
 
         const branchGap = OPTS.depthGap + 25 * (children.length - 1)
+
         for (const child of children) expect(positions.get(child.id)!.x).toBe(800 + branchGap)
+
         expect(positions.get('C1A')!.x).toBe(800 + branchGap + 800 + OPTS.depthGap)
     })
 
     it('keeps a single-child chain collinear even when sizes differ', () => {
         const nodes: TreeLayoutNode[] = [
-            { id: 'R', parentId: null, width: 800, height: 1000 },
-            { id: 'A', parentId: 'R', width: 800, height: 200 },
+            {
+                id: 'R',
+                parentId: null,
+                width: 800,
+                height: 1000,
+            },
+            {
+                id: 'A',
+                parentId: 'R',
+                width: 800,
+                height: 200,
+            },
         ]
         const { positions } = layoutTree(nodes, OPTS)
 

@@ -7,7 +7,7 @@
 Consumers import TypeScript source through explicit package exports. No package build or generated JavaScript is required.
 
 ```typescript
-import { html, applyStyle, createDocumentHtml } from '@lixpi/ui-primitives/dom'
+import { html, applyStyle, createDocumentEl, createDocumentHtml } from '@lixpi/ui-primitives/dom'
 import { appendSvgPathIcon, roundedRectanglePath } from '@lixpi/ui-primitives/svg'
 import { Easing, easeHover } from '@lixpi/ui-primitives/animation'
 import { createShiftingGradientBackground } from '@lixpi/ui-primitives/gradients'
@@ -15,13 +15,15 @@ import { createShiftingGradientBackground } from '@lixpi/ui-primitives/gradients
 
 `html` and `createEl` create real elements in the current document. They attach event handlers, append child nodes and apply class, style, data and attribute values. `applyStyle` updates several style properties on an existing HTML or SVG element. These helpers do not mount elements or own their cleanup.
 
-`createDocumentHtml(document)` binds a template to a supplied browser document, including detached documents without a window. It supports nested child arrays, numeric text, boolean attributes, `textContent` and trusted `innerHTML`; null, undefined and false attributes are omitted. It keeps document-local rendering independent of the global document. Use this entrypoint for document-scoped embedded views.
+`createDocumentHtml(document)` binds a template to a supplied browser document, including detached documents without a window. `createDocumentEl(document)` provides the same document-bound behavior as an element factory for components whose tag name is selected dynamically. Both support nested child arrays, numeric text, boolean attributes, `textContent` and trusted `innerHTML`; null, undefined and false attributes are omitted. They keep document-local rendering independent of the global document.
 
 `getElementBorderRadius(element, width, height)` resolves a circular corner radius from the element's computed pixel or percentage radii, clamped to its box. It uses the element's document and does not discover or cache DOM targets.
 
 `ElementStyleLease` temporarily overrides named CSS properties on an explicit element. It preserves overlapping owners when they finish out of order, then restores the original inline values and priorities after the final lease ends. Pass CSS property names such as `user-select`; call `destroy()` when the interaction or component ends.
 
 `getElementScale(element)` reads the element's transform scale. `copyCssCustomProperties(source, target, names)` copies an explicit list of computed custom properties, falling back to inline values for detached elements. Neither helper searches for application containers or copies unrelated styling.
+
+`applyCssCustomProperties(element, values)` sets named CSS custom properties and removes entries whose value is null or undefined. Use it for permanent custom-property updates; use `ElementStyleLease` when the values are temporary and must restore what was there before.
 
 `isEditableTarget(target)` recognizes form controls and contenteditable descendants without relying on global browser constructors. Controllers use it to leave text-editing keys with the editor.
 

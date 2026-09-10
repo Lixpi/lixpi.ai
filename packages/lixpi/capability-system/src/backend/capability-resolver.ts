@@ -343,13 +343,13 @@ export const resolveCapabilities = async (
     )
 }
 
-function isTextResource(mediaType: CapabilityResourceRef['mediaType']): boolean {
+const isTextResource = (mediaType: CapabilityResourceRef['mediaType']): boolean => {
     return mediaType === 'text/markdown'
         || mediaType === 'application/json'
         || mediaType === 'application/schema+json'
 }
 
-function deduplicateReferences(references: readonly CapabilityPromptReference[]): CapabilityPromptReference[] {
+const deduplicateReferences = (references: readonly CapabilityPromptReference[]): CapabilityPromptReference[] => {
     const byId = new Map<string, CapabilityPromptReference>()
 
     for (const reference of references) {
@@ -368,10 +368,10 @@ function deduplicateReferences(references: readonly CapabilityPromptReference[])
     return [...byId.values()]
 }
 
-function parseManifest(
+const parseManifest = (
     bytes: Uint8Array,
     capabilityId: string,
-): unknown {
+): unknown => {
     try {
         return JSON.parse(
             new TextDecoder().decode(bytes),
@@ -386,12 +386,12 @@ function parseManifest(
     }
 }
 
-function verifyHash(
+const verifyHash = (
     bytes: Uint8Array,
     expectedHash: string,
     code: 'CAPABILITY_MANIFEST_INTEGRITY_FAILED' | 'CAPABILITY_RESOURCE_INTEGRITY_FAILED',
     subject: string,
-): void {
+): void => {
     const expected = expectedHash.startsWith('sha256:') ? expectedHash.slice(7) : expectedHash
     const actual = createHash('sha256').update(bytes).digest('hex')
 
@@ -402,23 +402,22 @@ function verifyHash(
         throw new CapabilityError(code, `Integrity verification failed for ${subject}`)
 }
 
-function resourceKey(
+const resourceKey = (
     capabilityId: string,
     resourceId: string,
-): string {
-    return `${capabilityId}\u0000${resourceId}`
-}
+): string => `${capabilityId}\u0000${resourceId}`
 
-function inaccessibleCapabilityError(capabilityId: string): CapabilityError {
-    return new CapabilityError('CAPABILITY_NOT_FOUND_OR_FORBIDDEN', `Capability ${capabilityId} was not found or is not accessible`)
-}
+const inaccessibleCapabilityError = (capabilityId: string): CapabilityError => new CapabilityError(
+    'CAPABILITY_NOT_FOUND_OR_FORBIDDEN',
+    `Capability ${capabilityId} was not found or is not accessible`,
+)
 
-function throwIfAborted(signal: AbortSignal | undefined): void {
+const throwIfAborted = (signal: AbortSignal | undefined): void => {
     if (signal?.aborted)
         throw signal.reason ?? new DOMException('Aborted', 'AbortError')
 }
 
-function deepFreeze<T>(value: T): T {
+const deepFreeze = <T>(value: T): T => {
     if (
         !value
         || typeof value !== 'object'

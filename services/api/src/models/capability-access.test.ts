@@ -79,8 +79,12 @@ describe('Capability access-list mutations', () => {
         transactWrite = vi.fn().mockResolvedValue(undefined)
         ;(globalThis as any).dynamoDBService = {
             getItem: vi.fn().mockImplementation(async ({ key }: { key: Record<string, unknown> }) => {
-                if ('principalId' in key) return undefined
-                if ('searchKey' in key) return meta
+                if ('principalId' in key)
+                    return undefined
+
+                if ('searchKey' in key)
+                    return meta
+
                 return record
             }),
             queryItems: vi.fn().mockResolvedValue({ items: [meta] }),
@@ -96,7 +100,10 @@ describe('Capability access-list mutations', () => {
             capabilityId: record.capabilityId,
             principalId: 'viewer-1',
             accessLevel: 'viewer',
-            requester: { userId: 'owner-1', organizationIds: ['org-1'] },
+            requester: {
+                userId: 'owner-1',
+                organizationIds: ['org-1'],
+            },
         })
 
         expect(grant).toEqual(expect.objectContaining({
@@ -109,7 +116,10 @@ describe('Capability access-list mutations', () => {
             operations: [
                 expect.objectContaining({
                     type: 'put',
-                    item: expect.objectContaining({ principalId: 'viewer-1', accessLevel: 'viewer' }),
+                    item: expect.objectContaining({
+                        principalId: 'viewer-1',
+                        accessLevel: 'viewer',
+                    }),
                 }),
                 expect.objectContaining({
                     type: 'put',
@@ -127,7 +137,10 @@ describe('Capability access-list mutations', () => {
             capabilityId: record.capabilityId,
             principalId: 'viewer-1',
             accessLevel: 'viewer',
-            requester: { userId: 'member-1', organizationIds: ['org-1'] },
+            requester: {
+                userId: 'member-1',
+                organizationIds: ['org-1'],
+            },
         })).rejects.toThrow('PERMISSION_DENIED')
 
         expect(transactWrite).not.toHaveBeenCalled()
@@ -137,7 +150,10 @@ describe('Capability access-list mutations', () => {
         await revokeCapabilityAccess({
             capabilityId: record.capabilityId,
             principalId: 'viewer-1',
-            requester: { userId: 'owner-1', organizationIds: ['org-1'] },
+            requester: {
+                userId: 'owner-1',
+                organizationIds: ['org-1'],
+            },
         })
 
         expect(transactWrite).toHaveBeenCalledWith(expect.objectContaining({
@@ -145,11 +161,17 @@ describe('Capability access-list mutations', () => {
             operations: [
                 expect.objectContaining({
                     type: 'delete',
-                    key: { capabilityId: record.capabilityId, principalId: 'viewer-1' },
+                    key: {
+                        capabilityId: record.capabilityId,
+                        principalId: 'viewer-1',
+                    },
                 }),
                 expect.objectContaining({
                     type: 'delete',
-                    key: { scopeAndOwner: 'principal#viewer-1', searchKey: meta.searchKey },
+                    key: {
+                        scopeAndOwner: 'principal#viewer-1',
+                        searchKey: meta.searchKey,
+                    },
                 }),
             ],
         }))
@@ -169,7 +191,10 @@ describe('Capability access-list mutations', () => {
             capabilityId: record.capabilityId,
             expectedManifestBlobHash: record.manifestBlobHash,
             status: 'disabled',
-            requester: { userId: 'owner-1', organizationIds: ['org-1'] },
+            requester: {
+                userId: 'owner-1',
+                organizationIds: ['org-1'],
+            },
         })
 
         expect(result).toEqual({

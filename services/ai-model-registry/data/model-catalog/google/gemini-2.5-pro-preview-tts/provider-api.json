@@ -1,0 +1,38 @@
+{
+    "_meta": {
+        "sourceName": "Google Generative Language API",
+        "sourceId": "provider-api",
+        "queriedEndpoints": [
+            {
+                "endpoint": "GET https://generativelanguage.googleapis.com/v1beta/models",
+                "params": {
+                    "pageSize": 100,
+                    "pagesFetched": 1
+                },
+                "note": "Paged with pageToken until exhausted. The API key travels as a query parameter and is not recorded."
+            }
+        ],
+        "hasDataForThisModel": true,
+        "inferenceProvidersWithData": [
+            "google"
+        ],
+        "fetchedAt": "2026-09-08T00:55:53.392Z",
+        "publishedVersions": {
+            "currentVersion": "gemini-2.5-pro-preview-tts",
+            "allPublishedVersions": [
+                "gemini-2.5-pro-preview-tts"
+            ]
+        }
+    },
+    "byInferenceProvider": {
+        "google": {
+            "title": "Gemini 2.5 Pro Preview TTS",
+            "contextWindow": 8192,
+            "maxCompletionSize": 16384,
+            "defaultTemperature": 1,
+            "model": "gemini-2.5-pro-preview-tts",
+            "modelVersion": "gemini-2.5-pro-preview-tts",
+            "modelKeyAtSource": "gemini-2.5-pro-preview-tts"
+        }
+    }
+}

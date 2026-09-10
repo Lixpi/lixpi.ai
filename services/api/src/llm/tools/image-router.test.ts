@@ -24,16 +24,22 @@ import {
     type ProviderState,
 } from '../graph/state.ts'
 
-function createState(overrides: Partial<ProviderState> = {}): ProviderState {
+const createState = (overrides: Partial<ProviderState> = {}): ProviderState => {
     return {
-        messages: [{ role: 'user', content: 'paint this cat' }],
+        messages: [{
+            role: 'user',
+            content: 'paint this cat',
+        }],
         aiModelMetaInfo: {
             provider: 'Anthropic',
             model: 'claude-sonnet-4-6',
             modelVersion: 'claude-sonnet-4-6',
             maxCompletionSize: 4096,
         },
-        eventMeta: { organizationId: 'org-1', userId: 'user-1' },
+        eventMeta: {
+            organizationId: 'org-1',
+            userId: 'user-1',
+        },
         workspaceId: 'workspace-1',
         aiChatThreadId: 'thread-1',
         instanceKey: 'workspace-1:thread-1',
@@ -85,7 +91,12 @@ const createRouter = (
     const process = vi.fn(async () => results[Math.min(process.mock.calls.length - 1, results.length - 1)] as ProviderState)
     const createTransient = vi.fn(() => ({ process }))
     const router = new ImageRouter({ createTransient } as any)
-    return { router, createTransient, process }
+
+    return {
+        router,
+        createTransient,
+        process,
+    }
 }
 
 let debugInfoSpy: ReturnType<typeof vi.spyOn> | null = null
@@ -110,7 +121,10 @@ afterEach(() => {
 
 describe('ImageRouter', () => {
     it('returns empty update when provider, model, or prompt is missing', async () => {
-        const { router, createTransient } = createRouter()
+        const {
+            router,
+            createTransient,
+        } = createRouter()
 
         const result = await router.execute(createState({
             imageProviderName: undefined,
@@ -123,7 +137,10 @@ describe('ImageRouter', () => {
     })
 
     it('passes onProseMirrorContent through to the transient image provider request', async () => {
-        const { router, process } = createRouter()
+        const {
+            router,
+            process,
+        } = createRouter()
         const state = createState()
         const onProseMirrorContent = vi.fn()
 
@@ -136,7 +153,10 @@ describe('ImageRouter', () => {
     })
 
     it('requests capture-only generation without media persistence when configured', async () => {
-        const { router, process } = createRouter()
+        const {
+            router,
+            process,
+        } = createRouter()
 
         await router.execute(createState(), { captureOnly: true })
 
@@ -146,7 +166,11 @@ describe('ImageRouter', () => {
     })
 
     it('routes image generation and applies provider mapping defaults', async () => {
-        const { router, createTransient, process } = createRouter()
+        const {
+            router,
+            createTransient,
+            process,
+        } = createRouter()
         const state = createState({ eventMeta: { organizationId: 'organization-1' } })
 
         const result = await router.execute(state)
@@ -168,7 +192,10 @@ describe('ImageRouter', () => {
             model: 'Gemini Image',
             modelVersion: 'gemini-2.5-flash-image',
         })
-        expect(requestData.messages).toEqual([{ role: 'user', content: expect.any(String) }])
+        expect(requestData.messages).toEqual([{
+            role: 'user',
+            content: expect.any(String),
+        }])
         expect(requestData.imageGenerationReferences).toEqual([{
             url: 'data:image/png;base64,cat-ref',
             role: 'source-reference',
@@ -183,7 +210,11 @@ describe('ImageRouter', () => {
     })
 
     it('submits plain text content when no reference images are present', async () => {
-        const { router, createTransient, process } = createRouter()
+        const {
+            router,
+            createTransient,
+            process,
+        } = createRouter()
 
         await router.execute(createState({
             referenceImages: [],
@@ -198,7 +229,13 @@ describe('ImageRouter', () => {
     })
 
     it('returns an error when the transient provider fails without images', async () => {
-        const { router, process } = createRouter({ error: 'Image provider failed', generatedImages: [] })
+        const {
+            router,
+            process,
+        } = createRouter({
+            error: 'Image provider failed',
+            generatedImages: [],
+        })
 
         const result = await router.execute(createState())
 
@@ -207,7 +244,10 @@ describe('ImageRouter', () => {
     })
 
     it('returns a provider-completion error when no image is emitted', async () => {
-        const { router, process } = createRouter({ generatedImages: [] })
+        const {
+            router,
+            process,
+        } = createRouter({ generatedImages: [] })
 
         const result = await router.execute(createState())
 
@@ -216,7 +256,10 @@ describe('ImageRouter', () => {
     })
 
     it('uses mediaRunId instance keys for fan-out children', async () => {
-        const { router, createTransient } = createRouter()
+        const {
+            router,
+            createTransient,
+        } = createRouter()
         const generationRun = {
             generationRequestId: 'request-1',
             reasoningRunId: 'reasoning-1',
@@ -235,7 +278,10 @@ describe('ImageRouter', () => {
     })
 
     it('derives a media-run instance key when generationRun has no explicit mediaRunId', async () => {
-        const { router, createTransient } = createRouter()
+        const {
+            router,
+            createTransient,
+        } = createRouter()
         const generationRun = {
             generationRequestId: 'request-1',
             reasoningRunId: 'reasoning-1',
@@ -254,7 +300,10 @@ describe('ImageRouter', () => {
             throw new Error('image provider crash')
         })
         const createTransient = vi.fn(() => ({ process }))
-        const router = new ImageRouter({ createTransient, remove } as any)
+        const router = new ImageRouter({
+            createTransient,
+            remove,
+        } as any)
 
         const result = await router.execute(createState())
 
@@ -268,20 +317,19 @@ describe('ImageRouter', () => {
         const stop = vi.fn(async () => undefined)
         let completeProcessing: ((state: ProviderState) => void) | undefined
         const process = vi.fn(() =>
-            new Promise<ProviderState>((resolve) => {
-                completeProcessing = resolve
-            })
+            new Promise<ProviderState>((resolve) => void (completeProcessing = resolve))
         )
         const createTransient = vi.fn(() => ({ process }))
-        const router = new ImageRouter({ createTransient, stop } as any)
+        const router = new ImageRouter({
+            createTransient,
+            stop,
+        } as any)
 
         const execution = router.execute(createState(), { signal: controller.signal })
         await vi.waitFor(() => expect(process).toHaveBeenCalledOnce())
 
         controller.abort()
-        await vi.waitFor(() => {
-            expect(stop).toHaveBeenCalledWith('workspace-1:thread-1:image')
-        })
+        await vi.waitFor(() => void expect(stop).toHaveBeenCalledWith('workspace-1:thread-1:image'))
         completeProcessing?.(createState({
             generatedImages: ['nats-obj://workspace-workspace-1-files/cat.png'],
         }))
@@ -311,7 +359,11 @@ describe('ImageRouter', () => {
                     mimeType: 'image/png' as const,
                 }],
             },
-            imageUsage: { generatedCount: 27, size: '3840x2560', quality: 'high' },
+            imageUsage: {
+                generatedCount: 27,
+                size: '3840x2560',
+                quality: 'high',
+            },
             capabilityMediaTrace: { schemaVersion: 'character-sheet-trace-v1' },
         }))
         const get = vi.fn(() => ({ execute }))
@@ -339,12 +391,23 @@ describe('ImageRouter', () => {
             capabilityReferenceImages: ['data:image/png;base64,U1RZTEU='],
             capabilityReferenceImageTraceUrls: ['/api/capabilities/style/resources/sample-1'],
             capabilityToolResults: [
-                { capabilityId: 'character-creator', runId: 'character-run', output: {} },
-                { capabilityId: 'visual-style', runId: 'style-run', output: { style: 'watercolor' } },
+                {
+                    capabilityId: 'character-creator',
+                    runId: 'character-run',
+                    output: {},
+                },
+                {
+                    capabilityId: 'visual-style',
+                    runId: 'style-run',
+                    output: { style: 'watercolor' },
+                },
             ],
             mediaBranchCandidateSnapshot: {
                 activeTargetCandidateId: 'node:sheet-target',
-                candidates: [{ candidateId: 'node:sheet-target', assetId: 'asset-1' }],
+                candidates: [{
+                    candidateId: 'node:sheet-target',
+                    assetId: 'asset-1',
+                }],
             } as any,
             mediaBranchResolution: {
                 operationKind: 'edit_existing',
@@ -395,7 +458,10 @@ describe('ImageRouter', () => {
                     sharedState: {
                         authoritativePrompt: 'Create a combie character out of this photo.',
                         editTargetAssetId: 'asset-1',
-                        mediaReferenceAliases: [{ assetId: 'asset-1', alias: 'REFERENCE_1' }],
+                        mediaReferenceAliases: [{
+                            assetId: 'asset-1',
+                            alias: 'REFERENCE_1',
+                        }],
                         sourceSubjectIdentityClassifications: ['self'],
                         capabilityInstructions: ['Apply the sibling visual-style Capability.'],
                         capabilityReferences: [{
@@ -403,8 +469,16 @@ describe('ImageRouter', () => {
                             traceUrl: '/api/capabilities/style/resources/sample-1',
                         }],
                         capabilityOutputs: [
-                            { capabilityId: 'character-creator', runId: 'character-run', output: {} },
-                            { capabilityId: 'visual-style', runId: 'style-run', output: { style: 'watercolor' } },
+                            {
+                                capabilityId: 'character-creator',
+                                runId: 'character-run',
+                                output: {},
+                            },
+                            {
+                                capabilityId: 'visual-style',
+                                runId: 'style-run',
+                                output: { style: 'watercolor' },
+                            },
                         ],
                     },
                 }),
@@ -428,7 +502,11 @@ describe('ImageRouter', () => {
             expect(createTransient).not.toHaveBeenCalled()
             expect(result).toMatchObject({
                 generatedImages: ['final-character-sheet-base64'],
-                imageUsage: { generatedCount: 27, size: '3840x2560', quality: 'high' },
+                imageUsage: {
+                    generatedCount: 27,
+                    size: '3840x2560',
+                    quality: 'high',
+                },
             })
         } finally {
             complete.mockRestore()

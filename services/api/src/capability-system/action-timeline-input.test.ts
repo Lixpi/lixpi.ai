@@ -43,10 +43,16 @@ describe('resolveActionTimelineInput', () => {
         expect(resolveActionTimelineInput({
             prompt: 'Make this 12s total with a 2s cadence.',
             referenceAssetIds: [],
-            submittedInput: { durationMs: 30000, precisionMs: 5000 },
+            submittedInput: {
+                durationMs: 30000,
+                precisionMs: 5000,
+            },
         })).toMatchObject({
             valid: true,
-            input: { durationMs: 12000, precisionMs: 2000 },
+            input: {
+                durationMs: 12000,
+                precisionMs: 2000,
+            },
         })
     })
 
@@ -54,10 +60,16 @@ describe('resolveActionTimelineInput', () => {
         expect(resolveActionTimelineInput({
             prompt: 'Regenerate this timeline.',
             referenceAssetIds: [],
-            submittedInput: { durationMs: 9000, precisionMs: 1500 },
+            submittedInput: {
+                durationMs: 9000,
+                precisionMs: 1500,
+            },
         })).toMatchObject({
             valid: true,
-            input: { durationMs: 9000, precisionMs: 1500 },
+            input: {
+                durationMs: 9000,
+                precisionMs: 1500,
+            },
         })
     })
 

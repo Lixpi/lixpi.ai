@@ -24,13 +24,6 @@
         "**/node_modules/**",
         "**/dist/**",
         "**/coverage/**",
-        "**/*.test.ts",
-        "**/*.spec.ts",
-        "**/testUtils/**/*.ts",
-        "**/test/**/*.ts",
-        "**/tests/**/*.ts",
-        "**/__tests__/**/*.ts",
-        "**/mocks/**/*.ts",
         "packages-vendor/**",
         "**/*.js",
         "**/*.jsx",
@@ -191,27 +184,6 @@
             ],
             "rules": {
                 "lixpi/require-ast-formatter-rules": "error"
-            }
-        },
-        {
-            "files": ["**/*.test.ts", "**/*.spec.ts", "**/testUtils/**/*.ts", "**/test/**/*.ts", "**/tests/**/*.ts", "**/__tests__/**/*.ts", "**/mocks/**/*.ts"],
-            "rules": {
-                "arrow-body-style": "off",
-                "lixpi/no-block-comments": "off",
-                "lixpi/no-comma-separated-statements": "off",
-                "lixpi/no-unused-imports": "off",
-                "lixpi/prefer-attached-trailing-comma": "off",
-                "lixpi/prefer-arrow-function-declaration": "off",
-                "lixpi/prefer-compact-if": "off",
-                "lixpi/prefer-expression-arrow-body": "off",
-                "lixpi/prefer-multiline-attr-chain": "off",
-                "lixpi/prefer-multiline-collection": "off",
-                "lixpi/prefer-multiline-object-pattern": "off",
-                "lixpi/prefer-separated-statements": "off",
-                "lixpi/prefer-multiline-type-literal": "off",
-                "lixpi/prefer-multiline-condition": "off",
-                "lixpi/prefer-void-arrow-body": "off",
-                "prefer-arrow-callback": "off"
             }
         },
         {

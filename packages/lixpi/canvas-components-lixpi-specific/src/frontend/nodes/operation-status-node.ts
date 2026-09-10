@@ -132,10 +132,12 @@ export class OperationStatusNode {
         action: () => Promise<void>,
     ): void {
         const html = this.html
-        const button = html`<button
+        const button = html`
+            <button
                 type="button"
                 className="workspace-media-operation-action nopan"
-            >${label}</button>` as HTMLButtonElement
+            >${label}</button>
+        ` as HTMLButtonElement
         this.bindAction(button, action)
         this.actionsElement.append(button)
     }

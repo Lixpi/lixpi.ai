@@ -301,10 +301,12 @@ class SidePanel implements SidePanelInstance {
         // Translucent glass backdrop. It is a sibling that sits behind the panel
         // (lower z-index) and blurs the canvas behind it. Its width tracks the
         // panel width so its inner edge sits flush with the panel edge.
-        this.backdropElement = this.html`<div
+        this.backdropElement = this.html`
+            <div
                 className=${`side-panel-backdrop side-panel-backdrop-${side}`}
                 aria-hidden="true"
-            ></div>` as HTMLDivElement
+            ></div>
+        ` as HTMLDivElement
 
         this.overlayElement = config.overlay?.enabled ? this.createOverlayElement(config.overlay) : null
         this.toggleElement = config.toggle ? this.createToggleElement(config.toggle) : null

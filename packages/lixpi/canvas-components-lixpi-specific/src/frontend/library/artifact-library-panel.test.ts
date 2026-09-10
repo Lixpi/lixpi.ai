@@ -23,12 +23,38 @@ import {
 } from './artifact-library-panel.ts'
 
 const owners: ArtifactLibraryPanelInstance[] = []
-function fixture() {
-    const meta = { assetId: 'a', title: 'Artifact', scope: 'workspace', scopeOwnerId: 'w', primaryCategory: 'capabilityArtifact', artifactTypeId: 'test-artifact', updatedAt: 1 } as AssetMeta
-    const asset = { ...meta, organizationId: 'org', revision: 7, artifact: { artifactTypeId: 'test-artifact', schemaVersion: '1' }, documents: { capabilityArtifact: {}, provenance: {} }, states: { lifecycle: 'active' }, generatedOutputReview: { status: 'candidate' } } as Asset
+const fixture = () => {
+    const meta = {
+        assetId: 'a',
+        title: 'Artifact',
+        scope: 'workspace',
+        scopeOwnerId: 'w',
+        primaryCategory: 'capabilityArtifact',
+        artifactTypeId: 'test-artifact',
+        updatedAt: 1,
+    } as AssetMeta
+    const asset = {
+        ...meta,
+        organizationId: 'org',
+        revision: 7,
+        artifact: {
+            artifactTypeId: 'test-artifact',
+            schemaVersion: '1',
+        },
+        documents: {
+            capabilityArtifact: {},
+            provenance: {},
+        },
+        states: { lifecycle: 'active' },
+        generatedOutputReview: { status: 'candidate' },
+    } as Asset
     const views: ReturnType<typeof vi.fn>[] = []
     const frontend = {
-        createLibraryItemView: vi.fn(({ container, title, onAddToCanvas }) => {
+        createLibraryItemView: vi.fn(({
+            container,
+            title,
+            onAddToCanvas,
+        }) => {
             const button = document.createElement('button')
             button.textContent = title
             button.addEventListener('click', onAddToCanvas)
@@ -38,23 +64,32 @@ function fixture() {
                 button.remove()
             })
             views.push(destroy)
+
             return { destroy }
         }),
         createGeneratedOutputInfoView: vi.fn(({ container }) => {
             container.textContent = 'Registered detail'
             const destroy = vi.fn(() => container.replaceChildren())
             views.push(destroy)
+
             return { destroy }
         }),
     } as unknown as CapabilityArtifactFrontendDefinition
-    const shared = { schemaVersion: '1', assertInitialDocument: vi.fn(), buildCatalogMetadata: vi.fn(() => ({ summary: 'Structured' })) } as unknown as CapabilityArtifactSharedDefinition
+    const shared = {
+        schemaVersion: '1',
+        assertInitialDocument: vi.fn(),
+        buildCatalogMetadata: vi.fn(() => ({ summary: 'Structured' })),
+    } as unknown as CapabilityArtifactSharedDefinition
     const options: ArtifactLibraryPanelOptions = {
         document,
         workspaceId: 'w',
         userId: 'u',
         onError: vi.fn(),
         ensureStyles: vi.fn(),
-        frontendRegistry: { get: () => frontend, require: () => frontend },
+        frontendRegistry: {
+            get: () => frontend,
+            require: () => frontend,
+        },
         sharedRegistry: { get: () => shared },
         assets: {
             list: vi.fn(async () => ({ items: [meta] })),
@@ -63,11 +98,15 @@ function fixture() {
             updateMetadata: vi.fn(async () => asset),
             changeScope: vi.fn(async () => asset),
             resumeDocument: vi.fn(async () => {}),
-            getDocument: vi.fn(() => ({ doc: {}, version: 1 })),
+            getDocument: vi.fn(() => ({
+                doc: {},
+                version: 1,
+            })),
         },
         mountHistory: vi.fn(() => {
             const destroy = vi.fn()
             views.push(destroy)
+
             return { destroy }
         }),
         onInsertAsset: vi.fn(async () => true),
@@ -82,20 +121,45 @@ function fixture() {
         panel.showAsset('a')
         await vi.waitFor(() => expect(options.mountHistory).toHaveBeenCalled())
     }
-    return { panel, options, meta, asset, frontend, shared, views, host, mount, inspect }
+
+    return {
+        panel,
+        options,
+        meta,
+        asset,
+        frontend,
+        shared,
+        views,
+        host,
+        mount,
+        inspect,
+    }
 }
 afterEach(() => {
     for (const owner of owners.splice(0)) owner.destroy()
+
     document.body.replaceChildren()
 })
 
 describe('Artifact library ownership', () => {
     it('loads available scopes across pages and delegates metadata and views to the registered definition', async () => {
         const f = fixture()
-        vi.mocked(f.options.assets.list).mockResolvedValueOnce({ items: [f.meta], cursor: 'next' }).mockResolvedValueOnce({ items: [{ ...f.meta, assetId: 'foreign', scopeOwnerId: 'elsewhere' }] })
+        vi.mocked(f.options.assets.list).mockResolvedValueOnce({
+            items: [f.meta],
+            cursor: 'next',
+        }).mockResolvedValueOnce({ items: [{
+            ...f.meta,
+            assetId: 'foreign',
+            scopeOwnerId: 'elsewhere',
+        }] })
         f.mount()
         await vi.waitFor(() => expect(f.frontend.createLibraryItemView).toHaveBeenCalledOnce())
-        expect(f.options.assets.list).toHaveBeenLastCalledWith({ workspaceId: 'w', primaryCategory: 'capabilityArtifact', limit: 100, cursor: 'next' })
+        expect(f.options.assets.list).toHaveBeenLastCalledWith({
+            workspaceId: 'w',
+            primaryCategory: 'capabilityArtifact',
+            limit: 100,
+            cursor: 'next',
+        })
         expect(f.shared.assertInitialDocument).toHaveBeenCalledWith({})
         expect(f.shared.buildCatalogMetadata).toHaveBeenCalledWith({})
         const inspectButton = f.panel.rootEl.querySelector<HTMLButtonElement>('[data-action="inspect"]')!
@@ -105,7 +169,11 @@ describe('Artifact library ownership', () => {
         await vi.waitFor(() => expect(f.options.onInsertAsset).toHaveBeenCalledWith(f.meta))
         await f.inspect()
         expect(f.frontend.createGeneratedOutputInfoView).toHaveBeenCalledOnce()
-        expect(f.options.mountHistory).toHaveBeenCalledWith(expect.objectContaining({ asset: f.asset, content: {}, signal: expect.any(AbortSignal) }))
+        expect(f.options.mountHistory).toHaveBeenCalledWith(expect.objectContaining({
+            asset: f.asset,
+            content: {},
+            signal: expect.any(AbortSignal),
+        }))
     })
 
     it('preserves review actions and captures workspace, user and organization scope owners', async () => {
@@ -113,6 +181,7 @@ describe('Artifact library ownership', () => {
         f.mount()
         await vi.waitFor(() => expect(f.frontend.createLibraryItemView).toHaveBeenCalledOnce())
         await f.inspect()
+
         for (const [scope, owner] of [['user', 'u'], ['organization', 'org'], ['workspace', 'w']]) {
             const select = f.panel.rootEl.querySelector<HTMLSelectElement>('select')!
             select.value = scope
@@ -124,6 +193,7 @@ describe('Artifact library ownership', () => {
                 expect(replacement).not.toBe(select)
             })
         }
+
         const acceptButton = f.panel.rootEl.querySelector<HTMLButtonElement>('.artifact-library-detail-review button')!
         expect(acceptButton.classList.contains('capability-library-row-action')).toBe(true)
         expect(acceptButton.classList.contains('capability-library-row-action-primary')).toBe(true)
@@ -133,11 +203,17 @@ describe('Artifact library ownership', () => {
 
     it('does not continue paginating or mount views after destruction', async () => {
         const f = fixture()
-        const page = Promise.withResolvers<{ items: AssetMeta[]; cursor?: string }>()
+        const page = Promise.withResolvers<{
+            items: AssetMeta[]
+            cursor?: string
+        }>()
         vi.mocked(f.options.assets.list).mockReturnValue(page.promise)
         f.mount()
         f.panel.destroy()
-        page.resolve({ items: [f.meta], cursor: 'next' })
+        page.resolve({
+            items: [f.meta],
+            cursor: 'next',
+        })
         await page.promise
         expect(f.options.assets.list).toHaveBeenCalledOnce()
         expect(f.options.assets.refresh).not.toHaveBeenCalled()
@@ -174,9 +250,14 @@ describe('Artifact library ownership', () => {
         input.dispatchEvent(new Event('change'))
         const loadCount = vi.mocked(first.options.assets.list).mock.calls.length
         first.panel.destroy()
+
         for (const destroy of first.views) expect(destroy).toHaveBeenCalledOnce()
+
         expect(second.panel.rootEl.isConnected).toBe(true)
-        write.resolve({ ...first.asset, title: 'Renamed' })
+        write.resolve({
+            ...first.asset,
+            title: 'Renamed',
+        })
         await write.promise
         expect(first.options.assets.list).toHaveBeenCalledTimes(loadCount)
         input.dispatchEvent(new Event('change'))

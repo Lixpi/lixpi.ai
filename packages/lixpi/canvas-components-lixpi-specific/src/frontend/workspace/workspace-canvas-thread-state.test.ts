@@ -15,7 +15,11 @@ import {
 const state = (nodes: CanvasState['nodes'] = []): CanvasState => ({
     nodes,
     edges: [],
-    viewport: { x: 0, y: 0, zoom: 1 },
+    viewport: {
+        x: 0,
+        y: 0,
+        zoom: 1,
+    },
 })
 
 describe('WorkspaceCanvasThreadState', () => {
@@ -27,9 +31,15 @@ describe('WorkspaceCanvasThreadState', () => {
             reattachWindowMs: 1_000,
         })
         const threads = [
-            { threadId: 'canvas-run', content: {} },
+            {
+                threadId: 'canvas-run',
+                content: {},
+            },
             { threadId: 'thread-b' },
-            { threadId: 'thread-a', content: {} },
+            {
+                threadId: 'thread-a',
+                content: {},
+            },
         ] as WorkspaceCanvasConversation[]
 
         expect(owner.getThreadsKey(threads)).toBe('thread-a:loaded,thread-b:pending')
@@ -45,8 +55,14 @@ describe('WorkspaceCanvasThreadState', () => {
                         nodeId: 'image-1',
                         type: 'image',
                         assetId: 'asset-1',
-                        position: { x: 0, y: 0 },
-                        dimensions: { width: 1, height: 1 },
+                        position: {
+                            x: 0,
+                            y: 0,
+                        },
+                        dimensions: {
+                            width: 1,
+                            height: 1,
+                        },
                         generatedBy: { conversationAssetId: 'canvas-run' },
                     } as CanvasState['nodes'][number],
                 ]),
@@ -57,7 +73,13 @@ describe('WorkspaceCanvasThreadState', () => {
         const thread = {
             threadId: 'canvas-run',
             updatedAt: 9_500,
-            content: { type: 'doc', content: [{ type: 'aiAssistantMessage', attrs: { isStreaming: true } }] },
+            content: {
+                type: 'doc',
+                content: [{
+                    type: 'aiAssistantMessage',
+                    attrs: { isStreaming: true },
+                }],
+            },
         } as WorkspaceCanvasConversation
 
         expect(owner.hasInProgressContent(thread)).toBe(true)

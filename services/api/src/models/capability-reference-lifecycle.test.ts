@@ -30,8 +30,17 @@ vi.mock('./blob.ts', () => ({
     },
     buildBlobReferenceBatchOperations: ({ additions }: { additions: Array<{ blob: BlobRecord }> }) => ({
         operations: additions.flatMap(({ blob }) => [
-            { type: 'put', tableName: 'Blob-References', item: { blobKey: blob.blobKey } },
-            { type: 'update', tableName: 'Blobs', key: { blobKey: blob.blobKey }, updates: { referenceCount: 1 } },
+            {
+                type: 'put',
+                tableName: 'Blob-References',
+                item: { blobKey: blob.blobKey },
+            },
+            {
+                type: 'update',
+                tableName: 'Blobs',
+                key: { blobKey: blob.blobKey },
+                updates: { referenceCount: 1 },
+            },
         ]),
         deletionBlobHashes: [],
     }),
@@ -170,7 +179,10 @@ describe('Capability Blob reference lifecycle', () => {
         mocks.getContentAddressedBlob.mockResolvedValue(new TextEncoder().encode(JSON.stringify(oldManifest)))
         mocks.store.mockResolvedValue(storedManifestBlob)
         mocks.addReference.mockResolvedValue({ created: true })
-        mocks.removeReference.mockResolvedValue({ removed: true, deletionRequired: false })
+        mocks.removeReference.mockResolvedValue({
+            removed: true,
+            deletionRequired: false,
+        })
     })
 
     afterEach(() => {
@@ -190,7 +202,10 @@ describe('Capability Blob reference lifecycle', () => {
             tags: [],
             catalogExposure: 'standalone',
             expectedManifestBlobHash: oldManifestHash,
-            requester: { userId: 'owner-1', organizationIds: ['org-1'] },
+            requester: {
+                userId: 'owner-1',
+                organizationIds: ['org-1'],
+            },
             allowedActions: new Set(),
         })).rejects.toThrow('CAPABILITY_CONCURRENT_UPDATE')
 
@@ -212,7 +227,10 @@ describe('Capability Blob reference lifecycle', () => {
             tags: [],
             catalogExposure: 'standalone',
             expectedManifestBlobHash: oldManifestHash,
-            requester: { userId: 'owner-1', organizationIds: ['org-1'] },
+            requester: {
+                userId: 'owner-1',
+                organizationIds: ['org-1'],
+            },
             allowedActions: new Set(),
         })
 
@@ -245,7 +263,10 @@ describe('Capability Blob reference lifecycle', () => {
         const openRun: CapabilityRun = {
             runId: 'run-1',
             rootCapabilityId: 'skill-lifecycle',
-            resolvedManifests: [{ capabilityId: 'skill-lifecycle', manifestBlobHash: oldManifestHash }],
+            resolvedManifests: [{
+                capabilityId: 'skill-lifecycle',
+                manifestBlobHash: oldManifestHash,
+            }],
             workspaceId: 'workspace-1',
             origin: 'panel',
             status: 'running',
@@ -257,22 +278,42 @@ describe('Capability Blob reference lifecycle', () => {
         }
         let runs: CapabilityRun[] = [openRun]
         ;(globalThis as any).dynamoDBService.scanItems.mockImplementation(({ tableName }: { tableName: string }) => {
-            if (tableName.includes('Blob-References')) return { items: oldReferences }
-            if (tableName.includes('Capability-Runs')) return { items: runs }
-            if (tableName.includes('Capabilities')) return { items: [currentRecord] }
+            if (tableName.includes('Blob-References'))
+                return { items: oldReferences }
+
+            if (tableName.includes('Capability-Runs'))
+                return { items: runs }
+
+            if (tableName.includes('Capabilities'))
+                return { items: [currentRecord] }
+
             return { items: [] }
         })
         mocks.getContentAddressedBlob.mockImplementation(({ blobHash }: { blobHash: string }) => new TextEncoder().encode(JSON.stringify(blobHash === newManifestHash ? nextManifest : oldManifest)))
 
         const now = CAPABILITY_BLOB_RETIREMENT_GRACE_MS + 10
-        const protectedResult = await retireSupersededCapabilityBlobReferences({ now, limit: 10 })
-        expect(protectedResult).toMatchObject({ eligibleReferences: 2, protectedReferences: 2, retiredReferences: 0 })
+        const protectedResult = await retireSupersededCapabilityBlobReferences({
+            now,
+            limit: 10,
+        })
+        expect(protectedResult).toMatchObject({
+            eligibleReferences: 2,
+            protectedReferences: 2,
+            retiredReferences: 0,
+        })
         expect(mocks.removeReference).not.toHaveBeenCalled()
 
         runs = []
-        const retiredResult = await retireSupersededCapabilityBlobReferences({ now, limit: 10 })
+        const retiredResult = await retireSupersededCapabilityBlobReferences({
+            now,
+            limit: 10,
+        })
 
-        expect(retiredResult).toMatchObject({ eligibleReferences: 2, protectedReferences: 0, retiredReferences: 2 })
+        expect(retiredResult).toMatchObject({
+            eligibleReferences: 2,
+            protectedReferences: 0,
+            retiredReferences: 2,
+        })
         expect(mocks.removeReference).toHaveBeenCalledWith({
             organizationId: 'org-1',
             blobHash: oldManifestHash,
@@ -326,7 +367,10 @@ describe('Capability Blob reference lifecycle', () => {
         ;(globalThis as any).dynamoDBService.queryItems.mockResolvedValue({ items: [existingGrant] })
 
         await saveCapability({
-            manifest: { ...nextManifest, name: 'Renamed Lifecycle' },
+            manifest: {
+                ...nextManifest,
+                name: 'Renamed Lifecycle',
+            },
             scope: 'organization',
             scopeOwnerId: 'org-1',
             storageOwnerId: 'org-1',
@@ -334,7 +378,10 @@ describe('Capability Blob reference lifecycle', () => {
             tags: [],
             catalogExposure: 'standalone',
             expectedManifestBlobHash: oldManifestHash,
-            requester: { userId: 'owner-1', organizationIds: ['org-1'] },
+            requester: {
+                userId: 'owner-1',
+                organizationIds: ['org-1'],
+            },
             allowedActions: new Set(),
         })
 
@@ -350,7 +397,10 @@ describe('Capability Blob reference lifecycle', () => {
         expect(operations).toContainEqual(expect.objectContaining({
             type: 'put',
             tableName: expect.stringContaining('Capabilities-Access-List'),
-            item: expect.objectContaining({ principalId: 'viewer-1', accessLevel: 'viewer' }),
+            item: expect.objectContaining({
+                principalId: 'viewer-1',
+                accessLevel: 'viewer',
+            }),
         }))
         expect(operations).toContainEqual(expect.objectContaining({
             type: 'put',
@@ -423,7 +473,10 @@ describe('Capability Blob reference lifecycle', () => {
             summary: 'Summary',
             tags: [],
             catalogExposure: 'standalone',
-            requester: { userId: 'owner-1', organizationIds: ['org-1'] },
+            requester: {
+                userId: 'owner-1',
+                organizationIds: ['org-1'],
+            },
             allowedActions: new Set(),
         })).rejects.toThrow('INVALID_CAPABILITY_MANIFEST')
 

@@ -5,16 +5,7 @@ import {
     vi,
 } from 'vitest'
 
-import {
-    cacheImageGenerationTrace,
-    createImageGenerationTraceDetails,
-    deduplicateImageGenerationTraceReferences,
-    formatImageGenerationTraceReferenceSource,
-    formatImageGenerationTraceRole,
-    getImageGenerationTrace,
-    formatTraceModelLabel,
-    type ImageGenerationTraceDetailsAttrs,
-} from '$src/components/proseMirror/plugins/aiChatThreadPlugin/imageGenerationTraceDetails.ts'
+import { cacheImageGenerationTrace, createImageGenerationTraceDetails, deduplicateImageGenerationTraceReferences, formatImageGenerationTraceReferenceSource, formatImageGenerationTraceRole, getImageGenerationTrace, formatTraceModelLabel } from '$src/components/proseMirror/plugins/aiChatThreadPlugin/imageGenerationTraceDetails.ts'
 import {
     type CapabilityGenerationTrace,
     type ImageGenerationTrace,
@@ -27,7 +18,7 @@ vi.mock('$src/services/auth-service.ts', () => ({
     },
 }))
 
-function makeReference(overrides: Partial<ImageGenerationTraceReference> = {}): ImageGenerationTraceReference {
+const makeReference = (overrides: Partial<ImageGenerationTraceReference> = {}): ImageGenerationTraceReference => {
     return {
         id: 'branch:person',
         imageUrl: 'nats-obj://workspace-workspace-1-files/person-file',
@@ -40,7 +31,7 @@ function makeReference(overrides: Partial<ImageGenerationTraceReference> = {}): 
     }
 }
 
-function makeTrace(referenceImages: ImageGenerationTraceReference[]): ImageGenerationTrace {
+const makeTrace = (referenceImages: ImageGenerationTraceReference[]): ImageGenerationTrace => {
     return {
         traceVersion: 'image-generation-trace-v1',
         chatModelProvider: 'Anthropic',
@@ -58,13 +49,19 @@ function makeTrace(referenceImages: ImageGenerationTraceReference[]): ImageGener
 
 type RenderOptions = Parameters<typeof createImageGenerationTraceDetails>[0]
 
-function renderTiles(referenceImages: ImageGenerationTraceReference[], options: RenderOptions = {}) {
+const renderTiles = (referenceImages: ImageGenerationTraceReference[], options: RenderOptions = {}) => {
     const details = createImageGenerationTraceDetails(options)
     details.renderReferenceGrid(makeTrace(referenceImages))
     const tiles = Array.from(details.dom.querySelectorAll('.ai-image-generation-reference')) as HTMLElement[]
     const image = details.dom.querySelector('.ai-image-generation-reference-image') as HTMLImageElement
     const unavailable = details.dom.querySelector('.ai-image-generation-reference-unavailable') as HTMLSpanElement
-    return { details, tiles, image, unavailable }
+
+    return {
+        details,
+        tiles,
+        image,
+        unavailable,
+    }
 }
 
 // =============================================================================
@@ -82,13 +79,20 @@ describe('createImageGenerationTraceDetails — reference tile load contract', (
     })
 
     it('starts the image and the unavailable hint hidden', () => {
-        const { image, unavailable } = renderTiles([makeReference()])
+        const {
+            image,
+            unavailable,
+        } = renderTiles([makeReference()])
         expect(image.hidden).toBe(true)
         expect(unavailable.hidden).toBe(true)
     })
 
     it('reveals the image once it loads', () => {
-        const { tiles, image, unavailable } = renderTiles([makeReference()])
+        const {
+            tiles,
+            image,
+            unavailable,
+        } = renderTiles([makeReference()])
         image.dispatchEvent(new Event('load'))
         expect(image.hidden).toBe(false)
         expect(unavailable.hidden).toBe(true)
@@ -96,7 +100,11 @@ describe('createImageGenerationTraceDetails — reference tile load contract', (
     })
 
     it('shows the unavailable hint when every source errors', async () => {
-        const { tiles, image, unavailable } = renderTiles([makeReference()])
+        const {
+            tiles,
+            image,
+            unavailable,
+        } = renderTiles([makeReference()])
         await vi.waitFor(() => expect(image.src).not.toBe(''))
         image.dispatchEvent(new Event('error'))
         await vi.waitFor(() => expect(unavailable.hidden).toBe(false))
@@ -126,7 +134,10 @@ describe('createImageGenerationTraceDetails — reference source resolution', ()
 
     it('retries the next source (e.g. the canvas in-memory image) when the primary errors', async () => {
         const { image } = renderTiles(
-            [makeReference({ imageUrl: 'http://example.com/primary.png', assetId: undefined })],
+            [makeReference({
+                imageUrl: 'http://example.com/primary.png',
+                assetId: undefined,
+            })],
             { getAdditionalReferenceImageSources: () => ['blob:canvas-fallback'] },
         )
         await vi.waitFor(() => expect(image.src).toContain('http://example.com/primary.png'))
@@ -142,7 +153,10 @@ describe('createImageGenerationTraceDetails — reference source resolution', ()
 describe('createImageGenerationTraceDetails — reference grid', () => {
     it('renders one tile per reference with the formatted role', () => {
         const { tiles } = renderTiles([
-            makeReference({ id: 'a', role: 'target' }),
+            makeReference({
+                id: 'a',
+                role: 'target',
+            }),
             makeReference({
                 id: 'b',
                 role: 'style-reference',
@@ -160,7 +174,10 @@ describe('createImageGenerationTraceDetails — reference grid', () => {
     })
 
     it('shows an empty-state message when there are no references', () => {
-        const { details, tiles } = renderTiles([])
+        const {
+            details,
+            tiles,
+        } = renderTiles([])
         expect(tiles).toHaveLength(0)
         expect(details.dom.querySelector('.ai-image-generation-empty-references')?.textContent).toContain('No reference images were sent')
     })
@@ -198,7 +215,12 @@ describe('createImageGenerationTraceDetails — render contract', () => {
         const details = createImageGenerationTraceDetails()
 
         details.render({
-            attrs: { title: 'Image generation prompt', isOpen: false, isStreaming: true, imageGenerationTraceId: 'streaming-trace' },
+            attrs: {
+                title: 'Image generation prompt',
+                isOpen: false,
+                isStreaming: true,
+                imageGenerationTraceId: 'streaming-trace',
+            },
             childCount: 2,
             toolPromptFallbackText: 'draft from server',
         })
@@ -206,7 +228,12 @@ describe('createImageGenerationTraceDetails — render contract', () => {
         expect(details.dom.querySelector('.ai-image-generation-tool-prompt-fallback')?.hidden).toBe(true)
 
         details.render({
-            attrs: { title: 'Image generation prompt', isOpen: false, isStreaming: true, imageGenerationTraceId: 'streaming-trace' },
+            attrs: {
+                title: 'Image generation prompt',
+                isOpen: false,
+                isStreaming: true,
+                imageGenerationTraceId: 'streaming-trace',
+            },
             childCount: 0,
             toolPromptFallbackText: 'draft from server',
         })
@@ -214,7 +241,12 @@ describe('createImageGenerationTraceDetails — render contract', () => {
         expect(details.dom.querySelector('.ai-image-generation-tool-prompt-fallback')?.hidden).toBe(false)
 
         details.render({
-            attrs: { title: 'Image generation prompt', isOpen: false, isStreaming: true, imageGenerationTraceId: 'streaming-trace' },
+            attrs: {
+                title: 'Image generation prompt',
+                isOpen: false,
+                isStreaming: true,
+                imageGenerationTraceId: 'streaming-trace',
+            },
             childCount: 0,
             toolPromptFallbackText: 'draft from server',
             forceToolPromptFallback: true,
@@ -235,13 +267,23 @@ describe('createImageGenerationTraceDetails — render contract', () => {
         const finalPromptSection = details.dom.querySelector('.ai-image-generation-final-prompt-section') as HTMLElement
 
         details.render({
-            attrs: { title: 'Image generation prompt', isOpen: false, isStreaming: false, imageGenerationTrace: baselineTrace },
+            attrs: {
+                title: 'Image generation prompt',
+                isOpen: false,
+                isStreaming: false,
+                imageGenerationTrace: baselineTrace,
+            },
             childCount: 1,
         })
         expect(finalPromptSection.hidden).toBe(true)
 
         details.render({
-            attrs: { title: 'Image generation prompt', isOpen: false, isStreaming: false, imageGenerationTrace: changedTrace },
+            attrs: {
+                title: 'Image generation prompt',
+                isOpen: false,
+                isStreaming: false,
+                imageGenerationTrace: changedTrace,
+            },
             childCount: 1,
         })
         expect(finalPromptSection.hidden).toBe(false)
@@ -255,7 +297,12 @@ describe('createImageGenerationTraceDetails — render contract', () => {
         const resolverSummary = details.dom.querySelector('.ai-image-generation-resolver-summary') as HTMLElement
 
         details.render({
-            attrs: { title: 'Image generation prompt', isOpen: false, isStreaming: false, imageGenerationTraceId: null },
+            attrs: {
+                title: 'Image generation prompt',
+                isOpen: false,
+                isStreaming: false,
+                imageGenerationTraceId: null,
+            },
             childCount: 0,
         })
         expect(details.dom.classList.contains('has-image-generation-trace')).toBe(false)
@@ -306,7 +353,12 @@ describe('createImageGenerationTraceDetails — render contract', () => {
         }
 
         details.render({
-            attrs: { title: 'Image generation prompt', isOpen: false, isStreaming: false, imageGenerationTrace: traceWithResolver },
+            attrs: {
+                title: 'Image generation prompt',
+                isOpen: false,
+                isStreaming: false,
+                imageGenerationTrace: traceWithResolver,
+            },
             childCount: 1,
         })
 
@@ -331,7 +383,10 @@ describe('createImageGenerationTraceDetails — render contract', () => {
             capabilityRunId: 'timeline-run',
             chatModelProvider: 'Anthropic',
             chatModelId: 'Anthropic:claude-haiku-4-5',
-            input: { durationMs: 15000, precisionMs: 2000 },
+            input: {
+                durationMs: 15000,
+                precisionMs: 2000,
+            },
             outputAssetIds: ['timeline-asset'],
             steps: [{
                 stepId: 'persist',
@@ -369,9 +424,7 @@ describe('createImageGenerationTraceDetails — render contract', () => {
 })
 
 describe('formatTraceModelLabel', () => {
-    it('returns the model segment of a Provider:model id', () => {
-        expect(formatTraceModelLabel('Anthropic:claude-sonnet-4-6')).toBe('claude-sonnet-4-6')
-    })
+    it('returns the model segment of a Provider:model id', () => void expect(formatTraceModelLabel('Anthropic:claude-sonnet-4-6')).toBe('claude-sonnet-4-6'))
 
     it('returns an empty string for a missing id', () => {
         expect(formatTraceModelLabel('')).toBe('')
@@ -399,8 +452,14 @@ describe('formatImageGenerationTraceReferenceSource', () => {
 
 describe('trace cache and fallback helpers', () => {
     it('prefers cache lookups when imageGenerationTraceId is provided', () => {
-        const cachedTrace = makeTrace([makeReference({ id: 'cached', label: 'Cached trace image' })])
-        const inlineTrace = makeTrace([makeReference({ id: 'inline', label: 'Inline trace image' })])
+        const cachedTrace = makeTrace([makeReference({
+            id: 'cached',
+            label: 'Cached trace image',
+        })])
+        const inlineTrace = makeTrace([makeReference({
+            id: 'inline',
+            label: 'Inline trace image',
+        })])
         cacheImageGenerationTrace('trace-1', cachedTrace)
 
         const resolved = getImageGenerationTrace({
@@ -416,7 +475,10 @@ describe('trace cache and fallback helpers', () => {
     })
 
     it('falls back to inline trace when no trace ID is supplied', () => {
-        const inlineTrace = makeTrace([makeReference({ id: 'inline', label: 'Inline trace image' })])
+        const inlineTrace = makeTrace([makeReference({
+            id: 'inline',
+            label: 'Inline trace image',
+        })])
 
         const resolved = getImageGenerationTrace({
             title: 'Image generation prompt',

@@ -16,6 +16,16 @@ import {
     ensureCapabilityStyles,
 } from './installed-capabilities.ts'
 
+const extractCssRule = (selector: string): string => {
+    const escapedSelector = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    const match = ACTION_TIMELINE_FRONTEND_STYLES.match(new RegExp(`${escapedSelector} \\{([^}]*)\\}`, 's'))
+
+    if (!match?.[1])
+        throw new Error(`Missing CSS rule: ${selector}`)
+
+    return match[1]
+}
+
 describe('installed Action Timeline frontend', () => {
     it('registers a complete package-owned Artifact frontend definition', () => {
         expect(actionTimelineFrontendDefinition).toMatchObject({
@@ -100,15 +110,24 @@ describe('installed Action Timeline frontend', () => {
 
     it('delegates Timeline thumbnails and inline references to one host preview factory', () => {
         const container = document.createElement('div')
-        const createAssetReferenceView = vi.fn(({ assetId, variant }) => ({
+        const createAssetReferenceView = vi.fn(({
+            assetId,
+            variant,
+        }) => ({
             dom: Object.assign(document.createElement('span'), {
                 textContent: `${variant}:${assetId}`,
             }),
             destroy: vi.fn(),
         }))
         const timeline = buildActionTimelineDocument(
-            { durationMs: 1000, precisionMs: 1000 },
-            [{ slotIndex: 0, runs: [{ text: 'Board ' }, { assetId: 'train-asset' }] }],
+            {
+                durationMs: 1000,
+                precisionMs: 1000,
+            },
+            [{
+                slotIndex: 0,
+                runs: [{ text: 'Board ' }, { assetId: 'train-asset' }],
+            }],
             new Map([['train-asset', { mediaKind: 'video' as const }]]),
         )
         const view = actionTimelineFrontendDefinition.createCanvasNodeView({
@@ -118,8 +137,14 @@ describe('installed Action Timeline frontend', () => {
                 nodeId: 'timeline-node',
                 artifactTypeId: 'action-timeline',
                 assetId: 'timeline-asset',
-                position: { x: 0, y: 0 },
-                dimensions: { width: 520, height: 360 },
+                position: {
+                    x: 0,
+                    y: 0,
+                },
+                dimensions: {
+                    width: 520,
+                    height: 360,
+                },
             },
             document: timeline,
             createAssetReferenceView,
@@ -140,10 +165,3 @@ describe('installed Action Timeline frontend', () => {
         view.destroy()
     })
 })
-
-function extractCssRule(selector: string): string {
-    const escapedSelector = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-    const match = ACTION_TIMELINE_FRONTEND_STYLES.match(new RegExp(`${escapedSelector} \\{([^}]*)\\}`, 's'))
-    if (!match?.[1]) throw new Error(`Missing CSS rule: ${selector}`)
-    return match[1]
-}

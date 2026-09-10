@@ -506,11 +506,11 @@ export class CapabilityCatalogClient {
     }
 }
 
-export function rankEmptyCapabilityQuery(
+export const rankEmptyCapabilityQuery = (
     page: CapabilityCatalogPage,
     recentSelections: CapabilityCatalogItem[],
     limit = 20,
-): CapabilityCatalogPage {
+): CapabilityCatalogPage => {
     const ranked: CapabilityCatalogItem[] = []
     const seen = new Set<string>()
     const push = (item: CapabilityCatalogItem): void => {
@@ -534,16 +534,16 @@ export function rankEmptyCapabilityQuery(
     }
 }
 
-function compareCapabilityCatalogItems(
+const compareCapabilityCatalogItems = (
     left: CapabilityCatalogItem,
     right: CapabilityCatalogItem,
-): number {
+): number => {
     return left.normalizedName.localeCompare(right.normalizedName)
         || left.kind.localeCompare(right.kind)
         || left.capabilityId.localeCompare(right.capabilityId)
 }
 
-function normalizeInputSchema(value: unknown): CapabilityInputSchema | undefined {
+const normalizeInputSchema = (value: unknown): CapabilityInputSchema | undefined => {
     if (
         !value
         || typeof value !== 'object'
@@ -576,18 +576,16 @@ export const parseCapabilityManifestJson = (value: string): CapabilityManifest =
     return parsed
 }
 
-function assertValidCapabilityManifest(value: unknown): asserts value is CapabilityManifest {
+const assertValidCapabilityManifest = (value: unknown): asserts value is CapabilityManifest => {
     const validation = validateCapabilityManifest(value)
 
     if (!validation.valid)
         throw new Error(`Invalid manifest: ${validation.issues[0]?.message ?? validation.issues[0]?.code ?? 'unknown issue'}`)
 }
 
-export function normalizeQuery(query: string): string {
-    return query.trim().toLocaleLowerCase().replace(/\s+/g, ' ')
-}
+export const normalizeQuery = (query: string): string => query.trim().toLocaleLowerCase().replace(/\s+/g, ' ')
 
-function stablePayloadKey(payload: Record<string, unknown>): string {
+const stablePayloadKey = (payload: Record<string, unknown>): string => {
     return JSON.stringify(
         Object.entries(
             withoutUndefinedValues(payload),
@@ -595,7 +593,7 @@ function stablePayloadKey(payload: Record<string, unknown>): string {
     )
 }
 
-function withoutUndefinedValues(payload: Record<string, unknown>): Record<string, unknown> {
+const withoutUndefinedValues = (payload: Record<string, unknown>): Record<string, unknown> => {
     return Object.fromEntries(
         Object.entries(payload).filter(([, value]) => value !== undefined),
     )

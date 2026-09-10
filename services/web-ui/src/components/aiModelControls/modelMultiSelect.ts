@@ -144,10 +144,12 @@ class ModelMultiSelect implements ModelMultiSelectInstance {
         this.button = this.dom.querySelector('button') as HTMLButtonElement
         this.titleEl = this.dom.querySelector('.title') as HTMLElement
         this.dotsMenu = this.dom.querySelector('.dots-dropdown-menu') as HTMLElement
-        this.optionsList = html`<ul
+        this.optionsList = html`
+            <ul
                 className="submenu ai-model-multi-select-list"
                 onwheel=${this.handleWheel}
-            ></ul>` as HTMLUListElement
+            ></ul>
+        ` as HTMLUListElement
 
         this.infoBubble = createInfoBubble({
             id: `model-multi-select-${config.id}`,

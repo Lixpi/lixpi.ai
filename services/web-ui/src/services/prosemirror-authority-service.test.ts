@@ -15,7 +15,10 @@ import {
 
 import { ProseMirrorAuthorityService } from '$src/services/prosemirror-authority-service.ts'
 
-const { DOCUMENT_SUBMIT_STEPS: DOC_SUBMIT_STEPS, DOCUMENT_RESUME: DOC_RESUME } = NATS_SUBJECTS.ASSET_SUBJECTS
+const {
+    DOCUMENT_SUBMIT_STEPS: DOC_SUBMIT_STEPS,
+    DOCUMENT_RESUME: DOC_RESUME,
+} = NATS_SUBJECTS.ASSET_SUBJECTS
 
 const mocks = vi.hoisted(() => ({
     getData: vi.fn(),
@@ -80,29 +83,27 @@ type MockTransaction = {
     step: ReturnType<typeof vi.fn>
 }
 
-function flushPromises(): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, 0))
-}
+const flushPromises = (): Promise<void> => new Promise(resolve => setTimeout(resolve, 0))
 
-function createDeferred<T>(): {
+const createDeferred = <T>(): {
     promise: Promise<T>
     resolve: (value: T) => void
-} {
+} => {
     let resolvePromise: ((value: T) => void) | undefined
-    const promise = new Promise<T>((resolve) => {
-        resolvePromise = resolve
-    })
+    const promise = new Promise<T>((resolve) => void (resolvePromise = resolve))
+
     return {
         promise,
         resolve: (value: T) => resolvePromise?.(value),
     }
 }
 
-function createTransaction(): MockTransaction {
+const createTransaction = (): MockTransaction => {
     const transaction: MockTransaction = {
         metadata: new Map(),
         setMeta: vi.fn((key: string, value: unknown) => {
             transaction.metadata.set(key, value)
+
             return transaction
         }),
         replaceWith: vi.fn(() => transaction),
@@ -112,11 +113,14 @@ function createTransaction(): MockTransaction {
     return transaction
 }
 
-function createView() {
+const createView = () => {
     const transactions: MockTransaction[] = []
     const doc = {
         content: { size: 0 },
-        toJSON: vi.fn(() => ({ type: 'doc', content: [] })),
+        toJSON: vi.fn(() => ({
+            type: 'doc',
+            content: [],
+        })),
     }
 
     return {
@@ -132,6 +136,7 @@ function createView() {
                 get tr() {
                     const transaction = createTransaction()
                     transactions.push(transaction)
+
                     return transaction
                 },
             },
@@ -140,14 +145,14 @@ function createView() {
     }
 }
 
-function createNats() {
+const createNats = () => {
     return {
         subscribe: vi.fn(),
         request: vi.fn(),
     }
 }
 
-function createEvent(overrides: Record<string, unknown>) {
+const createEvent = (overrides: Record<string, unknown>) => {
     return {
         organizationId: 'org-1',
         assetId: 'asset-1',
@@ -180,7 +185,11 @@ describe('ProseMirrorAuthorityService', () => {
             invert: vi.fn(() => ({})),
             getMap: vi.fn(() => ({})),
         })
-        mocks.acquireLease.mockResolvedValue({ leaseId: 'lease-1', workspaceId: coordinate.workspaceId, expiresAt: 999 })
+        mocks.acquireLease.mockResolvedValue({
+            leaseId: 'lease-1',
+            workspaceId: coordinate.workspaceId,
+            expiresAt: 999,
+        })
         mocks.renewLease.mockResolvedValue({ leaseId: 'lease-1' })
         mocks.releaseLease.mockResolvedValue(undefined)
         mocks.get.mockResolvedValue({ editLease: undefined })
@@ -262,7 +271,10 @@ describe('ProseMirrorAuthorityService', () => {
         service.submitLocalTransaction({
             docChanged: true,
             getMeta: vi.fn(() => false),
-            steps: [{ toJSON: () => ({ type: 'replace', index: 1 }) }],
+            steps: [{ toJSON: () => ({
+                type: 'replace',
+                index: 1,
+            }) }],
             docs: [{}],
         } as any)
 
@@ -274,7 +286,11 @@ describe('ProseMirrorAuthorityService', () => {
     it('releases a lease resolved after disconnect without notifying or subscribing', async () => {
         const nats = createNats()
         mocks.getData.mockReturnValue(nats)
-        const deferredLease = createDeferred<{ leaseId: string; workspaceId: string; expiresAt: number }>()
+        const deferredLease = createDeferred<{
+            leaseId: string
+            workspaceId: string
+            expiresAt: number
+        }>()
         mocks.acquireLease.mockReturnValue(deferredLease.promise)
         const { view } = createView()
         const onLeaseStateChange = vi.fn()
@@ -286,7 +302,11 @@ describe('ProseMirrorAuthorityService', () => {
             onLeaseStateChange,
         })
         service.disconnect()
-        deferredLease.resolve({ leaseId: 'late-lease', workspaceId: coordinate.workspaceId, expiresAt: 999 })
+        deferredLease.resolve({
+            leaseId: 'late-lease',
+            workspaceId: coordinate.workspaceId,
+            expiresAt: 999,
+        })
         await flushPromises()
 
         expect(mocks.releaseLease).toHaveBeenCalledWith(
@@ -332,6 +352,7 @@ describe('ProseMirrorAuthorityService', () => {
         let subscriptionHandler: (event: AssetStepStreamEvent) => void = () => undefined
         nats.subscribe.mockImplementation((_subject: string, handler: (event: AssetStepStreamEvent) => void) => {
             subscriptionHandler = handler
+
             return { unsubscribe: vi.fn() }
         })
 
@@ -380,7 +401,10 @@ describe('ProseMirrorAuthorityService', () => {
                     organizationId: coordinate.organizationId,
                     role: coordinate.role,
                     version: 2,
-                    doc: { type: 'doc', content: [] },
+                    doc: {
+                        type: 'doc',
+                        content: [],
+                    },
                 },
                 currentVersion: 2,
                 currentStreamSeq: 3,
@@ -405,7 +429,10 @@ describe('ProseMirrorAuthorityService', () => {
         service.submitLocalTransaction({
             docChanged: true,
             getMeta: vi.fn(() => false),
-            steps: [{ toJSON: () => ({ type: 'replace', index: 1 }) }],
+            steps: [{ toJSON: () => ({
+                type: 'replace',
+                index: 1,
+            }) }],
             docs: [{}],
         } as any)
 
@@ -414,7 +441,10 @@ describe('ProseMirrorAuthorityService', () => {
         await vi.advanceTimersByTimeAsync(100)
         await Promise.resolve()
 
-        expect(view.state.schema.nodeFromJSON).toHaveBeenCalledWith({ type: 'doc', content: [] })
+        expect(view.state.schema.nodeFromJSON).toHaveBeenCalledWith({
+            type: 'doc',
+            content: [],
+        })
         expect(nats.request).toHaveBeenNthCalledWith(
             2,
             DOC_SUBMIT_STEPS,
@@ -457,8 +487,14 @@ describe('ProseMirrorAuthorityService', () => {
             docChanged: true,
             getMeta: vi.fn(() => false),
             steps: [
-                { toJSON: () => ({ type: 'replace', index: 1 }) },
-                { toJSON: () => ({ type: 'replace', index: 2 }) },
+                { toJSON: () => ({
+                    type: 'replace',
+                    index: 1,
+                }) },
+                { toJSON: () => ({
+                    type: 'replace',
+                    index: 2,
+                }) },
             ],
             docs: [{}, {}],
         } as any)
@@ -499,7 +535,10 @@ describe('ProseMirrorAuthorityService', () => {
     it('flushes immediately when local batch reaches max size', async () => {
         vi.useFakeTimers()
         const nats = createNats()
-        const submitResponse: SubmitResult = { status: 'ACCEPTED', version: 50 }
+        const submitResponse: SubmitResult = {
+            status: 'ACCEPTED',
+            version: 50,
+        }
         nats.request
             .mockResolvedValueOnce({
                 snapshot: null,
@@ -521,7 +560,10 @@ describe('ProseMirrorAuthorityService', () => {
 
         await vi.advanceTimersByTimeAsync(0)
 
-        const steps = Array.from({ length: 50 }, (_, index) => ({ toJSON: () => ({ type: 'replace', index }) }))
+        const steps = Array.from({ length: 50 }, (_, index) => ({ toJSON: () => ({
+            type: 'replace',
+            index,
+        }) }))
         service.submitLocalTransaction({
             docChanged: true,
             getMeta: vi.fn(() => false),
@@ -559,7 +601,12 @@ describe('ProseMirrorAuthorityService', () => {
                 liveSubject: eventSubject,
                 hasMore: true,
                 events: [
-                    createEvent({ kind: 'STEP', version: 1, step: { stepType: 'replace' }, streamSequence: 1 }),
+                    createEvent({
+                        kind: 'STEP',
+                        version: 1,
+                        step: { stepType: 'replace' },
+                        streamSequence: 1,
+                    }),
                 ],
             })
             .mockResolvedValueOnce({
@@ -569,7 +616,12 @@ describe('ProseMirrorAuthorityService', () => {
                 liveSubject: eventSubject,
                 hasMore: false,
                 events: [
-                    createEvent({ kind: 'STEP', version: 2, step: { stepType: 'replace' }, streamSequence: 2 }),
+                    createEvent({
+                        kind: 'STEP',
+                        version: 2,
+                        step: { stepType: 'replace' },
+                        streamSequence: 2,
+                    }),
                 ],
             })
         mocks.getData.mockReturnValue(nats)
@@ -624,7 +676,10 @@ describe('ProseMirrorAuthorityService', () => {
         service.submitLocalTransaction({
             docChanged: true,
             getMeta: vi.fn(() => false),
-            steps: [{ toJSON: () => ({ type: 'replace', index: 1 }) }],
+            steps: [{ toJSON: () => ({
+                type: 'replace',
+                index: 1,
+            }) }],
             docs: [{}],
         } as any)
 

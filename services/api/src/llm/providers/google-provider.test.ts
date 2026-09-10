@@ -49,18 +49,17 @@ const extractFramesMock = vi.hoisted(() => ({
 }))
 
 vi.mock('@google/genai', () => ({
-    GoogleGenAI: vi.fn(function() {
-        return {
-            models: {
-                generateContent,
-                generateContentStream: googleMocks.generateContentStream,
-                generateVideos: googleMocks.generateVideos,
-            },
-            operations: { getVideosOperation: googleMocks.getVideosOperation },
-            files: { download: googleMocks.download },
-            vertexai: false,
+    GoogleGenAI: class {
+        models = {
+            generateContent,
+            generateContentStream: googleMocks.generateContentStream,
+            generateVideos: googleMocks.generateVideos,
         }
-    }),
+
+        operations = { getVideosOperation: googleMocks.getVideosOperation }
+        files = { download: googleMocks.download }
+        vertexai = false
+    },
 }))
 
 vi.mock('../../services/video-frame-extraction.ts', () => ({
@@ -139,13 +138,24 @@ const configureProviderInternals = (provider: GoogleProvider) => {
     ;(provider as any).imagePublisher = imagePublisher
     ;(provider as any).videoPublisher = videoPublisher
     ;(provider as any).abortController = new AbortController()
-    return { start, end, chunk, error, imagePublisher, videoPublisher }
+
+    return {
+        start,
+        end,
+        chunk,
+        error,
+        imagePublisher,
+        videoPublisher,
+    }
 }
 
 const baseGoogleState = () => ({
     workspaceId: 'ws-1',
     aiChatThreadId: 'thread-1',
-    messages: [{ role: 'user', content: 'generate a scene' }],
+    messages: [{
+        role: 'user',
+        content: 'generate a scene',
+    }],
     modelVersion: 'gemini-2.5-flash',
     aiModelMetaInfo: googleModelMeta('gemini-2.5-flash') as any,
     maxCompletionSize: 1000,
@@ -179,14 +189,26 @@ const makeModelRequiredPlan = (): SealedResolvedCapabilityPlan => {
                 video: 'ignore',
                 outputMode: 'capability-only',
             },
-            workflow: { steps: [], outputs: {} },
+            workflow: {
+                steps: [],
+                outputs: {},
+            },
         },
     }
     const serializable: ResolvedCapabilityPlan = {
         rootCapabilityIds: ['action-timeline'],
-        capabilities: [{ capabilityId: 'action-timeline', kind: 'tool', manifestBlobHash: 'manifest-hash', manifest }],
-        resolvedManifests: [{ capabilityId: 'action-timeline', manifestBlobHash: 'manifest-hash' }],
+        capabilities: [{
+            capabilityId: 'action-timeline',
+            kind: 'tool',
+            manifestBlobHash: 'manifest-hash',
+            manifest,
+        }],
+        resolvedManifests: [{
+            capabilityId: 'action-timeline',
+            manifestBlobHash: 'manifest-hash',
+        }],
     }
+
     return new SealedResolvedCapabilityPlan(serializable, [{
         capabilityId: 'action-timeline',
         ref: schemaRef,
@@ -205,13 +227,25 @@ const makeModelRequiredPlan = (): SealedResolvedCapabilityPlan => {
 describe('buildVeoReferenceImages', () => {
     it('uses the VEO 3.1 asset reference type for every reference image', () => {
         const refs = [
-            { imageBytes: 'first-image', mimeType: 'image/png' },
-            { imageBytes: 'second-image', mimeType: 'image/jpeg' },
+            {
+                imageBytes: 'first-image',
+                mimeType: 'image/png',
+            },
+            {
+                imageBytes: 'second-image',
+                mimeType: 'image/jpeg',
+            },
         ]
 
         expect(buildVeoReferenceImages(refs)).toEqual([
-            { image: refs[0], referenceType: 'asset' },
-            { image: refs[1], referenceType: 'asset' },
+            {
+                image: refs[0],
+                referenceType: 'asset',
+            },
+            {
+                image: refs[1],
+                referenceType: 'asset',
+            },
         ])
     })
 })
@@ -223,7 +257,10 @@ describe('getGoogleImageResponseSummary', () => {
             candidates: [
                 {
                     finishReason: 'STOP',
-                    safetyRatings: [{ category: 'HARM_CATEGORY_TEST', probability: 'LOW' }],
+                    safetyRatings: [{
+                        category: 'HARM_CATEGORY_TEST',
+                        probability: 'LOW',
+                    }],
                     content: {
                         parts: [
                             { text: 'x'.repeat(300) },
@@ -240,7 +277,10 @@ describe('getGoogleImageResponseSummary', () => {
                 {
                     index: 0,
                     finishReason: 'STOP',
-                    safetyRatings: [{ category: 'HARM_CATEGORY_TEST', probability: 'LOW' }],
+                    safetyRatings: [{
+                        category: 'HARM_CATEGORY_TEST',
+                        probability: 'LOW',
+                    }],
                     partTypes: [
                         {
                             hasText: true,
@@ -321,7 +361,10 @@ describe('GoogleProvider internals', () => {
             candidates: [
                 {
                     finish_reason: 'STOP',
-                    safety_ratings: [{ category: 'HARM_CATEGORY_HARASSMENT', probability: 'LOW' }],
+                    safety_ratings: [{
+                        category: 'HARM_CATEGORY_HARASSMENT',
+                        probability: 'LOW',
+                    }],
                     content: {
                         parts: [
                             { function_call: { name: 'generate_image' } },
@@ -337,7 +380,10 @@ describe('GoogleProvider internals', () => {
             candidates: [{
                 index: 0,
                 finishReason: 'STOP',
-                safetyRatings: [{ category: 'HARM_CATEGORY_HARASSMENT', probability: 'LOW' }],
+                safetyRatings: [{
+                    category: 'HARM_CATEGORY_HARASSMENT',
+                    probability: 'LOW',
+                }],
                 partTypes: [
                     {
                         hasText: false,
@@ -361,15 +407,27 @@ describe('GoogleProvider internals', () => {
 
         const parts = (provider as any).buildParts([
             { text: 'prompt' },
-            { inline_data: { data: 'abc', mime_type: 'image/png' } },
-            { inlineData: { data: 'def', mimeType: 'image/jpeg' } },
+            { inline_data: {
+                data: 'abc',
+                mime_type: 'image/png',
+            } },
+            { inlineData: {
+                data: 'def',
+                mimeType: 'image/jpeg',
+            } },
             { unknown: 'x' },
         ])
 
         expect(parts).toEqual([
             { text: 'prompt' },
-            { inlineData: { data: 'abc', mimeType: 'image/png' } },
-            { inlineData: { data: 'def', mimeType: 'image/jpeg' } },
+            { inlineData: {
+                data: 'abc',
+                mimeType: 'image/png',
+            } },
+            { inlineData: {
+                data: 'def',
+                mimeType: 'image/jpeg',
+            } },
         ])
     })
 
@@ -387,8 +445,14 @@ describe('GoogleProvider internals', () => {
                     content: {
                         parts: [
                             { text: 'preview text' },
-                            { inlineData: { data: 'iVBORw0KGgo=', mimeType: 'image/png' } },
-                            { inline_data: { data: '/9j/4AAQSk', mimeType: 'image/jpeg' } },
+                            { inlineData: {
+                                data: 'iVBORw0KGgo=',
+                                mimeType: 'image/png',
+                            } },
+                            { inline_data: {
+                                data: '/9j/4AAQSk',
+                                mimeType: 'image/jpeg',
+                            } },
                         ],
                     },
                 },
@@ -396,7 +460,10 @@ describe('GoogleProvider internals', () => {
         })
 
         const provider = new GoogleProvider('ws-1:thread-1', createProviderDeps())
-        const { chunk, imagePublisher } = configureProviderInternals(provider)
+        const {
+            chunk,
+            imagePublisher,
+        } = configureProviderInternals(provider)
         const sourceBytes = Buffer.from('original-source')
         const layoutBytes = Buffer.from('structure-reference')
 
@@ -413,7 +480,10 @@ describe('GoogleProvider internals', () => {
                 imageSize: '16:9',
                 resolution: '4K',
             },
-            messages: [{ role: 'user', content: 'show me a dog' }],
+            messages: [{
+                role: 'user',
+                content: 'show me a dog',
+            }],
             resolvedImageGenerationReferences: [
                 {
                     url: 'source-url',
@@ -440,7 +510,10 @@ describe('GoogleProvider internals', () => {
 
         expect(generateContent).toHaveBeenCalledWith(expect.objectContaining({
             config: expect.objectContaining({
-                imageConfig: { aspectRatio: '16:9', imageSize: '4K' },
+                imageConfig: {
+                    aspectRatio: '16:9',
+                    imageSize: '4K',
+                },
             }),
             contents: [{
                 role: 'user',
@@ -449,11 +522,17 @@ describe('GoogleProvider internals', () => {
                     {
                         text: 'REFERENCE IMAGE 1 — AUTHORITATIVE ORIGINAL SOURCE. File: original-source-1.jpg. Use its observed design, clothing, material, accessory, and placement evidence wherever the request assigns the target appearance to this source.',
                     },
-                    { inlineData: { mimeType: 'image/jpeg', data: sourceBytes.toString('base64') } },
+                    { inlineData: {
+                        mimeType: 'image/jpeg',
+                        data: sourceBytes.toString('base64'),
+                    } },
                     {
                         text: 'REFERENCE IMAGE 2 — STRUCTURE REFERENCE ONLY. File: structure-reference-1.png. Use its composition without copying identity or design.',
                     },
-                    { inlineData: { mimeType: 'image/png', data: layoutBytes.toString('base64') } },
+                    { inlineData: {
+                        mimeType: 'image/png',
+                        data: layoutBytes.toString('base64'),
+                    } },
                 ],
             }],
         }))
@@ -489,7 +568,10 @@ describe('GoogleProvider internals', () => {
         generateContent.mockResolvedValueOnce({
             candidates: [{
                 content: {
-                    parts: [{ inlineData: { data: 'iVBORw0KGgo=', mimeType: 'image/png' } }],
+                    parts: [{ inlineData: {
+                        data: 'iVBORw0KGgo=',
+                        mimeType: 'image/png',
+                    } }],
                 },
             }],
         })
@@ -503,10 +585,16 @@ describe('GoogleProvider internals', () => {
             aiModelMetaInfo: googleModelMeta(
                 'synchronized-image-model',
                 ['text', 'image', 'image_generation'],
-                { ...GOOGLE_INFERENCE_CAPABILITIES, thinkingMode: 'google-level' },
+                {
+                    ...GOOGLE_INFERENCE_CAPABILITIES,
+                    thinkingMode: 'google-level',
+                },
             ),
             enableImageGeneration: true,
-            messages: [{ role: 'user', content: 'show me a dog' }],
+            messages: [{
+                role: 'user',
+                content: 'show me a dog',
+            }],
         })
 
         expect(generateContent).toHaveBeenCalledWith(expect.objectContaining({
@@ -528,7 +616,10 @@ describe('GoogleProvider internals', () => {
         })
 
         const provider = new GoogleProvider('ws-1:thread-1', createProviderDeps())
-        const { chunk, imagePublisher } = configureProviderInternals(provider)
+        const {
+            chunk,
+            imagePublisher,
+        } = configureProviderInternals(provider)
 
         const update = await (provider as any).streamImpl({
             ...baseGoogleState(),
@@ -538,7 +629,10 @@ describe('GoogleProvider internals', () => {
                 ['text', 'image', 'image_generation'],
             ),
             enableImageGeneration: true,
-            messages: [{ role: 'user', content: 'try generating image' }],
+            messages: [{
+                role: 'user',
+                content: 'try generating image',
+            }],
         })
 
         expect(chunk).toHaveBeenCalledWith('No images in this response')
@@ -579,7 +673,10 @@ describe('GoogleProvider internals', () => {
         ]))
 
         const provider = new GoogleProvider('ws-1:thread-1', createProviderDeps())
-        const { start, videoPublisher } = configureProviderInternals(provider)
+        const {
+            start,
+            videoPublisher,
+        } = configureProviderInternals(provider)
 
         const update = await (provider as any).streamImpl({
             ...baseGoogleState(),
@@ -595,8 +692,14 @@ describe('GoogleProvider internals', () => {
                 {
                     role: 'user',
                     content: [
-                        { type: 'input_image', image_url: 'data:image/png;base64,ZmFrZQ==' },
-                        { type: 'input_image', image_url: 'data:image/jpeg;base64,c2hvd2M=' },
+                        {
+                            type: 'input_image',
+                            image_url: 'data:image/png;base64,ZmFrZQ==',
+                        },
+                        {
+                            type: 'input_image',
+                            image_url: 'data:image/jpeg;base64,c2hvd2M=',
+                        },
                     ],
                 },
             ],
@@ -625,7 +728,11 @@ describe('GoogleProvider internals', () => {
 
     it('registers standing Capability tools and continues after search_capabilities results', async () => {
         googleMocks.generateContentStream.mockResolvedValueOnce(makeAsyncStream([{
-            usageMetadata: { promptTokenCount: 2, candidatesTokenCount: 1, totalTokenCount: 3 },
+            usageMetadata: {
+                promptTokenCount: 2,
+                candidatesTokenCount: 1,
+                totalTokenCount: 3,
+            },
             candidates: [{
                 content: {
                     parts: [{
@@ -638,7 +745,11 @@ describe('GoogleProvider internals', () => {
             }],
         }]))
         googleMocks.generateContentStream.mockResolvedValueOnce(makeAsyncStream([{
-            usageMetadata: { promptTokenCount: 3, candidatesTokenCount: 4, totalTokenCount: 7 },
+            usageMetadata: {
+                promptTokenCount: 3,
+                candidatesTokenCount: 4,
+                totalTokenCount: 7,
+            },
             candidates: [{ content: { parts: [{ text: 'I found the Tool.' }] } }],
         }]))
         const search = vi.fn(async () => ({
@@ -652,20 +763,29 @@ describe('GoogleProvider internals', () => {
         }))
         const deps = {
             ...createProviderDeps(),
-            capabilityDispatcher: { search, use: vi.fn() },
+            capabilityDispatcher: {
+                search,
+                use: vi.fn(),
+            },
         } as any
         const provider = new GoogleProvider('ws-1:thread-1', deps)
         const { chunk } = configureProviderInternals(provider)
 
         const update = await (provider as any).streamImpl({
             ...baseGoogleState(),
-            eventMeta: { userId: 'user-1', organizationId: 'organization-1' },
+            eventMeta: {
+                userId: 'user-1',
+                organizationId: 'organization-1',
+            },
             capabilityInvocationDepth: 0,
         } as any)
 
         expect(search).toHaveBeenCalledWith(
             expect.objectContaining({ query: 'character' }),
-            expect.objectContaining({ userId: 'user-1', workspaceId: 'ws-1' }),
+            expect.objectContaining({
+                userId: 'user-1',
+                workspaceId: 'ws-1',
+            }),
         )
         expect(googleMocks.generateContentStream).toHaveBeenCalledTimes(2)
         expect(googleMocks.generateContentStream.mock.calls[0]?.[0]).toEqual(expect.objectContaining({
@@ -704,7 +824,10 @@ describe('GoogleProvider internals', () => {
                     parts: [{
                         functionCall: {
                             name: toolName,
-                            args: { durationMs: 1, precisionMs: 1 },
+                            args: {
+                                durationMs: 1,
+                                precisionMs: 1,
+                            },
                         },
                     }],
                 },
@@ -714,8 +837,15 @@ describe('GoogleProvider internals', () => {
             candidates: [{ content: { parts: [{ text: 'The action timeline is ready.' }] } }],
         }]))
         const use = vi.fn(async () => ({
-            run: { runId: 'timeline-run', status: 'completed', outputAssetIds: ['timeline-asset'] },
-            output: { outputKind: 'capabilityArtifact', assetId: 'timeline-asset' },
+            run: {
+                runId: 'timeline-run',
+                status: 'completed',
+                outputAssetIds: ['timeline-asset'],
+            },
+            output: {
+                outputKind: 'capabilityArtifact',
+                assetId: 'timeline-asset',
+            },
             stepOutputs: {},
             events: [],
         }))
@@ -729,10 +859,16 @@ describe('GoogleProvider internals', () => {
 
         const state = {
             ...baseGoogleState(),
-            eventMeta: { userId: 'user-1', organizationId: 'organization-1' },
+            eventMeta: {
+                userId: 'user-1',
+                organizationId: 'organization-1',
+            },
             resolvedCapabilityPlan: makeModelRequiredPlan(),
             capabilityInputs: {
-                'action-timeline': { durationMs: 15000, precisionMs: 2000 },
+                'action-timeline': {
+                    durationMs: 15000,
+                    precisionMs: 2000,
+                },
             },
             generationRun: {
                 requestKind: 'media-generation-matrix',
@@ -835,7 +971,10 @@ describe('GoogleProvider internals', () => {
             imageProviderName: 'Google',
             enableImageGeneration: false,
             mediaFanoutPlan: true,
-            messages: [{ role: 'user', content: 'draw it' }],
+            messages: [{
+                role: 'user',
+                content: 'draw it',
+            }],
         } as any)
 
         expect(chunk).toHaveBeenCalledWith('No clear tool call yet.')
@@ -880,14 +1019,21 @@ describe('GoogleProvider internals', () => {
         ]))
 
         const provider = new GoogleProvider('ws-1:thread-1', createProviderDeps())
-        const { chunk, end, error } = configureProviderInternals(provider)
+        const {
+            chunk,
+            end,
+            error,
+        } = configureProviderInternals(provider)
 
         const update = await (provider as any).streamImpl({
             ...baseGoogleState(),
             enableImageGeneration: false,
             enableVideoGeneration: false,
             reasoningGenerationConfig: { thinkingLevel: 'low' },
-            messages: [{ role: 'user', content: 'plain text request' }],
+            messages: [{
+                role: 'user',
+                content: 'plain text request',
+            }],
         })
 
         expect(chunk).toHaveBeenCalledTimes(2)
@@ -936,14 +1082,21 @@ describe('GoogleProvider internals', () => {
             ),
             enableVideoGeneration: true,
             videoModelVersion: 'veo-3.1-generate-preview',
-            videoModelMetaInfo: { provider: 'Google', model: 'veo-3.1', modelVersion: 'veo-3.1-generate-preview' } as any,
+            videoModelMetaInfo: {
+                provider: 'Google',
+                model: 'veo-3.1',
+                modelVersion: 'veo-3.1-generate-preview',
+            } as any,
             videoProviderName: 'Google',
             videoAspectRatio: '16:9',
             videoResolution: '720p',
             videoDurationSeconds: 8,
             videoGenerationConfig: { negativePrompt: 'no subtitles or captions' },
             videoFirstFrameImage: 'data:image/png;base64,ZmFrZQ==',
-            messages: [{ role: 'user', content: 'make a cinematic shot' }],
+            messages: [{
+                role: 'user',
+                content: 'make a cinematic shot',
+            }],
         } as any)
 
         const completeArgs = videoPublisher.complete.mock.calls[0]?.[0]
@@ -971,7 +1124,10 @@ describe('GoogleProvider internals', () => {
         })
         expect(generateRequest.source).toEqual({
             prompt: 'make a cinematic shot',
-            image: { imageBytes: 'ZmFrZQ==', mimeType: 'image/png' },
+            image: {
+                imageBytes: 'ZmFrZQ==',
+                mimeType: 'image/png',
+            },
         })
         expect(generateRequest).not.toHaveProperty('prompt')
         expect(generateRequest).not.toHaveProperty('image')
@@ -1007,9 +1163,16 @@ describe('GoogleProvider internals', () => {
             ),
             enableVideoGeneration: true,
             videoModelVersion: 'veo-3.1-generate-preview',
-            videoModelMetaInfo: { provider: 'Google', model: 'veo-3.1', modelVersion: 'veo-3.1-generate-preview' } as any,
+            videoModelMetaInfo: {
+                provider: 'Google',
+                model: 'veo-3.1',
+                modelVersion: 'veo-3.1-generate-preview',
+            } as any,
             videoProviderName: 'Google',
-            messages: [{ role: 'user', content: 'make a cinematic shot' }],
+            messages: [{
+                role: 'user',
+                content: 'make a cinematic shot',
+            }],
         } as any)
 
         const expectedError = 'VEO: operation completed without a video (operation=operations/veo-empty, generatedVideoCount=0, raiMediaFilteredCount=0)'
@@ -1040,14 +1203,20 @@ describe('GoogleProvider internals', () => {
         ]))
 
         const provider = new GoogleProvider('ws-1:thread-1', createProviderDeps())
-        const { start, chunk } = configureProviderInternals(provider)
+        const {
+            start,
+            chunk,
+        } = configureProviderInternals(provider)
 
         const update = await (provider as any).streamImpl({
             ...baseGoogleState(),
             modelVersion: 'gemini-2.5-flash',
             enableImageGeneration: false,
             enableVideoGeneration: false,
-            messages: [{ role: 'user', content: 'Tell me something.' }],
+            messages: [{
+                role: 'user',
+                content: 'Tell me something.',
+            }],
         })
 
         expect(start).toHaveBeenCalled()

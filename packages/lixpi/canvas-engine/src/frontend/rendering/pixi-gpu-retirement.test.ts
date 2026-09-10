@@ -10,22 +10,37 @@ import {
 } from 'pixi.js'
 import { PixiGpuRetirement } from './pixi-gpu-retirement.ts'
 
-function rendererFixture(uid: number) {
+const rendererFixture = (uid: number) => {
     const created: Array<{ destroy: ReturnType<typeof vi.fn> }> = []
     const system = {
         createGPUBuffer: (buffer: Buffer) => {
             const native = { destroy: vi.fn() }
             created.push(native)
-            buffer._gpuData[uid] = { gpuBuffer: native, destroy: () => native.destroy() } as never
+            buffer._gpuData[uid] = {
+                gpuBuffer: native,
+                destroy: () => native.destroy(),
+            } as never
+
             return native
         },
     }
-    return { renderer: { uid, buffer: system } as unknown as WebGPURenderer, created, system }
+
+    return {
+        renderer: {
+            uid,
+            buffer: system,
+        } as unknown as WebGPURenderer,
+        created,
+        system,
+    }
 }
 
 describe('renderer-owned GPU buffer retirement', () => {
     it('detaches a replaced buffer immediately but delays native destruction', () => {
-        const { renderer, created } = rendererFixture(1)
+        const {
+            renderer,
+            created,
+        } = rendererFixture(1)
         const pending: Array<() => void> = []
         const retirement = new PixiGpuRetirement(renderer, dispose => pending.push(dispose))
         const buffer = { _gpuData: {} } as Buffer
@@ -37,7 +52,9 @@ describe('renderer-owned GPU buffer retirement', () => {
         expect(created[0].destroy).not.toHaveBeenCalled()
         renderer.buffer.createGPUBuffer(buffer)
         expect(buffer._gpuData[1]).not.toBe(old)
+
         for (const dispose of pending) dispose()
+
         expect(created[0].destroy).toHaveBeenCalledOnce()
         expect(created[1].destroy).not.toHaveBeenCalled()
         retirement.destroy()

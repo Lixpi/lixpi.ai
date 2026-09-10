@@ -67,8 +67,16 @@ describe('AiModelService', () => {
 
     it('sets loading and stores direct model arrays from NATS', async () => {
         const response = [
-            { provider: 'openai', model: 'gpt-4o', version: '1' },
-            { provider: 'google', model: 'gemini', version: '1' },
+            {
+                provider: 'openai',
+                model: 'gpt-4o',
+                version: '1',
+            },
+            {
+                provider: 'google',
+                model: 'gemini',
+                version: '1',
+            },
         ] as const
 
         requestMock.mockResolvedValue(response)
@@ -88,12 +96,21 @@ describe('AiModelService', () => {
     it('stores model catalog responses with matrix when returned', async () => {
         const catalog = {
             models: [
-                { provider: 'openai', model: 'gpt-4o' },
-                { provider: 'google', model: 'gemini-flash' },
+                {
+                    provider: 'openai',
+                    model: 'gpt-4o',
+                },
+                {
+                    provider: 'google',
+                    model: 'gemini-flash',
+                },
             ],
             mediaGenerationConfigMatrix: {
                 version: 'media-generation-config-matrix-v1',
-                groups: [{ provider: 'openai', models: [] }],
+                groups: [{
+                    provider: 'openai',
+                    models: [],
+                }],
             },
         } as const
 
@@ -107,7 +124,10 @@ describe('AiModelService', () => {
     })
 
     it('falls back to empty model list when response shape is unknown', async () => {
-        requestMock.mockResolvedValue({ kind: 'unknown', notModels: [] })
+        requestMock.mockResolvedValue({
+            kind: 'unknown',
+            notModels: [],
+        })
 
         await service.getAvailableAiModels()
 

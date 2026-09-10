@@ -13,7 +13,12 @@ import {
 describe('Loading placeholders', () => {
     it('mounts loading state in a supplied document and exposes accessible status', () => {
         const target = document.implementation.createHTMLDocument()
-        const placeholder = createLoadingPlaceholder({ document: target, size: 'large', theme: 'dark', label: 'Loading document' })
+        const placeholder = createLoadingPlaceholder({
+            document: target,
+            size: 'large',
+            theme: 'dark',
+            label: 'Loading document',
+        })
         target.body.append(placeholder.dom)
         expect(placeholder.dom.ownerDocument).toBe(target)
         expect(placeholder.dom.getAttribute('role')).toBe('status')
@@ -29,7 +34,11 @@ describe('Loading placeholders', () => {
 
     it('updates error content safely and removes the retry callback on disposal', () => {
         const onRetry = vi.fn()
-        const placeholder = createErrorPlaceholder({ onRetry, message: 'Unavailable', withOverlay: false })
+        const placeholder = createErrorPlaceholder({
+            onRetry,
+            message: 'Unavailable',
+            withOverlay: false,
+        })
         const button = placeholder.dom.querySelector('button')!
         button.click()
         expect(onRetry).toHaveBeenCalledOnce()

@@ -9,7 +9,7 @@ import { FrameScheduler } from './frame-scheduler.ts'
 
 afterEach(() => vi.unstubAllGlobals())
 
-function schedulerFixture() {
+const schedulerFixture = () => {
     const queued = new Map<number, FrameRequestCallback>()
     let nextId = 0
     const render = vi.fn()
@@ -19,12 +19,12 @@ function schedulerFixture() {
         onError,
         request: callback => {
             queued.set(++nextId, callback)
+
             return nextId
         },
-        cancel: id => {
-            queued.delete(id)
-        },
+        cancel: id => void queued.delete(id),
     })
+
     return {
         scheduler,
         queued,
@@ -33,6 +33,7 @@ function schedulerFixture() {
         frame: (time: number) => {
             const pending = Array.from(queued.values())
             queued.clear()
+
             for (const callback of pending) callback(time)
         },
     }
@@ -41,11 +42,14 @@ function schedulerFixture() {
 describe('FrameScheduler', () => {
     it('invokes the default browser frame methods with the global receiver', () => {
         const request = vi.fn(function(this: typeof globalThis) {
-            if (this !== globalThis) throw new TypeError('Illegal invocation')
+            if (this !== globalThis)
+                throw new TypeError('Illegal invocation')
+
             return 42
         })
         const cancel = vi.fn(function(this: typeof globalThis) {
-            if (this !== globalThis) throw new TypeError('Illegal invocation')
+            if (this !== globalThis)
+                throw new TypeError('Illegal invocation')
         })
         vi.stubGlobal('requestAnimationFrame', request)
         vi.stubGlobal('cancelAnimationFrame', cancel)
@@ -63,14 +67,37 @@ describe('FrameScheduler', () => {
 
     it('coalesces dirty bounds into one frame and preserves caller rectangles', () => {
         const fixture = schedulerFixture()
-        const bounds = { x: 1, y: 2, width: 3, height: 4 }
+        const bounds = {
+            x: 1,
+            y: 2,
+            width: 3,
+            height: 4,
+        }
         fixture.scheduler.invalidate(bounds)
         bounds.x = 100
-        fixture.scheduler.invalidate({ x: 5, y: 6, width: 7, height: 8 })
+        fixture.scheduler.invalidate({
+            x: 5,
+            y: 6,
+            width: 7,
+            height: 8,
+        })
         expect(fixture.queued.size).toBe(1)
         fixture.frame(10)
         expect(fixture.render).toHaveBeenCalledOnce()
-        expect(fixture.render.mock.calls[0][0]).toEqual({ full: false, bounds: [{ x: 1, y: 2, width: 3, height: 4 }, { x: 5, y: 6, width: 7, height: 8 }] })
+        expect(fixture.render.mock.calls[0][0]).toEqual({
+            full: false,
+            bounds: [{
+                x: 1,
+                y: 2,
+                width: 3,
+                height: 4,
+            }, {
+                x: 5,
+                y: 6,
+                width: 7,
+                height: 8,
+            }],
+        })
         expect(fixture.queued.size).toBe(0)
     })
 

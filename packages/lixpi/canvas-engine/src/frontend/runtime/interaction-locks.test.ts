@@ -15,9 +15,15 @@ describe('InteractionLocks', () => {
         const marquee = locks.acquire({ selection: true })
         panel()
         panel()
-        expect(locks.state).toEqual({ locked: true, selection: true })
+        expect(locks.state).toEqual({
+            locked: true,
+            selection: true,
+        })
         marquee()
-        expect(listener).toHaveBeenLastCalledWith({ locked: false, selection: false })
+        expect(listener).toHaveBeenLastCalledWith({
+            locked: false,
+            selection: false,
+        })
         locks.destroy()
     })
 

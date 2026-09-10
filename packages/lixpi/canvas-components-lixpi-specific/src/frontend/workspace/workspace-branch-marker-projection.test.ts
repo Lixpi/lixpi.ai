@@ -15,8 +15,14 @@ const marker = (overrides: Partial<BranchOriginCanvasNode> = {}): BranchOriginCa
     type: 'branchOrigin',
     branchId: 'branch-1',
     generationRequestId: 'request-1',
-    position: { x: 0, y: 0 },
-    dimensions: { width: 0, height: 0 },
+    position: {
+        x: 0,
+        y: 0,
+    },
+    dimensions: {
+        width: 0,
+        height: 0,
+    },
     temporary: true,
     conversationAssetId: 'thread-1',
     ...overrides,
@@ -25,7 +31,15 @@ const marker = (overrides: Partial<BranchOriginCanvasNode> = {}): BranchOriginCa
 describe('WorkspaceBranchMarkerProjection', () => {
     it('normalizes missing marker dimensions without changing unrelated state', () => {
         const source = marker()
-        const state = { nodes: [source], edges: [], viewport: { x: 0, y: 0, zoom: 1 } } satisfies CanvasState
+        const state = {
+            nodes: [source],
+            edges: [],
+            viewport: {
+                x: 0,
+                y: 0,
+                zoom: 1,
+            },
+        } satisfies CanvasState
 
         const normalized = WorkspaceBranchMarkerProjection.normalizeState(state)
 
@@ -35,16 +49,33 @@ describe('WorkspaceBranchMarkerProjection', () => {
     })
 
     it('clears live projection overrides and commits resized marker geometry', () => {
-        const source = marker({ dimensions: { width: 100, height: 30 } })
-        const state = { nodes: [source], edges: [], viewport: { x: 0, y: 0, zoom: 1 } } satisfies CanvasState
+        const source = marker({ dimensions: {
+            width: 100,
+            height: 30,
+        } })
+        const state = {
+            nodes: [source],
+            edges: [],
+            viewport: {
+                x: 0,
+                y: 0,
+                zoom: 1,
+            },
+        } satisfies CanvasState
         const commit = vi.fn()
         const deleteProjectionOverride = vi.fn()
         const owner = new WorkspaceBranchMarkerProjection({
             getState: () => state,
             getConversationPreview: () => null,
-            getPromptParts: () => [{ type: 'text', text: 'A much longer branch marker prompt that must resize the card' }],
+            getPromptParts: () => [{
+                type: 'text',
+                text: 'A much longer branch marker prompt that must resize the card',
+            }],
             getPromptTraceHandles: () => [],
-            getLiveOverride: () => ({ position: { x: 25, y: 30 } }),
+            getLiveOverride: () => ({ position: {
+                x: 25,
+                y: 30,
+            } }),
             deleteProjectionOverride,
             projectionOverrideNodeIds: new Set([source.nodeId]),
             manuallyPositionedNodeIds: new Set(),

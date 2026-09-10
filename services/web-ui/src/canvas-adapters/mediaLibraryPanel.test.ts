@@ -12,13 +12,9 @@ import {
 } from '@lixpi/canvas-components-lixpi-specific/frontend/library'
 import { withoutLayout } from '@lixpi/test-utils'
 
-function expectSourceToContain(source: string, snippet: string): void {
-    expect(withoutLayout(source).includes(withoutLayout(snippet)), `source should contain: ${snippet}`).toBe(true)
-}
+const expectSourceToContain = (source: string, snippet: string): void => void expect(withoutLayout(source).includes(withoutLayout(snippet)), `source should contain: ${snippet}`).toBe(true)
 
-function expectSourceNotToContain(source: string, snippet: string): void {
-    expect(withoutLayout(source).includes(withoutLayout(snippet)), `source should not contain: ${snippet}`).toBe(false)
-}
+const expectSourceNotToContain = (source: string, snippet: string): void => void expect(withoutLayout(source).includes(withoutLayout(snippet)), `source should not contain: ${snippet}`).toBe(false)
 
 const panelSource = readFileSync(resolve(import.meta.dirname, '../../packages/lixpi/canvas-components-lixpi-specific/src/frontend/library/media-library-panel.ts'), 'utf-8')
 const panelStyles = readFileSync(resolve(import.meta.dirname, '../../packages/lixpi/canvas-components-lixpi-specific/src/frontend/library/workspace-library-panels.scss'), 'utf-8')

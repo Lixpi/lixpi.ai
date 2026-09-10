@@ -16,7 +16,13 @@ describe('GestureController', () => {
         const onMove = vi.fn()
         const onEnd = vi.fn(() => document.dispatchEvent(new MouseEvent('mousemove')))
         const onCancel = vi.fn()
-        controller.start({ root: document.body, event: new MouseEvent('mousedown'), onMove, onEnd, onCancel })
+        controller.start({
+            root: document.body,
+            event: new MouseEvent('mousedown'),
+            onMove,
+            onEnd,
+            onCancel,
+        })
         document.dispatchEvent(new MouseEvent('mousemove'))
         document.dispatchEvent(new MouseEvent('mouseup'))
         document.dispatchEvent(new MouseEvent('mouseup'))
@@ -32,9 +38,21 @@ describe('GestureController', () => {
         const root = document.createElement('div')
         const onEnd = vi.fn()
         const onCancel = vi.fn()
-        const config = { root, event: new MouseEvent('mousedown'), onMove: vi.fn(), onEnd, onCancel }
-        first.start({ ...config, cursor: 'ew-resize' })
-        second.start({ ...config, cursor: 'ns-resize' })
+        const config = {
+            root,
+            event: new MouseEvent('mousedown'),
+            onMove: vi.fn(),
+            onEnd,
+            onCancel,
+        }
+        first.start({
+            ...config,
+            cursor: 'ew-resize',
+        })
+        second.start({
+            ...config,
+            cursor: 'ns-resize',
+        })
         first.cancelAll('scene-change')
         expect(document.body.style.cursor).toBe('ns-resize')
         expect(onCancel).toHaveBeenCalledWith('scene-change')
@@ -49,14 +67,25 @@ describe('GestureController', () => {
             const controller = new GestureController()
             const onMove = vi.fn()
             const onCancel = vi.fn()
-            controller.start({ root: document.body, event: new PointerEvent('pointerdown', { pointerId: 1 }), onMove, onEnd: vi.fn(), onCancel })
+            controller.start({
+                root: document.body,
+                event: new PointerEvent('pointerdown', { pointerId: 1 }),
+                onMove,
+                onEnd: vi.fn(),
+                onCancel,
+            })
             document.dispatchEvent(new PointerEvent('pointermove', { pointerId: 2 }))
             expect(onMove).not.toHaveBeenCalled()
             document.dispatchEvent(new PointerEvent('pointermove', { pointerId: 1 }))
             expect(onMove).toHaveBeenCalledOnce()
-            if (reason === 'escape') document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
-            else if (reason === 'blur') window.dispatchEvent(new Event('blur'))
-            else controller.destroy()
+
+            if (reason === 'escape')
+                document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
+            else if (reason === 'blur')
+                window.dispatchEvent(new Event('blur'))
+            else
+                controller.destroy()
+
             expect(onCancel).toHaveBeenCalledExactlyOnceWith(reason)
             controller.destroy()
         }

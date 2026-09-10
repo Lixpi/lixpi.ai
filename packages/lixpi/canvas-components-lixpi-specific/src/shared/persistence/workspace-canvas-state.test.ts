@@ -21,16 +21,34 @@ describe('workspace canvas state policy', () => {
     })
 
     it('normalizes missing scene fields without discarding supplied product state', () => {
-        const viewport = { x: 1, y: 2, zoom: 0.5 }
-        const normalized = normalizeWorkspaceCanvasState({ viewport, lastActiveConversationAssetId: 'conversation' })
-        expect(normalized).toEqual({ viewport, nodes: [], edges: [], lastActiveConversationAssetId: 'conversation' })
+        const viewport = {
+            x: 1,
+            y: 2,
+            zoom: 0.5,
+        }
+        const normalized = normalizeWorkspaceCanvasState({
+            viewport,
+            lastActiveConversationAssetId: 'conversation',
+        })
+        expect(normalized).toEqual({
+            viewport,
+            nodes: [],
+            edges: [],
+            lastActiveConversationAssetId: 'conversation',
+        })
         expect(normalized.viewport).not.toBe(viewport)
         expect(normalizeWorkspaceCanvasState(null)).toEqual(createDefaultCanvasState())
     })
 
     it('marks local changes dirty and authoritative adoption clean', () => {
         const state = createDefaultCanvasState()
-        expect(workspaceCanvasStatePatch(state, 'local-intent')).toEqual({ data: { canvasState: state }, meta: { requiresSave: true } })
-        expect(workspaceCanvasStatePatch(state, 'authoritative')).toEqual({ data: { canvasState: state }, meta: { requiresSave: false } })
+        expect(workspaceCanvasStatePatch(state, 'local-intent')).toEqual({
+            data: { canvasState: state },
+            meta: { requiresSave: true },
+        })
+        expect(workspaceCanvasStatePatch(state, 'authoritative')).toEqual({
+            data: { canvasState: state },
+            meta: { requiresSave: false },
+        })
     })
 })

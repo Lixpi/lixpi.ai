@@ -1,0 +1,40 @@
+{
+    "_meta": {
+        "sourceName": "Google Generative Language API",
+        "sourceId": "provider-api",
+        "queriedEndpoints": [
+            {
+                "endpoint": "GET https://generativelanguage.googleapis.com/v1beta/models",
+                "params": {
+                    "pageSize": 100,
+                    "pagesFetched": 1
+                },
+                "note": "Paged with pageToken until exhausted. The API key travels as a query parameter and is not recorded."
+            }
+        ],
+        "hasDataForThisModel": true,
+        "inferenceProvidersWithData": [
+            "google"
+        ],
+        "fetchedAt": "2026-09-08T00:55:53.377Z",
+        "publishedVersions": {
+            "currentVersion": "gemini-2.5-flash-native-audio-preview",
+            "allPublishedVersions": [
+                "gemini-2.5-flash-native-audio-preview",
+                "gemini-2.5-flash-native-audio-preview-09-2025",
+                "gemini-2.5-flash-native-audio-preview-12-2025"
+            ]
+        }
+    },
+    "byInferenceProvider": {
+        "google": {
+            "title": "Gemini 2.5 Flash Native Audio Preview 09-2025",
+            "contextWindow": 131072,
+            "maxCompletionSize": 8192,
+            "defaultTemperature": 1,
+            "model": "gemini-2.5-flash-native-audio-preview",
+            "modelVersion": "gemini-2.5-flash-native-audio-preview",
+            "modelKeyAtSource": "gemini-2.5-flash-native-audio-preview-09-2025"
+        }
+    }
+}

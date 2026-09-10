@@ -24,7 +24,7 @@ beforeEach(() => {
 })
 
 describe('AiModel.getAvailableAiModels', () => {
-    it('sorts models by sortingPosition and removes pricing before returning catalog data', async () => {
+    it('sorts models by sortingPosition and removes per-endpoint pricing before returning catalog data', async () => {
         dynamoDBService.scanItems.mockResolvedValue({
             items: [
                 {
@@ -38,10 +38,20 @@ describe('AiModel.getAvailableAiModels', () => {
                         key: 'reasoningEffort',
                         label: 'Reasoning effort',
                         kind: 'segmented',
-                        options: [{ value: 'high', label: 'High' }],
+                        options: [{
+                            value: 'high',
+                            label: 'High',
+                        }],
                         defaultValue: 'high',
                     }],
-                    pricing: { input: 99 },
+                    inferenceProviderCalledByThePlatform: 'anthropic',
+                    inferenceProviders: { anthropic: {
+                        isCalledByThePlatform: true,
+                        pricing: {
+                            currency: 'USD',
+                            input: 99,
+                        },
+                    } },
                 },
                 {
                     provider: 'Google',
@@ -52,7 +62,14 @@ describe('AiModel.getAvailableAiModels', () => {
                     modalities: [{ modality: 'image_generation' }],
                     imageSizeMode: 'resolution',
                     imageSizes: [{ value: '768x768' }],
-                    pricing: { input: 1 },
+                    inferenceProviderCalledByThePlatform: 'google',
+                    inferenceProviders: { google: {
+                        isCalledByThePlatform: true,
+                        pricing: {
+                            currency: 'USD',
+                            input: 1,
+                        },
+                    } },
                 },
                 {
                     provider: 'Google',
@@ -62,11 +79,45 @@ describe('AiModel.getAvailableAiModels', () => {
                     sortingPosition: 3,
                     modalities: [{ modality: 'video_generation' }],
                     videoGenerationControls: [
-                        { key: 'aspectRatio', label: 'Aspect ratio', kind: 'aspect-ratio', options: [{ value: '16:9', label: '16:9' }], defaultValue: '16:9' },
-                        { key: 'resolution', label: 'Resolution', kind: 'segmented', options: [{ value: '720p', label: '720p' }], defaultValue: '720p' },
-                        { key: 'duration', label: 'Duration', kind: 'segmented', options: [{ value: '8', label: '8' }], defaultValue: '8' },
+                        {
+                            key: 'aspectRatio',
+                            label: 'Aspect ratio',
+                            kind: 'aspect-ratio',
+                            options: [{
+                                value: '16:9',
+                                label: '16:9',
+                            }],
+                            defaultValue: '16:9',
+                        },
+                        {
+                            key: 'resolution',
+                            label: 'Resolution',
+                            kind: 'segmented',
+                            options: [{
+                                value: '720p',
+                                label: '720p',
+                            }],
+                            defaultValue: '720p',
+                        },
+                        {
+                            key: 'duration',
+                            label: 'Duration',
+                            kind: 'segmented',
+                            options: [{
+                                value: '8',
+                                label: '8',
+                            }],
+                            defaultValue: '8',
+                        },
                     ],
-                    pricing: { input: 2 },
+                    inferenceProviderCalledByThePlatform: 'google',
+                    inferenceProviders: { google: {
+                        isCalledByThePlatform: true,
+                        pricing: {
+                            currency: 'USD',
+                            input: 2,
+                        },
+                    } },
                 },
             ],
         })
@@ -84,8 +135,8 @@ describe('AiModel.getAvailableAiModels', () => {
             'Anthropic:claude-3-opus-20240229',
             'Google:veo-3.1-generate-preview',
         ])
-        expect(result.models[0]).not.toHaveProperty('pricing')
-        expect(result.models[2]).not.toHaveProperty('pricing')
+        expect(result.models[0].inferenceProviders?.google).not.toHaveProperty('pricing')
+        expect(result.models[2].inferenceProviders?.google).not.toHaveProperty('pricing')
 
         const imageGroup = result.mediaGenerationConfigMatrix.groups.find((group) => group.mediaType === 'image')
         const reasoningGroup = result.mediaGenerationConfigMatrix.groups.find((group) => group.mediaType === 'reasoning')
@@ -96,7 +147,10 @@ describe('AiModel.getAvailableAiModels', () => {
             controls: [{
                 key: 'reasoningEffort',
                 defaultValue: 'high',
-                options: [{ value: 'high', label: 'High' }],
+                options: [{
+                    value: 'high',
+                    label: 'High',
+                }],
             }],
         })
 
@@ -106,7 +160,10 @@ describe('AiModel.getAvailableAiModels', () => {
             key: 'imageSize',
             label: 'Resolution',
             kind: 'segmented',
-            options: [{ value: '768x768', label: '768x768' }],
+            options: [{
+                value: '768x768',
+                label: '768x768',
+            }],
             defaultValue: '768x768',
         }])
         // With no model flagged via isDefaultFor, defaults fall back to the first
@@ -124,19 +181,28 @@ describe('AiModel.getAvailableAiModels', () => {
                 key: 'aspectRatio',
                 label: 'Aspect ratio',
                 defaultValue: '16:9',
-                options: [{ value: '16:9', label: '16:9' }],
+                options: [{
+                    value: '16:9',
+                    label: '16:9',
+                }],
             }),
             expect.objectContaining({
                 key: 'resolution',
                 label: 'Resolution',
                 defaultValue: '720p',
-                options: [{ value: '720p', label: '720p' }],
+                options: [{
+                    value: '720p',
+                    label: '720p',
+                }],
             }),
             expect.objectContaining({
                 key: 'duration',
                 label: 'Duration',
                 defaultValue: '8',
-                options: [{ value: '8', label: '8' }],
+                options: [{
+                    value: '8',
+                    label: '8',
+                }],
             }),
         ]))
     })
@@ -150,31 +216,48 @@ describe('AiModel.getAvailableAiModels', () => {
                 modelVersion: 'gpt-image-2',
                 sortingPosition: 1,
                 modalities: [{ modality: 'image_generation' }],
-                imageSizes: [{ value: '1024x1024', label: '1:1' }],
+                imageSizes: [{
+                    value: '1024x1024',
+                    label: '1:1',
+                }],
                 imageGenerationControls: [
                     {
                         key: 'imageSize',
                         label: 'Resolution',
                         kind: 'segmented',
-                        options: [{ value: '1024x1024', label: '1:1' }],
+                        options: [{
+                            value: '1024x1024',
+                            label: '1:1',
+                        }],
                         defaultValue: '1024x1024',
                     },
                     {
                         key: 'quality',
                         label: 'Quality',
                         kind: 'segmented',
-                        options: [{ value: 'auto', label: 'Auto' }, { value: 'high', label: 'High' }],
+                        options: [{
+                            value: 'auto',
+                            label: 'Auto',
+                        }, {
+                            value: 'high',
+                            label: 'High',
+                        }],
                         defaultValue: 'auto',
                     },
                     {
                         key: 'background',
                         label: 'Background',
                         kind: 'segmented',
-                        options: [{ value: 'auto', label: 'Auto' }, { value: 'transparent', label: 'Transparent' }],
+                        options: [{
+                            value: 'auto',
+                            label: 'Auto',
+                        }, {
+                            value: 'transparent',
+                            label: 'Transparent',
+                        }],
                         defaultValue: 'auto',
                     },
                 ],
-                pricing: {},
             }],
         })
 
@@ -186,8 +269,14 @@ describe('AiModel.getAvailableAiModels', () => {
 
     it('groups provider models with matching options and splits different option sets', async () => {
         const matchingImageSizes = [
-            { value: '1024x1024', label: '1:1' },
-            { value: '1536x1024', label: '3:2' },
+            {
+                value: '1024x1024',
+                label: '1:1',
+            },
+            {
+                value: '1536x1024',
+                label: '3:2',
+            },
         ]
         dynamoDBService.scanItems.mockResolvedValue({
             items: [
@@ -200,7 +289,6 @@ describe('AiModel.getAvailableAiModels', () => {
                     modalities: [{ modality: 'image_generation' }],
                     imageSizeMode: 'resolution',
                     imageSizes: matchingImageSizes,
-                    pricing: {},
                 },
                 {
                     provider: 'OpenAI',
@@ -211,7 +299,6 @@ describe('AiModel.getAvailableAiModels', () => {
                     modalities: [{ modality: 'image_generation' }],
                     imageSizeMode: 'resolution',
                     imageSizes: matchingImageSizes,
-                    pricing: {},
                 },
                 {
                     provider: 'OpenAI',
@@ -221,8 +308,10 @@ describe('AiModel.getAvailableAiModels', () => {
                     sortingPosition: 3,
                     modalities: [{ modality: 'image_generation' }],
                     imageSizeMode: 'resolution',
-                    imageSizes: [{ value: '1024x1024', label: '1:1' }],
-                    pricing: {},
+                    imageSizes: [{
+                        value: '1024x1024',
+                        label: '1:1',
+                    }],
                 },
             ],
         })
@@ -257,13 +346,20 @@ describe('AiModel.getAvailableAiModels', () => {
                     label: 'Resolution',
                     kind: 'segmented',
                     defaultValue: '1080p',
-                    options: [{ value: '1080p', label: '1080p', description: optionDescription }],
+                    options: [{
+                        value: '1080p',
+                        label: '1080p',
+                        description: optionDescription,
+                    }],
                 },
                 {
                     key: 'serviceTier',
                     label: 'Service tier',
                     kind: 'segmented',
-                    options: [{ value: 'default', label: 'Default' }],
+                    options: [{
+                        value: 'default',
+                        label: 'Default',
+                    }],
                 },
                 {
                     key: 'priority',
@@ -272,7 +368,6 @@ describe('AiModel.getAvailableAiModels', () => {
                     options: [],
                 },
             ],
-            pricing: {},
         })
         dynamoDBService.scanItems.mockResolvedValue({
             items: [
@@ -325,11 +420,16 @@ describe('AiModel.getAvailableAiModels', () => {
                 kind: 'segmented',
                 defaultValue,
                 options: [
-                    { value: 'mp4', label: 'MP4' },
-                    { value: 'mov', label: 'MOV' },
+                    {
+                        value: 'mp4',
+                        label: 'MP4',
+                    },
+                    {
+                        value: 'mov',
+                        label: 'MOV',
+                    },
                 ],
             }],
-            pricing: {},
         })
         dynamoDBService.scanItems.mockResolvedValue({
             items: [
@@ -354,7 +454,6 @@ describe('AiModel.getAvailableAiModels', () => {
                     modelVersion: 'claude-sonnet',
                     sortingPosition: 1,
                     modalities: [{ modality: 'text' }],
-                    pricing: {},
                 },
                 {
                     provider: 'Anthropic',
@@ -363,7 +462,6 @@ describe('AiModel.getAvailableAiModels', () => {
                     sortingPosition: 2,
                     modalities: [{ modality: 'text' }],
                     isDefaultFor: ['reasoning'],
-                    pricing: {},
                 },
                 {
                     provider: 'Google',
@@ -372,7 +470,6 @@ describe('AiModel.getAvailableAiModels', () => {
                     sortingPosition: 3,
                     modalities: [{ modality: 'image_generation' }],
                     isDefaultFor: ['image'],
-                    pricing: {},
                 },
                 {
                     provider: 'Google',
@@ -381,7 +478,6 @@ describe('AiModel.getAvailableAiModels', () => {
                     sortingPosition: 4,
                     modalities: [{ modality: 'video_generation' }],
                     isDefaultFor: ['video'],
-                    pricing: {},
                 },
             ],
         })
@@ -407,7 +503,6 @@ describe('AiModel.getAvailableAiModels — settings-configured defaults', () => 
                     sortingPosition: 1,
                     modalities: [{ modality: 'text' }],
                     isDefaultFor: ['reasoning'],
-                    pricing: {},
                 },
                 {
                     // Matches settings.aiModels.defaultReasoningModelId exactly.
@@ -416,8 +511,7 @@ describe('AiModel.getAvailableAiModels — settings-configured defaults', () => 
                     modelVersion: 'claude-haiku-4-5',
                     sortingPosition: 2,
                     modalities: [{ modality: 'text' }],
-                    pricing: {},
-                },
+                        },
             ],
         })
 
@@ -436,15 +530,13 @@ describe('AiModel.getAvailableAiModels — settings-configured defaults', () => 
                     modelVersion: 'claude-haiku-4-5-20250815',
                     sortingPosition: 1,
                     modalities: [{ modality: 'text' }],
-                    pricing: {},
-                },
+                        },
                 {
                     provider: 'Anthropic',
                     model: 'claude-haiku-4-5-20250601',
                     modelVersion: 'claude-haiku-4-5-20250601',
                     sortingPosition: 2,
                     modalities: [{ modality: 'text' }],
-                    pricing: {},
                 },
             ],
         })
@@ -465,7 +557,6 @@ describe('AiModel.getAvailableAiModels — settings-configured defaults', () => 
                     sortingPosition: 1,
                     modalities: [{ modality: 'text' }],
                     isDefaultFor: ['reasoning'],
-                    pricing: {},
                 },
             ],
         })
@@ -499,9 +590,19 @@ describe('AiModel.getAiModel', () => {
                 supportedAspectRatios: ['1:1'],
             },
             modalities: [{ modality: 'image_generation' }],
-            pricing: {
-                input: 0.1,
-                output: 0.2,
+            inferenceProviderCalledByThePlatform: 'google',
+            inferenceProviders: {
+                google: {
+                    inferenceProviderTitle: 'Google',
+                    isCalledByThePlatform: true,
+                    reportedBySources: [],
+                    modelKeyAtSource: {},
+                    pricing: {
+                        currency: 'USD',
+                        input: 0.1,
+                        output: 0.2,
+                    },
+                },
             },
         }
         dynamoDBService.getItem.mockImplementation(async () => ({ ...modelRecord }))
@@ -512,7 +613,10 @@ describe('AiModel.getAiModel', () => {
         })
 
         expect(dynamoDBService.getItem).toHaveBeenCalledWith(expect.objectContaining({
-            key: { provider: 'Google', model: 'gemini-3.1-flash-image' },
+            key: {
+                provider: 'Google',
+                model: 'gemini-3.1-flash-image',
+            },
             origin: 'model::AiModel->getAiModel()',
         }))
         expect(model).toMatchObject({
@@ -526,7 +630,7 @@ describe('AiModel.getAiModel', () => {
                 inputFidelity: 'provider-managed',
             }),
         })
-        expect(model).not.toHaveProperty('pricing')
+        expect(model?.inferenceProviders?.google).not.toHaveProperty('pricing')
     })
 
     it('returns pricing metadata when omitPricing is false', async () => {
@@ -534,7 +638,17 @@ describe('AiModel.getAiModel', () => {
             provider: 'Google',
             model: 'gemini-3.1-flash-image',
             modelVersion: 'gemini-3.1-flash-image',
-            pricing: { input: 0.1, output: 0.2 },
+            inferenceProviderCalledByThePlatform: 'google',
+            inferenceProviders: {
+                google: {
+                    isCalledByThePlatform: true,
+                    pricing: {
+                        currency: 'USD',
+                        input: 0.1,
+                        output: 0.2,
+                    },
+                },
+            },
         }))
 
         const model = await AiModelModel.getAiModel({
@@ -543,6 +657,10 @@ describe('AiModel.getAiModel', () => {
             omitPricing: false,
         })
 
-        expect(model).toHaveProperty('pricing', { input: 0.1, output: 0.2 })
+        expect(model?.inferenceProviders?.google.pricing).toEqual({
+            currency: 'USD',
+            input: 0.1,
+            output: 0.2,
+        })
     })
 })

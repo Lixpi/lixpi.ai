@@ -684,7 +684,7 @@ export const settleGeneratedAssetComposition = async ({
     return composition
 }
 
-function decodeCapabilityImage(value: string): Buffer {
+const decodeCapabilityImage = (value: string): Buffer => {
     const dataUrlMatch = /^data:image\/png;base64,([A-Za-z0-9+/=\r\n]+)$/u.exec(value)
     const base64 = dataUrlMatch?.[1] ?? value
 

@@ -36,11 +36,14 @@ vi.mock('prosemirror-transform', () => ({
     },
 }))
 
-function createPlugin(sendAiRequestHandler = vi.fn(), stopAiRequestHandler = vi.fn()) {
+const createPlugin = (sendAiRequestHandler = vi.fn(), stopAiRequestHandler = vi.fn()) => {
     return createAiChatThreadPlugin({
         sendAiRequestHandler,
         stopAiRequestHandler,
-        placeholders: { titlePlaceholder: 'Title', paragraphPlaceholder: 'Type here' },
+        placeholders: {
+            titlePlaceholder: 'Title',
+            paragraphPlaceholder: 'Type here',
+        },
     })
 }
 
@@ -57,19 +60,19 @@ afterEach(() => {
     consoleErrorSpy = null
 })
 
-function collectNodes(state: EditorState, nodeType: string): ProseMirrorNode[] {
+const collectNodes = (state: EditorState, nodeType: string): ProseMirrorNode[] => {
     const nodes: ProseMirrorNode[] = []
     state.doc.descendants((node) => {
-        if (node.type.name === nodeType) nodes.push(node)
+        if (node.type.name === nodeType)
+            nodes.push(node)
     })
+
     return nodes
 }
 
-function makeUserMessage(text: string, extraChildren: ProseMirrorNode[] = []): ProseMirrorNode {
-    return schema.nodes.aiUserMessage.create({}, [schema.nodes.paragraph.create(null, schema.text(text)), ...extraChildren])
-}
+const makeUserMessage = (text: string, extraChildren: ProseMirrorNode[] = []): ProseMirrorNode => schema.nodes.aiUserMessage.create({}, [schema.nodes.paragraph.create(null, schema.text(text)), ...extraChildren])
 
-function makeImageRef(overrides: Record<string, unknown> = {}): ProseMirrorNode {
+const makeImageRef = (overrides: Record<string, unknown> = {}): ProseMirrorNode => {
     return schema.nodes.aiGeneratedImage.create({
         imageData: 'data:image/png;base64,ZmFrZQ==',
         fileId: 'image-file',
@@ -86,7 +89,7 @@ function makeImageRef(overrides: Record<string, unknown> = {}): ProseMirrorNode 
     })
 }
 
-function makeVideoRef(overrides: Record<string, unknown> = {}): ProseMirrorNode {
+const makeVideoRef = (overrides: Record<string, unknown> = {}): ProseMirrorNode => {
     return schema.nodes.aiGeneratedVideo.create({
         videoUrl: '',
         fileId: 'video-file',
@@ -115,20 +118,21 @@ function makeVideoRef(overrides: Record<string, unknown> = {}): ProseMirrorNode 
     })
 }
 
-function makeParagraphMessage(
+const makeParagraphMessage = (
     nodeType: 'aiUserMessage' | 'aiResponseMessage',
     text: string,
     inlineChildren: ProseMirrorNode[] = [],
-): ProseMirrorNode {
+): ProseMirrorNode => {
     const creator = nodeType === 'aiUserMessage'
         ? schema.nodes.aiUserMessage
         : schema.nodes.aiResponseMessage
+
     return creator.create({}, [
         schema.nodes.paragraph.create(null, [schema.text(text), ...inlineChildren]),
     ])
 }
 
-function makeThread(attrs: Record<string, unknown> = {}, children: ProseMirrorNode[] = []): ProseMirrorNode {
+const makeThread = (attrs: Record<string, unknown> = {}, children: ProseMirrorNode[] = []): ProseMirrorNode => {
     return schema.nodes.aiChatThread.create({
         threadId: 'thread-1',
         aiReasoningModels: JSON.stringify(['Anthropic:claude-sonnet-4-6']),
@@ -207,8 +211,14 @@ describe('aiChatThreadPlugin — request payload construction', () => {
         const sendAiRequestHandler = vi.fn()
         const plugin = createPlugin(sendAiRequestHandler)
 
-        const userImage = makeImageRef({ fileId: 'image-file-1', workspaceId: 'workspace-1' })
-        const responseVideo = makeVideoRef({ posterFileId: 'video-poster-1', workspaceId: 'workspace-video-1' })
+        const userImage = makeImageRef({
+            fileId: 'image-file-1',
+            workspaceId: 'workspace-1',
+        })
+        const responseVideo = makeVideoRef({
+            posterFileId: 'video-poster-1',
+            workspaceId: 'workspace-video-1',
+        })
 
         const userMessage = makeUserMessage('User message with image reference', [userImage])
         const responseParagraph = schema.nodes.paragraph.create(null, [schema.text('Assistant message with visual context')])
@@ -439,7 +449,10 @@ describe('aiChatThreadPlugin — request payload construction', () => {
             [makeUserMessage('Thread one prompt')],
         )
         const threadTwo = makeThread(
-            { threadId: 'thread-b', aiReasoningModels: JSON.stringify(['Anthropic:claude-sonnet-4-6']) },
+            {
+                threadId: 'thread-b',
+                aiReasoningModels: JSON.stringify(['Anthropic:claude-sonnet-4-6']),
+            },
             [makeUserMessage('Thread two prompt')],
         )
 
@@ -502,10 +515,15 @@ describe('aiChatThreadPlugin — request payload construction', () => {
         })
 
         state.doc.descendants((node, pos) => {
-            if (node.type.name === 'aiChatThread' && node.attrs.threadId === 'thread-current') {
+            if (
+                node.type.name === 'aiChatThread'
+                && node.attrs.threadId === 'thread-current'
+            ) {
                 currentThreadPos = pos
+
                 return false
             }
+
             return true
         })
 
@@ -599,7 +617,11 @@ describe('aiChatThreadPlugin — request payload construction', () => {
 
     it('resolves ai model dropdown titles through aiModelsStore and updates thread attrs', () => {
         const getDataSpy = vi.spyOn(aiModelsStore, 'getData').mockReturnValue([
-            { provider: 'OpenAI', model: 'o4-mini', title: 'OpenAI o4-mini' },
+            {
+                provider: 'OpenAI',
+                model: 'o4-mini',
+                title: 'OpenAI o4-mini',
+            },
         ] as any)
 
         const plugin = createPlugin(vi.fn())
@@ -1045,7 +1067,10 @@ describe('aiChatThreadPlugin — request payload construction', () => {
         const state = EditorState.create({
             doc: doc(
                 makeThread(
-                    { threadId: 'thread-stop', aiReasoningModels: JSON.stringify(['Anthropic:claude-sonnet-4-6']) },
+                    {
+                        threadId: 'thread-stop',
+                        aiReasoningModels: JSON.stringify(['Anthropic:claude-sonnet-4-6']),
+                    },
                     [makeUserMessage('Stopping request')],
                 ),
             ),
@@ -1066,7 +1091,10 @@ describe('aiChatThreadPlugin — request payload construction', () => {
         const plugin = createPlugin()
 
         const thread = makeThread(
-            { threadId: 'thread-delete', aiReasoningModels: JSON.stringify(['Anthropic:claude-sonnet-4-6']) },
+            {
+                threadId: 'thread-delete',
+                aiReasoningModels: JSON.stringify(['Anthropic:claude-sonnet-4-6']),
+            },
             [makeUserMessage('Only message')],
         )
         const state = EditorState.create({

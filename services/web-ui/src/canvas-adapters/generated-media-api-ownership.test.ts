@@ -9,30 +9,28 @@ import { withoutLayout } from '@lixpi/test-utils'
 
 const source = readFileSync(resolve(import.meta.dirname, '../../packages/lixpi/canvas-components-lixpi-specific/src/frontend/workspace/workspace-canvas.ts'), 'utf-8')
 
-function getFunctionBody(name: string, endMarker: string): string {
+const getFunctionBody = (name: string, endMarker: string): string => {
     const start = source.indexOf(`private ${name} = (`)
     const end = source.indexOf(endMarker, start)
     expect(start, `${name} should exist`).toBeGreaterThan(-1)
     expect(end, `${name} should end before ${endMarker}`).toBeGreaterThan(start)
+
     return source.slice(start, end)
 }
 
-function getExcerpt(startMarker: string, endMarker: string): string {
+const getExcerpt = (startMarker: string, endMarker: string): string => {
     const source = readFileSync(resolve(import.meta.dirname, '../../packages/lixpi/canvas-components-lixpi-specific/src/frontend/media/workspace-generation-handlers.ts'), 'utf-8')
     const start = source.indexOf(startMarker)
     const end = source.indexOf(endMarker, start)
     expect(start, `${startMarker} should exist`).toBeGreaterThan(-1)
     expect(end, `${endMarker} should follow ${startMarker}`).toBeGreaterThan(start)
+
     return source.slice(start, end)
 }
 
-function expectSourceToContain(value: string, snippet: string, label: string): void {
-    expect(withoutLayout(value).includes(withoutLayout(snippet)), `${label} should contain:\n${snippet}`).toBe(true)
-}
+const expectSourceToContain = (value: string, snippet: string, label: string): void => void expect(withoutLayout(value).includes(withoutLayout(snippet)), `${label} should contain:\n${snippet}`).toBe(true)
 
-function expectSourceNotToContain(value: string, snippet: string, label: string): void {
-    expect(withoutLayout(value).includes(withoutLayout(snippet)), `${label} should not contain:\n${snippet}`).toBe(false)
-}
+const expectSourceNotToContain = (value: string, snippet: string, label: string): void => void expect(withoutLayout(value).includes(withoutLayout(snippet)), `${label} should not contain:\n${snippet}`).toBe(false)
 
 describe('generated-media API ownership', () => {
     it('does not promote a source-less preserved regeneration marker through browser-side pending-marker geometry', () => {
@@ -84,7 +82,5 @@ describe('generated-media API ownership', () => {
         expectSourceToContain(placements, 'this.phases.delete(nodeId)', 'phase clearing')
     })
 
-    it('does not use blocking browser alert dialogs in runtime canvas code', () => {
-        expectSourceNotToContain(source, 'alert(', 'workspace canvas')
-    })
+    it('does not use blocking browser alert dialogs in runtime canvas code', () => void expectSourceNotToContain(source, 'alert(', 'workspace canvas'))
 })

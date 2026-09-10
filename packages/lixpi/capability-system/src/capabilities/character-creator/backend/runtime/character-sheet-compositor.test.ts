@@ -47,11 +47,23 @@ describe('character sheet compositor', () => {
                 regions: ['face' as const, 'body' as const, 'outfit' as const],
             }],
         }
-        const first = await composeCharacterSheet({ panelSpecs, panels, evidence })
-        const second = await composeCharacterSheet({ panelSpecs, panels, evidence })
+        const first = await composeCharacterSheet({
+            panelSpecs,
+            panels,
+            evidence,
+        })
+        const second = await composeCharacterSheet({
+            panelSpecs,
+            panels,
+            evidence,
+        })
         const metadata = await sharp(first.bytes).metadata()
 
-        expect(metadata).toMatchObject({ format: 'png', width: 3840, height: 2560 })
+        expect(metadata).toMatchObject({
+            format: 'png',
+            width: 3840,
+            height: 2560,
+        })
         expect(first.sha256).toBe(createHash('sha256').update(first.bytes).digest('hex'))
         expect(first.sha256).toBe('74b89791320acfb013ab2e85aac04835a7b845ba7cc3966486f8c6445151f031')
         expect(second.sha256).toBe(first.sha256)
@@ -65,7 +77,11 @@ describe('character sheet compositor', () => {
             panelSpecs,
             panels: panels.filter(panel => panel.panelId !== 'body-front'),
             evidence: emptyCharacterEvidenceProfile(),
-        })).resolves.toMatchObject({ width: 3840, height: 2560, issues: [] })
+        })).resolves.toMatchObject({
+            width: 3840,
+            height: 2560,
+            issues: [],
+        })
 
         await expect(composeCharacterSheet({
             panelSpecs,
@@ -82,7 +98,10 @@ describe('character sheet compositor', () => {
 
         await expect(composeCharacterSheet({
             panelSpecs,
-            panels: panels.map(panel => panel.panelId === 'body-front' ? { ...panel, bytes: Buffer.from('bad') } : panel),
+            panels: panels.map(panel => panel.panelId === 'body-front' ? {
+                ...panel,
+                bytes: Buffer.from('bad'),
+            } : panel),
             evidence: emptyCharacterEvidenceProfile(),
         })).rejects.toThrow('CHARACTER_SHEET_PANEL_CORRUPT')
     }, 20000)

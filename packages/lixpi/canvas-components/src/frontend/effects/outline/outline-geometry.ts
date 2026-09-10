@@ -89,12 +89,12 @@ export const getRoundedOutlinePoint = (
 
 // Samples a rounded rectangle at a wrapped path distance. The tangent is kept
 // with the point because the mesh builder needs a stable normal for strip width.
-export function getRoundedOutlineFrame(
+export const getRoundedOutlineFrame = (
     width: number,
     height: number,
     radius: number,
     distance: number,
-): OutlineFrame {
+): OutlineFrame => {
     const boundedRadius = Math.max(
         0,
         Math.min(

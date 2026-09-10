@@ -23,7 +23,10 @@ const source = (assetId: string) => ({
 
 describe('character evidence analysis', () => {
     it('returns explicit source-free evidence without inventing observations', async () => {
-        const evidence = await analyzeCharacterEvidence({ sources: [], userPrompt: 'A courier' })
+        const evidence = await analyzeCharacterEvidence({
+            sources: [],
+            userPrompt: 'A courier',
+        })
 
         expect(evidence.medium).toBe('unknown')
         expect(evidence.facts).toEqual([])
@@ -133,9 +136,16 @@ describe('character evidence analysis', () => {
             },
         })
 
-        expect(evidence.conflicts).toEqual([expect.objectContaining({ conflictGroupId: 'coat-1', factIndexes: [0, 1] })])
+        expect(evidence.conflicts).toEqual([expect.objectContaining({
+            conflictGroupId: 'coat-1',
+            factIndexes: [0, 1],
+        })])
         expect(
-            selectCharacterEvidenceFacts({ evidence, targetAngle: 'profile', promptChangedFeatures: [] })
+            selectCharacterEvidenceFacts({
+                evidence,
+                targetAngle: 'profile',
+                promptChangedFeatures: [],
+            })
                 .find(fact => fact.feature === 'coat color')?.value,
         ).toBe('brown')
     })
@@ -166,7 +176,10 @@ describe('character evidence analysis', () => {
             targetAngle: 'front',
             promptChangedFeatures: evidence.promptChangedFeatures,
         })).toEqual([
-            expect.objectContaining({ feature: 'coat color', value: 'red' }),
+            expect.objectContaining({
+                feature: 'coat color',
+                value: 'red',
+            }),
         ])
         expect(evidence.promptDirectives).toEqual(['Change the coat to blue.'])
     })
@@ -183,7 +196,12 @@ describe('character evidence analysis', () => {
                         value: 'visible face',
                         visibility: 'observed',
                         sourceAssetId: 'asset-front',
-                        sourceRegion: { x: 900, y: 0, width: 200, height: 200 },
+                        sourceRegion: {
+                            x: 900,
+                            y: 0,
+                            width: 200,
+                            height: 200,
+                        },
                         targetAngles: ['front'],
                         confidence: 1,
                     }],

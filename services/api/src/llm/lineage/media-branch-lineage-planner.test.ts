@@ -16,6 +16,7 @@ const planner = new MediaBranchLineagePlanner()
 
 const candidate = (overrides: Partial<MediaBranchCandidateImage>): MediaBranchCandidateImage => {
     const nodeId = overrides.nodeId ?? 'node-1'
+
     return {
         candidateId: overrides.candidateId ?? nodeId,
         nodeId,
@@ -186,7 +187,11 @@ describe('MediaBranchLineagePlanner', () => {
                     branchId: 'branch-person',
                     parentImageNodeId: 'parent-person',
                 }),
-                candidate({ nodeId: 'portrait-source', roleHints: ['base-context'], assetId: 'portrait-source' }),
+                candidate({
+                    nodeId: 'portrait-source',
+                    roleHints: ['base-context'],
+                    assetId: 'portrait-source',
+                }),
             ],
         }
 
@@ -332,8 +337,16 @@ describe('MediaBranchLineagePlanner', () => {
             promptFingerprint: 'landscape-fp',
             transcriptContext: 'context',
             candidates: [
-                candidate({ nodeId: 'portrait-source', roleHints: ['base-context'], assetId: 'portrait-source' }),
-                candidate({ nodeId: 'duplicate-source', roleHints: ['base-context'], assetId: 'duplicate-source' }),
+                candidate({
+                    nodeId: 'portrait-source',
+                    roleHints: ['base-context'],
+                    assetId: 'portrait-source',
+                }),
+                candidate({
+                    nodeId: 'duplicate-source',
+                    roleHints: ['base-context'],
+                    assetId: 'duplicate-source',
+                }),
             ],
         }
 
@@ -374,8 +387,16 @@ describe('MediaBranchLineagePlanner', () => {
             promptFingerprint: 'skies-fp',
             transcriptContext: 'context',
             candidates: [
-                candidate({ nodeId: 'portrait-source', roleHints: ['base-context'], assetId: 'portrait-source' }),
-                candidate({ nodeId: 'landscape-source', roleHints: ['base-context'], assetId: 'landscape-source' }),
+                candidate({
+                    nodeId: 'portrait-source',
+                    roleHints: ['base-context'],
+                    assetId: 'portrait-source',
+                }),
+                candidate({
+                    nodeId: 'landscape-source',
+                    roleHints: ['base-context'],
+                    assetId: 'landscape-source',
+                }),
             ],
         }
 
@@ -472,9 +493,21 @@ describe('MediaBranchLineagePlanner', () => {
             promptFingerprint: 'poster-fp',
             transcriptContext: 'context',
             candidates: [
-                candidate({ nodeId: 'candidate-1', roleHints: ['base-context'], assetId: 'candidate-1' }),
-                candidate({ nodeId: 'candidate-2', roleHints: ['base-context'], assetId: 'candidate-2' }),
-                candidate({ nodeId: 'candidate-1', roleHints: ['base-context'], assetId: 'candidate-1' }),
+                candidate({
+                    nodeId: 'candidate-1',
+                    roleHints: ['base-context'],
+                    assetId: 'candidate-1',
+                }),
+                candidate({
+                    nodeId: 'candidate-2',
+                    roleHints: ['base-context'],
+                    assetId: 'candidate-2',
+                }),
+                candidate({
+                    nodeId: 'candidate-1',
+                    roleHints: ['base-context'],
+                    assetId: 'candidate-1',
+                }),
             ],
         }
 
@@ -490,10 +523,22 @@ describe('MediaBranchLineagePlanner', () => {
                 conversationAssetId: 'thread-2',
                 workspaceId: 'workspace-1',
                 nodes: [
-                    { nodeId: 'chip-1', isExplicitChip: true },
-                    { nodeId: 'chip-1', isExplicitChip: true },
-                    { nodeId: 'chip-2', isExplicitChip: false },
-                    { nodeId: 'chip-3', isExplicitChip: true },
+                    {
+                        nodeId: 'chip-1',
+                        isExplicitChip: true,
+                    },
+                    {
+                        nodeId: 'chip-1',
+                        isExplicitChip: true,
+                    },
+                    {
+                        nodeId: 'chip-2',
+                        isExplicitChip: false,
+                    },
+                    {
+                        nodeId: 'chip-3',
+                        isExplicitChip: true,
+                    },
                 ],
             } as any,
             createdAt: 1700000003000,
@@ -573,8 +618,16 @@ describe('MediaBranchLineagePlanner', () => {
             promptFingerprint: 'portrait-fp',
             transcriptContext: 'context',
             candidates: [
-                candidate({ nodeId: 'reference-a', roleHints: ['base-context'], assetId: 'reference-a' }),
-                candidate({ nodeId: 'reference-b', roleHints: ['base-context'], assetId: 'reference-b' }),
+                candidate({
+                    nodeId: 'reference-a',
+                    roleHints: ['base-context'],
+                    assetId: 'reference-a',
+                }),
+                candidate({
+                    nodeId: 'reference-b',
+                    roleHints: ['base-context'],
+                    assetId: 'reference-b',
+                }),
             ],
         }
 
@@ -739,6 +792,7 @@ describe('MediaBranchLineagePlanner', () => {
 
 const resolutionForCandidate = (snapshot: MediaBranchCandidateSnapshot) => {
     const firstCandidate = snapshot.candidates?.[0]
+
     return {
         resolverKind: 'structured-vlm',
         resolverVersion: 'image-branch-vlm-v1',

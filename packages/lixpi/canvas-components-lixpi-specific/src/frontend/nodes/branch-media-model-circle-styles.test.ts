@@ -13,19 +13,36 @@ import {
 
 afterEach(() => vi.restoreAllMocks())
 
-function settings(): BranchMediaModelCircleSettings {
+const settings = (): BranchMediaModelCircleSettings => {
     return {
         glass: {
             textureSize: 128,
             translucency: 0.97,
             rimFeatherFraction: 0.04,
             fallbackColors: ['#06133A', '#0A49A7', '#1768D9', '#55A7FF'],
-            brandColorAdjust: { saturationMultiplier: 1, minSaturation: 0, maxSaturation: 1, lightnessMultiplier: 1, minLightness: 0, maxLightness: 1 },
-            brandColorStops: [{ targetColor: '#FFFFFF', amount: 0.5 }],
+            brandColorAdjust: {
+                saturationMultiplier: 1,
+                minSaturation: 0,
+                maxSaturation: 1,
+                lightnessMultiplier: 1,
+                minLightness: 0,
+                maxLightness: 1,
+            },
+            brandColorStops: [{
+                targetColor: '#FFFFFF',
+                amount: 0.5,
+            }],
             material: {} as BranchMediaModelCircleSettings['glass']['material'],
             discMaterial: {},
         },
-        texture: { fallbackColor: '#53616C', fillOpacity: 0.5, brandColorMix: { targetColor: '#FFFFFF', amount: 0.5 } },
+        texture: {
+            fallbackColor: '#53616C',
+            fillOpacity: 0.5,
+            brandColorMix: {
+                targetColor: '#FFFFFF',
+                amount: 0.5,
+            },
+        },
     }
 }
 
@@ -33,7 +50,8 @@ describe('BranchMediaModelCircleStyles', () => {
     it('caches unchanged treatments per instance and rebakes after settings changes or release', () => {
         const bake = vi.spyOn(CircularGlassMaterial.prototype, 'bakeDataUrl').mockReturnValue('data:image/png;base64,test')
         const config = settings()
-        const a = new BranchMediaModelCircleStyles(config), b = new BranchMediaModelCircleStyles(settings())
+        const a = new BranchMediaModelCircleStyles(config)
+        const b = new BranchMediaModelCircleStyles(settings())
         expect(a.getGlassImage('#123456')).toBe('url(data:image/png;base64,test)')
         a.getGlassImage('#123456')
         expect(bake).toHaveBeenCalledOnce()

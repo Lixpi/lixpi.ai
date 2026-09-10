@@ -20,7 +20,7 @@ import {
 
 type GeneratedMediaNode = Extract<CanvasNode, { type: 'image' | 'video' }>
 
-function operationNode(overrides: Partial<OperationStatusCanvasNode> = {}): OperationStatusCanvasNode {
+const operationNode = (overrides: Partial<OperationStatusCanvasNode> = {}): OperationStatusCanvasNode => {
     return {
         nodeId: 'operation-1',
         type: 'operationStatus',
@@ -30,17 +30,27 @@ function operationNode(overrides: Partial<OperationStatusCanvasNode> = {}): Oper
         message: 'Preparing the media request.',
         generationRequestId: 'request-1',
         generationRun: 0,
-        position: { x: 20, y: 30 },
-        dimensions: { width: 360, height: 104 },
+        position: {
+            x: 20,
+            y: 30,
+        },
+        dimensions: {
+            width: 360,
+            height: 104,
+        },
         createdAt: 1,
         updatedAt: 1,
         ...overrides,
     }
 }
 
-function canvasState(node = operationNode()): CanvasState {
+const canvasState = (node = operationNode()): CanvasState => {
     return {
-        viewport: { x: 0, y: 0, zoom: 1 },
+        viewport: {
+            x: 0,
+            y: 0,
+            zoom: 1,
+        },
         nodes: [node],
         edges: [{
             edgeId: 'edge-1',
@@ -50,7 +60,7 @@ function canvasState(node = operationNode()): CanvasState {
     }
 }
 
-function pendingOutputNode(overrides: Partial<GeneratedMediaNode> = {}): GeneratedMediaNode {
+const pendingOutputNode = (overrides: Partial<GeneratedMediaNode> = {}): GeneratedMediaNode => {
     return {
         nodeId: 'pending-image-media-run-1',
         type: 'image',
@@ -91,13 +101,19 @@ function pendingOutputNode(overrides: Partial<GeneratedMediaNode> = {}): Generat
             },
             updatedAt: 2,
         },
-        position: { x: 500, y: 200 },
-        dimensions: { width: 512, height: 512 },
+        position: {
+            x: 500,
+            y: 200,
+        },
+        dimensions: {
+            width: 512,
+            height: 512,
+        },
         ...overrides,
     } as GeneratedMediaNode
 }
 
-function request(overrides: Partial<MediaGenerationRequest> = {}): MediaGenerationRequest {
+const request = (overrides: Partial<MediaGenerationRequest> = {}): MediaGenerationRequest => {
     return {
         generationRequestId: 'request-1',
         workspaceId: 'workspace-1',
@@ -136,12 +152,23 @@ describe('media generation operation recovery', () => {
                 status: 'awaiting-reference-resolution',
                 unresolvedBindings: [{
                     bindingId: 'binding-1',
-                    promptRange: { from: 0, to: 8 },
+                    promptRange: {
+                        from: 0,
+                        to: 8,
+                    },
                     originalText: 'portrait',
                     matcherVersion: '1',
                     candidates: [
-                        { assetId: 'asset-1', score: 0.9, previewRenditionName: 'thumbnail' },
-                        { assetId: 'asset-2', score: 0.8, previewRenditionName: 'thumbnail' },
+                        {
+                            assetId: 'asset-1',
+                            score: 0.9,
+                            previewRenditionName: 'thumbnail',
+                        },
+                        {
+                            assetId: 'asset-2',
+                            score: 0.8,
+                            previewRenditionName: 'thumbnail',
+                        },
                     ],
                 }],
             }),
@@ -168,12 +195,23 @@ describe('media generation operation recovery', () => {
                 status: 'awaiting-reference-resolution',
                 unresolvedBindings: [{
                     bindingId: 'binding-1',
-                    promptRange: { from: 0, to: 8 },
+                    promptRange: {
+                        from: 0,
+                        to: 8,
+                    },
                     originalText: 'portrait',
                     matcherVersion: '1',
                     candidates: [
-                        { assetId: 'asset-1', score: 0.9, previewRenditionName: 'thumbnail' },
-                        { assetId: 'asset-2', score: 0.8, previewRenditionName: 'thumbnail' },
+                        {
+                            assetId: 'asset-1',
+                            score: 0.9,
+                            previewRenditionName: 'thumbnail',
+                        },
+                        {
+                            assetId: 'asset-2',
+                            score: 0.8,
+                            previewRenditionName: 'thumbnail',
+                        },
                     ],
                 }],
                 runs: [{
@@ -205,21 +243,43 @@ describe('media generation operation recovery', () => {
                 status: 'awaiting-reference-resolution',
                 unresolvedBindings: [{
                     bindingId: 'binding-reference-drawing',
-                    promptRange: { from: 0, to: 17 },
+                    promptRange: {
+                        from: 0,
+                        to: 17,
+                    },
                     originalText: 'reference drawing',
                     matcherVersion: '1',
                     candidates: [
-                        { assetId: 'asset-1', score: 0.9, previewRenditionName: 'thumbnail' },
-                        { assetId: 'asset-2', score: 0.8, previewRenditionName: 'thumbnail' },
+                        {
+                            assetId: 'asset-1',
+                            score: 0.9,
+                            previewRenditionName: 'thumbnail',
+                        },
+                        {
+                            assetId: 'asset-2',
+                            score: 0.8,
+                            previewRenditionName: 'thumbnail',
+                        },
                     ],
                 }, {
                     bindingId: 'binding-character-sheet',
-                    promptRange: { from: 18, to: 33 },
+                    promptRange: {
+                        from: 18,
+                        to: 33,
+                    },
                     originalText: 'character sheet',
                     matcherVersion: '1',
                     candidates: [
-                        { assetId: 'asset-2', score: 0.9, previewRenditionName: 'thumbnail' },
-                        { assetId: 'asset-3', score: 0.8, previewRenditionName: 'thumbnail' },
+                        {
+                            assetId: 'asset-2',
+                            score: 0.9,
+                            previewRenditionName: 'thumbnail',
+                        },
+                        {
+                            assetId: 'asset-3',
+                            score: 0.8,
+                            previewRenditionName: 'thumbnail',
+                        },
                     ],
                 }],
             }),
@@ -320,7 +380,12 @@ describe('media generation operation recovery', () => {
             sequence: 3,
             status: 'MEDIA_GENERATION_PROBLEM',
             requestRevision: 3,
-            payload: { status: 'failed', runStatus: 'failed', generationRun: 0, problem },
+            payload: {
+                status: 'failed',
+                runStatus: 'failed',
+                generationRun: 0,
+                problem,
+            },
             createdAt: 3,
         }
         const result = applyMediaGenerationRequestEventToOperationNodes(canvasState(), event)
@@ -372,16 +437,26 @@ describe('media generation operation recovery', () => {
                                 provider: 'Anthropic',
                                 modelId: 'Anthropic:claude-opus-5',
                                 purpose: 'Compare the result with its sources.',
-                                params: [{ name: 'framing', value: '0.91' }],
+                                params: [{
+                                    name: 'framing',
+                                    value: '0.91',
+                                }],
                                 inputHandles: [{
                                     kind: 'media',
                                     id: 'asset-1',
                                     displayName: 'Source image',
                                     mediaKind: 'image',
                                 }],
-                                tokenUsage: { input: 120, output: 30, reasoning: 18 },
+                                tokenUsage: {
+                                    input: 120,
+                                    output: 30,
+                                    reasoning: 18,
+                                },
                             }],
-                            facts: [{ label: 'Overall score', value: '0.91' }],
+                            facts: [{
+                                label: 'Overall score',
+                                value: '0.91',
+                            }],
                         },
                     }],
                 },
@@ -390,7 +465,11 @@ describe('media generation operation recovery', () => {
         }
 
         const result = applyMediaGenerationRequestEventToOperationNodes({
-            viewport: { x: 0, y: 0, zoom: 1 },
+            viewport: {
+                x: 0,
+                y: 0,
+                zoom: 1,
+            },
             nodes: [output],
             edges: [],
         }, event)
@@ -398,13 +477,26 @@ describe('media generation operation recovery', () => {
         const trace = updated.generationProgress?.progress.items?.[0]?.trace
 
         expect(trace?.reasoning).toBe('The framing matches the requested target.')
-        expect(trace?.handles?.[0]).toMatchObject({ id: 'asset-1', role: 'comparison-source' })
+        expect(trace?.handles?.[0]).toMatchObject({
+            id: 'asset-1',
+            role: 'comparison-source',
+        })
         expect(trace?.modelCalls?.[0]).toMatchObject({
             role: 'assessor',
-            params: [{ name: 'framing', value: '0.91' }],
-            tokenUsage: { input: 120, output: 30, reasoning: 18 },
+            params: [{
+                name: 'framing',
+                value: '0.91',
+            }],
+            tokenUsage: {
+                input: 120,
+                output: 30,
+                reasoning: 18,
+            },
         })
-        expect(trace?.facts).toEqual([{ label: 'Overall score', value: '0.91' }])
+        expect(trace?.facts).toEqual([{
+            label: 'Overall score',
+            value: '0.91',
+        }])
     })
 
     it('does not erase accumulated trace items when a later status event has only generic progress', () => {
@@ -422,7 +514,10 @@ describe('media generation operation recovery', () => {
                         status: 'running',
                         trace: {
                             traceVersion: 'execution-trace-v1',
-                            facts: [{ label: 'Framing', value: '0.91' }],
+                            facts: [{
+                                label: 'Framing',
+                                value: '0.91',
+                            }],
                         },
                     }],
                 },
@@ -445,14 +540,21 @@ describe('media generation operation recovery', () => {
         }
 
         const result = applyMediaGenerationRequestEventToOperationNodes({
-            viewport: { x: 0, y: 0, zoom: 1 },
+            viewport: {
+                x: 0,
+                y: 0,
+                zoom: 1,
+            },
             nodes: [output],
             edges: [],
         }, event)
         const progress = (result.state.nodes[0] as GeneratedMediaNode).generationProgress?.progress
 
         expect(progress?.phase).toBe('assessing')
-        expect(progress?.items?.[0]?.trace?.facts).toEqual([{ label: 'Framing', value: '0.91' }])
+        expect(progress?.items?.[0]?.trace?.facts).toEqual([{
+            label: 'Framing',
+            value: '0.91',
+        }])
     })
 
     it('replaces a failed pending output with the existing operation card in its reserved slot', () => {
@@ -462,7 +564,11 @@ describe('media generation operation recovery', () => {
             outputNodeId: output.nodeId,
         })
         const state: CanvasState = {
-            viewport: { x: 0, y: 0, zoom: 1 },
+            viewport: {
+                x: 0,
+                y: 0,
+                zoom: 1,
+            },
             nodes: [operation, output],
             edges: [{
                 edgeId: 'edge-source-output',
@@ -501,7 +607,10 @@ describe('media generation operation recovery', () => {
         expect(result.state.nodes).toEqual(expect.arrayContaining([expect.objectContaining({
             nodeId: output.nodeId,
             status: 'failed',
-            position: { x: 576, y: 404 },
+            position: {
+                x: 576,
+                y: 404,
+            },
             lineageAssignment: expect.objectContaining({
                 branchId: 'branch-1',
                 branchForkNodeId: 'branch-fork-1',
@@ -516,7 +625,11 @@ describe('media generation operation recovery', () => {
     it('materializes the failure card from a terminal live event when the hidden operation node is absent', () => {
         const output = pendingOutputNode()
         const state: CanvasState = {
-            viewport: { x: 0, y: 0, zoom: 1 },
+            viewport: {
+                x: 0,
+                y: 0,
+                zoom: 1,
+            },
             nodes: [output],
             edges: [{
                 edgeId: 'edge-source-output',
@@ -560,7 +673,10 @@ describe('media generation operation recovery', () => {
             nodeId: output.nodeId,
             type: 'operationStatus',
             status: 'failed',
-            position: { x: 576, y: 404 },
+            position: {
+                x: 576,
+                y: 404,
+            },
             lineageAssignment: expect.objectContaining({ branchId: 'branch-1' }),
         })])
         expect(result.state.edges).toEqual([expect.objectContaining({
@@ -572,7 +688,11 @@ describe('media generation operation recovery', () => {
     it('materializes a terminal failure immediately from a generic reasoning stream error', () => {
         const output = pendingOutputNode()
         const state: CanvasState = {
-            viewport: { x: 0, y: 0, zoom: 1 },
+            viewport: {
+                x: 0,
+                y: 0,
+                zoom: 1,
+            },
             nodes: [output],
             edges: [{
                 edgeId: 'edge-source-output',
@@ -608,13 +728,24 @@ describe('media generation operation recovery', () => {
     })
 
     it('removes only the completed run when sibling operation nodes remain active', () => {
-        const sibling = operationNode({ nodeId: 'operation-2', generationRun: 1 })
+        const sibling = operationNode({
+            nodeId: 'operation-2',
+            generationRun: 1,
+        })
         const state: CanvasState = {
             ...canvasState(),
             nodes: [operationNode(), sibling],
             edges: [
-                { edgeId: 'edge-1', sourceNodeId: 'source-1', targetNodeId: 'operation-1' },
-                { edgeId: 'edge-2', sourceNodeId: 'source-1', targetNodeId: 'operation-2' },
+                {
+                    edgeId: 'edge-1',
+                    sourceNodeId: 'source-1',
+                    targetNodeId: 'operation-1',
+                },
+                {
+                    edgeId: 'edge-2',
+                    sourceNodeId: 'source-1',
+                    targetNodeId: 'operation-2',
+                },
             ],
         }
         const event: MediaGenerationRequestEvent = {
@@ -623,7 +754,11 @@ describe('media generation operation recovery', () => {
             sequence: 4,
             status: 'MEDIA_GENERATION_REQUEST_STATUS',
             requestRevision: 4,
-            payload: { status: 'running', runStatus: 'completed', generationRun: 0 },
+            payload: {
+                status: 'running',
+                runStatus: 'completed',
+                generationRun: 0,
+            },
             createdAt: 4,
         }
         const result = applyMediaGenerationRequestEventToOperationNodes(state, event)

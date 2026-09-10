@@ -467,7 +467,7 @@ export const addPromptReferenceAudioToLatestUserMessage = <
     })
 }
 
-function getPromptReferenceSelectionKey(reference: PromptReference): string {
+const getPromptReferenceSelectionKey = (reference: PromptReference): string => {
     if (reference.referenceType === 'media')
         return `media#${reference.assetId}#${reference.nodeId ?? ''}`
 
@@ -480,7 +480,7 @@ function getPromptReferenceSelectionKey(reference: PromptReference): string {
     return `${reference.referenceType}#${reference.capabilityId}`
 }
 
-function dedupeCapabilityReferences(references: CapabilityPromptReference[]): CapabilityPromptReference[] {
+const dedupeCapabilityReferences = (references: CapabilityPromptReference[]): CapabilityPromptReference[] => {
     const byId = new Map<string, CapabilityPromptReference>()
 
     for (const reference of references) {
@@ -491,11 +491,11 @@ function dedupeCapabilityReferences(references: CapabilityPromptReference[]): Ca
     return [...byId.values()]
 }
 
-function isMatchingMediaNode(
+const isMatchingMediaNode = (
     node: CanvasNode,
     assetId: string,
     mediaKind: string,
-): boolean {
+): boolean => {
     if (
         !('assetId' in node)
         || node.assetId !== assetId
@@ -508,7 +508,7 @@ function isMatchingMediaNode(
     return node.type === mediaKind
 }
 
-async function toMediaCandidate(asset: Asset): Promise<MediaBranchCandidateImage> {
+const toMediaCandidate = async (asset: Asset): Promise<MediaBranchCandidateImage> => {
     if (
         asset.media?.kind !== 'image'
         && asset.media?.kind !== 'video'

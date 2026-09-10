@@ -24,22 +24,40 @@ const media = (nodeId: string, type: 'image' | 'video' = 'image'): CanvasNode =>
     nodeId,
     type,
     assetId: `asset-${nodeId}`,
-    position: { x: 0, y: 0 },
-    dimensions: { width: 100, height: 100 },
+    position: {
+        x: 0,
+        y: 0,
+    },
+    dimensions: {
+        width: 100,
+        height: 100,
+    },
 })
 const submitData = (): CanvasConversationSubmit => ({
-    messages: [{ role: 'user', content: 'serialized prompt' }],
+    messages: [{
+        role: 'user',
+        content: 'serialized prompt',
+    }],
     mediaGenerationMode: 'video',
     aiReasoningModels: ['reasoning-a', 'reasoning-b'],
     useMultipleReasoningModels: true,
     useMultipleImageModels: false,
     useMultipleVideoModels: true,
-    imageOptions: { aiImageModels: ['image-a'], imageGenerationSize: '1024x1024' },
-    videoOptions: { aiVideoModels: ['video-a'], sourceVideoNodeId: 'video', videoAspectRatio: '16:9', videoResolution: '720p', videoDuration: '5' },
+    imageOptions: {
+        aiImageModels: ['image-a'],
+        imageGenerationSize: '1024x1024',
+    },
+    videoOptions: {
+        aiVideoModels: ['video-a'],
+        sourceVideoNodeId: 'video',
+        videoAspectRatio: '16:9',
+        videoResolution: '720p',
+        videoDuration: '5',
+    },
     referenceNodeIds: ['image', 'excluded'],
 })
 
-function setup(overrides: Partial<CanvasConversationRunPorts> = {}, options: Partial<CanvasConversationRunOptions> = {}) {
+const setup = (overrides: Partial<CanvasConversationRunPorts> = {}, options: Partial<CanvasConversationRunOptions> = {}) => {
     const editors = new CanvasConversationEditors<CanvasConversationRun>({
         pane: document.createElement('div'),
         setTimer: () => 1,
@@ -47,26 +65,56 @@ function setup(overrides: Partial<CanvasConversationRunPorts> = {}, options: Par
     })
     let callbacks!: CanvasConversationEditorMount
     let transportError!: (error: unknown) => void
-    const editor = { readContent: vi.fn(() => ({ type: 'doc', content: [] })), submitPersisted: vi.fn(), destroy: vi.fn(), activate: vi.fn() }
-    const transport = { send: vi.fn(async (_request: CanvasGenerationRequest) => {}), stop: vi.fn(async () => {}), disconnect: vi.fn() }
+    const editor = {
+        readContent: vi.fn(() => ({
+            type: 'doc',
+            content: [],
+        })),
+        submitPersisted: vi.fn(),
+        destroy: vi.fn(),
+        activate: vi.fn(),
+    }
+    const transport = {
+        send: vi.fn(async (_request: CanvasGenerationRequest) => {}),
+        stop: vi.fn(async () => {}),
+        disconnect: vi.fn(),
+    }
     const state: CanvasState = {
-        viewport: { x: 0, y: 0, zoom: 1 },
+        viewport: {
+            x: 0,
+            y: 0,
+            zoom: 1,
+        },
         nodes: [media('image'), media('video', 'video'), media('excluded')],
-        edges: [{ edgeId: 'edge', sourceNodeId: 'excluded', targetNodeId: 'image', sourceHandle: 'right', targetHandle: 'left' }],
+        edges: [{
+            edgeId: 'edge',
+            sourceNodeId: 'excluded',
+            targetNodeId: 'image',
+            sourceHandle: 'right',
+            targetHandle: 'left',
+        }],
     }
     const ports: CanvasConversationRunPorts = {
         mountEditor: request => {
             callbacks = request
+
             return editor
         },
         connect: request => {
             transportError = request.onError
+
             return transport
         },
-        context: new WorkspaceGenerationContext({ readAsset: () => undefined, renditionPath: (id, rendition) => `${id}/${rendition}` }),
+        context: new WorkspaceGenerationContext({
+            readAsset: () => undefined,
+            renditionPath: (id, rendition) => `${id}/${rendition}`,
+        }),
         readCanvasState: () => state,
         getContextTitles: () => ({}),
-        getVisibleArea: () => ({ width: 800, height: 600 }),
+        getVisibleArea: () => ({
+            width: 800,
+            height: 600,
+        }),
         createRequestId: () => 'request-1',
         now: () => 123,
         publishContent: vi.fn(),
@@ -85,16 +133,31 @@ function setup(overrides: Partial<CanvasConversationRunPorts> = {}, options: Par
     }
     const config: CanvasConversationRunOptions = {
         workspaceId: 'workspace-1',
-        thread: { threadId: 'thread-1', organizationId: 'org-1', content: { type: 'doc' }, proseMirrorVersion: 7 },
+        thread: {
+            threadId: 'thread-1',
+            organizationId: 'org-1',
+            content: { type: 'doc' },
+            proseMirrorVersion: 7,
+        },
         submittedData: {
-            contentJSON: [{ type: 'paragraph', content: [{ type: 'text', text: 'exact composer prompt' }] }],
+            contentJSON: [{
+                type: 'paragraph',
+                content: [{
+                    type: 'text',
+                    text: 'exact composer prompt',
+                }],
+            }],
             mediaGenerationMode: 'video',
             aiReasoningModels: ['reasoning-a'],
             useMultipleReasoningModels: false,
             useMultipleImageModels: false,
             useMultipleVideoModels: false,
             capabilityInputs: {},
-            reasoningOptions: { configGroups: [{ groupId: 'reasoning-config', modelIds: ['reasoning-a'], values: {} }] },
+            reasoningOptions: { configGroups: [{
+                groupId: 'reasoning-config',
+                modelIds: ['reasoning-a'],
+                values: {},
+            }] },
         },
         explicitContextNodeIds: ['video', 'image'],
         excludedCanvasNodeIds: ['excluded'],
@@ -102,6 +165,7 @@ function setup(overrides: Partial<CanvasConversationRunPorts> = {}, options: Par
     }
     const mount = () => editors.mount(config.thread.threadId, scope => new CanvasConversationRun(scope, config, ports))
     const run = mount()
+
     return {
         editors,
         editor,
@@ -121,10 +185,22 @@ function setup(overrides: Partial<CanvasConversationRunPorts> = {}, options: Par
 describe('canvas conversation run', () => {
     it('forwards media events only for the live workspace and conversation', () => {
         const fixture = setup()
-        fixture.callbacks.onSegment({ type: 'image_partial', workspaceId: 'other', conversationAssetId: 'thread-1' })
-        fixture.callbacks.onSegment({ type: 'image_partial', workspaceId: 'workspace-1', conversationAssetId: 'other' })
+        fixture.callbacks.onSegment({
+            type: 'image_partial',
+            workspaceId: 'other',
+            conversationAssetId: 'thread-1',
+        })
+        fixture.callbacks.onSegment({
+            type: 'image_partial',
+            workspaceId: 'workspace-1',
+            conversationAssetId: 'other',
+        })
         expect(fixture.ports.onSegment).not.toHaveBeenCalled()
-        const event = { type: 'image_partial', workspaceId: 'workspace-1', conversationAssetId: 'thread-1' }
+        const event = {
+            type: 'image_partial',
+            workspaceId: 'workspace-1',
+            conversationAssetId: 'thread-1',
+        }
         fixture.callbacks.onSegment(event, { responseMessageId: 'response' })
         expect(fixture.ports.onSegment).toHaveBeenCalledWith(event, { responseMessageId: 'response' })
         fixture.editors.clear()
@@ -151,9 +227,15 @@ describe('canvas conversation run', () => {
                 videoResolution: '720p',
                 videoDuration: '5',
                 videoSourceForExtension: 'asset-video',
-                canvasVisibleArea: { width: 800, height: 600 },
+                canvasVisibleArea: {
+                    width: 800,
+                    height: 600,
+                },
                 reasoningConfigGroups: fixture.config.submittedData!.reasoningOptions!.configGroups,
-                workspaceContextSnapshot: { workspaceId: 'workspace-1', promptText: 'exact composer prompt' },
+                workspaceContextSnapshot: {
+                    workspaceId: 'workspace-1',
+                    promptText: 'exact composer prompt',
+                },
             })
             expect(request.workspaceContextSnapshot!.nodes.map(node => node.nodeId)).toEqual(['image', 'video'])
             expect(request.mediaBranchCandidateSnapshot!.candidates.map(node => node.nodeId)).toEqual(['image', 'video'])
@@ -163,7 +245,10 @@ describe('canvas conversation run', () => {
             expect.objectContaining({
                 referenceNodeIds: ['video', 'image'],
                 promptText: 'exact composer prompt',
-                promptParts: [{ type: 'text', text: 'exact composer prompt' }],
+                promptParts: [{
+                    type: 'text',
+                    text: 'exact composer prompt',
+                }],
                 createdAt: 123,
             }),
             fixture.config.submittedData,
@@ -173,7 +258,13 @@ describe('canvas conversation run', () => {
     })
 
     it('retains submitted options despite later composer mutation and passes regeneration through', async () => {
-        const regeneration = { mode: 'existing-prompt', lineageParentNodeId: 'branch', branchId: 'branch', lineageParentType: 'branchOrigin', replayPrompts: [] } satisfies NonNullable<CanvasConversationRunOptions['regeneration']>
+        const regeneration = {
+            mode: 'existing-prompt',
+            lineageParentNodeId: 'branch',
+            branchId: 'branch',
+            lineageParentType: 'branchOrigin',
+            replayPrompts: [],
+        } satisfies NonNullable<CanvasConversationRunOptions['regeneration']>
         const fixture = setup({}, { regeneration })
         fixture.config.submittedData!.contentJSON[0].content[0].text = 'changed'
         fixture.config.explicitContextNodeIds!.length = 0
@@ -187,7 +278,11 @@ describe('canvas conversation run', () => {
 
     it('sends reasoning without adding media preflight or a request identifier', async () => {
         const fixture = setup()
-        await fixture.callbacks.onSubmit({ ...submitData(), imageOptions: undefined, videoOptions: undefined })
+        await fixture.callbacks.onSubmit({
+            ...submitData(),
+            imageOptions: undefined,
+            videoOptions: undefined,
+        })
         expect(fixture.ports.preflight).not.toHaveBeenCalled()
         expect(fixture.transport.send.mock.calls[0][0]).not.toHaveProperty('generationRequestId')
         fixture.editors.destroy()
@@ -196,7 +291,13 @@ describe('canvas conversation run', () => {
     it('receives persisted runs without resubmitting them', async () => {
         const fixture = setup({}, { submittedData: undefined })
         await fixture.callbacks.onSubmit(submitData())
-        fixture.callbacks.onStreaming({ type: 'doc', content: [{ type: 'text', text: 'stream' }] })
+        fixture.callbacks.onStreaming({
+            type: 'doc',
+            content: [{
+                type: 'text',
+                text: 'stream',
+            }],
+        })
         expect(fixture.transport.send).not.toHaveBeenCalled()
         expect(fixture.ports.rememberContent).toHaveBeenCalledWith('thread-1', expect.any(Object), true)
         expect(fixture.ports.publishContent).not.toHaveBeenCalled()

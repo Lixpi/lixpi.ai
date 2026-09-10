@@ -17,9 +17,18 @@ const builderResult = builders(testSchema, {
     p: { nodeType: 'paragraph' },
 
     // Headings
-    h1: { nodeType: 'heading', level: 1 },
-    h2: { nodeType: 'heading', level: 2 },
-    h3: { nodeType: 'heading', level: 3 },
+    h1: {
+        nodeType: 'heading',
+        level: 1,
+    },
+    h2: {
+        nodeType: 'heading',
+        level: 2,
+    },
+    h3: {
+        nodeType: 'heading',
+        level: 3,
+    },
 
     // Regular image with default attrs
     img: {
@@ -119,35 +128,43 @@ export const {
 export const schema = builderResult.schema
 
 // Helper to find position of a node by type
-export function findNodePosition(doc: ProseMirrorNode, nodeType: string): number | null {
+export const findNodePosition = (doc: ProseMirrorNode, nodeType: string): number | null => {
     let foundPos: number | null = null
     doc.descendants((node, pos) => {
-        if (node.type.name === nodeType && foundPos === null) {
+        if (
+            node.type.name === nodeType
+            && foundPos === null
+        ) {
             foundPos = pos
+
             return false // Stop searching
         }
     })
+
     return foundPos
 }
 
 // Helper to find all positions of nodes by type
-export function findAllNodePositions(doc: ProseMirrorNode, nodeType: string): number[] {
+export const findAllNodePositions = (doc: ProseMirrorNode, nodeType: string): number[] => {
     const positions: number[] = []
     doc.descendants((node, pos) => {
-        if (node.type.name === nodeType) {
+        if (node.type.name === nodeType)
             positions.push(pos)
-        }
     })
+
     return positions
 }
 
 // Create EditorState with a document
-export function createEditorState(doc: ProseMirrorNode): EditorState {
-    return EditorState.create({ doc, schema: testSchema })
+export const createEditorState = (doc: ProseMirrorNode): EditorState => {
+    return EditorState.create({
+        doc,
+        schema: testSchema,
+    })
 }
 
 // Create EditorState with NodeSelection on a specific node
-export function createStateWithNodeSelection(doc: ProseMirrorNode, nodePos: number): EditorState {
+export const createStateWithNodeSelection = (doc: ProseMirrorNode, nodePos: number): EditorState => {
     return EditorState.create({
         doc,
         schema: testSchema,
@@ -156,7 +173,7 @@ export function createStateWithNodeSelection(doc: ProseMirrorNode, nodePos: numb
 }
 
 // Create EditorState with TextSelection
-export function createStateWithTextSelection(doc: ProseMirrorNode, from: number, to: number): EditorState {
+export const createStateWithTextSelection = (doc: ProseMirrorNode, from: number, to: number): EditorState => {
     return EditorState.create({
         doc,
         schema: testSchema,
@@ -165,8 +182,11 @@ export function createStateWithTextSelection(doc: ProseMirrorNode, from: number,
 }
 
 // Helper to select a node by type (returns new state with selection)
-export function selectNodeByType(doc: ProseMirrorNode, nodeType: string): EditorState | null {
+export const selectNodeByType = (doc: ProseMirrorNode, nodeType: string): EditorState | null => {
     const pos = findNodePosition(doc, nodeType)
-    if (pos === null) return null
+
+    if (pos === null)
+        return null
+
     return createStateWithNodeSelection(doc, pos)
 }

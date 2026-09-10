@@ -6,8 +6,8 @@ import {
 } from 'vitest'
 import { readFileSync } from 'fs'
 import { resolve } from 'path'
-import { NodeSelection } from 'prosemirror-state'
-import { DOMSerializer } from 'prosemirror-model'
+
+
 import { applyStyle } from '@lixpi/ui-primitives/dom'
 import {
     doc,
@@ -23,35 +23,35 @@ import {
 } from '$src/components/proseMirror/plugins/aiChatThreadPlugin/aiResponseMessageNode.ts'
 import { withoutLayout } from '@lixpi/test-utils'
 
-function loadScss(): string {
+const loadScss = (): string => {
     return readFileSync(
         resolve(import.meta.dirname, 'ai-chat-thread.scss'),
         'utf-8',
     )
 }
 
-function loadSource(filename: string): string {
+const loadSource = (filename: string): string => {
     return readFileSync(
         resolve(import.meta.dirname, filename),
         'utf-8',
     )
 }
 
-function loadAnimationsScss(): string {
+const loadAnimationsScss = (): string => {
     return readFileSync(
         resolve(import.meta.dirname, '../../../../sass/components/_animations.scss'),
         'utf-8',
     )
 }
 
-function expectSourceToContain(source: string, snippet: string, label = 'source excerpt'): void {
+const expectSourceToContain = (source: string, snippet: string, label = 'source excerpt'): void => {
     expect(
         withoutLayout(source).includes(withoutLayout(snippet)),
         `${label} should contain:\n${snippet}`,
     ).toBe(true)
 }
 
-function expectSourceNotToContain(source: string, snippet: string, label = 'source excerpt'): void {
+const expectSourceNotToContain = (source: string, snippet: string, label = 'source excerpt'): void => {
     expect(
         withoutLayout(source).includes(withoutLayout(snippet)),
         `${label} should not contain:\n${snippet}`,
@@ -97,9 +97,8 @@ describe('aiResponseMessage — id attribute', () => {
 
         let targetNode = null as any
         state.doc.descendants((node) => {
-            if (node.type.name === 'aiResponseMessage') {
+            if (node.type.name === 'aiResponseMessage')
                 targetNode = node
-            }
         })
 
         expect(targetNode).not.toBeNull()
@@ -119,14 +118,16 @@ describe('aiResponseMessage — id attribute', () => {
 
 describe('aiResponseMessage — toDOM spec', () => {
     it('produces a div with ai-response-message class', () => {
-        const responseNode = response({ id: 'msg-1', aiProvider: 'OpenAI' }, p('content'))
+        const responseNode = response({
+            id: 'msg-1',
+            aiProvider: 'OpenAI',
+        }, p('content'))
         const state = createEditorState(doc(thread(responseNode)))
 
         let targetNode = null as any
         state.doc.descendants((node) => {
-            if (node.type.name === 'aiResponseMessage') {
+            if (node.type.name === 'aiResponseMessage')
                 targetNode = node
-            }
         })
 
         const domOutput = targetNode.type.spec.toDOM(targetNode)
@@ -134,14 +135,16 @@ describe('aiResponseMessage — toDOM spec', () => {
     })
 
     it('includes data-ai-provider attribute in serialized DOM', () => {
-        const responseNode = response({ id: 'msg-1', aiProvider: 'Anthropic' }, p('content'))
+        const responseNode = response({
+            id: 'msg-1',
+            aiProvider: 'Anthropic',
+        }, p('content'))
         const state = createEditorState(doc(thread(responseNode)))
 
         let targetNode = null as any
         state.doc.descendants((node) => {
-            if (node.type.name === 'aiResponseMessage') {
+            if (node.type.name === 'aiResponseMessage')
                 targetNode = node
-            }
         })
 
         const domOutput = targetNode.type.spec.toDOM(targetNode)
@@ -154,9 +157,8 @@ describe('aiResponseMessage — toDOM spec', () => {
 
         let targetNode = null as any
         state.doc.descendants((node) => {
-            if (node.type.name === 'aiResponseMessage') {
+            if (node.type.name === 'aiResponseMessage')
                 targetNode = node
-            }
         })
 
         const domOutput = targetNode.type.spec.toDOM(targetNode)
@@ -184,6 +186,7 @@ describe('aiResponseMessage — parseDOM spec', () => {
                     style: 'color: red',
                     'data-ai-provider': 'OpenAI',
                 }
+
                 return attrs[attr] ?? null
             },
         }
@@ -207,9 +210,13 @@ describe('aiResponseMessage — parseDOM spec', () => {
 // aiResponseMessageNodeView — ignoreMutation
 // =============================================================================
 
-function createResponseNodeView(attrs: Record<string, unknown> = {}, content: any = schema.nodes.paragraph.create(null, schema.text('Hello'))) {
+const createResponseNodeView = (attrs: Record<string, unknown> = {}, content: any = schema.nodes.paragraph.create(null, schema.text('Hello'))) => {
     const node = schema.nodes.aiResponseMessage.create(
-        { id: 'test-msg-1', aiProvider: 'Anthropic', ...attrs },
+        {
+            id: 'test-msg-1',
+            aiProvider: 'Anthropic',
+            ...attrs,
+        },
         content,
     )
 
@@ -220,7 +227,13 @@ function createResponseNodeView(attrs: Record<string, unknown> = {}, content: an
     const getPos = vi.fn(() => 0)
 
     const nodeView = aiResponseMessageNodeView(node, mockView, getPos)
-    return { nodeView, node, mockView, getPos }
+
+    return {
+        nodeView,
+        node,
+        mockView,
+        getPos,
+    }
 }
 
 describe('aiResponseMessageNodeView — ignoreMutation', () => {
@@ -308,7 +321,11 @@ describe('aiResponseMessageNodeView — marginBottom survives update()', () => {
 
         // Simulate ProseMirror calling update() with a new node (e.g. new animation frame)
         const updatedNode = schema.nodes.aiResponseMessage.create(
-            { id: 'test-msg-1', aiProvider: 'Anthropic', currentFrame: 3 },
+            {
+                id: 'test-msg-1',
+                aiProvider: 'Anthropic',
+                currentFrame: 3,
+            },
             schema.nodes.paragraph.create(null, schema.text('Hello')),
         )
 
@@ -328,7 +345,12 @@ describe('aiResponseMessageNodeView — marginBottom survives update()', () => {
         // Simulate rapid animation frame updates (every 90ms during streaming)
         for (let frame = 0; frame < 8; frame++) {
             const updatedNode = schema.nodes.aiResponseMessage.create(
-                { id: 'test-msg-1', aiProvider: 'Anthropic', currentFrame: frame, isReceivingAnimation: false },
+                {
+                    id: 'test-msg-1',
+                    aiProvider: 'Anthropic',
+                    currentFrame: frame,
+                    isReceivingAnimation: false,
+                },
                 schema.nodes.paragraph.create(null, schema.text('Hello')),
             )
             nodeView.update!(updatedNode, [], null as any)
@@ -393,7 +415,11 @@ describe('aiResponseMessageNodeView — DOM structure', () => {
         const bubble = dom.querySelector('.ai-response-message') as HTMLElement
         const loadingIndicator = dom.querySelector('.ai-response-loading-spinner') as HTMLElement
         const updatedNode = schema.nodes.aiResponseMessage.create(
-            { id: 'test-msg-1', aiProvider: 'Anthropic', isReceivingAnimation: false },
+            {
+                id: 'test-msg-1',
+                aiProvider: 'Anthropic',
+                isReceivingAnimation: false,
+            },
             schema.nodes.paragraph.create(null, schema.text('Ready')),
         )
 
@@ -411,7 +437,10 @@ describe('aiResponseMessageNodeView — DOM structure', () => {
         expect(dom.getAttribute('data-message-id')).toBe('msg-old')
 
         const updatedNode = schema.nodes.aiResponseMessage.create(
-            { id: 'msg-new', aiProvider: 'Anthropic' },
+            {
+                id: 'msg-new',
+                aiProvider: 'Anthropic',
+            },
             schema.nodes.paragraph.create(null, schema.text('Updated')),
         )
         nodeView.update!(updatedNode, [], null as any)

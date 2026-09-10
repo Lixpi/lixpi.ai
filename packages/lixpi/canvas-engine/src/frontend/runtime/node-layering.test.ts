@@ -11,13 +11,9 @@ import { createNodeLayerManager } from './node-layering.ts'
 describe('nodeLayering — createNodeLayerManager', () => {
     let manager: ReturnType<typeof createNodeLayerManager>
 
-    beforeEach(() => {
-        manager = createNodeLayerManager()
-    })
+    beforeEach(() => void (manager = createNodeLayerManager()))
 
-    it('starts with initial z-index of 10', () => {
-        expect(manager.currentTopIndex()).toBe(10)
-    })
+    it('starts with initial z-index of 10', () => void expect(manager.currentTopIndex()).toBe(10))
 
     it('increments z-index when bringToFront is called', () => {
         const el = document.createElement('div')

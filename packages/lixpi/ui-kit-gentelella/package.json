@@ -1,0 +1,132 @@
+{
+    "name": "@lixpi/ui-kit-gentelella",
+    "version": "0.0.1",
+    "private": true,
+    "type": "module",
+    "main": "./src/index.ts",
+    "scripts": {
+        "test:run": "vitest run"
+    },
+    "exports": {
+        ".": "./src/index.ts",
+        "./class-names": "./src/classNames.ts",
+        "./component": "./src/component.ts",
+        "./content": "./src/content.ts",
+        "./inventory": "./src/inventory.ts",
+        "./components/admin": "./src/components/admin/index.ts",
+        "./components/application-shell": "./src/components/applicationShell/index.ts",
+        "./components/applications": "./src/components/applications/index.ts",
+        "./components/auth": "./src/components/auth/index.ts",
+        "./components/banner": "./src/components/banner/index.ts",
+        "./components/button": "./src/components/button/index.ts",
+        "./components/card": "./src/components/card/index.ts",
+        "./components/chart": "./src/components/chart/index.ts",
+        "./components/chip": "./src/components/chip/index.ts",
+        "./components/commands": "./src/components/commands/index.ts",
+        "./components/commerce": "./src/components/commerce/index.ts",
+        "./components/data-table": "./src/components/dataTable/index.ts",
+        "./components/drawer": "./src/components/drawer/index.ts",
+        "./components/empty-state": "./src/components/emptyState/index.ts",
+        "./components/feedback": "./src/components/feedback/index.ts",
+        "./components/form": "./src/components/form/index.ts",
+        "./components/form-controls": "./src/components/formControls/index.ts",
+        "./components/foundation": "./src/components/foundation/index.ts",
+        "./components/input-group": "./src/components/inputGroup/index.ts",
+        "./components/marketing": "./src/components/marketing/index.ts",
+        "./components/media": "./src/components/media/index.ts",
+        "./components/navigation": "./src/components/navigation/index.ts",
+        "./components/overlay": "./src/components/overlay/index.ts",
+        "./components/page": "./src/components/page/index.ts",
+        "./components/page-header": "./src/components/pageHeader/index.ts",
+        "./components/spinner": "./src/components/spinner/index.ts",
+        "./components/status": "./src/components/status/index.ts",
+        "./components/table": "./src/components/table/index.ts",
+        "./components/tabs": "./src/components/tabs/index.ts",
+        "./components/theme": "./src/components/theme/index.ts",
+        "./components/widgets": "./src/components/widgets/index.ts",
+        "./runtime": "./src/runtime/modules.ts",
+        "./runtime/calendar": "./src/runtime/calendar.ts",
+        "./runtime/charts": "./src/runtime/charts.ts",
+        "./runtime/command-palette": "./src/runtime/command-palette.ts",
+        "./runtime/data-adapter": "./src/runtime/data-adapter.ts",
+        "./runtime/details": "./src/runtime/details.ts",
+        "./runtime/file-manager": "./src/runtime/file-manager.ts",
+        "./runtime/form-controls": "./src/runtime/form-controls.ts",
+        "./runtime/inbox": "./src/runtime/inbox.ts",
+        "./runtime/kanban": "./src/runtime/kanban.ts",
+        "./runtime/markup": "./src/runtime/markup.ts",
+        "./runtime/menus": "./src/runtime/menus.ts",
+        "./runtime/modal": "./src/runtime/modal.ts",
+        "./runtime/page-actions": "./src/runtime/page-actions.ts",
+        "./runtime/product-images": "./src/runtime/product-images.ts",
+        "./runtime/product-mockups": "./src/runtime/product-mockups.ts",
+        "./runtime/settings": "./src/runtime/settings.ts",
+        "./runtime/shell": "./src/runtime/shell.ts",
+        "./runtime/shell-render": "./src/runtime/shell-render.ts",
+        "./runtime/tables": "./src/runtime/tables.ts",
+        "./runtime/toast": "./src/runtime/toast.ts",
+        "./styles/application-shell": {
+            "sass": "./styles/application-shell.scss",
+            "style": "./styles/application-shell.scss",
+            "default": "./styles/application-shell.scss"
+        },
+        "./styles/apps": {
+            "sass": "./styles/apps.scss",
+            "style": "./styles/apps.scss",
+            "default": "./styles/apps.scss"
+        },
+        "./styles/auth": {
+            "sass": "./styles/auth.scss",
+            "style": "./styles/auth.scss",
+            "default": "./styles/auth.scss"
+        },
+        "./styles/components": {
+            "sass": "./styles/components.scss",
+            "style": "./styles/components.scss",
+            "default": "./styles/components.scss"
+        },
+        "./styles/datatable": {
+            "sass": "./styles/datatable.scss",
+            "style": "./styles/datatable.scss",
+            "default": "./styles/datatable.scss"
+        },
+        "./styles/forms": {
+            "sass": "./styles/forms.scss",
+            "style": "./styles/forms.scss",
+            "default": "./styles/forms.scss"
+        },
+        "./styles/layout": {
+            "sass": "./styles/layout.scss",
+            "style": "./styles/layout.scss",
+            "default": "./styles/layout.scss"
+        },
+        "./styles/pages": {
+            "sass": "./styles/pages.scss",
+            "style": "./styles/pages.scss",
+            "default": "./styles/pages.scss"
+        },
+        "./styles/theme": {
+            "sass": "./styles/theme.scss",
+            "style": "./styles/theme.scss",
+            "default": "./styles/theme.scss"
+        },
+        "./styles/tokens": {
+            "sass": "./styles/tokens.scss",
+            "style": "./styles/tokens.scss",
+            "default": "./styles/tokens.scss"
+        },
+        "./styles/widgets": {
+            "sass": "./styles/widgets.scss",
+            "style": "./styles/widgets.scss",
+            "default": "./styles/widgets.scss"
+        }
+    },
+    "dependencies": {
+        "@lixpi/ui-primitives": "workspace:*",
+        "gentelella": "4.1.1"
+    },
+    "devDependencies": {
+        "happy-dom": "*",
+        "vitest": "*"
+    }
+}

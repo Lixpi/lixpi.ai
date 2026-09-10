@@ -164,7 +164,7 @@ export const getBranchMarkerPromptParts = (
     })
 }
 
-export function resolveBranchMarkerPromptParts({
+export const resolveBranchMarkerPromptParts = ({
     persistedUserMessage,
     submittedParts = [],
     fallbackText,
@@ -172,7 +172,7 @@ export function resolveBranchMarkerPromptParts({
     persistedUserMessage?: ProseMirrorJsonNode
     submittedParts?: readonly BranchMarkerPromptPart[]
     fallbackText: string
-}): BranchMarkerPromptPart[] {
+}): BranchMarkerPromptPart[] => {
     const persistedParts = normalizePromptParts(
         collectRawPromptParts(persistedUserMessage),
     )

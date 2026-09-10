@@ -34,13 +34,18 @@ describe('WorkspaceCanvasSelection', () => {
                 const previous = nodeIds
                 nodeIds = next
                 fromMarquee = nextFromMarquee
+
                 return previous
             },
             toggle: (nodeId: string) => {
                 const previous = nodeIds
                 nodeIds = new Set(nodeIds)
-                if (nodeIds.has(nodeId)) nodeIds.delete(nodeId)
-                else nodeIds.add(nodeId)
+
+                if (nodeIds.has(nodeId))
+                    nodeIds.delete(nodeId)
+                else
+                    nodeIds.add(nodeId)
+
                 return previous
             },
             clear: () => {
@@ -51,21 +56,53 @@ describe('WorkspaceCanvasSelection', () => {
         const setSelectedImageNodes = vi.fn()
         const showNode = vi.fn()
         const state = {
-            nodes: [{ nodeId: 'image-1', type: 'image', assetId: 'asset-1', position: { x: 0, y: 0 }, dimensions: { width: 10, height: 10 } }],
+            nodes: [{
+                nodeId: 'image-1',
+                type: 'image',
+                assetId: 'asset-1',
+                position: {
+                    x: 0,
+                    y: 0,
+                },
+                dimensions: {
+                    width: 10,
+                    height: 10,
+                },
+            }],
             edges: [],
-            viewport: { x: 0, y: 0, zoom: 1 },
+            viewport: {
+                x: 0,
+                y: 0,
+                zoom: 1,
+            },
         } as CanvasState
         const owner = new WorkspaceCanvasSelection({
             pane,
             viewport,
             runtime: {
                 selection,
-                installSelectionOverlay: () => ({ setGroup: vi.fn(), setMarquee: vi.fn(), reset: vi.fn(), contains: () => false }),
-                installMarquee: () => ({ active: false, bounds: null, cancel: vi.fn() }),
+                installSelectionOverlay: () => ({
+                    setGroup: vi.fn(),
+                    setMarquee: vi.fn(),
+                    reset: vi.fn(),
+                    contains: () => false,
+                }),
+                installMarquee: () => ({
+                    active: false,
+                    bounds: null,
+                    cancel: vi.fn(),
+                }),
             },
-            media: { setSelectedImageNodes, setSelectionOverlayBounds: vi.fn(), setMarqueeRect: vi.fn() },
+            media: {
+                setSelectedImageNodes,
+                setSelectionOverlayBounds: vi.fn(),
+                setMarqueeRect: vi.fn(),
+            },
             layers: { bringToFront: vi.fn() },
-            marqueeStyle: { borderColor: 'red', backgroundColor: 'blue' },
+            marqueeStyle: {
+                borderColor: 'red',
+                backgroundColor: 'blue',
+            },
             getState: () => state,
             getNodeWorldPosition: node => node.position,
             getNodeGeometryOverride: () => undefined,
@@ -75,10 +112,19 @@ describe('WorkspaceCanvasSelection', () => {
             suppressPaneClick: vi.fn(),
             addContext: vi.fn(),
             scheduleEdges: vi.fn(),
-            menu: { showNode, showEdge: vi.fn(), hide: vi.fn(), repositionNode: vi.fn(), repositionEdge: vi.fn() },
+            menu: {
+                showNode,
+                showEdge: vi.fn(),
+                hide: vi.fn(),
+                repositionNode: vi.fn(),
+                repositionEdge: vi.fn(),
+            },
         } as WorkspaceCanvasSelectionPorts)
 
-        owner.setNodes(new Set(['missing', 'image-1']))
+        owner.setNodes(new Set([
+            'missing',
+            'image-1',
+        ]))
 
         expect([...owner.selection.nodeIds]).toEqual(['image-1'])
         expect(nodeElement.classList.contains('is-selected')).toBe(true)

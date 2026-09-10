@@ -51,6 +51,7 @@ vi.mock('$src/components/proseMirror/components/editor.ts', () => ({
 vi.mock('@lixpi/ui-primitives/gradients', () => ({
     createShiftingGradientBackground: (...args: unknown[]) => {
         createShiftingGradientBackgroundMock(...args)
+
         return mockGradient
     },
 }))
@@ -91,6 +92,7 @@ const createComposer = (overrides: Record<string, any> = {}) => {
         ...overrides,
     })
     composers.push(composer)
+
     return composer
 }
 
@@ -223,7 +225,10 @@ describe('createAiPromptComposer', () => {
         })
 
         const editor = getLastEditor()
-        const content = { type: 'doc', content: [] }
+        const content = {
+            type: 'doc',
+            content: [],
+        }
         editor.options.onEditorChange?.(content)
 
         expect(onContentChange).toHaveBeenCalledWith(content)
@@ -231,9 +236,13 @@ describe('createAiPromptComposer', () => {
 
     it('creates gradient by default and suppresses it when useGradient is false', () => {
         const originalGradientSetting = settings.aiPromptInput.useShiftingGradientBackground
+
         try {
             settings.aiPromptInput.useShiftingGradientBackground = false
-            const composerWithoutGradient = createComposer({ onSubmit: vi.fn(), onStop: vi.fn() })
+            const composerWithoutGradient = createComposer({
+                onSubmit: vi.fn(),
+                onStop: vi.fn(),
+            })
             composerWithoutGradient.triggerGradientAnimation()
             expect(createShiftingGradientBackgroundMock).not.toHaveBeenCalled()
             expect(mockGradient.triggerAnimation).not.toHaveBeenCalled()
@@ -257,7 +266,11 @@ describe('createAiPromptComposer', () => {
         const onStop = vi.fn()
         const originalGradientSetting = settings.aiPromptInput.useShiftingGradientBackground
         settings.aiPromptInput.useShiftingGradientBackground = true
-        const composer = createComposer({ onSubmit, onStop, threadId: 'thread-1' })
+        const composer = createComposer({
+            onSubmit,
+            onStop,
+            threadId: 'thread-1',
+        })
         const editor = getLastEditor()
         const host = document.createElement('div')
         host.appendChild(composer.element)

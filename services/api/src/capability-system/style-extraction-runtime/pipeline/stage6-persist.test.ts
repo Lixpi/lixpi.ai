@@ -35,7 +35,7 @@ const logger: StageLogger = {
     span: async (_stage, _model, body) => await body(),
 }
 
-function makeState(): StyleExtractionState {
+const makeState = (): StyleExtractionState => {
     return {
         input: {
             styleExtractionRunId: 'run-1',
@@ -44,9 +44,17 @@ function makeState(): StyleExtractionState {
             organizationId: 'organization-1',
             messages: [],
             analysisProvider: 'OpenAI',
-            analysisModel: { provider: 'OpenAI', model: 'gpt-5', modelVersion: 'gpt-5' },
+            analysisModel: {
+                provider: 'OpenAI',
+                model: 'gpt-5',
+                modelVersion: 'gpt-5',
+            },
         },
-        references: [{ imageRef: 'input-0', url: 'nats-obj://source', assetId: 'asset-1' }],
+        references: [{
+            imageRef: 'input-0',
+            url: 'nats-obj://source',
+            assetId: 'asset-1',
+        }],
         axisExtractions: {},
         failedAxes: [],
         sourceCrops: [{
@@ -128,7 +136,10 @@ describe('visual-style Capability persistence', () => {
             scope: 'organization',
             scopeOwnerId: 'organization-1',
             storageOwnerId: 'organization-1',
-            requester: { userId: 'user-1', organizationIds: ['organization-1'] },
+            requester: {
+                userId: 'user-1',
+                organizationIds: ['organization-1'],
+            },
         })
         expect(saveInput.manifest).toMatchObject({
             capabilityId: 'visual-style.generated-id',
@@ -142,12 +153,26 @@ describe('visual-style Capability persistence', () => {
             },
         })
         expect(saveInput.manifest.resources).toEqual(expect.arrayContaining([
-            expect.objectContaining({ resourceId: 'visual-style-sample-0', blobHash: 'a'.repeat(64), role: 'example' }),
-            expect.objectContaining({ resourceId: 'visual-style-sample-1', blobHash: 'b'.repeat(64), role: 'example' }),
+            expect.objectContaining({
+                resourceId: 'visual-style-sample-0',
+                blobHash: 'a'.repeat(64),
+                role: 'example',
+            }),
+            expect.objectContaining({
+                resourceId: 'visual-style-sample-1',
+                blobHash: 'b'.repeat(64),
+                role: 'example',
+            }),
         ]))
         expect(saveInput.manifest.tool.workflow.steps[0].input).toMatchObject({
-            sample0: { source: 'resource', resourceId: 'visual-style-sample-0' },
-            sample1: { source: 'resource', resourceId: 'visual-style-sample-1' },
+            sample0: {
+                source: 'resource',
+                resourceId: 'visual-style-sample-0',
+            },
+            sample1: {
+                source: 'resource',
+                resourceId: 'visual-style-sample-1',
+            },
         })
     })
 })

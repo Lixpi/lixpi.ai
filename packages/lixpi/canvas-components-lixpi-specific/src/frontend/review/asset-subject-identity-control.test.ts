@@ -20,21 +20,32 @@ const controls: AssetSubjectIdentityControlInstance[] = []
 
 afterEach(() => {
     for (const control of controls.splice(0)) control.destroy()
+
     document.body.replaceChildren()
 })
 
-function asset(assetId = 'asset-a', revision = 7, classification: SubjectIdentityClassification = 'unknown'): Asset {
-    return { assetId, revision, subjectIdentity: { classification } } as Asset
+const asset = (assetId = 'asset-a', revision = 7, classification: SubjectIdentityClassification = 'unknown'): Asset => {
+    return {
+        assetId,
+        revision,
+        subjectIdentity: { classification },
+    } as Asset
 }
 
-function mount() {
+const mount = () => {
     const host = document.createElement('div')
     document.body.append(host)
     const pending = Promise.withResolvers<Asset | { error: string }>()
     const attestSubjectIdentity = vi.fn(() => pending.promise)
     const onUpdated = vi.fn()
     const onError = vi.fn()
-    const control = mountAssetSubjectIdentityControl({ host, asset: asset(), attestSubjectIdentity, onUpdated, onError })
+    const control = mountAssetSubjectIdentityControl({
+        host,
+        asset: asset(),
+        attestSubjectIdentity,
+        onUpdated,
+        onError,
+    })
     controls.push(control)
     const choose = (label: string) => {
         const item = Array.from(host.querySelectorAll<HTMLElement>('.dropdown-option-item'))
@@ -42,7 +53,16 @@ function mount() {
         expect(item).toBeDefined()
         item!.click()
     }
-    return { host, control, pending, attestSubjectIdentity, onUpdated, onError, choose }
+
+    return {
+        host,
+        control,
+        pending,
+        attestSubjectIdentity,
+        onUpdated,
+        onError,
+        choose,
+    }
 }
 
 describe('Asset subject identity control', () => {
@@ -73,8 +93,12 @@ describe('Asset subject identity control', () => {
         const view = mount()
         view.choose('Me')
         view.control.setAsset(asset('asset-b', 2, 'fictional'))
-        if (outcome === 'resolve') view.pending.resolve(asset('asset-a', 8, 'self'))
-        else view.pending.reject(new Error('Disconnected'))
+
+        if (outcome === 'resolve')
+            view.pending.resolve(asset('asset-a', 8, 'self'))
+        else
+            view.pending.reject(new Error('Disconnected'))
+
         await Promise.allSettled([view.pending.promise])
         expect(view.onUpdated).not.toHaveBeenCalled()
         expect(view.onError).not.toHaveBeenCalled()

@@ -21,20 +21,33 @@ vi.mock('@lixpi/ui-primitives/gradients', () => ({ createShiftingGradientBackgro
 const owners: ReturnType<typeof createAiPromptComposer>[] = []
 afterEach(() => {
     for (const owner of owners.splice(0)) owner.destroy()
+
     document.body.replaceChildren()
     vi.clearAllMocks()
 })
 
-function fixture(overrides: Partial<AiPromptComposerConfig> = {}) {
-    const editor = { editorView: { focus: vi.fn() } as unknown as EditorView, restoreContent: vi.fn(), destroy: vi.fn() }
-    const gradient = { triggerAnimation: vi.fn(), destroy: vi.fn() }
+const fixture = (overrides: Partial<AiPromptComposerConfig> = {}) => {
+    const editor = {
+        editorView: { focus: vi.fn() } as unknown as EditorView,
+        restoreContent: vi.fn(),
+        destroy: vi.fn(),
+    }
+    const gradient = {
+        triggerAnimation: vi.fn(),
+        destroy: vi.fn(),
+    }
     gradients.create.mockReturnValueOnce(gradient)
     let request: PromptComposerEditorRequest
     const config: AiPromptComposerConfig = {
         document,
-        appearance: { popoverBoxShadow: '0 1px 2px black', useShiftingGradientBackground: true, gradientColors: ['#112233', '#445566', '#778899', '#aabbcc'] },
+        appearance: {
+            popoverBoxShadow: '0 1px 2px black',
+            useShiftingGradientBackground: true,
+            gradientColors: ['#112233', '#445566', '#778899', '#aabbcc'],
+        },
         mountEditor: options => {
             request = options
+
             return editor
         },
         onSubmit: vi.fn(),
@@ -44,14 +57,29 @@ function fixture(overrides: Partial<AiPromptComposerConfig> = {}) {
     const composer = createAiPromptComposer(config)
     owners.push(composer)
     document.body.appendChild(composer.element)
-    return { composer, config, editor, gradient, request: request! }
+
+    return {
+        composer,
+        config,
+        editor,
+        gradient,
+        request: request!,
+    }
 }
 
 describe('AI prompt composer lifetime', () => {
     it('owns the editor shell, appearance and supplied draft identity without choosing control defaults', () => {
         const initialContent = { type: 'doc' }
-        const f = fixture({ initialContent, threadId: 'thread', className: 'workspace-composer' })
-        expect(f.request).toMatchObject({ host: f.composer.editorContainer, initialContent, threadId: 'thread' })
+        const f = fixture({
+            initialContent,
+            threadId: 'thread',
+            className: 'workspace-composer',
+        })
+        expect(f.request).toMatchObject({
+            host: f.composer.editorContainer,
+            initialContent,
+            threadId: 'thread',
+        })
         expect(f.composer.element.classList.contains('workspace-composer')).toBe(true)
         expect(f.composer.element.style.getPropertyValue('--dropdown-popover-box-shadow')).toBe('0 1px 2px black')
         expect(gradients.create).toHaveBeenCalledWith(f.composer.element, { colors: ['#112233', '#445566', '#778899', '#aabbcc'] })
@@ -92,17 +120,25 @@ describe('AI prompt composer lifetime', () => {
     })
 
     it('releases a gradient and detached shell when editor mounting fails', () => {
-        const gradient = { destroy: vi.fn(), triggerAnimation: vi.fn() }
+        const gradient = {
+            destroy: vi.fn(),
+            triggerAnimation: vi.fn(),
+        }
         gradients.create.mockReturnValueOnce(gradient)
         let request: PromptComposerEditorRequest | undefined
         expect(() =>
             createAiPromptComposer({
                 document,
-                appearance: { popoverBoxShadow: '', useShiftingGradientBackground: true, gradientColors: ['red', 'blue', 'green', 'white'] },
+                appearance: {
+                    popoverBoxShadow: '',
+                    useShiftingGradientBackground: true,
+                    gradientColors: ['red', 'blue', 'green', 'white'],
+                },
                 onSubmit: vi.fn(),
                 mountEditor: options => {
                     request = options
                     document.body.appendChild(options.host.parentElement!)
+
                     throw new Error('editor failed')
                 },
             })

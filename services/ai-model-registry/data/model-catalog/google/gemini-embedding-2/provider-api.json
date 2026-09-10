@@ -1,0 +1,37 @@
+{
+    "_meta": {
+        "sourceName": "Google Generative Language API",
+        "sourceId": "provider-api",
+        "queriedEndpoints": [
+            {
+                "endpoint": "GET https://generativelanguage.googleapis.com/v1beta/models",
+                "params": {
+                    "pageSize": 100,
+                    "pagesFetched": 1
+                },
+                "note": "Paged with pageToken until exhausted. The API key travels as a query parameter and is not recorded."
+            }
+        ],
+        "hasDataForThisModel": true,
+        "inferenceProvidersWithData": [
+            "google"
+        ],
+        "fetchedAt": "2026-09-08T00:55:53.473Z",
+        "publishedVersions": {
+            "currentVersion": "gemini-embedding-2",
+            "allPublishedVersions": [
+                "gemini-embedding-2"
+            ]
+        }
+    },
+    "byInferenceProvider": {
+        "google": {
+            "title": "Gemini Embedding 2",
+            "contextWindow": 8192,
+            "maxCompletionSize": 1,
+            "model": "gemini-embedding-2",
+            "modelVersion": "gemini-embedding-2",
+            "modelKeyAtSource": "gemini-embedding-2"
+        }
+    }
+}

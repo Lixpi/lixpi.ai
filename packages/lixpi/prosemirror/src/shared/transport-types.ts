@@ -125,10 +125,6 @@ export type SubmitResult =
         currentVersion: number
     }
 
-function sanitizeStreamToken(value: string): string {
-    return value.replace(/[^A-Za-z0-9_-]/g, '_')
-}
+const sanitizeStreamToken = (value: string): string => value.replace(/[^A-Za-z0-9_-]/g, '_')
 
-function sanitizeSubjectToken(value: string): string {
-    return value.replace(/[^A-Za-z0-9_-]/g, '_')
-}
+const sanitizeSubjectToken = (value: string): string => value.replace(/[^A-Za-z0-9_-]/g, '_')

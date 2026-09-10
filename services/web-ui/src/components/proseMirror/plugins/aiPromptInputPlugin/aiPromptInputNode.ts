@@ -383,6 +383,14 @@ const setNodeAttrs = (
     view.dispatch(tr)
 }
 
+const getNodeViewPos = (getPos: () => number | undefined): number | undefined => {
+    try {
+        return getPos()
+    } catch {
+        return undefined
+    }
+}
+
 const getNodeAttr = (
     view: EditorView,
     getPos: () => number | undefined,
@@ -402,14 +410,6 @@ const getNodeAttr = (
         return undefined
 
     return node.attrs?.[attrName]
-}
-
-function getNodeViewPos(getPos: () => number | undefined): number | undefined {
-    try {
-        return getPos()
-    } catch {
-        return undefined
-    }
 }
 
 const createModelMenuTrigger = (onClick: (event: MouseEvent) => void): HTMLButtonElement => {
@@ -513,10 +513,12 @@ export const createAiPromptInputNodeView = (options: AiPromptInputNodeViewOption
         const contextTrayEl = options.createContextTray?.() ?? null
         const contentDOM = html`<div className="ai-prompt-input-content"></div>` as HTMLDivElement
         const controlsEl = html`<div className="ai-prompt-input-controls"></div>` as HTMLDivElement
-        const mediaModeSwitchHost = html`<div
+        const mediaModeSwitchHost = html`
+            <div
                 className="ai-prompt-media-mode-switch"
                 contenteditable="false"
-            ></div>` as HTMLDivElement
+            ></div>
+        ` as HTMLDivElement
         const mediaModeSwitchSvg = select(mediaModeSwitchHost)
             .append('svg')
             .attr('class', 'ai-prompt-media-mode-switch-svg')
@@ -623,6 +625,16 @@ export const createAiPromptInputNodeView = (options: AiPromptInputNodeViewOption
                     ...(firstVideoGroup?.values.duration ? { videoDuration: firstVideoGroup.values.duration } : {}),
                 },
             )
+        }
+
+        const updateModelDropdowns = (): void => {
+            mediaModeSwitch.setValue(
+                getMediaGenerationMode(),
+            )
+            updateModelMenuRows()
+            updateModelMenuControls()
+            updateModelMenuTriggerSummary()
+            scheduleModelMenuReposition()
         }
 
         const submitControls: SubmitControls = {
@@ -1015,15 +1027,6 @@ export const createAiPromptInputNodeView = (options: AiPromptInputNodeViewOption
             }
         }
 
-        function updateModelDropdowns(): void {
-            mediaModeSwitch.setValue(
-                getMediaGenerationMode(),
-            )
-            updateModelMenuRows()
-            updateModelMenuControls()
-            updateModelMenuTriggerSummary()
-            scheduleModelMenuReposition()
-        }
         modelMenuContent = createAiModelMenuContent([
             {
                 title: 'Reasoning model',

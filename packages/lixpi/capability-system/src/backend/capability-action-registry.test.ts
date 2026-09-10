@@ -11,7 +11,7 @@ import {
 } from './capability-action-registry.ts'
 import { isCapabilityError } from '../shared/capability-errors.ts'
 
-function makeAction(overrides: Partial<CapabilityActionDefinition> & { key: string }): CapabilityActionDefinition {
+const makeAction = (overrides: Partial<CapabilityActionDefinition> & { key: string }): CapabilityActionDefinition => {
     return {
         timeoutMs: 1000,
         validateInput: () => ({ valid: true }),
@@ -75,7 +75,10 @@ describe('CapabilityActionRegistry — register', () => {
         (timeoutMs) => {
             const registry = new CapabilityActionRegistry()
 
-            expect(() => registry.register(makeAction({ key: 'style-extraction.run', timeoutMs })))
+            expect(() => registry.register(makeAction({
+                key: 'style-extraction.run',
+                timeoutMs,
+            })))
                 .toThrow('must have a positive integer timeout')
         },
     )
@@ -127,7 +130,10 @@ describe('CapabilityActionRegistry — get/has/allowedActionKeys', () => {
 
         const keys = registry.allowedActionKeys()
 
-        expect(keys).toEqual(new Set(['style-extraction.run', 'character-creator.run']))
+        expect(keys).toEqual(new Set([
+            'style-extraction.run',
+            'character-creator.run',
+        ]))
     })
 
     it('returns a snapshot from allowedActionKeys that does not track later registrations', () => {
@@ -150,10 +156,11 @@ describe('acceptCapabilityJsonValue', () => {
         0,
         -3.5,
         [1, 'two', [3, false]],
-        { a: 1, b: { c: [null, 'x'] } },
-    ])('accepts JSON-compatible value %j', (value) => {
-        expect(acceptCapabilityJsonValue(value)).toEqual({ valid: true })
-    })
+        {
+            a: 1,
+            b: { c: [null, 'x'] },
+        },
+    ])('accepts JSON-compatible value %j', (value) => void expect(acceptCapabilityJsonValue(value)).toEqual({ valid: true }))
 
     it('rejects undefined', () => {
         expect(acceptCapabilityJsonValue(undefined)).toEqual({
@@ -163,7 +170,10 @@ describe('acceptCapabilityJsonValue', () => {
     })
 
     it('rejects non-finite numbers', () => {
-        expect(acceptCapabilityJsonValue(Number.NaN)).toEqual({ valid: false, message: 'Value must be JSON-compatible' })
+        expect(acceptCapabilityJsonValue(Number.NaN)).toEqual({
+            valid: false,
+            message: 'Value must be JSON-compatible',
+        })
         expect(acceptCapabilityJsonValue(Number.POSITIVE_INFINITY)).toEqual({
             valid: false,
             message: 'Value must be JSON-compatible',

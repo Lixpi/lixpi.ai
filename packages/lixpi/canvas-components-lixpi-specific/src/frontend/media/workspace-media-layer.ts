@@ -138,10 +138,12 @@ export class WorkspaceMediaLayer {
                 pointerEvents: 'none',
                 zIndex: '2',
             }
-            this.host = html`<div
+            this.host = html`
+                <div
                     className="workspace-canvas-media-layer"
                     style=${hostStyle}
-                ></div>` as HTMLElement
+                ></div>
+            ` as HTMLElement
             this.lifetime.own(() => this.host.remove())
             options.paneEl.insertBefore(this.host, options.viewportEl)
             this.sources = new WorkspaceMediaSources(options.sources)

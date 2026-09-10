@@ -322,10 +322,10 @@ const validateExpectedInput = (
     )
 }
 
-export function validateDescriptionSheet(
+export const validateDescriptionSheet = (
     moduleId: string,
     sheet: CapabilityModuleDescriptionSheet | undefined,
-): asserts sheet is CapabilityModuleDescriptionSheet {
+): asserts sheet is CapabilityModuleDescriptionSheet => {
     if (
         !sheet
         || typeof sheet !== 'object'

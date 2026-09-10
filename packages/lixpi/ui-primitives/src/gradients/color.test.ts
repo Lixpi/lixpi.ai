@@ -18,13 +18,19 @@ describe('color conversion and mixing', () => {
         expect(normalizeHexColor(' ab12ef ')).toBe('#AB12EF')
         expect(normalizeHexColor('#abc')).toBeNull()
         expect(normalizeHexColor(null)).toBeNull()
-        expect(parseHexColor('invalid', '#123456')).toEqual({ r: 18, g: 52, b: 86 })
-        expect(parseHexColor('invalid')).toEqual({ r: 0, g: 0, b: 0 })
+        expect(parseHexColor('invalid', '#123456')).toEqual({
+            r: 18,
+            g: 52,
+            b: 86,
+        })
+        expect(parseHexColor('invalid')).toEqual({
+            r: 0,
+            g: 0,
+            b: 0,
+        })
     })
 
-    it.each(['#000000', '#FFFFFF', '#FF0000', '#00FF00', '#0000FF', '#808080', '#123456', '#FACE12'])('preserves %s through HSL conversion', hex => {
-        expect(rgbToHex(hslToRgb(rgbToHsl(parseHexColor(hex))))).toBe(hex)
-    })
+    it.each(['#000000', '#FFFFFF', '#FF0000', '#00FF00', '#0000FF', '#808080', '#123456', '#FACE12'])('preserves %s through HSL conversion', hex => void expect(rgbToHex(hslToRgb(rgbToHsl(parseHexColor(hex))))).toBe(hex))
 
     it('mixes channels with clamped amounts and a finite fallback for invalid amounts', () => {
         expect(mixHexColors('#000000', '#FFFFFF', 0.5)).toBe('#808080')
@@ -35,9 +41,23 @@ describe('color conversion and mixing', () => {
     })
 
     it('applies saturation and lightness bounds without changing hue', () => {
-        const adjusted = adjustHexColor('#FF0000', { saturationMultiplier: 1, minSaturation: 0, maxSaturation: 1, lightnessMultiplier: 0.5, minLightness: 0, maxLightness: 1 })
+        const adjusted = adjustHexColor('#FF0000', {
+            saturationMultiplier: 1,
+            minSaturation: 0,
+            maxSaturation: 1,
+            lightnessMultiplier: 0.5,
+            minLightness: 0,
+            maxLightness: 1,
+        })
         expect(adjusted).toBe('#800000')
-        const bounded = adjustHexColor('#FF0000', { saturationMultiplier: 3, minSaturation: 0, maxSaturation: 0, lightnessMultiplier: 3, minLightness: 0.5, maxLightness: 0.5 })
+        const bounded = adjustHexColor('#FF0000', {
+            saturationMultiplier: 3,
+            minSaturation: 0,
+            maxSaturation: 0,
+            lightnessMultiplier: 3,
+            minLightness: 0.5,
+            maxLightness: 0.5,
+        })
         expect(bounded).toBe('#808080')
     })
 })

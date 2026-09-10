@@ -11,8 +11,12 @@ import { createContextPreviewEnvironment } from './context-preview-environment.t
 vi.mock('$src/services/auth-service.ts', () => ({ default: { getTokenSilently: vi.fn(async () => 'a/b ?c') } }))
 afterEach(() => vi.clearAllMocks())
 
-function fixture() {
-    return createContextPreviewEnvironment({ document, getDocuments: () => [], getThreads: () => [] })
+const fixture = () => {
+    return createContextPreviewEnvironment({
+        document,
+        getDocuments: () => [],
+        getThreads: () => [],
+    })
 }
 
 describe('context preview infrastructure adapter', () => {
@@ -37,8 +41,20 @@ describe('context preview infrastructure adapter', () => {
         expect(port.extractDocumentText({
             type: 'doc',
             content: [
-                { type: 'paragraph', content: [{ type: 'text', text: 'First' }] },
-                { type: 'paragraph', content: [{ type: 'text', text: 'Second' }] },
+                {
+                    type: 'paragraph',
+                    content: [{
+                        type: 'text',
+                        text: 'First',
+                    }],
+                },
+                {
+                    type: 'paragraph',
+                    content: [{
+                        type: 'text',
+                        text: 'Second',
+                    }],
+                },
             ],
         })).toBe('First\nSecond')
         expect(port.extractDocumentText('')).toBe('')

@@ -51,12 +51,12 @@ export const normalizeCapabilityInputsAttr = (value: unknown): string => {
         : ''
 }
 
-function isJsonObject(value: unknown): value is Record<string, CapabilityJsonValue> {
+const isJsonObject = (value: unknown): value is Record<string, CapabilityJsonValue> => {
     return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
         && Object.entries(value).every(([key, child]) => isSafeKey(key) && isJsonValue(child))
 }
 
-function isJsonValue(value: unknown): value is CapabilityJsonValue {
+const isJsonValue = (value: unknown): value is CapabilityJsonValue => {
     if (
         value === null
         || typeof value === 'string'
@@ -73,9 +73,7 @@ function isJsonValue(value: unknown): value is CapabilityJsonValue {
     return isJsonObject(value)
 }
 
-function isSafeKey(key: string): boolean {
-    return key !== '__proto__' && key !== 'prototype' && key !== 'constructor'
-}
+const isSafeKey = (key: string): boolean => key !== '__proto__' && key !== 'prototype' && key !== 'constructor'
 
 export const parseAiModelSelectionAttr = (value: unknown): string[] => {
     if (Array.isArray(value))

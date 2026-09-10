@@ -291,14 +291,14 @@ export class CapabilityModelToolExecutor {
     }
 }
 
-function resolveModelToolVariant(
+const resolveModelToolVariant = (
     state: ProviderState,
     plan: ProviderState['resolvedCapabilityPlan'],
     capabilityId: string,
 ): {
     axis: 'request'
     variantKey: 'request'
-} | CapabilityReasoningModelVariant {
+} | CapabilityReasoningModelVariant => {
     const tool = plan?.getManifest(capabilityId)?.manifest.tool
 
     if (
@@ -313,7 +313,7 @@ function resolveModelToolVariant(
     return reasoningVariantFromState(state)
 }
 
-function reasoningVariantFromState(state: ProviderState): CapabilityReasoningModelVariant {
+const reasoningVariantFromState = (state: ProviderState): CapabilityReasoningModelVariant => {
     const reasoningModelId = state.generationRun?.reasoningModelId
         ?? `${state.provider}:${state.aiModelMetaInfo?.model ?? state.modelVersion}`
 
@@ -330,7 +330,7 @@ function reasoningVariantFromState(state: ProviderState): CapabilityReasoningMod
     }
 }
 
-function buildGenerationTraceSteps(events: readonly Readonly<import('@lixpi/constants').CapabilityRunEvent>[]): CapabilityGenerationTraceStep[] {
+const buildGenerationTraceSteps = (events: readonly Readonly<import('@lixpi/constants').CapabilityRunEvent>[]): CapabilityGenerationTraceStep[] => {
     return events.flatMap(event => {
         if (
             !event.stepId

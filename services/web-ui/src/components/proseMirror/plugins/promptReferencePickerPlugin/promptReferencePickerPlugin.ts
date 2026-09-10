@@ -48,6 +48,85 @@ export type PromptReferencePickerState = {
     category: PromptReferenceCategory
 }
 
+export const promptReferenceCatalogItemToAtomAttrs = (item: PromptReferenceCatalogItem): Record<string, string> => {
+    if (item.referenceType === 'media') {
+        return {
+            referenceType: 'media',
+            assetId: item.assetId,
+            nodeId: item.nodeId ?? '',
+            mediaKind: item.mediaKind,
+            displayName: item.title,
+        }
+    }
+
+    if (item.referenceType === 'capability-artifact') {
+        return {
+            referenceType: 'capability-artifact',
+            assetId: item.assetId,
+            nodeId: item.nodeId ?? '',
+            artifactTypeId: item.artifactTypeId,
+            displayName: item.title,
+        }
+    }
+
+    if (item.referenceType === 'capability-module') {
+        return {
+            referenceType: 'capability-module',
+            moduleId: item.moduleId,
+            displayName: item.name,
+        }
+    }
+
+    return {
+        referenceType: item.referenceType,
+        capabilityId: item.capabilityId,
+        displayName: item.name,
+    }
+}
+
+const getCatalogItemKey = (item: PromptReferenceCatalogItem): string => {
+    if (item.referenceType === 'media')
+        return `media:${item.assetId}:${item.nodeId ?? ''}`
+
+    if (item.referenceType === 'capability-artifact')
+        return `capability-artifact:${item.assetId}:${item.nodeId ?? ''}`
+
+    return `${item.referenceType}:${item.referenceId}`
+}
+
+const getCatalogItemSignature = (item: PromptReferenceCatalogItem): string => {
+    if (item.referenceType === 'media') {
+        return [
+            item.title,
+            item.source,
+            item.scope,
+            item.mediaKind,
+            String(item.thumbnailAvailable),
+            String(item.updatedAt),
+        ].join('\n')
+    }
+
+    if (item.referenceType === 'capability-artifact') {
+        return [
+            item.title,
+            item.source,
+            item.scope,
+            item.artifactTypeId,
+            JSON.stringify(item.displayMetadata),
+            String(item.updatedAt),
+        ].join('\n')
+    }
+
+    return [item.name, item.summary, item.referenceType].join('\n')
+}
+
+const categoryLabel = (category: PromptReferenceCategory): string => {
+    if (category === 'capabilities')
+        return 'Capabilities'
+
+    return `${category[0]!.toLocaleUpperCase('en-US')}${category.slice(1)}`
+}
+
 export const promptReferencePickerPluginKey = new PluginKey<PromptReferencePickerState>('promptReferencePicker')
 export const capabilityModulePickerPluginKey = new PluginKey<PromptReferencePickerState>('capabilityModulePicker')
 
@@ -405,10 +484,12 @@ class PromptReferencePickerMenu {
             || categoryChanged
         ) {
             this.results = []
-            this.list.replaceChildren(html`<div
+            this.list.replaceChildren(html`
+                <div
                     className="prompt-reference-picker-status"
                     role="status"
-                >Searching…</div>`)
+                >Searching…</div>
+            `)
         }
 
         const requestSequence = ++this.requestSequence
@@ -739,14 +820,14 @@ class PromptReferencePickerMenu {
                         )
                 }}
             >
-            <span
-                className="prompt-reference-picker-glyph prompt-reference-picker-glyph-capability-artifact"
-                aria-hidden="true"
-                innerHTML=${getCapabilityArtifactIcon(item.artifactTypeId)}
-            ></span>
-            <span className="prompt-reference-picker-copy prompt-reference-picker-artifact-host"></span>
-            <span className="prompt-reference-picker-badge">Artifact</span>
-        </button>
+                <span
+                    className="prompt-reference-picker-glyph prompt-reference-picker-glyph-capability-artifact"
+                    aria-hidden="true"
+                    innerHTML=${getCapabilityArtifactIcon(item.artifactTypeId)}
+                ></span>
+                <span className="prompt-reference-picker-copy prompt-reference-picker-artifact-host"></span>
+                <span className="prompt-reference-picker-badge">Artifact</span>
+            </button>
         ` as HTMLButtonElement
         capabilityArtifactFrontendRegistry.require(item.artifactTypeId).createPromptReferenceView({
             container: row.querySelector('.prompt-reference-picker-artifact-host') as HTMLElement,
@@ -970,82 +1051,3 @@ export const createSlashCapabilityModulePickerPlugin = (catalog: PromptReference
     catalog,
     'modules',
 )
-
-export function promptReferenceCatalogItemToAtomAttrs(item: PromptReferenceCatalogItem): Record<string, string> {
-    if (item.referenceType === 'media') {
-        return {
-            referenceType: 'media',
-            assetId: item.assetId,
-            nodeId: item.nodeId ?? '',
-            mediaKind: item.mediaKind,
-            displayName: item.title,
-        }
-    }
-
-    if (item.referenceType === 'capability-artifact') {
-        return {
-            referenceType: 'capability-artifact',
-            assetId: item.assetId,
-            nodeId: item.nodeId ?? '',
-            artifactTypeId: item.artifactTypeId,
-            displayName: item.title,
-        }
-    }
-
-    if (item.referenceType === 'capability-module') {
-        return {
-            referenceType: 'capability-module',
-            moduleId: item.moduleId,
-            displayName: item.name,
-        }
-    }
-
-    return {
-        referenceType: item.referenceType,
-        capabilityId: item.capabilityId,
-        displayName: item.name,
-    }
-}
-
-function getCatalogItemKey(item: PromptReferenceCatalogItem): string {
-    if (item.referenceType === 'media')
-        return `media:${item.assetId}:${item.nodeId ?? ''}`
-
-    if (item.referenceType === 'capability-artifact')
-        return `capability-artifact:${item.assetId}:${item.nodeId ?? ''}`
-
-    return `${item.referenceType}:${item.referenceId}`
-}
-
-function getCatalogItemSignature(item: PromptReferenceCatalogItem): string {
-    if (item.referenceType === 'media') {
-        return [
-            item.title,
-            item.source,
-            item.scope,
-            item.mediaKind,
-            String(item.thumbnailAvailable),
-            String(item.updatedAt),
-        ].join('\n')
-    }
-
-    if (item.referenceType === 'capability-artifact') {
-        return [
-            item.title,
-            item.source,
-            item.scope,
-            item.artifactTypeId,
-            JSON.stringify(item.displayMetadata),
-            String(item.updatedAt),
-        ].join('\n')
-    }
-
-    return [item.name, item.summary, item.referenceType].join('\n')
-}
-
-function categoryLabel(category: PromptReferenceCategory): string {
-    if (category === 'capabilities')
-        return 'Capabilities'
-
-    return category[0]!.toLocaleUpperCase('en-US') + category.slice(1)
-}

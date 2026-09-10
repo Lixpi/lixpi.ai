@@ -13,9 +13,7 @@ import {
 } from './transcoders/run-process.ts'
 
 describe('runProcess', () => {
-    it('resolves when process exits successfully', async () => {
-        await expect(runProcess('node', ['-e', 'process.exit(0)'])).resolves.toBeUndefined()
-    })
+    it('resolves when process exits successfully', async () => void (await expect(runProcess('node', ['-e', 'process.exit(0)'])).resolves.toBeUndefined()))
 
     it('rejects when process exits non-zero', async () => {
         await expect(runProcess('node', ['-e', 'process.exit(3)']))
@@ -29,9 +27,7 @@ describe('runProcess', () => {
 })
 
 describe('withTempDir', () => {
-    beforeEach(() => {
-        vi.useRealTimers()
-    })
+    beforeEach(() => void vi.useRealTimers())
 
     it('creates a temporary directory, passes it into a function, and always removes it', async () => {
         let innerDir: string | null = null
@@ -39,6 +35,7 @@ describe('withTempDir', () => {
         const result = await withTempDir('unit-', async (dir) => {
             innerDir = dir
             await access(dir)
+
             return 'done'
         })
 
@@ -52,6 +49,7 @@ describe('withTempDir', () => {
         await expect(withTempDir('unit-', async (dir) => {
             innerDir = dir
             await access(dir)
+
             throw new Error('extract failed')
         })).rejects.toThrow('extract failed')
 

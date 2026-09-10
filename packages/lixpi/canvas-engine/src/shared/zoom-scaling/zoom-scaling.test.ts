@@ -16,9 +16,7 @@ import {
     getResizeHandleScaledSizes,
 } from './zoom-scaling.ts'
 
-function worldSizeToScreenSize(size: number, viewport: { zoom: number }): number {
-    return size * viewport.zoom
-}
+const worldSizeToScreenSize = (size: number, viewport: { zoom: number }): number => size * viewport.zoom
 
 const boundedZoomScaling = { minZoom: 0.4 }
 const adaptiveBoundedLowZoomPower = 0.45
@@ -28,14 +26,17 @@ const adaptiveEdgeScalingConfig = { zoomScaling: adaptiveBoundedZoomScaling }
 const resizeHandleScalingConfig = { zoomScaling: boundedZoomScaling }
 const adaptiveResizeHandleScalingConfig = { zoomScaling: adaptiveBoundedZoomScaling }
 
-function expectedAdaptiveBoundedScreenMultiplier(
+const expectedAdaptiveBoundedScreenMultiplier = (
     zoom: number,
     minZoom = boundedZoomScaling.minZoom,
     lowZoomPower = adaptiveBoundedLowZoomPower,
-): number {
+): number => {
     const safeZoom = Number.isFinite(zoom) ? Math.max(zoom, 0.01) : 1
     const safeMinZoom = Number.isFinite(minZoom) ? Math.max(minZoom, 0.01) : 1
-    if (safeZoom >= safeMinZoom) return Math.pow(Math.min(safeZoom, 1), lowZoomPower)
+
+    if (safeZoom >= safeMinZoom)
+        return Math.pow(Math.min(safeZoom, 1), lowZoomPower)
+
     return Math.pow(Math.min(safeMinZoom, 1), lowZoomPower) * (safeZoom / safeMinZoom)
 }
 
@@ -44,9 +45,7 @@ function expectedAdaptiveBoundedScreenMultiplier(
 // =============================================================================
 
 describe('getAdaptiveZoomMultiplier', () => {
-    it('returns 1 at 100% zoom', () => {
-        expect(getAdaptiveZoomMultiplier(1)).toBe(1)
-    })
+    it('returns 1 at 100% zoom', () => void expect(getAdaptiveZoomMultiplier(1)).toBe(1))
 
     it('shrinks below 1 for low zoom (power curve)', () => {
         const m = getAdaptiveZoomMultiplier(0.5)
@@ -99,13 +98,9 @@ describe('scaleForZoom', () => {
         expect(adaptive).toBeLessThan(constant)
     })
 
-    it('adaptive mode: at zoom = 1.0 equals base size', () => {
-        expect(scaleForZoom(16, 1.0, { mode: 'adaptive' })).toBe(16)
-    })
+    it('adaptive mode: at zoom = 1.0 equals base size', () => void expect(scaleForZoom(16, 1.0, { mode: 'adaptive' })).toBe(16))
 
-    it('defaults to constant mode', () => {
-        expect(scaleForZoom(10, 2.0)).toBe(5)
-    })
+    it('defaults to constant mode', () => void expect(scaleForZoom(10, 2.0)).toBe(5))
 })
 
 // =============================================================================
@@ -116,14 +111,23 @@ describe('adaptive bounded canvas chrome scaling', () => {
     it('adds the canvas-chrome low-zoom power without mutating the plain bounded config', () => {
         const adapted = getAdaptiveBoundedZoomScalingOptions(boundedZoomScaling)
 
-        expect(adapted).toEqual({ minZoom: 0.4, lowZoomPower: adaptiveBoundedLowZoomPower })
+        expect(adapted).toEqual({
+            minZoom: 0.4,
+            lowZoomPower: adaptiveBoundedLowZoomPower,
+        })
         expect(boundedZoomScaling).toEqual({ minZoom: 0.4 })
     })
 
     it('preserves an explicit low-zoom power override', () => {
-        const adapted = getAdaptiveBoundedZoomScalingOptions({ minZoom: 0.5, lowZoomPower: 0.7 })
+        const adapted = getAdaptiveBoundedZoomScalingOptions({
+            minZoom: 0.5,
+            lowZoomPower: 0.7,
+        })
 
-        expect(adapted).toEqual({ minZoom: 0.5, lowZoomPower: 0.7 })
+        expect(adapted).toEqual({
+            minZoom: 0.5,
+            lowZoomPower: 0.7,
+        })
     })
 
     it('keeps screen chrome at base pixels at 100% and above', () => {
@@ -181,14 +185,26 @@ describe('adaptive bounded canvas chrome scaling', () => {
 // =============================================================================
 
 describe('getCanvasChromeScreenLayout', () => {
-    const worldPosition = { x: 240, y: 360 }
-    const worldDimensions = { width: 512, height: 288 }
+    const worldPosition = {
+        x: 240,
+        y: 360,
+    }
+    const worldDimensions = {
+        width: 512,
+        height: 288,
+    }
     const baseGap = 6
-    const viewportBase = { x: 120, y: -45 }
+    const viewportBase = {
+        x: 120,
+        y: -45,
+    }
 
-    function getLayout(zoom: number) {
+    const getLayout = (zoom: number) => {
         return getCanvasChromeScreenLayout({
-            viewport: { ...viewportBase, zoom },
+            viewport: {
+                ...viewportBase,
+                zoom,
+            },
             worldPosition,
             worldDimensions,
             baseGap,
@@ -210,6 +226,7 @@ describe('getCanvasChromeScreenLayout', () => {
 
     it('thins generated-media icon chrome only below the lower zoom breakpoint', () => {
         let previousScale = 0
+
         for (let zoomStep = 1; zoomStep < 40; zoomStep += 1) {
             const zoom = zoomStep / 100
             const layout = getLayout(zoom)
@@ -262,7 +279,10 @@ describe('getCanvasChromeScreenLayout', () => {
     it('uses the adaptive bounded curve for generated-media chrome when the caller opts in', () => {
         for (const zoom of [0.1, 0.35, 0.4, 0.44, 0.47, 0.75, 1, 1.57, 2]) {
             const layout = getCanvasChromeScreenLayout({
-                viewport: { ...viewportBase, zoom },
+                viewport: {
+                    ...viewportBase,
+                    zoom,
+                },
                 worldPosition,
                 worldDimensions,
                 baseGap,
@@ -275,11 +295,10 @@ describe('getCanvasChromeScreenLayout', () => {
             expect(layout.screenGap).toBeCloseTo(baseGap * expectedScale, 10)
             expect(layout.left + layout.layoutWidth * layout.screenScale).toBeCloseTo(projectedRight, 10)
 
-            if (zoom < 1) {
+            if (zoom < 1)
                 expect(layout.screenScale).toBeLessThan(1)
-            } else {
+             else
                 expect(layout.screenScale).toBe(1)
-            }
         }
     })
 })
@@ -327,6 +346,7 @@ describe('getEdgeScaledSizes', () => {
 
     it('never lets the visual connector size grow with zoom above 100%', () => {
         const baseStroke = 2
+
         for (let zoomStep = 100; zoomStep <= 500; zoomStep += 1) {
             const zoom = zoomStep / 100
             const sizes = getEdgeScaledSizes(zoom, edgeScalingConfig)
@@ -368,7 +388,11 @@ describe('getEdgeScaledSizes', () => {
     it('renders connector chrome at identical PIXI screen sizes for every zoom percent above the lower threshold', () => {
         for (let zoomStep = 40; zoomStep <= 500; zoomStep += 1) {
             const zoom = zoomStep / 100
-            const viewport = { x: 17, y: -29, zoom }
+            const viewport = {
+                x: 17,
+                y: -29,
+                zoom,
+            }
             const sizes = getEdgeScaledSizes(zoom, edgeScalingConfig)
 
             expect(worldSizeToScreenSize(sizes.strokeWidth, viewport)).toBeCloseTo(2, 10)
@@ -390,9 +414,14 @@ describe('getEdgeScaledSizes', () => {
 
     it('only thins PIXI connector screen sizes while zooming out below the lower threshold', () => {
         let previousStroke = 0
+
         for (let zoomStep = 1; zoomStep < 40; zoomStep += 1) {
             const zoom = zoomStep / 100
-            const viewport = { x: 0, y: 0, zoom }
+            const viewport = {
+                x: 0,
+                y: 0,
+                zoom,
+            }
             const sizes = getEdgeScaledSizes(zoom, edgeScalingConfig)
             const stroke = worldSizeToScreenSize(sizes.strokeWidth, viewport)
 
@@ -405,6 +434,7 @@ describe('getEdgeScaledSizes', () => {
 
     it('thins PIXI connector base pixels only below the lower threshold', () => {
         let previousStroke = 0
+
         for (let zoomStep = 1; zoomStep < 40; zoomStep += 1) {
             const zoom = zoomStep / 100
             const stroke = scaleCanvasChromeToScreenForZoom(2, zoom, boundedZoomScaling)
@@ -476,7 +506,10 @@ describe('getEdgeScaledSizes', () => {
         const sizes = getEdgeScaledSizes(1, {
             baseStrokeWidth: 4,
             baseMarkerSize: 20,
-            baseMarkerOffset: { source: 10, target: 10 },
+            baseMarkerOffset: {
+                source: 10,
+                target: 10,
+            },
             zoomScaling: boundedZoomScaling,
         })
 

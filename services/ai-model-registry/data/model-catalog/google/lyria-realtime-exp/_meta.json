@@ -1,0 +1,109 @@
+{
+    "modelFamily": "lyria-realtime-exp",
+    "mergedAt": "2026-09-08T03:06:07.404Z",
+    "baseSchemaVersion": 1,
+    "syncStatus": "missing-required-fields",
+    "sources": {
+        "sourcesQueried": [
+            "litellm",
+            "models.dev",
+            "provider-api",
+            "bedrock"
+        ],
+        "sourcesWithDataForThisModel": [],
+        "inferenceProviderCalledByThePlatform": "google",
+        "sourcesWithoutRatesForThatProvider": [],
+        "confirmedByMoreThanOneSource": false,
+        "fieldsWhereSourcesDisagree": []
+    },
+    "lixpi": {
+        "fieldsOnlyLixpiSupplies": [
+            "modalities",
+            "shortTitle"
+        ],
+        "fieldsWhereLixpiOverridesSources": [],
+        "fieldsInheritedFromProviderBaseFile": [
+            "color",
+            "colorIconName",
+            "iconName",
+            "providerTitle"
+        ]
+    },
+    "requiredFieldsStillMissing": [
+        "inferenceProviders.google.pricing",
+        "title",
+        "sortingPosition",
+        "modalities",
+        "defaultTemperature",
+        "inferenceCapabilities"
+    ],
+    "fieldsFilledFromSchemaDefault": [
+        "inferenceProviders.google.pricing.currency",
+        "contextWindow",
+        "maxCompletionSize"
+    ],
+    "ratesRefusedBecauseUnitsDiffer": [],
+    "fieldOrigins": {
+        "providerTitle": {
+            "valueCameFrom": "provider-base-file",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": []
+        },
+        "color": {
+            "valueCameFrom": "provider-base-file",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": []
+        },
+        "iconName": {
+            "valueCameFrom": "provider-base-file",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": []
+        },
+        "colorIconName": {
+            "valueCameFrom": "provider-base-file",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": []
+        },
+        "title": {
+            "valueCameFrom": "lixpi-authored-file",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": []
+        },
+        "shortTitle": {
+            "valueCameFrom": "lixpi-authored-file",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": []
+        },
+        "sortingPosition": {
+            "valueCameFrom": "lixpi-authored-file",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": []
+        },
+        "modalities": {
+            "valueCameFrom": "lixpi-authored-file",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": []
+        },
+        "defaultTemperature": {
+            "valueCameFrom": "lixpi-authored-file",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": []
+        },
+        "provider": {
+            "valueCameFrom": "derived-from-file-name",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": []
+        },
+        "model": {
+            "valueCameFrom": "lixpi-authored-file",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": []
+        },
+        "modelVersion": {
+            "valueCameFrom": "lixpi-authored-file",
+            "sourceAgreement": "only-one-source-answered",
+            "sourcesThatAnswered": []
+        }
+    },
+    "note": "No source has data for this model. Every field comes from the authored file."
+}

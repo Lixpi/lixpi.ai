@@ -1,10 +1,4 @@
-import {
-    describe,
-    it,
-    expect,
-    beforeEach,
-    vi,
-} from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { readFileSync } from 'fs'
 import { resolve } from 'path'
 import { selection } from 'd3-selection'
@@ -51,9 +45,11 @@ import { withoutLayout } from '@lixpi/test-utils'
 // transition chains synchronous and no-op for these unit tests.
 const makeChain = (): any => {
     const chain: any = {}
+
     for (const method of ['duration', 'ease', 'attr', 'style', 'select', 'delay', 'on', 'remove', 'tween']) {
         chain[method] = () => chain
     }
+
     return chain
 }
 ;(selection.prototype as any).transition = () => makeChain()
@@ -62,19 +58,19 @@ const makeChain = (): any => {
 // HELPERS
 // =============================================================================
 
-function expectSourceToContain(source: string, snippet: string): void {
-    expect(withoutLayout(source).includes(withoutLayout(snippet)), `source should contain: ${snippet}`).toBe(true)
+const expectSourceToContain = (source: string, snippet: string): void => void expect(withoutLayout(source).includes(withoutLayout(snippet)), `source should contain: ${snippet}`).toBe(true)
+
+const expectSourceNotToContain = (source: string, snippet: string): void => void expect(withoutLayout(source).includes(withoutLayout(snippet)), `source should not contain: ${snippet}`).toBe(false)
+
+const createEditorStateWithPlugins = (document: ProseMirrorNode, plugins: any[] = []) => {
+    return EditorState.create({
+        doc: document,
+        schema: testSchema,
+        plugins,
+    })
 }
 
-function expectSourceNotToContain(source: string, snippet: string): void {
-    expect(withoutLayout(source).includes(withoutLayout(snippet)), `source should not contain: ${snippet}`).toBe(false)
-}
-
-function createEditorStateWithPlugins(document: ProseMirrorNode, plugins: any[] = []) {
-    return EditorState.create({ doc: document, schema: testSchema, plugins })
-}
-
-function createMockControlFactories() {
+const createMockControlFactories = () => {
     const modelDropdownDom = document.createElement('div')
     modelDropdownDom.className = 'mock-model-dropdown'
 
@@ -178,8 +174,9 @@ function createMockControlFactories() {
     }
 }
 
-function createPluginOptions(overrides: Partial<Parameters<typeof createAiPromptInputPlugin>[0]> = {}) {
+const createPluginOptions = (overrides: Partial<Parameters<typeof createAiPromptInputPlugin>[0]> = {}) => {
     const factories = createMockControlFactories()
+
     return {
         options: {
             onSubmit: vi.fn(),
@@ -220,17 +217,11 @@ describe('aiPromptInputNodeSpec — schema definition', () => {
         expect(nodeType.spec.content).toBe('(paragraph | block)+')
     })
 
-    it('is not draggable', () => {
-        expect(aiPromptInputNodeSpec.draggable).toBe(false)
-    })
+    it('is not draggable', () => void expect(aiPromptInputNodeSpec.draggable).toBe(false))
 
-    it('is not selectable', () => {
-        expect(aiPromptInputNodeSpec.selectable).toBe(false)
-    })
+    it('is not selectable', () => void expect(aiPromptInputNodeSpec.selectable).toBe(false))
 
-    it('is isolating', () => {
-        expect(aiPromptInputNodeSpec.isolating).toBe(true)
-    })
+    it('is isolating', () => void expect(aiPromptInputNodeSpec.isolating).toBe(true))
 
     describe('default attribute values', () => {
         it('aiReasoningModels defaults to empty string', () => {
@@ -258,7 +249,10 @@ describe('aiPromptInputNodeSpec — schema definition', () => {
 
         it('serializes attributes as data-* attributes', () => {
             const state = createBaseEditorState(doc(promptInput(
-                { aiReasoningModels: '["gpt-4"]', imageGenerationSize: '512x512' },
+                {
+                    aiReasoningModels: '["gpt-4"]',
+                    imageGenerationSize: '512x512',
+                },
                 p('Hello'),
             )))
             const node = state.doc.firstChild!
@@ -314,11 +308,11 @@ describe('aiPromptInputNodeSpec — schema definition', () => {
 // =============================================================================
 
 describe('createAiPromptInputNodeView — DOM structure', () => {
-    function createNodeView(
+    const createNodeView = (
         text = 'Hello world',
         attrs: Record<string, unknown> = {},
         options: Partial<Parameters<typeof createAiPromptInputNodeView>[0]> = {},
-    ) {
+    ) => {
         const testDoc = doc(promptInput(attrs, p(text)))
         const state = createBaseEditorState(testDoc)
         const node = state.doc.firstChild!
@@ -350,7 +344,12 @@ describe('createAiPromptInputNodeView — DOM structure', () => {
             ...options,
         })(node, mockView, getPos)
 
-        return { nv, factories, node, mockView }
+        return {
+            nv,
+            factories,
+            node,
+            mockView,
+        }
     }
 
     it('creates wrapper with class ai-prompt-input-wrapper', () => {
@@ -371,7 +370,10 @@ describe('createAiPromptInputNodeView — DOM structure', () => {
     })
 
     it('renders the image and video choices as 36px circular icon values', () => {
-        const { nv, mockView } = createNodeView()
+        const {
+            nv,
+            mockView,
+        } = createNodeView()
         const svg = nv.dom.querySelector('.ai-prompt-media-mode-switch-svg') as SVGSVGElement
         const track = svg.querySelector('.sliding-switch-track') as SVGRectElement
         const indicator = svg.querySelector('.sliding-switch-indicator') as SVGRectElement
@@ -416,10 +418,16 @@ describe('createAiPromptInputNodeView — DOM structure', () => {
         expect(imageIconPath?.getAttribute('fill')).toBe(settings.aiPromptInput.mediaModeSwitch.styles.selectedOptionColor)
         expect(videoIconPath?.getAttribute('fill')).toBe(settings.aiPromptInput.mediaModeSwitch.styles.unselectedOptionColor)
 
-        videoOption.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true, cancelable: true }))
+        videoOption.dispatchEvent(new MouseEvent('mouseenter', {
+            bubbles: true,
+            cancelable: true,
+        }))
         expect(videoIconPath?.getAttribute('fill')).toBe(settings.aiPromptInput.mediaModeSwitch.styles.hoveredOptionColor)
 
-        videoOption.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }))
+        videoOption.dispatchEvent(new MouseEvent('click', {
+            bubbles: true,
+            cancelable: true,
+        }))
 
         expect(mockView.state.doc.firstChild!.attrs.mediaGenerationMode).toBe('video')
         expect(imageOption.getAttribute('aria-checked')).toBe('false')
@@ -429,9 +437,7 @@ describe('createAiPromptInputNodeView — DOM structure', () => {
 
     it('mounts the icon switch outside the input wrapper when requested and removes it on destroy', () => {
         const mediaModeMountEl = document.createElement('div')
-        const mountMediaModeSwitch = vi.fn((switchElement: HTMLElement) => {
-            mediaModeMountEl.appendChild(switchElement)
-        })
+        const mountMediaModeSwitch = vi.fn((switchElement: HTMLElement) => void mediaModeMountEl.appendChild(switchElement))
         const { nv } = createNodeView('Hello', {}, { mountMediaModeSwitch })
 
         const mediaModeSwitch = mediaModeMountEl.querySelector('.ai-prompt-media-mode-switch') as HTMLElement
@@ -561,10 +567,11 @@ describe('createAiPromptInputNodeView — DOM structure', () => {
 
     it('mounts the model configuration trigger beside the composer without mode text or a leading icon', () => {
         const modelMenuControlMountEl = document.createElement('div')
-        const mountModelMenuControl = vi.fn((controlElement: HTMLElement) => {
-            modelMenuControlMountEl.appendChild(controlElement)
-        })
-        const { nv, factories } = createNodeView('Hello', {}, { mountModelMenuControl })
+        const mountModelMenuControl = vi.fn((controlElement: HTMLElement) => void modelMenuControlMountEl.appendChild(controlElement))
+        const {
+            nv,
+            factories,
+        } = createNodeView('Hello', {}, { mountModelMenuControl })
         const trigger = modelMenuControlMountEl.querySelector('.ai-prompt-model-menu-trigger') as HTMLButtonElement
         const summary = trigger.querySelector('.ai-prompt-model-menu-trigger-summary')
         const controls = nv.dom.querySelector('.ai-prompt-input-controls')!
@@ -586,7 +593,10 @@ describe('createAiPromptInputNodeView — DOM structure', () => {
         )
 
         document.body.append(nv.dom, modelMenuControlMountEl)
-        trigger.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }))
+        trigger.dispatchEvent(new MouseEvent('click', {
+            bubbles: true,
+            cancelable: true,
+        }))
 
         const modelMenu = nv.dom.querySelector('.ai-prompt-model-menu-info-bubble')!
         expect(modelMenu.classList.contains('is-visible')).toBe(true)
@@ -625,7 +635,10 @@ describe('createAiPromptInputNodeView — DOM structure', () => {
                                 key: 'imageSize',
                                 label: 'Image size',
                                 kind: 'segmented',
-                                options: [{ value: '1:1', label: 'Square' }],
+                                options: [{
+                                    value: '1:1',
+                                    label: 'Square',
+                                }],
                                 defaultValue: '1:1',
                             },
                         ],
@@ -691,21 +704,30 @@ describe('createAiPromptInputNodeView — DOM structure', () => {
                                 key: 'aspectRatio',
                                 label: 'Aspect ratio',
                                 kind: 'segmented',
-                                options: [{ value: '16:9', label: 'Widescreen' }],
+                                options: [{
+                                    value: '16:9',
+                                    label: 'Widescreen',
+                                }],
                                 defaultValue: '16:9',
                             },
                             {
                                 key: 'resolution',
                                 label: 'Resolution',
                                 kind: 'segmented',
-                                options: [{ value: '1080p', label: '1080p' }],
+                                options: [{
+                                    value: '1080p',
+                                    label: '1080p',
+                                }],
                                 defaultValue: '1080p',
                             },
                             {
                                 key: 'duration',
                                 label: 'Duration',
                                 kind: 'segmented',
-                                options: [{ value: '-1', label: 'Automatic' }],
+                                options: [{
+                                    value: '-1',
+                                    label: 'Automatic',
+                                }],
                                 defaultValue: '-1',
                             },
                         ],
@@ -723,7 +745,11 @@ describe('createAiPromptInputNodeView — DOM structure', () => {
                     {
                         groupId: 'video:openai',
                         modelIds: ['OpenAI:sora-2'],
-                        values: { aspectRatio: '16:9', resolution: '1080p', duration: '-1' },
+                        values: {
+                            aspectRatio: '16:9',
+                            resolution: '1080p',
+                            duration: '-1',
+                        },
                     },
                 ]),
             }, {
@@ -778,21 +804,30 @@ describe('createAiPromptInputNodeView — DOM structure', () => {
                                 key: 'aspectRatio',
                                 label: 'Aspect ratio',
                                 kind: 'segmented',
-                                options: [{ value: '16:9', label: 'Widescreen' }],
+                                options: [{
+                                    value: '16:9',
+                                    label: 'Widescreen',
+                                }],
                                 defaultValue: '16:9',
                             },
                             {
                                 key: 'resolution',
                                 label: 'Resolution',
                                 kind: 'segmented',
-                                options: [{ value: '1080p', label: '1080p' }],
+                                options: [{
+                                    value: '1080p',
+                                    label: '1080p',
+                                }],
                                 defaultValue: '1080p',
                             },
                             {
                                 key: 'duration',
                                 label: 'Duration',
                                 kind: 'segmented',
-                                options: [{ value: '-1', label: 'Automatic' }],
+                                options: [{
+                                    value: '-1',
+                                    label: 'Automatic',
+                                }],
                                 defaultValue: '-1',
                             },
                         ],
@@ -802,6 +837,7 @@ describe('createAiPromptInputNodeView — DOM structure', () => {
         } as any)
 
         let nv: ReturnType<typeof createNodeView>['nv'] | null = null
+
         try {
             const modelMenuControlMountEl = document.createElement('div')
             nv = createNodeView('Hello', {
@@ -811,7 +847,11 @@ describe('createAiPromptInputNodeView — DOM structure', () => {
                     {
                         groupId: 'video:google',
                         modelIds: ['Google:veo-3'],
-                        values: { aspectRatio: '16:9', resolution: '1080p', duration: '-1' },
+                        values: {
+                            aspectRatio: '16:9',
+                            resolution: '1080p',
+                            duration: '-1',
+                        },
                     },
                 ]),
             }, {
@@ -849,7 +889,9 @@ describe('createAiPromptInputNodeView — DOM structure', () => {
             expect(summary?.querySelector('.ai-prompt-model-menu-trigger-summary-aspect-ratio-icon')).toBeNull()
             expect(summary?.querySelector('.ai-prompt-model-menu-trigger-summary-clock-icon')).toBeNull()
         } finally {
-            if (nv?.destroy) nv.destroy()
+            if (nv?.destroy)
+                nv.destroy()
+
             aiModelsStore.resetStore()
         }
     })
@@ -890,7 +932,9 @@ describe('createAiPromptInputNodeView — DOM structure', () => {
 
             expect(getModelLabel()).toBe('GPT Image 2')
         } finally {
-            if (nv?.destroy) nv.destroy()
+            if (nv?.destroy)
+                nv.destroy()
+
             aiModelsStore.resetStore()
         }
     })
@@ -919,7 +963,10 @@ describe('createAiPromptInputNodeView — DOM structure', () => {
             toJSON: () => ({}),
         } as DOMRect)
 
-        trigger.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }))
+        trigger.dispatchEvent(new MouseEvent('click', {
+            bubbles: true,
+            cancelable: true,
+        }))
 
         const modelMenu = nv.dom.querySelector('.ai-prompt-model-menu-info-bubble') as HTMLElement
         expect(modelMenu.style.getPropertyValue('--ai-prompt-model-menu-info-bubble-max-height')).toBe('584px')
@@ -948,7 +995,10 @@ describe('createAiPromptInputNodeView — DOM structure', () => {
 
     describe('control elements rendering', () => {
         it('renders model dropdown inside model settings bubble menu', () => {
-            const { nv, factories } = createNodeView()
+            const {
+                nv,
+                factories,
+            } = createNodeView()
             const modelMenu = nv.dom.querySelector('.ai-prompt-model-menu-content')!
             expect(modelMenu.contains(factories.modelDropdownDom)).toBe(true)
         })
@@ -958,20 +1008,29 @@ describe('createAiPromptInputNodeView — DOM structure', () => {
             // generation config matrix, not the legacy createImageSizeDropdown
             // factory — that factory is threaded through as an option but is no
             // longer invoked by the node view.
-            const { nv, factories } = createNodeView()
+            const {
+                nv,
+                factories,
+            } = createNodeView()
             const modelMenu = nv.dom.querySelector('.ai-prompt-model-menu-content')!
             expect(modelMenu.querySelector('.ai-media-config-matrix[data-media-type="image"]')).not.toBeNull()
             expect(factories.createImageSizeDropdown).not.toHaveBeenCalled()
         })
 
         it('renders submit button inside controls', () => {
-            const { nv, factories } = createNodeView()
+            const {
+                nv,
+                factories,
+            } = createNodeView()
             const controlsEl = nv.dom.querySelector('.ai-prompt-input-controls')!
             expect(controlsEl.contains(factories.submitButtonDom)).toBe(true)
         })
 
         it('controls keep only model settings trigger and submit visible by default', () => {
-            const { nv, factories } = createNodeView()
+            const {
+                nv,
+                factories,
+            } = createNodeView()
             const controlsEl = nv.dom.querySelector('.ai-prompt-input-controls')!
             const children = Array.from(controlsEl.children)
 
@@ -1011,7 +1070,10 @@ describe('createAiPromptInputNodeView — DOM structure', () => {
             document.body.appendChild(modelSelectorPortal)
             document.body.appendChild(dropdownScrollPortal)
 
-            trigger.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }))
+            trigger.dispatchEvent(new MouseEvent('click', {
+                bubbles: true,
+                cancelable: true,
+            }))
             expect(modelMenu.classList.contains('is-visible')).toBe(true)
 
             modelSelectorPortal.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }))
@@ -1039,6 +1101,7 @@ describe('createAiPromptInputNodeView — DOM structure', () => {
             expectedPlusIcon.innerHTML = plusIcon
 
             expect(sections).toHaveLength(titles.length)
+
             for (const [index, title] of titles.entries()) {
                 const section = sections[index]!
                 const heading = section.querySelector('.ai-prompt-model-menu-section-heading')!
@@ -1150,6 +1213,7 @@ describe('createAiPromptInputNodeView — DOM structure', () => {
             const sections = Array.from(nv.dom.querySelectorAll('.ai-prompt-model-menu-section'))
 
             expect(sections).toHaveLength(3)
+
             for (const section of sections) {
                 const rowCollection = section.querySelector('.ai-model-config-row-collection')
                 const rows = Array.from(section.querySelectorAll('.ai-model-config-row'))
@@ -1208,7 +1272,11 @@ describe('createAiPromptInputNodeView — DOM structure', () => {
                     modalities: [{ modality: 'text_generation' }],
                 },
             ] as any)
-            const { nv, factories, mockView } = createNodeView('Hello', {
+            const {
+                nv,
+                factories,
+                mockView,
+            } = createNodeView('Hello', {
                 aiReasoningModels: JSON.stringify(['Anthropic:sonnet-4-6']),
             })
             const reasoningSection = nv.dom.querySelectorAll('.ai-prompt-model-menu-section')[0] as HTMLElement
@@ -1219,7 +1287,10 @@ describe('createAiPromptInputNodeView — DOM structure', () => {
             expect(reasoningSection.querySelector('.ai-model-config-remove')).toBeNull()
 
             const addButton = reasoningSection.querySelector('.ai-model-config-add') as HTMLButtonElement
-            addButton.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }))
+            addButton.dispatchEvent(new MouseEvent('click', {
+                bubbles: true,
+                cancelable: true,
+            }))
             nv.update!(mockView.state.doc.firstChild!)
 
             expect(mockView.state.doc.firstChild!.attrs.useMultipleReasoningModels).toBe(true)
@@ -1229,7 +1300,10 @@ describe('createAiPromptInputNodeView — DOM structure', () => {
             expect(reasoningSection.querySelectorAll('.ai-model-config-row')).toHaveLength(2)
 
             const removeButton = reasoningSection.querySelector('.ai-model-config-remove') as HTMLButtonElement
-            removeButton.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }))
+            removeButton.dispatchEvent(new MouseEvent('click', {
+                bubbles: true,
+                cancelable: true,
+            }))
             nv.update!(mockView.state.doc.firstChild!)
 
             expect(mockView.state.doc.firstChild!.attrs.aiReasoningModels).toBe(JSON.stringify(['OpenAI:gpt-5-4']))
@@ -1249,7 +1323,7 @@ describe('createAiPromptInputNodeView — DOM structure', () => {
 // =============================================================================
 
 describe('createAiPromptInputNodeView — empty state tracking', () => {
-    function createNodeViewForEmpty(text = '') {
+    const createNodeViewForEmpty = (text = '') => {
         const testDoc = text ? doc(promptInput(p(text))) : doc(promptInput(p()))
         const state = createBaseEditorState(testDoc)
         const inputNode = state.doc.firstChild!
@@ -1276,7 +1350,10 @@ describe('createAiPromptInputNodeView — empty state tracking', () => {
             createSubmitButton: factories.createSubmitButton,
         })(inputNode, mockView, () => 0)
 
-        return { nv, factories }
+        return {
+            nv,
+            factories,
+        }
     }
 
     it('sets data-empty="true" when content is empty', () => {
@@ -1293,7 +1370,10 @@ describe('createAiPromptInputNodeView — empty state tracking', () => {
         const testDoc = doc(promptInput(p(promptReference({ displayName: 'Shelby' }))))
         const state = createBaseEditorState(testDoc)
         const inputNode = state.doc.firstChild!
-        const mockView = { state, dispatch: vi.fn() } as unknown as EditorView
+        const mockView = {
+            state,
+            dispatch: vi.fn(),
+        } as unknown as EditorView
         const factories = createMockControlFactories()
         const nv = createAiPromptInputNodeView({
             onSubmit: vi.fn(),
@@ -1333,7 +1413,7 @@ describe('createAiPromptInputNodeView — empty state tracking', () => {
 // =============================================================================
 
 describe('createAiPromptInputNodeView — stopEvent', () => {
-    function createNodeViewWithControls(options: Partial<Parameters<typeof createAiPromptInputNodeView>[0]> = {}) {
+    const createNodeViewWithControls = (options: Partial<Parameters<typeof createAiPromptInputNodeView>[0]> = {}) => {
         const testDoc = doc(promptInput(p('Hello')))
         const state = createBaseEditorState(testDoc)
         const inputNode = state.doc.firstChild!
@@ -1359,11 +1439,17 @@ describe('createAiPromptInputNodeView — stopEvent', () => {
             ...options,
         })(inputNode, mockView, () => 0)
 
-        return { nv, factories }
+        return {
+            nv,
+            factories,
+        }
     }
 
     it('stops events from controls (prevents ProseMirror from stealing focus)', () => {
-        const { nv, factories } = createNodeViewWithControls()
+        const {
+            nv,
+            factories,
+        } = createNodeViewWithControls()
         const event = new MouseEvent('click')
         Object.defineProperty(event, 'target', { value: factories.submitButtonDom })
 
@@ -1379,7 +1465,10 @@ describe('createAiPromptInputNodeView — stopEvent', () => {
     })
 
     it('stops events from elements nested inside controls', () => {
-        const { nv, factories } = createNodeViewWithControls()
+        const {
+            nv,
+            factories,
+        } = createNodeViewWithControls()
         const nestedEl = document.createElement('span')
         factories.modelDropdownDom.appendChild(nestedEl)
 
@@ -1404,7 +1493,7 @@ describe('createAiPromptInputNodeView — stopEvent', () => {
 // =============================================================================
 
 describe('createAiPromptInputNodeView — ignoreMutation', () => {
-    function createNodeViewInstance(options: Partial<Parameters<typeof createAiPromptInputNodeView>[0]> = {}) {
+    const createNodeViewInstance = (options: Partial<Parameters<typeof createAiPromptInputNodeView>[0]> = {}) => {
         const testDoc = doc(promptInput(p('Hello')))
         const state = createBaseEditorState(testDoc)
         const inputNode = state.doc.firstChild!
@@ -1430,7 +1519,10 @@ describe('createAiPromptInputNodeView — ignoreMutation', () => {
             ...options,
         })(inputNode, mockView, () => 0)
 
-        return { nv, factories }
+        return {
+            nv,
+            factories,
+        }
     }
 
     it('ignores mutations targeting the controls element', () => {
@@ -1442,7 +1534,10 @@ describe('createAiPromptInputNodeView — ignoreMutation', () => {
     })
 
     it('ignores mutations on elements inside controls', () => {
-        const { nv, factories } = createNodeViewInstance()
+        const {
+            nv,
+            factories,
+        } = createNodeViewInstance()
         const mutation = { target: factories.submitButtonDom } as MutationRecord
 
         expect(nv.ignoreMutation!(mutation)).toBe(true)
@@ -1471,7 +1566,7 @@ describe('createAiPromptInputNodeView — ignoreMutation', () => {
 // =============================================================================
 
 describe('createAiPromptInputNodeView — update', () => {
-    function createNodeViewForUpdate() {
+    const createNodeViewForUpdate = () => {
         const testDoc = doc(promptInput(p('Hello')))
         const state = createBaseEditorState(testDoc)
         const inputNode = state.doc.firstChild!
@@ -1496,7 +1591,10 @@ describe('createAiPromptInputNodeView — update', () => {
             createSubmitButton: factories.createSubmitButton,
         })(inputNode, mockView, () => 0)
 
-        return { nv, factories }
+        return {
+            nv,
+            factories,
+        }
     }
 
     it('returns true for same node type', () => {
@@ -1515,7 +1613,10 @@ describe('createAiPromptInputNodeView — update', () => {
     })
 
     it('calls modelDropdown.update on update', () => {
-        const { nv, factories } = createNodeViewForUpdate()
+        const {
+            nv,
+            factories,
+        } = createNodeViewForUpdate()
         const updatedDoc = doc(promptInput(p('Updated')))
         nv.update!(updatedDoc.firstChild!)
 
@@ -1523,7 +1624,10 @@ describe('createAiPromptInputNodeView — update', () => {
     })
 
     it('never invokes createImageSizeDropdown — image size now comes from the media generation config matrix', () => {
-        const { nv, factories } = createNodeViewForUpdate()
+        const {
+            nv,
+            factories,
+        } = createNodeViewForUpdate()
         const updatedDoc = doc(promptInput(p('Updated')))
         nv.update!(updatedDoc.firstChild!)
 
@@ -1553,7 +1657,10 @@ describe('createAiPromptInputNodeView — destroy', () => {
             createVideoResolutionDropdown: factories.createVideoResolutionDropdown,
             createVideoDurationDropdown: factories.createVideoDurationDropdown,
             createSubmitButton: factories.createSubmitButton,
-        })(testDoc.firstChild!, { state, dispatch: vi.fn() } as unknown as EditorView, () => 0)
+        })(testDoc.firstChild!, {
+            state,
+            dispatch: vi.fn(),
+        } as unknown as EditorView, () => 0)
 
         nv.destroy!()
 
@@ -1577,7 +1684,10 @@ describe('createAiPromptInputNodeView — destroy', () => {
             createVideoResolutionDropdown: factories.createVideoResolutionDropdown,
             createVideoDurationDropdown: factories.createVideoDurationDropdown,
             createSubmitButton: factories.createSubmitButton,
-        })(testDoc.firstChild!, { state, dispatch: vi.fn() } as unknown as EditorView, () => 0)
+        })(testDoc.firstChild!, {
+            state,
+            dispatch: vi.fn(),
+        } as unknown as EditorView, () => 0)
 
         nv.destroy!()
 
@@ -1607,7 +1717,10 @@ describe('createAiPromptInputNodeView — control adapters', () => {
             createVideoResolutionDropdown: factories.createVideoResolutionDropdown,
             createVideoDurationDropdown: factories.createVideoDurationDropdown,
             createSubmitButton: factories.createSubmitButton,
-        })(testDoc.firstChild!, { state, dispatch: vi.fn() } as unknown as EditorView, () => 0)
+        })(testDoc.firstChild!, {
+            state,
+            dispatch: vi.fn(),
+        } as unknown as EditorView, () => 0)
 
         expect(factories.createModelDropdown).toHaveBeenCalledTimes(1)
         const [controls, dropdownId] = factories.createModelDropdown.mock.calls[0]
@@ -1633,7 +1746,10 @@ describe('createAiPromptInputNodeView — control adapters', () => {
             createVideoResolutionDropdown: factories.createVideoResolutionDropdown,
             createVideoDurationDropdown: factories.createVideoDurationDropdown,
             createSubmitButton: factories.createSubmitButton,
-        })(testDoc.firstChild!, { state, dispatch: vi.fn() } as unknown as EditorView, () => 0)
+        })(testDoc.firstChild!, {
+            state,
+            dispatch: vi.fn(),
+        } as unknown as EditorView, () => 0)
 
         expect(factories.createImageSizeDropdown).not.toHaveBeenCalled()
     })
@@ -1658,7 +1774,10 @@ describe('createAiPromptInputNodeView — control adapters', () => {
             createVideoResolutionDropdown: factories.createVideoResolutionDropdown,
             createVideoDurationDropdown: factories.createVideoDurationDropdown,
             createSubmitButton: factories.createSubmitButton,
-        })(testDoc.firstChild!, { state, dispatch: vi.fn() } as unknown as EditorView, () => 0)
+        })(testDoc.firstChild!, {
+            state,
+            dispatch: vi.fn(),
+        } as unknown as EditorView, () => 0)
 
         expect(factories.createSubmitButton).toHaveBeenCalledTimes(1)
         const [controls] = factories.createSubmitButton.mock.calls[0]
@@ -1680,7 +1799,7 @@ describe('createAiPromptInputNodeView — control adapters', () => {
 // =============================================================================
 
 describe('Visual structure — CSS class expectations from SCSS', () => {
-    function renderNodeView() {
+    const renderNodeView = () => {
         const testDoc = doc(promptInput(p('Hello')))
         const state = createBaseEditorState(testDoc)
         const factories = createMockControlFactories()
@@ -1697,7 +1816,10 @@ describe('Visual structure — CSS class expectations from SCSS', () => {
             createVideoResolutionDropdown: factories.createVideoResolutionDropdown,
             createVideoDurationDropdown: factories.createVideoDurationDropdown,
             createSubmitButton: factories.createSubmitButton,
-        })(testDoc.firstChild!, { state, dispatch: vi.fn() } as unknown as EditorView, () => 0)
+        })(testDoc.firstChild!, {
+            state,
+            dispatch: vi.fn(),
+        } as unknown as EditorView, () => 0)
     }
 
     it('wrapper element is a div (matches div.ai-prompt-input-wrapper in SCSS)', () => {
@@ -1751,7 +1873,10 @@ describe('Visual structure — CSS class expectations from SCSS', () => {
             createVideoResolutionDropdown: factories.createVideoResolutionDropdown,
             createVideoDurationDropdown: factories.createVideoDurationDropdown,
             createSubmitButton: factories.createSubmitButton,
-        })(testDoc.firstChild!, { state, dispatch: vi.fn() } as unknown as EditorView, () => 0)
+        })(testDoc.firstChild!, {
+            state,
+            dispatch: vi.fn(),
+        } as unknown as EditorView, () => 0)
 
         // SCSS: &[data-empty="true"] .ai-prompt-input-content::before shows placeholder
         expect(nv.dom.getAttribute('data-empty')).toBe('true')
@@ -1779,7 +1904,7 @@ describe('Visual structure — CSS class expectations from SCSS', () => {
 // =============================================================================
 
 describe('Visual proportions — SCSS sizing expectations', () => {
-    function renderNodeView() {
+    const renderNodeView = () => {
         const testDoc = doc(promptInput(p('Hello')))
         const state = createBaseEditorState(testDoc)
         const factories = createMockControlFactories()
@@ -1796,7 +1921,10 @@ describe('Visual proportions — SCSS sizing expectations', () => {
             createVideoResolutionDropdown: factories.createVideoResolutionDropdown,
             createVideoDurationDropdown: factories.createVideoDurationDropdown,
             createSubmitButton: factories.createSubmitButton,
-        })(testDoc.firstChild!, { state, dispatch: vi.fn() } as unknown as EditorView, () => 0)
+        })(testDoc.firstChild!, {
+            state,
+            dispatch: vi.fn(),
+        } as unknown as EditorView, () => 0)
     }
 
     it('controls has compact child elements for balanced layout', () => {
@@ -1833,9 +1961,7 @@ describe('aiPromptInputPluginConstants', () => {
         expect(AI_PROMPT_INPUT_PLUGIN_KEY.key).toContain('aiPromptInput')
     })
 
-    it('exports SUBMIT_AI_PROMPT_META', () => {
-        expect(SUBMIT_AI_PROMPT_META).toBe('submit:aiPrompt')
-    })
+    it('exports SUBMIT_AI_PROMPT_META', () => void expect(SUBMIT_AI_PROMPT_META).toBe('submit:aiPrompt'))
 })
 
 // =============================================================================
@@ -1880,9 +2006,15 @@ describe('createAiPromptInputPlugin — plugin creation', () => {
 
         const nv = nodeViewFactory!(
             state.doc.firstChild!,
-            { state, dispatch: vi.fn() } as unknown as EditorView,
+            {
+                state,
+                dispatch: vi.fn(),
+            } as unknown as EditorView,
             () => 0,
-        ) as { dom: HTMLElement; contentDOM: HTMLElement | null }
+        ) as {
+            dom: HTMLElement
+            contentDOM: HTMLElement | null
+        }
 
         expect(options.createContextTray).toHaveBeenCalledTimes(1)
         expect(nv.dom.querySelector('.plugin-context-tray')).toBe(contextTray)
@@ -2009,7 +2141,10 @@ describe('createAiPromptInputPlugin — keyboard shortcuts', () => {
             useMultipleVideoModels: false,
         }, p('Create a clip')))
         const state = createEditorStateWithPlugins(testDoc, [plugin])
-        const mockView = { state, dispatch: vi.fn() } as unknown as EditorView
+        const mockView = {
+            state,
+            dispatch: vi.fn(),
+        } as unknown as EditorView
 
         plugin.props.handleDOMEvents!.keydown!(
             mockView,
@@ -2076,7 +2211,10 @@ describe('createAiPromptInputPlugin — keyboard shortcuts', () => {
                         displayName: 'Action Timeline',
                     }),
                 },
-                { type: 'text', text: ' Create 15 seconds with 2-second segments.' },
+                {
+                    type: 'text',
+                    text: ' Create 15 seconds with 2-second segments.',
+                },
             ],
         }])
     })
@@ -2088,7 +2226,10 @@ describe('createAiPromptInputPlugin — keyboard shortcuts', () => {
         const testDoc = doc(promptInput({ aiReasoningModels: '["claude"]' }, p('Hello')))
         const state = createEditorStateWithPlugins(testDoc, [plugin])
 
-        const mockView = { state, dispatch: vi.fn() } as unknown as EditorView
+        const mockView = {
+            state,
+            dispatch: vi.fn(),
+        } as unknown as EditorView
 
         const event = new KeyboardEvent('keydown', {
             key: 'Enter',
@@ -2107,7 +2248,10 @@ describe('createAiPromptInputPlugin — keyboard shortcuts', () => {
 
         const testDoc = doc(promptInput(p('Hello')))
         const state = createEditorStateWithPlugins(testDoc, [plugin])
-        const mockView = { state, dispatch: vi.fn() } as unknown as EditorView
+        const mockView = {
+            state,
+            dispatch: vi.fn(),
+        } as unknown as EditorView
 
         const event = new KeyboardEvent('keydown', { key: 'Enter' })
         const handler = plugin.props.handleDOMEvents!.keydown!
@@ -2123,9 +2267,15 @@ describe('createAiPromptInputPlugin — keyboard shortcuts', () => {
 
         const testDoc = doc(promptInput(p()))
         const state = createEditorStateWithPlugins(testDoc, [plugin])
-        const mockView = { state, dispatch: vi.fn() } as unknown as EditorView
+        const mockView = {
+            state,
+            dispatch: vi.fn(),
+        } as unknown as EditorView
 
-        const event = new KeyboardEvent('keydown', { key: 'Enter', metaKey: true })
+        const event = new KeyboardEvent('keydown', {
+            key: 'Enter',
+            metaKey: true,
+        })
         const handler = plugin.props.handleDOMEvents!.keydown!
         handler(mockView, event)
 
@@ -2146,7 +2296,10 @@ describe('createAiPromptInputPlugin — keyboard shortcuts', () => {
             }),
         } as unknown as EditorView
 
-        const event = new KeyboardEvent('keydown', { key: 'Enter', metaKey: true })
+        const event = new KeyboardEvent('keydown', {
+            key: 'Enter',
+            metaKey: true,
+        })
         plugin.props.handleDOMEvents!.keydown!(mockView, event)
 
         // After submit, dispatch should have been called to clear content
@@ -2204,7 +2357,10 @@ describe('createAiPromptInputPlugin — keyboard shortcuts', () => {
             }),
         } as unknown as EditorView
 
-        const event = new KeyboardEvent('keydown', { key: 'Enter', metaKey: true })
+        const event = new KeyboardEvent('keydown', {
+            key: 'Enter',
+            metaKey: true,
+        })
         plugin.props.handleDOMEvents!.keydown!(mockView, event)
 
         const inputNode = (mockView as any).state.doc.firstChild!
@@ -2231,7 +2387,10 @@ describe('createAiPromptInputPlugin — image options handling', () => {
         const plugin = createAiPromptInputPlugin(options)
 
         const testDoc = doc(promptInput(
-            { aiReasoningModels: '["dall-e-3"]', imageGenerationSize: '512x512' },
+            {
+                aiReasoningModels: '["dall-e-3"]',
+                imageGenerationSize: '512x512',
+            },
             p('Create an image'),
         ))
         const state = createEditorStateWithPlugins(testDoc, [plugin])
@@ -2242,7 +2401,10 @@ describe('createAiPromptInputPlugin — image options handling', () => {
             }),
         } as unknown as EditorView
 
-        const event = new KeyboardEvent('keydown', { key: 'Enter', metaKey: true })
+        const event = new KeyboardEvent('keydown', {
+            key: 'Enter',
+            metaKey: true,
+        })
         plugin.props.handleDOMEvents!.keydown!(mockView, event)
 
         const submitCall = options.onSubmit.mock.calls[0][0]
@@ -2268,7 +2430,10 @@ describe('createAiPromptInputPlugin — image options handling', () => {
             }),
         } as unknown as EditorView
 
-        const event = new KeyboardEvent('keydown', { key: 'Enter', metaKey: true })
+        const event = new KeyboardEvent('keydown', {
+            key: 'Enter',
+            metaKey: true,
+        })
         plugin.props.handleDOMEvents!.keydown!(mockView, event)
 
         const submitCall = options.onSubmit.mock.calls[0][0]

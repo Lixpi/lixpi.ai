@@ -16,53 +16,65 @@ import { workspaceCollisionSettings } from '@lixpi/constants'
 
 type UnknownRecord = Record<string, unknown>
 
-function collectGetterPaths(value: unknown, prefix = ''): string[] {
-    if (!value || typeof value !== 'object' || Array.isArray(value)) return []
+const collectGetterPaths = (value: unknown, prefix = ''): string[] => {
+    if (
+        !value
+        || typeof value !== 'object'
+        || Array.isArray(value)
+    )
+        return []
 
     const paths: string[] = []
+
     for (const [key, descriptor] of Object.entries(Object.getOwnPropertyDescriptors(value))) {
         const path = prefix ? `${prefix}.${key}` : key
+
         if (typeof descriptor.get === 'function') {
             paths.push(path)
+
             continue
         }
 
-        if ('value' in descriptor) {
+        if ('value' in descriptor)
             paths.push(...collectGetterPaths(descriptor.value, path))
-        }
     }
 
     return paths
 }
 
-function expectOwnKeys(value: UnknownRecord, keys: string[], path: string): void {
+const expectOwnKeys = (value: UnknownRecord, keys: string[], path: string): void => {
     for (const key of keys) {
         expect(Object.hasOwn(value, key), `${path} should expose ${key}`).toBe(true)
     }
 }
 
-function expectNoOwnKeys(value: Record<string, unknown>, keys: string[]): void {
+const expectNoOwnKeys = (value: Record<string, unknown>, keys: string[]): void => {
     for (const key of keys) {
         expect(Object.hasOwn(value, key), `settings object should not expose stale key: ${key}`).toBe(false)
     }
 }
 
-function expectStringLeaf(value: unknown, path: string): void {
+const expectStringLeaf = (value: unknown, path: string): void => {
     expect(
         ['string', 'number'].includes(typeof value),
         `${path} should be a style token-compatible leaf (${typeof value})`,
     ).toBe(true)
 }
 
-function expectLeafValuePaths(value: unknown, path = ''): void {
+const expectLeafValuePaths = (value: unknown, path = ''): void => {
     if (Array.isArray(value)) {
         expect(value.length).toBeGreaterThan(0, `${path} should be a non-empty array`)
         value.forEach((item, index) => expectLeafValuePaths(item, `${path}[${index}]`))
+
         return
     }
 
-    if (!value || typeof value !== 'object') {
+    if (
+        !value
+        || typeof value !== 'object'
+    ) {
         expectStringLeaf(value, path)
+
         return
     }
 
@@ -71,7 +83,7 @@ function expectLeafValuePaths(value: unknown, path = ''): void {
     }
 }
 
-function expectFiniteNumber(value: unknown, path: string): void {
+const expectFiniteNumber = (value: unknown, path: string): void => {
     expect(typeof value).toBe('number', `${path} should be a number`)
     expect(Number.isFinite(value), `${path} should be a finite number`).toBe(true)
 }
@@ -111,6 +123,7 @@ describe('settings - grouped configuration', () => {
         const paletteKeys = Object.keys(colorPalette)
 
         expect(paletteKeys.length).toBeGreaterThan(0)
+
         for (const key of paletteKeys) {
             const token = colorPalette[key as keyof typeof colorPalette]
             expectStringLeaf(token, `colorPalette.${key}`)
@@ -193,6 +206,7 @@ describe('settings - grouped configuration', () => {
         expectFiniteNumber(settings.mediaBranchLineage.branchFanoutExtraGap, 'settings.mediaBranchLineage.branchFanoutExtraGap')
         expectFiniteNumber(settings.mediaBranchLineage.branchOrigin.size, 'settings.mediaBranchLineage.branchOrigin.size')
         expectFiniteNumber(settings.mediaBranchLineage.branchOrigin.iconSize, 'settings.mediaBranchLineage.branchOrigin.iconSize')
+
         for (const [flowName, flowSettings] of Object.entries(settings.workspaceCollision)) {
             for (const [nodeType, nodeSettings] of Object.entries(flowSettings.nodeTypes)) {
                 expectFiniteNumber(nodeSettings.iterations, `settings.workspaceCollision.${flowName}.nodeTypes.${nodeType}.iterations`)
@@ -200,6 +214,7 @@ describe('settings - grouped configuration', () => {
                 expectFiniteNumber(nodeSettings.overlapThreshold, `settings.workspaceCollision.${flowName}.nodeTypes.${nodeType}.overlapThreshold`)
             }
         }
+
         expectFiniteNumber(settings.mediaLibrary.panelWidthFraction, 'settings.mediaLibrary.panelWidthFraction')
         expectFiniteNumber(settings.contentDescriptor.editDebounceMs, 'settings.contentDescriptor.editDebounceMs')
         expectFiniteNumber(settings.workspacePersistence.debounceMs, 'settings.workspacePersistence.debounceMs')
@@ -211,13 +226,9 @@ describe('settings - grouped configuration', () => {
         )
     })
 
-    it('keeps content descriptor debounce aligned to workspace persistence debounce', () => {
-        expect(settings.contentDescriptor.editDebounceMs).toBe(settings.workspacePersistence.debounceMs)
-    })
+    it('keeps content descriptor debounce aligned to workspace persistence debounce', () => void expect(settings.contentDescriptor.editDebounceMs).toBe(settings.workspacePersistence.debounceMs))
 
-    it('uses shared API/WebUI workspace collision settings from constants', () => {
-        expect(settings.workspaceCollision).toEqual(workspaceCollisionSettings)
-    })
+    it('uses shared API/WebUI workspace collision settings from constants', () => void expect(settings.workspaceCollision).toEqual(workspaceCollisionSettings))
 
     it('keeps all feature flags as booleans', () => {
         const booleanEntries = [
@@ -269,6 +280,7 @@ describe('settings - grouped configuration', () => {
         for (const [name, value] of Object.entries(modelDropdown)) {
             expectFiniteNumber(value, `settings.aiModelControls.styles.modelDropdown.${name}`)
         }
+
         expect(modelDropdown.width).toBeGreaterThan(mediaDropdown.width)
         expect(modelDropdown.iconSize).toBeGreaterThan(0)
         expect(modelDropdown.iconLabelGap).toBeGreaterThan(0)
@@ -333,6 +345,7 @@ describe('settings - grouped configuration', () => {
         }
 
         expect(Array.isArray(settings.videoControls.speed.guideRates), 'videoControls.speed.guideRates should be an array').toBe(true)
+
         for (let index = 0; index < settings.videoControls.speed.guideRates.length; index += 1) {
             expectFiniteNumber(settings.videoControls.speed.guideRates[index], `videoControls.speed.guideRates[${index}]`)
         }

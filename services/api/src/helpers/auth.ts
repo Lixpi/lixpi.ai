@@ -86,7 +86,7 @@ const cacheSuccessfulAuthResult = (
     )
 }
 
-function getAuthCacheExpiresAt(decoded: JwtVerificationResult['decoded']): number {
+const getAuthCacheExpiresAt = (decoded: JwtVerificationResult['decoded']): number => {
     const now = Date.now()
     const maxCacheExpiresAt = now + AUTH_REQUEST_CACHE_MS
     const tokenExpiresAt = typeof decoded?.exp === 'number'

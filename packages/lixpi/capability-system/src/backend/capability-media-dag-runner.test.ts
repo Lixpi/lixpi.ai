@@ -9,9 +9,18 @@ import { CapabilityMediaDagRunner } from './capability-media-dag-runner.ts'
 
 describe('CapabilityMediaDagRunner', () => {
     const nodes = [
-        { nodeId: 'front', dependsOn: [] },
-        { nodeId: 'profile', dependsOn: ['front'] },
-        { nodeId: 'back', dependsOn: ['profile'] },
+        {
+            nodeId: 'front',
+            dependsOn: [],
+        },
+        {
+            nodeId: 'profile',
+            dependsOn: ['front'],
+        },
+        {
+            nodeId: 'back',
+            dependsOn: ['profile'],
+        },
     ]
 
     it('executes dependencies and emits declaration-ordered events', async () => {
@@ -30,7 +39,10 @@ describe('CapabilityMediaDagRunner', () => {
         await new CapabilityMediaDagRunner([nodes[0]!], 1, 1).run({
             execute: async () => {
                 attempts += 1
-                if (attempts === 1) throw Object.assign(new Error('capacity'), { status: 429 })
+
+                if (attempts === 1)
+                    throw Object.assign(new Error('capacity'), { status: 429 })
+
                 return 'ok'
             },
             cleanup,
@@ -56,14 +68,22 @@ describe('CapabilityMediaDagRunner', () => {
     it('records an allowed optional failure and continues independent work', async () => {
         const result = await new CapabilityMediaDagRunner(
             [
-                { nodeId: 'required', dependsOn: [] },
-                { nodeId: 'optional', dependsOn: [] },
+                {
+                    nodeId: 'required',
+                    dependsOn: [],
+                },
+                {
+                    nodeId: 'optional',
+                    dependsOn: [],
+                },
             ],
             2,
             0,
         ).run({
             execute: async node => {
-                if (node.nodeId === 'optional') throw new Error('optional output unavailable')
+                if (node.nodeId === 'optional')
+                    throw new Error('optional output unavailable')
+
                 return node.nodeId
             },
             allowTerminalFailure: node => node.nodeId === 'optional',
@@ -71,25 +91,44 @@ describe('CapabilityMediaDagRunner', () => {
 
         expect(result.results.get('required')).toBe('required')
         expect(result.results.has('optional')).toBe(false)
-        expect(result.events).toContainEqual(expect.objectContaining({ nodeId: 'optional', type: 'failed' }))
+        expect(result.events).toContainEqual(expect.objectContaining({
+            nodeId: 'optional',
+            type: 'failed',
+        }))
     })
 
     it('supplies only declared producer outputs through configurable binding keys', async () => {
         const seenBindings = new Map<string, string[]>()
         const result = await new CapabilityMediaDagRunner(
             [
-                { nodeId: 'identity', dependsOn: [], outputBindings: [] },
+                {
+                    nodeId: 'identity',
+                    dependsOn: [],
+                    outputBindings: [],
+                },
                 {
                     nodeId: 'outfit',
                     dependsOn: ['identity'],
-                    outputBindings: [{ bindingKey: 'identity-anchor', sourceNodeId: 'identity', required: true }],
+                    outputBindings: [{
+                        bindingKey: 'identity-anchor',
+                        sourceNodeId: 'identity',
+                        required: true,
+                    }],
                 },
                 {
                     nodeId: 'back',
                     dependsOn: ['identity', 'outfit'],
                     outputBindings: [
-                        { bindingKey: 'identity-anchor', sourceNodeId: 'identity', required: true },
-                        { bindingKey: 'outfit-anchor', sourceNodeId: 'outfit', required: true },
+                        {
+                            bindingKey: 'identity-anchor',
+                            sourceNodeId: 'identity',
+                            required: true,
+                        },
+                        {
+                            bindingKey: 'outfit-anchor',
+                            sourceNodeId: 'outfit',
+                            required: true,
+                        },
                     ],
                 },
             ],
@@ -98,6 +137,7 @@ describe('CapabilityMediaDagRunner', () => {
         ).run({
             execute: async (node, context) => {
                 seenBindings.set(node.nodeId, [...context.boundOutputs.keys()])
+
                 return node.nodeId
             },
         })
@@ -116,18 +156,34 @@ describe('CapabilityMediaDagRunner', () => {
         const execute = vi.fn(async (node: { nodeId: string }) => `${node.nodeId}-new`)
         const result = await new CapabilityMediaDagRunner(
             [
-                { nodeId: 'identity', dependsOn: [], outputBindings: [] },
+                {
+                    nodeId: 'identity',
+                    dependsOn: [],
+                    outputBindings: [],
+                },
                 {
                     nodeId: 'outfit',
                     dependsOn: ['identity'],
-                    outputBindings: [{ bindingKey: 'identity-anchor', sourceNodeId: 'identity', required: true }],
+                    outputBindings: [{
+                        bindingKey: 'identity-anchor',
+                        sourceNodeId: 'identity',
+                        required: true,
+                    }],
                 },
                 {
                     nodeId: 'back',
                     dependsOn: ['identity', 'outfit'],
                     outputBindings: [
-                        { bindingKey: 'identity-anchor', sourceNodeId: 'identity', required: true },
-                        { bindingKey: 'outfit-anchor', sourceNodeId: 'outfit', required: true },
+                        {
+                            bindingKey: 'identity-anchor',
+                            sourceNodeId: 'identity',
+                            required: true,
+                        },
+                        {
+                            bindingKey: 'outfit-anchor',
+                            sourceNodeId: 'outfit',
+                            required: true,
+                        },
                     ],
                 },
             ],
@@ -160,47 +216,83 @@ describe('CapabilityMediaDagRunner', () => {
     })
 
     it('blocks missing required outputs and releases independent consumers in parallel after their barriers', async () => {
-        let releaseConsumers = (): void => undefined
-        const consumerGate = new Promise<void>(resolve => {
-            releaseConsumers = resolve
-        })
-        let releaseStarted = (): void => undefined
-        const consumersStarted = new Promise<void>(resolve => {
-            releaseStarted = resolve
-        })
+        let releaseConsumers = (): void => void (undefined)
+        const consumerGate = new Promise<void>(resolve => void (releaseConsumers = resolve))
+        let releaseStarted = (): void => void (undefined)
+        const consumersStarted = new Promise<void>(resolve => void (releaseStarted = resolve))
         let activeConsumers = 0
         const parallelRunner = new CapabilityMediaDagRunner(
             [
-                { nodeId: 'identity', dependsOn: [], outputBindings: [] },
+                {
+                    nodeId: 'identity',
+                    dependsOn: [],
+                    outputBindings: [],
+                },
                 {
                     nodeId: 'outfit',
                     dependsOn: ['identity'],
-                    outputBindings: [{ bindingKey: 'identity-anchor', sourceNodeId: 'identity', required: true }],
+                    outputBindings: [{
+                        bindingKey: 'identity-anchor',
+                        sourceNodeId: 'identity',
+                        required: true,
+                    }],
                 },
                 {
                     nodeId: 'back',
                     dependsOn: ['identity', 'outfit'],
                     outputBindings: [
-                        { bindingKey: 'identity-anchor', sourceNodeId: 'identity', required: true },
-                        { bindingKey: 'outfit-anchor', sourceNodeId: 'outfit', required: true },
+                        {
+                            bindingKey: 'identity-anchor',
+                            sourceNodeId: 'identity',
+                            required: true,
+                        },
+                        {
+                            bindingKey: 'outfit-anchor',
+                            sourceNodeId: 'outfit',
+                            required: true,
+                        },
                     ],
                 },
                 {
                     nodeId: 'profile',
                     dependsOn: ['identity', 'outfit', 'back'],
                     outputBindings: [
-                        { bindingKey: 'identity-anchor', sourceNodeId: 'identity', required: true },
-                        { bindingKey: 'outfit-anchor', sourceNodeId: 'outfit', required: true },
-                        { bindingKey: 'back-anchor', sourceNodeId: 'back', required: true },
+                        {
+                            bindingKey: 'identity-anchor',
+                            sourceNodeId: 'identity',
+                            required: true,
+                        },
+                        {
+                            bindingKey: 'outfit-anchor',
+                            sourceNodeId: 'outfit',
+                            required: true,
+                        },
+                        {
+                            bindingKey: 'back-anchor',
+                            sourceNodeId: 'back',
+                            required: true,
+                        },
                     ],
                 },
                 {
                     nodeId: 'action',
                     dependsOn: ['identity', 'outfit', 'back'],
                     outputBindings: [
-                        { bindingKey: 'identity-anchor', sourceNodeId: 'identity', required: true },
-                        { bindingKey: 'outfit-anchor', sourceNodeId: 'outfit', required: true },
-                        { bindingKey: 'back-anchor', sourceNodeId: 'back', required: true },
+                        {
+                            bindingKey: 'identity-anchor',
+                            sourceNodeId: 'identity',
+                            required: true,
+                        },
+                        {
+                            bindingKey: 'outfit-anchor',
+                            sourceNodeId: 'outfit',
+                            required: true,
+                        },
+                        {
+                            bindingKey: 'back-anchor',
+                            sourceNodeId: 'back',
+                            required: true,
+                        },
                     ],
                 },
             ],
@@ -209,11 +301,18 @@ describe('CapabilityMediaDagRunner', () => {
         )
         const parallelRun = parallelRunner.run({
             execute: async node => {
-                if (node.nodeId === 'profile' || node.nodeId === 'action') {
+                if (
+                    node.nodeId === 'profile'
+                    || node.nodeId === 'action'
+                ) {
                     activeConsumers += 1
-                    if (activeConsumers === 2) releaseStarted()
+
+                    if (activeConsumers === 2)
+                        releaseStarted()
+
                     await consumerGate
                 }
+
                 return node.nodeId
             },
         })
@@ -225,18 +324,28 @@ describe('CapabilityMediaDagRunner', () => {
 
         const blocked = await new CapabilityMediaDagRunner(
             [
-                { nodeId: 'identity', dependsOn: [], outputBindings: [] },
+                {
+                    nodeId: 'identity',
+                    dependsOn: [],
+                    outputBindings: [],
+                },
                 {
                     nodeId: 'outfit',
                     dependsOn: ['identity'],
-                    outputBindings: [{ bindingKey: 'identity-anchor', sourceNodeId: 'identity', required: true }],
+                    outputBindings: [{
+                        bindingKey: 'identity-anchor',
+                        sourceNodeId: 'identity',
+                        required: true,
+                    }],
                 },
             ],
             2,
             0,
         ).run({
             execute: async node => {
-                if (node.nodeId === 'identity') throw new Error('unavailable')
+                if (node.nodeId === 'identity')
+                    throw new Error('unavailable')
+
                 return node.nodeId
             },
             allowTerminalFailure: () => true,

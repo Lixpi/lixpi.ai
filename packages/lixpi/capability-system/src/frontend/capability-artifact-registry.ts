@@ -146,7 +146,7 @@ export class CapabilityArtifactFrontendRegistry {
     }
 }
 
-function assertCompleteFrontendDefinition(definition: CapabilityArtifactFrontendDefinition): void {
+const assertCompleteFrontendDefinition = (definition: CapabilityArtifactFrontendDefinition): void => {
     if (!definition.artifactTypeId.trim())
         throw new Error('CAPABILITY_ARTIFACT_FRONTEND_TYPE_ID_REQUIRED')
 

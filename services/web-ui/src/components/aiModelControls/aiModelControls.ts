@@ -803,10 +803,12 @@ class ModelSlidingDropdownView {
     private defaultSelectionTimer: ReturnType<typeof setTimeout> | null = null
 
     constructor(private readonly config: ModelSlidingDropdownConfig) {
-        this.dom = html`<span
+        this.dom = html`
+            <span
                 className="ai-model-sliding-dropdown-host"
                 contenteditable="false"
-            ></span>` as HTMLElement
+            ></span>
+        ` as HTMLElement
         this.syncModels(
             aiModelsStore.getData(),
         )
@@ -1456,10 +1458,12 @@ class MediaGenerationConfigMatrixView implements MediaGenerationConfigMatrixView
         selectedValue: string,
     ): HTMLElement {
         const checked = selectedValue === 'true'
-        const svgHost = html`<span
+        const svgHost = html`
+            <span
                 className="ai-media-config-toggle-svg-host"
                 aria-hidden="true"
-            ></span>` as HTMLElement
+            ></span>
+        ` as HTMLElement
         const svgEl = select(svgHost)
             .append('svg')
             .attr('class', 'ai-media-config-toggle-svg')

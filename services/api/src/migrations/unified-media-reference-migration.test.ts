@@ -127,15 +127,25 @@ describe('unified media reference migration', () => {
 
     it('rewrites legacy upload placeholders to the only runtime operation-node shape', () => {
         const legacy = {
-            viewport: { x: 0, y: 0, zoom: 1 },
+            viewport: {
+                x: 0,
+                y: 0,
+                zoom: 1,
+            },
             nodes: [{
                 nodeId: 'upload-1',
                 type: 'uploadPlaceholder',
                 fileName: 'portrait.png',
                 status: 'converting',
                 parentNodeId: 'region-1',
-                position: { x: 10, y: 20 },
-                dimensions: { width: 320, height: 96 },
+                position: {
+                    x: 10,
+                    y: 20,
+                },
+                dimensions: {
+                    width: 320,
+                    height: 96,
+                },
                 createdAt: 1,
                 updatedAt: 2,
             }],
@@ -162,24 +172,43 @@ describe('unified media reference migration', () => {
                     items: [{
                         assetId: 'corrupt-asset',
                         title: 'Corrupt',
-                        media: { kind: 'image', renditions: {} },
+                        media: {
+                            kind: 'image',
+                            renditions: {},
+                        },
                         documents: {},
-                        states: { lifecycle: 'active', media: 'ready', conversation: 'none', provenance: 'none' },
+                        states: {
+                            lifecycle: 'active',
+                            media: 'ready',
+                            conversation: 'none',
+                            provenance: 'none',
+                        },
                     }],
                 }
             }
+
             return {
                 items: [{
                     workspaceId: 'workspace-1',
                     canvasState: {
-                        viewport: { x: 0, y: 0, zoom: 1 },
+                        viewport: {
+                            x: 0,
+                            y: 0,
+                            zoom: 1,
+                        },
                         nodes: [{
                             nodeId: 'upload-1',
                             type: 'uploadPlaceholder',
                             fileName: 'portrait.png',
                             status: 'converting',
-                            position: { x: 0, y: 0 },
-                            dimensions: { width: 320, height: 96 },
+                            position: {
+                                x: 0,
+                                y: 0,
+                            },
+                            dimensions: {
+                                width: 320,
+                                height: 96,
+                            },
                             createdAt: 1,
                             updatedAt: 1,
                         }],

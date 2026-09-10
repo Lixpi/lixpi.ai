@@ -47,6 +47,7 @@ describe('verifyNKeySignedJWT', () => {
 
     const createValidClaims = (claims: Record<string, unknown> = {}) => {
         const now = Math.floor(Date.now() / 1000)
+
         return {
             sub: 'svc:llm',
             nbf: now - 10,
@@ -60,9 +61,7 @@ describe('verifyNKeySignedJWT', () => {
         vi.setSystemTime(new Date('2030-01-01T00:00:00.000Z'))
     })
 
-    afterEach(() => {
-        vi.useRealTimers()
-    })
+    afterEach(() => void vi.useRealTimers())
 
     it('returns decoded payload for valid nkey-signed tokens', async () => {
         const token = createSignedToken({
@@ -70,26 +69,41 @@ describe('verifyNKeySignedJWT', () => {
             signingPair: signer,
             claims: createValidClaims(),
         })
-        const result = await verifyNKeySignedJWT({ token, publicKey })
+        const result = await verifyNKeySignedJWT({
+            token,
+            publicKey,
+        })
 
         expect(result.error).toBeUndefined()
-        expect(result.decoded).toMatchObject({ sub: 'svc:llm', iss: publicKey })
+        expect(result.decoded).toMatchObject({
+            sub: 'svc:llm',
+            iss: publicKey,
+        })
     })
 
     it('returns an error when token is missing', async () => {
-        const result = await verifyNKeySignedJWT({ token: '', publicKey })
+        const result = await verifyNKeySignedJWT({
+            token: '',
+            publicKey,
+        })
 
         expect(result).toEqual({ error: 'No token provided' })
     })
 
     it('returns an error when public key is missing', async () => {
-        const result = await verifyNKeySignedJWT({ token: 'x', publicKey: '' })
+        const result = await verifyNKeySignedJWT({
+            token: 'x',
+            publicKey: '',
+        })
 
         expect(result).toEqual({ error: 'No public key provided' })
     })
 
     it('returns an error when token format is invalid', async () => {
-        const result = await verifyNKeySignedJWT({ token: 'not-a-jwt', publicKey })
+        const result = await verifyNKeySignedJWT({
+            token: 'not-a-jwt',
+            publicKey,
+        })
 
         expect(result.error).toBe('Invalid JWT format')
     })
@@ -118,7 +132,10 @@ describe('verifyNKeySignedJWT', () => {
             }),
         })
 
-        const result = await verifyNKeySignedJWT({ token, publicKey })
+        const result = await verifyNKeySignedJWT({
+            token,
+            publicKey,
+        })
 
         expect(result.error).toBe('JWT expired')
     })
@@ -132,7 +149,10 @@ describe('verifyNKeySignedJWT', () => {
             }),
         })
 
-        const result = await verifyNKeySignedJWT({ token, publicKey })
+        const result = await verifyNKeySignedJWT({
+            token,
+            publicKey,
+        })
 
         expect(result.error).toBe('JWT not yet valid')
     })
@@ -144,7 +164,10 @@ describe('verifyNKeySignedJWT', () => {
             claims: createValidClaims(),
         })
 
-        const result = await verifyNKeySignedJWT({ token, publicKey })
+        const result = await verifyNKeySignedJWT({
+            token,
+            publicKey,
+        })
 
         expect(result.error).toBe('Invalid NKey signature')
     })

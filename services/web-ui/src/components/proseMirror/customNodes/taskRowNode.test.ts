@@ -26,9 +26,7 @@ describe('taskRowNode re-exports', () => {
         expect(defaultAttrs).toBe(packageTaskRowDefaultAttrs)
     })
 
-    it('re-exports the shared task row node spec by reference', () => {
-        expect(taskRowNodeSpec).toBe(packageTaskRowNodeSpec)
-    })
+    it('re-exports the shared task row node spec by reference', () => void expect(taskRowNodeSpec).toBe(packageTaskRowNodeSpec))
 
     it('exports default attrs that match the schema declaration', () => {
         expect(defaultAttrs).toEqual({

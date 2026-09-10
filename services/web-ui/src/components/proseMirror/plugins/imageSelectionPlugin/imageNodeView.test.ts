@@ -21,13 +21,9 @@ vi.mock('$src/services/auth-service.ts', () => ({
     },
 }))
 
-afterEach(() => {
-    vi.clearAllMocks()
-})
+afterEach(() => void vi.clearAllMocks())
 
-beforeEach(() => {
-    vi.mocked(AuthService.getTokenSilently).mockReset().mockResolvedValue('token-1')
-})
+beforeEach(() => void vi.mocked(AuthService.getTokenSilently).mockReset().mockResolvedValue('token-1'))
 
 const createImageNode = (overrides: Record<string, unknown> = {}): ProseMirrorNode => {
     return testSchema.nodes.image.create({
@@ -62,7 +58,10 @@ const createGeneratedImageNode = (overrides: Record<string, unknown> = {}): Pros
 
 const createImageView = (node: ProseMirrorNode, editable = true, getPos: () => number | undefined = () => 0) => {
     const doc = testSchema.nodes.doc.create(null, [node])
-    const state = EditorState.create({ doc, schema: testSchema })
+    const state = EditorState.create({
+        doc,
+        schema: testSchema,
+    })
     const dispatch = vi.fn()
     const focus = vi.fn()
     const view = {
@@ -90,13 +89,9 @@ const createImageView = (node: ProseMirrorNode, editable = true, getPos: () => n
     }
 }
 
-const getImageElement = (nodeView: ImageNodeView): HTMLImageElement => {
-    return nodeView.dom.querySelector('img') as HTMLImageElement
-}
+const getImageElement = (nodeView: ImageNodeView): HTMLImageElement => nodeView.dom.querySelector('img') as HTMLImageElement
 
-const getResolvedImageSrc = (nodeView: ImageNodeView): string => {
-    return getImageElement(nodeView).getAttribute('src') ?? ''
-}
+const getResolvedImageSrc = (nodeView: ImageNodeView): string => getImageElement(nodeView).getAttribute('src') ?? ''
 
 // =============================================================================
 // Initialization and source resolution
@@ -216,7 +211,12 @@ describe('ImageNodeView — generated image behaviors', () => {
 
 describe('ImageNodeView — interactions', () => {
     it('selects the node and focuses editor when clicked while editable', () => {
-        const { nodeView, dispatch, focus, view } = createImageView(createImageNode())
+        const {
+            nodeView,
+            dispatch,
+            focus,
+            view,
+        } = createImageView(createImageNode())
 
         nodeView.dom.dispatchEvent(new MouseEvent('click'))
 
@@ -230,7 +230,11 @@ describe('ImageNodeView — interactions', () => {
     })
 
     it('does not dispatch selection when editor is read-only', () => {
-        const { nodeView, dispatch, focus } = createImageView(createImageNode(), false)
+        const {
+            nodeView,
+            dispatch,
+            focus,
+        } = createImageView(createImageNode(), false)
 
         nodeView.dom.dispatchEvent(new MouseEvent('click'))
 
@@ -274,7 +278,10 @@ describe('ImageNodeView — lifecycle cleanup', () => {
     })
 
     it('rejects incompatible nodes in update()', () => {
-        const { nodeView, doc } = createImageView(createImageNode())
+        const {
+            nodeView,
+            doc,
+        } = createImageView(createImageNode())
         const wrongNode = doc.type.schema.nodes.doc.create(null)
 
         expect(nodeView.update(wrongNode as ProseMirrorNode)).toBe(false)

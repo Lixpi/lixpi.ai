@@ -21,9 +21,7 @@ const createNatsService = () => ({
 // =============================================================================
 
 describe('PipelineEventLog', () => {
-    beforeEach(() => {
-        vi.clearAllMocks()
-    })
+    beforeEach(() => void vi.clearAllMocks())
 
     it('creates a workspace pipeline stream with bounded per-subject retention', async () => {
         const nats = createNatsService()
@@ -153,8 +151,14 @@ describe('PipelineEventLog', () => {
             next_by_subj: subject,
         })
         expect(result.events).toEqual([
-            expect.objectContaining({ eventId: 'event-4', streamSequence: 4 }),
-            expect.objectContaining({ eventId: 'event-7', streamSequence: 7 }),
+            expect.objectContaining({
+                eventId: 'event-4',
+                streamSequence: 4,
+            }),
+            expect.objectContaining({
+                eventId: 'event-7',
+                streamSequence: 7,
+            }),
         ])
     })
 })

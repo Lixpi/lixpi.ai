@@ -14,24 +14,21 @@ const source = [
 ].map(filename => readFileSync(resolve(import.meta.dirname, `../../packages/lixpi/canvas-components-lixpi-specific/src/frontend/workspace/${filename}`), 'utf-8')).join('\n')
 const scssSource = readFileSync(resolve(import.meta.dirname, '../../packages/lixpi/canvas-components-lixpi-specific/src/frontend/nodes/branch-marker-content.scss'), 'utf-8')
 
-function preflightMethod(name: string, module = 'workspace-preflight-markers'): string {
+const preflightMethod = (name: string, module = 'workspace-preflight-markers'): string => {
     const source = readFileSync(resolve(import.meta.dirname, `../../packages/lixpi/canvas-components-lixpi-specific/src/shared/generation/${module}.ts`), 'utf-8')
     const start = source.indexOf(`\n    ${name}(`)
     const end = source.indexOf('\n    }\n', start)
     expect(start, `Missing preflight method ${name}`).toBeGreaterThan(-1)
     expect(end).toBeGreaterThan(start)
+
     return source.slice(start, end)
 }
 
-function expectSourceToContain(sourceText: string, snippet: string, label: string): void {
-    expect(withoutLayout(sourceText).includes(withoutLayout(snippet)), `${label} should contain:\n${snippet}`).toBe(true)
-}
+const expectSourceToContain = (sourceText: string, snippet: string, label: string): void => void expect(withoutLayout(sourceText).includes(withoutLayout(snippet)), `${label} should contain:\n${snippet}`).toBe(true)
 
-function expectSourceNotToContain(sourceText: string, snippet: string, label: string): void {
-    expect(withoutLayout(sourceText).includes(withoutLayout(snippet)), `${label} should not contain:\n${snippet}`).toBe(false)
-}
+const expectSourceNotToContain = (sourceText: string, snippet: string, label: string): void => void expect(withoutLayout(sourceText).includes(withoutLayout(snippet)), `${label} should not contain:\n${snippet}`).toBe(false)
 
-function extractFunctionBody(functionName: string): string {
+const extractFunctionBody = (functionName: string): string => {
     const arrowSignatureIndex = source.indexOf(`private ${functionName} =`)
     const privateMethodSignatureIndex = source.indexOf(`private ${functionName}(`)
     const publicMethodSignatureIndex = source.indexOf(`\n    ${functionName}(`)
@@ -40,18 +37,32 @@ function extractFunctionBody(functionName: string): string {
         .sort((left, right) => left - right)[0] ?? -1
     const isArrow = arrowSignatureIndex >= 0 && (methodSignatureIndex < 0 || arrowSignatureIndex < methodSignatureIndex)
     const signatureIndex = isArrow ? arrowSignatureIndex : methodSignatureIndex
-    if (signatureIndex < 0) throw new Error(`Missing function: ${functionName}`)
+
+    if (signatureIndex < 0)
+        throw new Error(`Missing function: ${functionName}`)
+
     // An arrow can carry a concise expression body (`=> void this.chrome.sync(state)`)
     // rather than a braced one, so locate the body from the arrow itself and only
     // brace-match when a brace is actually what follows.
     const arrowIndex = isArrow ? source.indexOf('=>', signatureIndex) : -1
-    if (isArrow && arrowIndex < 0) throw new Error(`Missing function body: ${functionName}`)
+
+    if (
+        isArrow
+        && arrowIndex < 0
+    )
+        throw new Error(`Missing function body: ${functionName}`)
 
     let bodyStart = isArrow ? arrowIndex + 2 : source.indexOf('{', signatureIndex)
-    if (bodyStart < 0) throw new Error(`Missing function body: ${functionName}`)
+
+    if (bodyStart < 0)
+        throw new Error(`Missing function body: ${functionName}`)
 
     if (isArrow) {
-        while (bodyStart < source.length && /\s/.test(source[bodyStart]!)) bodyStart += 1
+        while (
+            bodyStart < source.length
+            && /\s/.test(source[bodyStart]!)
+        )
+            bodyStart += 1
 
         if (source[bodyStart] !== '{') {
             const lineEnd = source.indexOf('\n', bodyStart)
@@ -61,12 +72,20 @@ function extractFunctionBody(functionName: string): string {
     }
 
     let depth = 0
+
     for (let index = bodyStart; index < source.length; index += 1) {
-        if (source[index] === '{') depth += 1
-        if (source[index] !== '}') continue
+        if (source[index] === '{')
+            depth += 1
+
+        if (source[index] !== '}')
+            continue
+
         depth -= 1
-        if (depth === 0) return source.slice(bodyStart + 1, index)
+
+        if (depth === 0)
+            return source.slice(bodyStart + 1, index)
     }
+
     throw new Error(`Unterminated function body: ${functionName}`)
 }
 
@@ -85,6 +104,7 @@ describe('branch marker lifecycle', () => {
             expectSourceNotToContain(insertBody, 'screenFixed', 'preflight canvas position')
             expectSourceNotToContain(insertBody, 'pendingBranchMarkerOverlayEl', 'preflight canvas position')
         }
+
         expectSourceToContain(
             persistedInsertBody,
             'this.ports.append(pendingNode)',

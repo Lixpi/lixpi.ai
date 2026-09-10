@@ -1,0 +1,38 @@
+{
+    "_meta": {
+        "sourceName": "Google Generative Language API",
+        "sourceId": "provider-api",
+        "queriedEndpoints": [
+            {
+                "endpoint": "GET https://generativelanguage.googleapis.com/v1beta/models",
+                "params": {
+                    "pageSize": 100,
+                    "pagesFetched": 1
+                },
+                "note": "Paged with pageToken until exhausted. The API key travels as a query parameter and is not recorded."
+            }
+        ],
+        "hasDataForThisModel": true,
+        "inferenceProvidersWithData": [
+            "google"
+        ],
+        "fetchedAt": "2026-09-08T00:55:53.368Z",
+        "publishedVersions": {
+            "currentVersion": "gemini-2.5-flash-lite",
+            "allPublishedVersions": [
+                "gemini-2.5-flash-lite"
+            ]
+        }
+    },
+    "byInferenceProvider": {
+        "google": {
+            "title": "Gemini 2.5 Flash-Lite",
+            "contextWindow": 1048576,
+            "maxCompletionSize": 65536,
+            "defaultTemperature": 1,
+            "model": "gemini-2.5-flash-lite",
+            "modelVersion": "gemini-2.5-flash-lite",
+            "modelKeyAtSource": "gemini-2.5-flash-lite"
+        }
+    }
+}

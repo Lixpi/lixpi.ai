@@ -1,7 +1,10 @@
 import { existsSync, readdirSync, realpathSync, statSync } from 'node:fs'
 import path from 'node:path'
 
-const PACKAGE_NAMES = ['canvas-engine', 'canvas-components', 'canvas-components-lixpi-specific', 'ui-primitives', 'ui-kit']
+const PACKAGE_NAMES = ['canvas-engine', 'canvas-components', 'canvas-components-lixpi-specific', 'ui-primitives', 'ui-kit', 'ui-kit-gentelella']
+// Services that own their documentation. A service's pages live beside the code
+// they describe, and the central tree links to them rather than holding a copy.
+const SERVICE_NAMES = ['ai-model-registry']
 const EXCLUDED = new Set(['node_modules', '.git', 'dist'])
 const external = href => /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(href) || href.startsWith('//')
 const posix = value => value.split(path.sep).join('/')
@@ -48,12 +51,20 @@ export class DocumentationSources {
             this.register(root + '/README.md', route + '/index.html')
             if (existsSync(path.join(this.repoRoot, root, 'NOTICES.md'))) this.register(root + '/NOTICES.md', route + '/NOTICES.html')
             if (existsSync(path.join(this.repoRoot, root, 'docs'))) this.walk(root + '/docs', route + '/docs', false)
+            if (existsSync(path.join(this.repoRoot, root, 'documentation'))) this.walk(root + '/documentation', route + '/documentation', false)
+        }
+        for (const name of SERVICE_NAMES) {
+            const root = 'services/' + name
+            const route = 'services/' + name
+            this.register(root + '/README.md', route + '/index.html')
+            if (existsSync(path.join(this.repoRoot, root, 'documentation'))) this.walk(root + '/documentation', route + '/documentation', false)
         }
         return this
     }
 
     walk(directory, routePrefix, central) {
         for (const entry of readdirSync(this.sourcePath(directory), { withFileTypes: true })) {
+            if (central && entry.name === 'memory') continue
             if (entry.name.startsWith('.') || EXCLUDED.has(entry.name)) continue
             const file = path.posix.join(directory, entry.name)
             const route = path.posix.join(routePrefix, entry.name)

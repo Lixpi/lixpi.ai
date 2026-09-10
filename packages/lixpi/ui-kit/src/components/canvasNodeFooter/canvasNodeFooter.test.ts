@@ -9,11 +9,20 @@ import {
 
 import { createCanvasNodeFooter } from './index.ts'
 
-const icons = { info: '<span>i</span>', progress: { viewBox: { x: 0, y: 0, width: 10, height: 10 }, paths: ['M0 0 H10 V10 Z', 'M0 0 H10 V10 Z', 'M0 0 H10 V10 Z'] as const } }
+const icons = {
+    info: '<span>i</span>',
+    progress: {
+        viewBox: {
+            x: 0,
+            y: 0,
+            width: 10,
+            height: 10,
+        },
+        paths: ['M0 0 H10 V10 Z', 'M0 0 H10 V10 Z', 'M0 0 H10 V10 Z'] as const,
+    },
+}
 
-afterEach(() => {
-    vi.useRealTimers()
-})
+afterEach(() => void vi.useRealTimers())
 
 describe('canvas node footer', () => {
     it('renders info, active progress, and separated caller sections in order', () => {
@@ -28,7 +37,10 @@ describe('canvas node footer', () => {
             progressActive: true,
             selected: false,
             sections: [
-                { elements: [model], separated: true },
+                {
+                    elements: [model],
+                    separated: true,
+                },
                 { elements: [null, review] },
             ],
             onOpenDetails: vi.fn(),
@@ -83,7 +95,10 @@ describe('canvas node footer', () => {
             onOpenDetails: vi.fn(),
         })
 
-        footer.update({ progressActive: false, selected: true })
+        footer.update({
+            progressActive: false,
+            selected: true,
+        })
 
         const info = footer.element.querySelector<HTMLButtonElement>('.canvas-node-footer-info-button')!
         const progress = footer.element.querySelector<HTMLButtonElement>('.canvas-node-footer-progress-button')!
@@ -103,7 +118,10 @@ describe('canvas node footer', () => {
             infoLabel: 'Generation history',
             progressActive: true,
             selected: false,
-            sections: [{ elements: [null, undefined], separated: true }],
+            sections: [{
+                elements: [null, undefined],
+                separated: true,
+            }],
             onOpenDetails: vi.fn(),
         })
         document.body.appendChild(footer.element)

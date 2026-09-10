@@ -31,7 +31,7 @@ const spyCreateAiPromptInputPlugin = vi.mocked(aiPromptInputPluginModule.createA
 const aiChatThreadPluginMock = { kind: 'ai-chat-thread-plugin' }
 const aiPromptInputPluginMock = { kind: 'ai-prompt-input-plugin' }
 
-function createEditorShim(documentType: string) {
+const createEditorShim = (documentType: string) => {
     const editor = Object.create(ProseMirrorEditor.prototype) as any
 
     editor.documentType = documentType
@@ -250,7 +250,10 @@ describe('ProseMirrorEditor — plugin wiring', () => {
 
     it('injects ai thread render context into aiChatThread plugin creation args', () => {
         const editor = createEditorShim(DOCUMENT_TYPE.ASSET_CONVERSATION)
-        editor.aiChatThreadRenderContext = { custom: true, trace: 'enabled' }
+        editor.aiChatThreadRenderContext = {
+            custom: true,
+            trace: 'enabled',
+        }
 
         const plugins = editor.createPlugins({}, false)
 

@@ -23,7 +23,7 @@ vi.mock('../../services/asset-requester-context.ts', () => ({ getAssetRequesterC
 
 import { resolveStyleExtractionInput } from './style-extraction-input-resolver.ts'
 
-function makeContext(overrides: Partial<CapabilityActionExecutionContext> = {}): CapabilityActionExecutionContext {
+const makeContext = (overrides: Partial<CapabilityActionExecutionContext> = {}): CapabilityActionExecutionContext => {
     return {
         userId: 'user-1',
         workspaceId: 'workspace-1',
@@ -42,7 +42,7 @@ function makeContext(overrides: Partial<CapabilityActionExecutionContext> = {}):
     }
 }
 
-function readyImageAsset(overrides: Record<string, any> = {}) {
+const readyImageAsset = (overrides: Record<string, any> = {}) => {
     return {
         assetId: 'asset-1',
         organizationId: 'org-1',
@@ -50,8 +50,14 @@ function readyImageAsset(overrides: Record<string, any> = {}) {
             kind: 'image',
             modelSafe: true,
             renditions: {
-                canonical: { status: 'ready', blobHash: 'canonical-hash' },
-                original: { status: 'ready', blobHash: 'original-hash' },
+                canonical: {
+                    status: 'ready',
+                    blobHash: 'canonical-hash',
+                },
+                original: {
+                    status: 'ready',
+                    blobHash: 'original-hash',
+                },
             },
         },
         ...overrides,
@@ -63,8 +69,15 @@ describe('resolveStyleExtractionInput', () => {
         vi.clearAllMocks()
         mocks.requesterContext.get.mockResolvedValue({ organizationIds: ['org-1'] })
         mocks.asset.get.mockResolvedValue(readyImageAsset())
-        mocks.blob.get.mockResolvedValue({ bucketName: 'bucket-1', objectKey: 'object-1' })
-        mocks.aiModel.getAiModel.mockResolvedValue({ provider: 'OpenAI', model: 'gpt-5', modelVersion: 'gpt-5' })
+        mocks.blob.get.mockResolvedValue({
+            bucketName: 'bucket-1',
+            objectKey: 'object-1',
+        })
+        mocks.aiModel.getAiModel.mockResolvedValue({
+            provider: 'OpenAI',
+            model: 'gpt-5',
+            modelVersion: 'gpt-5',
+        })
     })
 
     it('resolves a full input from prompt, source assets, and an analysis model id', async () => {
@@ -82,15 +95,25 @@ describe('resolveStyleExtractionInput', () => {
             intent: 'extract this style',
             sourceAssetIds: ['asset-1'],
             analysisProvider: 'OpenAI',
-            analysisModel: { provider: 'OpenAI', model: 'gpt-5', modelVersion: 'gpt-5' },
+            analysisModel: {
+                provider: 'OpenAI',
+                model: 'gpt-5',
+                modelVersion: 'gpt-5',
+            },
             imageProvider: undefined,
             imageModel: undefined,
         })
         expect(result.messages).toEqual([{
             role: 'user',
             content: [
-                { type: 'input_text', text: 'extract this style' },
-                { type: 'input_image', image_url: 'nats-obj://bucket-1/object-1' },
+                {
+                    type: 'input_text',
+                    text: 'extract this style',
+                },
+                {
+                    type: 'input_image',
+                    image_url: 'nats-obj://bucket-1/object-1',
+                },
             ],
         }])
     })
@@ -117,7 +140,13 @@ describe('resolveStyleExtractionInput', () => {
     })
 
     it('resolves an optional image model id in addition to the analysis model', async () => {
-        mocks.aiModel.getAiModel.mockImplementation(async ({ provider, model }: { provider: string; model: string }) => ({
+        mocks.aiModel.getAiModel.mockImplementation(async ({
+            provider,
+            model,
+        }: {
+            provider: string
+            model: string
+        }) => ({
             provider,
             model,
             modelVersion: model,
@@ -131,7 +160,10 @@ describe('resolveStyleExtractionInput', () => {
         }, makeContext())
 
         expect(result.imageProvider).toBe('Google')
-        expect(result.imageModel).toMatchObject({ provider: 'Google', model: 'gemini-2.5-flash-image' })
+        expect(result.imageModel).toMatchObject({
+            provider: 'Google',
+            model: 'gemini-2.5-flash-image',
+        })
     })
 
     it('deduplicates repeated source asset ids', async () => {
@@ -152,7 +184,10 @@ describe('resolveStyleExtractionInput', () => {
                 modelSafe: true,
                 renditions: {
                     canonical: { status: 'processing' },
-                    original: { status: 'ready', blobHash: 'original-hash' },
+                    original: {
+                        status: 'ready',
+                        blobHash: 'original-hash',
+                    },
                 },
             },
         }))
@@ -163,20 +198,41 @@ describe('resolveStyleExtractionInput', () => {
             sourceAssetIds: ['asset-1'],
         }, makeContext())
 
-        expect(mocks.blob.get).toHaveBeenCalledWith({ organizationId: 'org-1', blobHash: 'original-hash' })
+        expect(mocks.blob.get).toHaveBeenCalledWith({
+            organizationId: 'org-1',
+            blobHash: 'original-hash',
+        })
     })
 
     it.each([
-        [{ prompt: '', analysisModelId: 'OpenAI:gpt-5', sourceAssetIds: ['asset-1'] }, 'prompt is required'],
-        [{ prompt: 'x', analysisModelId: '', sourceAssetIds: ['asset-1'] }, 'analysisModelId is required'],
-        [{ prompt: 'x', analysisModelId: 'OpenAI:gpt-5', sourceAssetIds: [] }, 'sourceAssetIds must contain Asset ids'],
-        [{ prompt: 'x', analysisModelId: 'OpenAI:gpt-5', sourceAssetIds: [123] }, 'sourceAssetIds must contain Asset ids'],
-    ])('rejects invalid input %j', async (input, message) => {
-        await expect(resolveStyleExtractionInput(input as any, makeContext())).rejects.toThrow(message)
-    })
+        [{
+            prompt: '',
+            analysisModelId: 'OpenAI:gpt-5',
+            sourceAssetIds: ['asset-1'],
+        }, 'prompt is required'],
+        [{
+            prompt: 'x',
+            analysisModelId: '',
+            sourceAssetIds: ['asset-1'],
+        }, 'analysisModelId is required'],
+        [{
+            prompt: 'x',
+            analysisModelId: 'OpenAI:gpt-5',
+            sourceAssetIds: [],
+        }, 'sourceAssetIds must contain Asset ids'],
+        [{
+            prompt: 'x',
+            analysisModelId: 'OpenAI:gpt-5',
+            sourceAssetIds: [123],
+        }, 'sourceAssetIds must contain Asset ids'],
+    ])('rejects invalid input %j', async (input, message) => void (await expect(resolveStyleExtractionInput(input as any, makeContext())).rejects.toThrow(message)))
 
     it('rejects when a source Asset is not an image', async () => {
-        mocks.asset.get.mockResolvedValue({ assetId: 'asset-1', organizationId: 'org-1', media: { kind: 'document' } })
+        mocks.asset.get.mockResolvedValue({
+            assetId: 'asset-1',
+            organizationId: 'org-1',
+            media: { kind: 'document' },
+        })
 
         await expect(resolveStyleExtractionInput({
             prompt: 'extract',
@@ -219,7 +275,11 @@ describe('resolveStyleExtractionInput', () => {
 
     it('rejects when neither rendition is ready', async () => {
         mocks.asset.get.mockResolvedValue(readyImageAsset({
-            media: { kind: 'image', modelSafe: false, renditions: { canonical: { status: 'processing' } } },
+            media: {
+                kind: 'image',
+                modelSafe: false,
+                renditions: { canonical: { status: 'processing' } },
+            },
         }))
 
         await expect(resolveStyleExtractionInput({

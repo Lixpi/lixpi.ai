@@ -20,20 +20,42 @@ import {
 
 afterEach(() => vi.useRealTimers())
 
-function asset(assetId: string, sourceAssetIds: string[] = []): Asset {
-    return { assetId, organizationId: 'org', revision: 1, documents: {}, lineage: { sourceAssetIds } } as Asset
+const asset = (assetId: string, sourceAssetIds: string[] = []): Asset => {
+    return {
+        assetId,
+        organizationId: 'org',
+        revision: 1,
+        documents: {},
+        lineage: { sourceAssetIds },
+    } as Asset
 }
 
-function canvas(assetIds: string[], active?: string): CanvasState {
+const canvas = (assetIds: string[], active?: string): CanvasState => {
     return {
-        nodes: assetIds.map(assetId => ({ nodeId: assetId, type: 'image', assetId, position: { x: 0, y: 0 }, dimensions: { width: 100, height: 100 } })),
+        nodes: assetIds.map(assetId => ({
+            nodeId: assetId,
+            type: 'image',
+            assetId,
+            position: {
+                x: 0,
+                y: 0,
+            },
+            dimensions: {
+                width: 100,
+                height: 100,
+            },
+        })),
         edges: [],
-        viewport: { x: 0, y: 0, zoom: 1 },
+        viewport: {
+            x: 0,
+            y: 0,
+            zoom: 1,
+        },
         lastActiveConversationAssetId: active,
     }
 }
 
-function projection(overrides: Partial<WorkspaceAssetProjectionPorts> = {}) {
+const projection = (overrides: Partial<WorkspaceAssetProjectionPorts> = {}) => {
     const ports: WorkspaceAssetProjectionPorts = {
         get: vi.fn(async id => asset(id)),
         hasDocument: vi.fn(() => false),
@@ -45,10 +67,14 @@ function projection(overrides: Partial<WorkspaceAssetProjectionPorts> = {}) {
         reportError: vi.fn(),
         ...overrides,
     }
-    return { ports, owner: new WorkspaceAssetProjection(ports) }
+
+    return {
+        ports,
+        owner: new WorkspaceAssetProjection(ports),
+    }
 }
 
-function synchronization(overrides: Partial<WorkspaceAssetSynchronizationPorts> = {}) {
+const synchronization = (overrides: Partial<WorkspaceAssetSynchronizationPorts> = {}) => {
     let onEvent: (event: WorkspaceAssetEvent) => void = () => {}
     const unsubscribe = vi.fn()
     const cancelTimer = vi.fn()
@@ -56,10 +82,12 @@ function synchronization(overrides: Partial<WorkspaceAssetSynchronizationPorts> 
     const ports: WorkspaceAssetSynchronizationPorts = {
         subscribe: vi.fn(listener => {
             onEvent = listener
+
             return unsubscribe
         }),
         setInterval: vi.fn(callback => {
             tick = callback
+
             return cancelTimer
         }),
         load: vi.fn(async () => {}),
@@ -72,21 +100,42 @@ function synchronization(overrides: Partial<WorkspaceAssetSynchronizationPorts> 
         ...overrides,
     }
     const owner = new WorkspaceAssetSynchronization('workspace', ports)
-    return { ports, owner, event: (assetId: string, deleted = false) => onEvent({ assetId, deleted }), tick: () => tick(), unsubscribe, cancelTimer }
+
+    return {
+        ports,
+        owner,
+        event: (assetId: string, deleted = false) => onEvent({
+            assetId,
+            deleted,
+        }),
+        tick: () => tick(),
+        unsubscribe,
+        cancelTimer,
+    }
 }
 
 describe('getWorkspaceCanvasAssetIds', () => {
     it('returns only Assets reachable from the canvas and conversation panel', () => {
         const canvasState: CanvasState = {
-            viewport: { x: 0, y: 0, zoom: 1 },
+            viewport: {
+                x: 0,
+                y: 0,
+                zoom: 1,
+            },
             edges: [],
             nodes: [
                 {
                     nodeId: 'generated-image-node',
                     type: 'image',
                     assetId: 'generated-image-asset',
-                    position: { x: 0, y: 0 },
-                    dimensions: { width: 400, height: 300 },
+                    position: {
+                        x: 0,
+                        y: 0,
+                    },
+                    dimensions: {
+                        width: 400,
+                        height: 300,
+                    },
                     generatedBy: {
                         conversationAssetId: 'generated-image-conversation',
                         responseId: 'response-1',
@@ -100,8 +149,14 @@ describe('getWorkspaceCanvasAssetIds', () => {
                     branchId: 'branch-1',
                     generationRequestId: 'generation-request-1',
                     conversationAssetId: 'branch-conversation',
-                    position: { x: 500, y: 0 },
-                    dimensions: { width: 400, height: 100 },
+                    position: {
+                        x: 500,
+                        y: 0,
+                    },
+                    dimensions: {
+                        width: 400,
+                        height: 100,
+                    },
                     temporary: true,
                 },
             ],
@@ -144,9 +199,7 @@ describe('WorkspaceAssetProjection', () => {
         let finish!: (value: Asset) => void
         const fixture = projection({
             get: vi.fn(() =>
-                new Promise(resolve => {
-                    finish = resolve
-                })
+                new Promise(resolve => void (finish = resolve))
             ),
         })
         const pending = fixture.owner.load('workspace', canvas(['a']), () => current)
@@ -163,9 +216,7 @@ describe('WorkspaceAssetProjection', () => {
         const fixture = projection({
             get: vi.fn(async id =>
                 id === 'old'
-                    ? await new Promise<Asset>(resolve => {
-                        finish = resolve
-                    })
+                    ? await new Promise<Asset>(resolve => void (finish = resolve))
                     : asset(id)
             ),
         })
@@ -178,10 +229,20 @@ describe('WorkspaceAssetProjection', () => {
     })
 
     it('resumes missing conversation documents first, batches snapshots and preserves cached documents', async () => {
-        const assets = Array.from({ length: 19 }, (_, index) => ({ ...asset(String(index)), documents: { provenance: {}, conversation: {} } }) as Asset)
+        const assets = Array.from({ length: 19 }, (_, index) => ({
+            ...asset(String(index)),
+            documents: {
+                provenance: {},
+                conversation: {},
+            },
+        }) as Asset)
         const fixture = projection({
             hasDocument: vi.fn((_id, role) => role === 'provenance'),
-            resumeDocument: vi.fn(async coordinate => ({ ...coordinate, version: 1, doc: {} })),
+            resumeDocument: vi.fn(async coordinate => ({
+                ...coordinate,
+                version: 1,
+                doc: {},
+            })),
         })
         await fixture.owner.hydrate(assets, () => true)
         expect(fixture.ports.resumeDocument).toHaveBeenCalledTimes(19)
@@ -194,12 +255,13 @@ describe('WorkspaceAssetProjection', () => {
         let finish!: (value: null) => void
         const fixture = projection({
             resumeDocument: vi.fn(() =>
-                new Promise(resolve => {
-                    finish = resolve
-                })
+                new Promise(resolve => void (finish = resolve))
             ),
         })
-        const pending = fixture.owner.hydrate([{ ...asset('a'), documents: { conversation: {} } } as Asset], () => current)
+        const pending = fixture.owner.hydrate([{
+            ...asset('a'),
+            documents: { conversation: {} },
+        } as Asset], () => current)
         current = false
         finish(null)
         await pending
@@ -209,7 +271,9 @@ describe('WorkspaceAssetProjection', () => {
     it('retains partial Asset loads and reports transport failures without publishing invalid records', async () => {
         const fixture = projection({
             get: vi.fn(async id => {
-                if (id === 'bad') throw new Error('offline')
+                if (id === 'bad')
+                    throw new Error('offline')
+
                 return asset(id)
             }),
         })
@@ -219,7 +283,8 @@ describe('WorkspaceAssetProjection', () => {
     })
 
     it('isolates simultaneous projections', async () => {
-        const first = projection(), second = projection()
+        const first = projection()
+        const second = projection()
         await Promise.all([first.owner.load('one', canvas(['a']), () => true), second.owner.load('two', canvas(['b']), () => true)])
         expect(first.ports.publishAssets).toHaveBeenCalledWith('one', [asset('a')])
         expect(second.ports.publishAssets).toHaveBeenCalledWith('two', [asset('b')])
@@ -261,11 +326,17 @@ describe('WorkspaceAssetSynchronization', () => {
         const fixture = synchronization({ fetch: vi.fn(() => new Promise(resolve => pending.push(resolve))) })
         fixture.event('a')
         fixture.event('a')
-        pending[1]({ ...asset('a'), revision: 2 })
+        pending[1]({
+            ...asset('a'),
+            revision: 2,
+        })
         await Promise.resolve()
         pending[0](asset('a'))
         await Promise.resolve()
-        expect(fixture.ports.publish).toHaveBeenCalledExactlyOnceWith({ ...asset('a'), revision: 2 })
+        expect(fixture.ports.publish).toHaveBeenCalledExactlyOnceWith({
+            ...asset('a'),
+            revision: 2,
+        })
         fixture.owner.destroy()
     })
 
@@ -273,9 +344,7 @@ describe('WorkspaceAssetSynchronization', () => {
         let finish!: () => void
         const fixture = synchronization({
             load: vi.fn(() =>
-                new Promise(resolve => {
-                    finish = () => resolve(undefined)
-                })
+                new Promise(resolve => void (finish = () => resolve(undefined)))
             ),
         })
         fixture.tick()

@@ -292,36 +292,7 @@ export const ACTION_TIMELINE_FRONTEND_STYLES = `
 }
 `
 
-export const actionTimelineFrontendDefinition: CapabilityArtifactFrontendDefinition = {
-    artifactTypeId: ACTION_TIMELINE_ARTIFACT_TYPE_ID,
-    iconId: 'ordered-list',
-    initialCanvasDimensions: actionTimelineSettings.canvas.initialDimensions,
-    createEditorPlugins: createActionTimelineEditorPlugins,
-    createCanvasNodeView: createActionTimelineCanvasView,
-    createGeneratedOutputInfoView: createActionTimelineInfoView,
-    buildReplaySubmitData: host => {
-        const input = asRecord(host.provenance.input) ?? {}
-        const variant = asRecord(host.provenance.variant)
-            ?? asRecord(asRecord(host.provenance.generationRun)?.lineageAssignment)
-            ?? {}
-        const reasoningModelId = typeof variant.reasoningModelId === 'string' ? variant.reasoningModelId : ''
-
-        return {
-            capabilityId: ACTION_TIMELINE_TOOL_ID,
-            capabilityInputs: {
-                [ACTION_TIMELINE_TOOL_ID]: {
-                    durationMs: numberValue(input.durationMs),
-                    precisionMs: numberValue(input.precisionMs),
-                },
-            },
-            reasoningModelIds: reasoningModelId ? [reasoningModelId] : [],
-        }
-    },
-    createPromptReferenceView: createActionTimelinePromptReferenceView,
-    createLibraryItemView: createActionTimelineLibraryView,
-}
-
-export function createActionTimelineEditorPlugins(): Plugin[] {
+export const createActionTimelineEditorPlugins = (): Plugin[] => {
     return [
         new Plugin({
             props: {
@@ -376,7 +347,7 @@ class ActionTimelineSegmentNodeView implements NodeView {
     }
 }
 
-function createActionTimelineCanvasView(host: CapabilityArtifactCanvasHost): CapabilityArtifactCanvasView {
+const createActionTimelineCanvasView = (host: CapabilityArtifactCanvasHost): CapabilityArtifactCanvasView => {
     const html = createDocumentHtml(host.container.ownerDocument)
     const root = html`
         <div className="action-timeline-body">
@@ -457,12 +428,12 @@ function createActionTimelineCanvasView(host: CapabilityArtifactCanvasHost): Cap
     }
 }
 
-function renderStaticTimeline(
+const renderStaticTimeline = (
     container: HTMLElement,
     document: object,
     host: CapabilityArtifactCanvasHost,
     registerReferenceView: (view: { destroy: () => void }) => void,
-): void {
+): void => {
     const html = createDocumentHtml(container.ownerDocument)
     container.replaceChildren()
     const doc = document as JsonNode
@@ -489,7 +460,7 @@ function renderStaticTimeline(
     }
 }
 
-function createActionTimelineInfoView(host: CapabilityArtifactInfoHost): CapabilityArtifactInfoView {
+const createActionTimelineInfoView = (host: CapabilityArtifactInfoHost): CapabilityArtifactInfoView => {
     const html = createDocumentHtml(host.container.ownerDocument)
     const doc = host.document as JsonNode
     const segments = doc.content?.length ?? 0
@@ -517,7 +488,7 @@ function createActionTimelineInfoView(host: CapabilityArtifactInfoHost): Capabil
     return { destroy: () => root.remove() }
 }
 
-function createActionTimelinePromptReferenceView(host: CapabilityPromptReferenceHost): CapabilityPromptReferenceView {
+const createActionTimelinePromptReferenceView = (host: CapabilityPromptReferenceHost): CapabilityPromptReferenceView => {
     const html = createDocumentHtml(host.container.ownerDocument)
     const segmentCount = numberValue(host.displayMetadata.segmentCount)
     const root = html`<span className="action-timeline-reference">${host.title}${segmentCount > 0 ? ` · ${segmentCount} segments` : ''}</span>` as HTMLSpanElement
@@ -526,7 +497,7 @@ function createActionTimelinePromptReferenceView(host: CapabilityPromptReference
     return { destroy: () => root.remove() }
 }
 
-function createActionTimelineLibraryView(host: CapabilityArtifactLibraryHost): CapabilityArtifactLibraryView {
+const createActionTimelineLibraryView = (host: CapabilityArtifactLibraryHost): CapabilityArtifactLibraryView => {
     const html = createDocumentHtml(host.container.ownerDocument)
     const durationMs = numberValue(host.displayMetadata.durationMs)
     const segmentCount = numberValue(host.displayMetadata.segmentCount)
@@ -545,12 +516,12 @@ function createActionTimelineLibraryView(host: CapabilityArtifactLibraryHost): C
     return { destroy: () => root.remove() }
 }
 
-function renderInlineContent(
+const renderInlineContent = (
     container: HTMLElement,
     node: JsonNode,
     host: CapabilityArtifactCanvasHost,
     registerReferenceView: (view: { destroy: () => void }) => void,
-): void {
+): void => {
     const visit = (child: JsonNode): void => {
         if (
             child.type === 'text'
@@ -579,17 +550,46 @@ function renderInlineContent(
     visit(node)
 }
 
-function numberValue(value: unknown): number {
+const numberValue = (value: unknown): number => {
     return typeof value === 'number'
         && Number.isFinite(value)
         ? value
         : 0
 }
 
-function asRecord(value: CapabilityJsonValue | undefined): Record<string, CapabilityJsonValue> | undefined {
+const asRecord = (value: CapabilityJsonValue | undefined): Record<string, CapabilityJsonValue> | undefined => {
     return value
         && typeof value === 'object'
         && !Array.isArray(value)
         ? value as Record<string, CapabilityJsonValue>
         : undefined
+}
+
+export const actionTimelineFrontendDefinition: CapabilityArtifactFrontendDefinition = {
+    artifactTypeId: ACTION_TIMELINE_ARTIFACT_TYPE_ID,
+    iconId: 'ordered-list',
+    initialCanvasDimensions: actionTimelineSettings.canvas.initialDimensions,
+    createEditorPlugins: createActionTimelineEditorPlugins,
+    createCanvasNodeView: createActionTimelineCanvasView,
+    createGeneratedOutputInfoView: createActionTimelineInfoView,
+    buildReplaySubmitData: host => {
+        const input = asRecord(host.provenance.input) ?? {}
+        const variant = asRecord(host.provenance.variant)
+            ?? asRecord(asRecord(host.provenance.generationRun)?.lineageAssignment)
+            ?? {}
+        const reasoningModelId = typeof variant.reasoningModelId === 'string' ? variant.reasoningModelId : ''
+
+        return {
+            capabilityId: ACTION_TIMELINE_TOOL_ID,
+            capabilityInputs: {
+                [ACTION_TIMELINE_TOOL_ID]: {
+                    durationMs: numberValue(input.durationMs),
+                    precisionMs: numberValue(input.precisionMs),
+                },
+            },
+            reasoningModelIds: reasoningModelId ? [reasoningModelId] : [],
+        }
+    },
+    createPromptReferenceView: createActionTimelinePromptReferenceView,
+    createLibraryItemView: createActionTimelineLibraryView,
 }

@@ -50,19 +50,29 @@ const FORBIDDEN_PATTERNS = [
 
 const SOURCE_SUFFIXES = ['.ts', '.md', '.txt', '.json'] as const
 
-function readInstructionSource(url: URL): InstructionSource {
+const readInstructionSource = (url: URL): InstructionSource => {
     return {
         path: fileURLToPath(url),
         text: readFileSync(url, 'utf8'),
     }
 }
 
-function collectInstructionSources(directory: URL): InstructionSource[] {
+const collectInstructionSources = (directory: URL): InstructionSource[] => {
     return readdirSync(directory, { withFileTypes: true }).flatMap(entry => {
         const child = new URL(entry.isDirectory() ? `${entry.name}/` : entry.name, directory)
-        if (entry.isDirectory()) return collectInstructionSources(child)
-        if (entry.name.endsWith('.test.ts') || entry.name.endsWith('.spec.ts')) return []
-        if (!SOURCE_SUFFIXES.some(suffix => entry.name.endsWith(suffix))) return []
+
+        if (entry.isDirectory())
+            return collectInstructionSources(child)
+
+        if (
+            entry.name.endsWith('.test.ts')
+            || entry.name.endsWith('.spec.ts')
+        )
+            return []
+
+        if (!SOURCE_SUFFIXES.some(suffix => entry.name.endsWith(suffix)))
+            return []
+
         return [readInstructionSource(child)]
     })
 }
@@ -77,6 +87,7 @@ describe('static model instructions', () => {
             FORBIDDEN_PATTERNS.flatMap(rule =>
                 [...source.text.matchAll(rule.pattern)].map(match => {
                     const line = source.text.slice(0, match.index).split('\n').length
+
                     return `${source.path}:${line} ${rule.reason}: ${match[0]}`
                 })
             )

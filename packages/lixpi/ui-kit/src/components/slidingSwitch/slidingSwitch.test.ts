@@ -25,9 +25,11 @@ import {
 // a transition, so it stays assertable.
 const makeChain = (): any => {
     const chain: any = {}
+
     for (const method of ['duration', 'ease', 'attr', 'style', 'tween']) {
         chain[method] = () => chain
     }
+
     return chain
 }
 ;(selection.prototype as any).transition = () => makeChain()
@@ -37,20 +39,29 @@ const SVG_NS = 'http://www.w3.org/2000/svg'
 type View = 'list' | 'grid' | 'timeline'
 
 const options = [
-    { label: 'List', value: 'list' as View },
-    { label: 'Grid', value: 'grid' as View },
-    { label: 'Timeline', value: 'timeline' as View },
+    {
+        label: 'List',
+        value: 'list' as View,
+    },
+    {
+        label: 'Grid',
+        value: 'grid' as View,
+    },
+    {
+        label: 'Timeline',
+        value: 'timeline' as View,
+    },
 ]
 
 // width 304, padding 2 -> segmentWidth 100, so segment x = 2 + index * 100.
 const WIDTH = 304
 const segmentX = (index: number) => 2 + index * 100
 
-function mount(
+const mount = (
     selectedValue: View = 'list',
     onChange = vi.fn(),
     config: Partial<Parameters<typeof createSlidingSwitch>[1]> = {},
-) {
+) => {
     const svg = document.createElementNS(SVG_NS, 'svg') as unknown as SVGSVGElement
     document.body.appendChild(svg)
     const slidingSwitch = createSlidingSwitch<View>(select(svg), {
@@ -64,7 +75,12 @@ function mount(
         onChange,
         ...config,
     })
-    return { svg, slidingSwitch, onChange }
+
+    return {
+        svg,
+        slidingSwitch,
+        onChange,
+    }
 }
 
 const hitRects = (svg: SVGSVGElement) => Array.from(svg.querySelectorAll('.sliding-switch-hit'))
@@ -80,13 +96,9 @@ const reshuffleToRight = {
 } satisfies SlidingSwitchReshuffleItemsOnValueChange
 
 describe('createSlidingSwitch', () => {
-    beforeEach(() => {
-        document.body.innerHTML = ''
-    })
+    beforeEach(() => void (document.body.innerHTML = ''))
 
-    afterEach(() => {
-        vi.useRealTimers()
-    })
+    afterEach(() => void vi.useRealTimers())
 
     it('appends an SVG group with a track, indicator, and one label + hit area per option', () => {
         const { svg } = mount()
@@ -98,7 +110,10 @@ describe('createSlidingSwitch', () => {
     })
 
     it('reflects the selected value and positions the indicator over it', () => {
-        const { svg, slidingSwitch } = mount('timeline')
+        const {
+            svg,
+            slidingSwitch,
+        } = mount('timeline')
         expect(slidingSwitch.getValue()).toBe('timeline')
         expect(indicatorX(svg)).toBe(String(segmentX(2)))
         expect(labels(svg)[2]!.getAttribute('fill')).toBe('#1a2744')
@@ -106,18 +121,31 @@ describe('createSlidingSwitch', () => {
     })
 
     it('falls back to the first option when the selected value is unknown', () => {
-        const { svg, slidingSwitch } = mount('nope' as View)
+        const {
+            svg,
+            slidingSwitch,
+        } = mount('nope' as View)
         expect(slidingSwitch.getValue()).toBe('list')
         expect(indicatorX(svg)).toBe(String(segmentX(0)))
     })
 
     it('throws when constructed with no options', () => {
         const svg = document.createElementNS(SVG_NS, 'svg') as unknown as SVGSVGElement
-        expect(() => createSlidingSwitch(select(svg), { id: 'v', x: 0, y: 0, width: WIDTH, options: [] })).toThrow()
+        expect(() => createSlidingSwitch(select(svg), {
+            id: 'v',
+            x: 0,
+            y: 0,
+            width: WIDTH,
+            options: [],
+        })).toThrow()
     })
 
     it('clicking a segment selects it, fires onChange, and recolors the labels', () => {
-        const { svg, slidingSwitch, onChange } = mount('list')
+        const {
+            svg,
+            slidingSwitch,
+            onChange,
+        } = mount('list')
 
         hitRects(svg)[1]!.dispatchEvent(new MouseEvent('click', { bubbles: true }))
 
@@ -128,7 +156,11 @@ describe('createSlidingSwitch', () => {
     })
 
     it('does not fire onChange when the active segment is clicked again', () => {
-        const { svg, slidingSwitch, onChange } = mount('list')
+        const {
+            svg,
+            slidingSwitch,
+            onChange,
+        } = mount('list')
         hitRects(svg)[0]!.dispatchEvent(new MouseEvent('click', { bubbles: true }))
         expect(onChange).not.toHaveBeenCalled()
         expect(slidingSwitch.getValue()).toBe('list')
@@ -181,7 +213,10 @@ describe('createSlidingSwitch', () => {
 
     it('passes the resolved option color to custom renderers', () => {
         const renderedColors = new Map<View, string>()
-        const { svg, slidingSwitch } = mount('list', vi.fn(), {
+        const {
+            svg,
+            slidingSwitch,
+        } = mount('list', vi.fn(), {
             unselectedOptionColor: '#456789',
             hoveredOptionColor: '#789abc',
             selectedOptionColor: '#def012',
@@ -201,7 +236,11 @@ describe('createSlidingSwitch', () => {
     })
 
     it('setValue selects without firing onChange', () => {
-        const { svg, slidingSwitch, onChange } = mount('list')
+        const {
+            svg,
+            slidingSwitch,
+            onChange,
+        } = mount('list')
         slidingSwitch.setValue('timeline')
         expect(slidingSwitch.getValue()).toBe('timeline')
         expect(onChange).not.toHaveBeenCalled()
@@ -219,7 +258,10 @@ describe('createSlidingSwitch', () => {
             y: 0,
             width: WIDTH,
             height: 26,
-            options: options.map((option) => ({ ...option, closable: option.value === 'grid' })),
+            options: options.map((option) => ({
+                ...option,
+                closable: option.value === 'grid',
+            })),
             selectedValue: 'list',
             onChange,
             onClose,
@@ -232,25 +274,42 @@ describe('createSlidingSwitch', () => {
     })
 
     it('supports keyboard selection across options', () => {
-        const { svg, slidingSwitch, onChange } = mount('list')
+        const {
+            svg,
+            slidingSwitch,
+            onChange,
+        } = mount('list')
 
-        hitRects(svg)[0]!.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }))
+        hitRects(svg)[0]!.dispatchEvent(new KeyboardEvent('keydown', {
+            key: 'ArrowRight',
+            bubbles: true,
+        }))
 
         expect(slidingSwitch.getValue()).toBe('grid')
         expect(onChange).toHaveBeenCalledExactlyOnceWith('grid', 'view-mode')
     })
 
     it('supports Home and End keyboard selection', () => {
-        const { svg, slidingSwitch, onChange } = mount('grid')
+        const {
+            svg,
+            slidingSwitch,
+            onChange,
+        } = mount('grid')
 
-        optionGroups(svg)[1]!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Home', bubbles: true }))
+        optionGroups(svg)[1]!.dispatchEvent(new KeyboardEvent('keydown', {
+            key: 'Home',
+            bubbles: true,
+        }))
 
         expect(slidingSwitch.getValue()).toBe('list')
         expect(onChange).toHaveBeenCalledTimes(1)
         expect(onChange).toHaveBeenLastCalledWith('list', 'view-mode')
 
         onChange.mockClear()
-        optionGroups(svg)[0]!.dispatchEvent(new KeyboardEvent('keydown', { key: 'End', bubbles: true }))
+        optionGroups(svg)[0]!.dispatchEvent(new KeyboardEvent('keydown', {
+            key: 'End',
+            bubbles: true,
+        }))
 
         expect(slidingSwitch.getValue()).toBe('timeline')
         expect(onChange).toHaveBeenCalledTimes(1)
@@ -260,20 +319,32 @@ describe('createSlidingSwitch', () => {
     it('fires close via keyboard on the close control', () => {
         const onChange = vi.fn()
         const onClose = vi.fn()
-        const { svg, slidingSwitch } = mount('list', onChange, {
-            options: options.map((option) => ({ ...option, closable: option.value === 'grid' })),
+        const {
+            svg,
+            slidingSwitch,
+        } = mount('list', onChange, {
+            options: options.map((option) => ({
+                ...option,
+                closable: option.value === 'grid',
+            })),
             onClose,
         })
         slidingSwitch.setValue('list')
 
-        closeGroups(svg)[1]!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
+        closeGroups(svg)[1]!.dispatchEvent(new KeyboardEvent('keydown', {
+            key: 'Enter',
+            bubbles: true,
+        }))
         expect(slidingSwitch.getValue()).toBe('list')
         expect(onChange).not.toHaveBeenCalled()
         expect(onClose).toHaveBeenCalledExactlyOnceWith('grid', 'view-mode', expect.objectContaining({ value: 'grid' }))
     })
 
     it('does not dispatch selection when a click event is already default-prevented', () => {
-        const { slidingSwitch, onChange } = mount('list')
+        const {
+            slidingSwitch,
+            onChange,
+        } = mount('list')
         const option = { value: 'grid' as View }
         const event = { defaultPrevented: true } as Event
         ;(slidingSwitch as any).selectOption(option, event)
@@ -284,7 +355,11 @@ describe('createSlidingSwitch', () => {
 
     it('does not close disabled options', () => {
         const onClose = vi.fn()
-        const { svg, slidingSwitch, onChange } = mount('list', vi.fn(), {
+        const {
+            svg,
+            slidingSwitch,
+            onChange,
+        } = mount('list', vi.fn(), {
             options: options.map((option, index) => ({
                 ...option,
                 closable: true,
@@ -301,7 +376,10 @@ describe('createSlidingSwitch', () => {
     })
 
     it('ignores setValue calls for values that are not represented', () => {
-        const { slidingSwitch, onChange } = mount('grid', vi.fn())
+        const {
+            slidingSwitch,
+            onChange,
+        } = mount('grid', vi.fn())
         slidingSwitch.setValue('missing' as View)
 
         expect(slidingSwitch.getValue()).toBe('grid')
@@ -310,8 +388,14 @@ describe('createSlidingSwitch', () => {
 
     it('does not select disabled options and wraps through keyboard to the next enabled option', () => {
         const onChange = vi.fn()
-        const { svg, slidingSwitch } = mount('list', onChange, {
-            options: options.map((option, index) => index === 1 ? { ...option, disabled: true } : option),
+        const {
+            svg,
+            slidingSwitch,
+        } = mount('list', onChange, {
+            options: options.map((option, index) => index === 1 ? {
+                ...option,
+                disabled: true,
+            } : option),
         })
 
         hitRects(svg)[1]!.dispatchEvent(new MouseEvent('click', { bubbles: true }))
@@ -319,7 +403,10 @@ describe('createSlidingSwitch', () => {
         expect(slidingSwitch.getValue()).toBe('list')
         expect(onChange).not.toHaveBeenCalled()
 
-        optionGroups(svg)[0]!.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }))
+        optionGroups(svg)[0]!.dispatchEvent(new KeyboardEvent('keydown', {
+            key: 'ArrowRight',
+            bubbles: true,
+        }))
 
         expect(slidingSwitch.getValue()).toBe('timeline')
         expect(onChange).toHaveBeenCalledExactlyOnceWith('timeline', 'view-mode')
@@ -344,7 +431,10 @@ describe('createSlidingSwitch', () => {
     })
 
     it('supports min-option width sizing and resize-driven dimension updates', () => {
-        const { svg, slidingSwitch } = mount('list', vi.fn(), {
+        const {
+            svg,
+            slidingSwitch,
+        } = mount('list', vi.fn(), {
             minOptionWidth: 120,
             width: 150,
             height: 28,
@@ -381,7 +471,10 @@ describe('createSlidingSwitch', () => {
             y: 0,
             width: WIDTH,
             height: 26,
-            options: options.map((option) => ({ ...option, closable: option.value === 'grid' })),
+            options: options.map((option) => ({
+                ...option,
+                closable: option.value === 'grid',
+            })),
             selectedValue: 'list',
             onClose,
             renderOption: (parent, state) =>
@@ -413,7 +506,10 @@ describe('createSlidingSwitch', () => {
     // =============================================================================
 
     it('moves the initial selected option to the configured right edge', () => {
-        const { svg, slidingSwitch } = mount('list', vi.fn(), {
+        const {
+            svg,
+            slidingSwitch,
+        } = mount('list', vi.fn(), {
             reshuffleItemsOnValueChange: reshuffleToRight,
         })
 
@@ -423,7 +519,10 @@ describe('createSlidingSwitch', () => {
     })
 
     it('moves the initial selected option to the configured left edge', () => {
-        const { svg, slidingSwitch } = mount('timeline', vi.fn(), {
+        const {
+            svg,
+            slidingSwitch,
+        } = mount('timeline', vi.fn(), {
             reshuffleItemsOnValueChange: {
                 enable: true,
                 selectedElementPosition: 'left',
@@ -437,7 +536,11 @@ describe('createSlidingSwitch', () => {
 
     it('sequentially reshuffles the newly selected option to the configured edge', () => {
         vi.useFakeTimers()
-        const { svg, slidingSwitch, onChange } = mount('list', vi.fn(), {
+        const {
+            svg,
+            slidingSwitch,
+            onChange,
+        } = mount('list', vi.fn(), {
             reshuffleItemsOnValueChange: reshuffleToRight,
         })
 
@@ -462,8 +565,14 @@ describe('createSlidingSwitch', () => {
             y: 0,
             width: 204,
             options: [
-                { label: 'Image', value: 'image' },
-                { label: 'Video', value: 'video' },
+                {
+                    label: 'Image',
+                    value: 'image',
+                },
+                {
+                    label: 'Video',
+                    value: 'video',
+                },
             ],
             selectedValue: 'image',
             onChange,
@@ -491,7 +600,11 @@ describe('createSlidingSwitch', () => {
 
     it('preserves the standard switch behavior when reshuffling is disabled', () => {
         vi.useFakeTimers()
-        const { svg, slidingSwitch, onChange } = mount('list', vi.fn(), {
+        const {
+            svg,
+            slidingSwitch,
+            onChange,
+        } = mount('list', vi.fn(), {
             reshuffleItemsOnValueChange: {
                 enable: false,
                 selectedElementPosition: 'right',
@@ -509,7 +622,11 @@ describe('createSlidingSwitch', () => {
 
     it('cancels an in-flight reshuffle before applying the next selection', () => {
         vi.useFakeTimers()
-        const { svg, slidingSwitch, onChange } = mount('list', vi.fn(), {
+        const {
+            svg,
+            slidingSwitch,
+            onChange,
+        } = mount('list', vi.fn(), {
             reshuffleItemsOnValueChange: reshuffleToRight,
         })
 
@@ -525,14 +642,20 @@ describe('createSlidingSwitch', () => {
     })
 
     it('keeps render safe after destroy', () => {
-        const { svg, slidingSwitch } = mount()
+        const {
+            svg,
+            slidingSwitch,
+        } = mount()
         slidingSwitch.destroy()
         expect(() => slidingSwitch.render()).not.toThrow()
         expect(svg.querySelector('.sliding-switch-group')).toBeNull()
     })
 
     it('removes its group on destroy', () => {
-        const { svg, slidingSwitch } = mount()
+        const {
+            svg,
+            slidingSwitch,
+        } = mount()
         slidingSwitch.destroy()
         expect(svg.querySelector('.sliding-switch-group')).toBeNull()
     })

@@ -19,22 +19,27 @@ import {
 
 const openaiMocks = vi.hoisted(() => ({ responsesCreate: vi.fn() }))
 const anthropicMocks = vi.hoisted(() => ({ messagesStream: vi.fn() }))
-const debugTools = vi.hoisted(() => ({ info: vi.fn(), warn: vi.fn(), err: vi.fn() }))
+const debugTools = vi.hoisted(() => ({
+    info: vi.fn(),
+    warn: vi.fn(),
+    err: vi.fn(),
+}))
 
 vi.mock('@lixpi/debug-tools', () => debugTools)
 vi.mock('openai', () => ({
-    default: vi.fn(function() {
-        return {
-            responses: { create: openaiMocks.responsesCreate },
-            images: { generate: vi.fn() },
-        }
-    }),
+    default: class {
+        responses = { create: openaiMocks.responsesCreate }
+        images = { generate: vi.fn() }
+    },
     toFile: vi.fn(),
 }))
 vi.mock('@anthropic-ai/sdk', () => ({
-    default: vi.fn(function() {
-        return { messages: { stream: anthropicMocks.messagesStream, create: vi.fn() } }
-    }),
+    default: class {
+        messages = {
+            stream: anthropicMocks.messagesStream,
+            create: vi.fn(),
+        }
+    },
 }))
 
 import {
@@ -43,7 +48,7 @@ import {
 import { AnthropicProvider } from './anthropic-provider.ts'
 import { OpenAIProvider } from './openai-provider.ts'
 
-function asyncStream<T>(items: T[]): AsyncIterable<T> {
+const asyncStream = <T>(items: T[]): AsyncIterable<T> => {
     return {
         [Symbol.asyncIterator]: async function*() {
             for (const item of items) yield item
@@ -51,17 +56,20 @@ function asyncStream<T>(items: T[]): AsyncIterable<T> {
     }
 }
 
-function deps(search: ReturnType<typeof vi.fn>): BaseProviderDeps {
+const deps = (search: ReturnType<typeof vi.fn>): BaseProviderDeps => {
     return {
         natsService: { publish: vi.fn() } as any,
         usageReporter: {} as any,
         runImageRouter: vi.fn(),
         runVideoRouter: vi.fn(),
-        capabilityDispatcher: { search, use: vi.fn() } as any,
+        capabilityDispatcher: {
+            search,
+            use: vi.fn(),
+        } as any,
     }
 }
 
-function capabilityRunResult() {
+const capabilityRunResult = () => {
     return {
         run: {
             runId: 'run-1',
@@ -81,7 +89,7 @@ function capabilityRunResult() {
     }
 }
 
-function actionTimelinePlan(): SealedResolvedCapabilityPlan {
+const actionTimelinePlan = (): SealedResolvedCapabilityPlan => {
     const schemaRef: CapabilityResourceRef = {
         resourceId: 'input',
         blobHash: 'input-hash',
@@ -108,7 +116,10 @@ function actionTimelinePlan(): SealedResolvedCapabilityPlan {
                 video: 'ignore',
                 outputMode: 'capability-only',
             },
-            workflow: { steps: [], outputs: {} },
+            workflow: {
+                steps: [],
+                outputs: {},
+            },
         },
     }
     const serializable: ResolvedCapabilityPlan = {
@@ -119,8 +130,12 @@ function actionTimelinePlan(): SealedResolvedCapabilityPlan {
             manifestBlobHash: 'manifest-hash',
             manifest,
         }],
-        resolvedManifests: [{ capabilityId: 'action-timeline', manifestBlobHash: 'manifest-hash' }],
+        resolvedManifests: [{
+            capabilityId: 'action-timeline',
+            manifestBlobHash: 'manifest-hash',
+        }],
     }
+
     return new SealedResolvedCapabilityPlan(serializable, [{
         capabilityId: 'action-timeline',
         ref: schemaRef,
@@ -136,7 +151,7 @@ function actionTimelinePlan(): SealedResolvedCapabilityPlan {
     }])
 }
 
-function configure(provider: OpenAIProvider | AnthropicProvider) {
+const configure = (provider: OpenAIProvider | AnthropicProvider) => {
     const publisher = {
         start: vi.fn(),
         end: vi.fn(),
@@ -145,9 +160,18 @@ function configure(provider: OpenAIProvider | AnthropicProvider) {
         capabilityGenerationTrace: vi.fn(),
     }
     ;(provider as any).streamPublisher = publisher
-    ;(provider as any).imagePublisher = { partial: vi.fn(), complete: vi.fn() }
-    ;(provider as any).videoPublisher = { pending: vi.fn(), generating: vi.fn(), complete: vi.fn(), error: vi.fn() }
+    ;(provider as any).imagePublisher = {
+        partial: vi.fn(),
+        complete: vi.fn(),
+    }
+    ;(provider as any).videoPublisher = {
+        pending: vi.fn(),
+        generating: vi.fn(),
+        complete: vi.fn(),
+        error: vi.fn(),
+    }
     ;(provider as any).abortController = new AbortController()
+
     return publisher
 }
 
@@ -160,11 +184,14 @@ const inferenceCapabilities = (provider: 'OpenAI' | 'Anthropic'): AiModelInferen
     supportedInputKinds: ['image', 'video-frame', 'document-text'],
 })
 
-function state(provider: 'OpenAI' | 'Anthropic') {
+const state = (provider: 'OpenAI' | 'Anthropic') => {
     return {
         workspaceId: 'workspace-1',
         aiChatThreadId: 'thread-1',
-        messages: [{ role: 'user', content: 'Find a character Tool' }],
+        messages: [{
+            role: 'user',
+            content: 'Find a character Tool',
+        }],
         modelVersion: provider === 'OpenAI' ? 'gpt-5' : 'claude-sonnet-4-5',
         aiModelMetaInfo: {
             modelVersion: provider === 'OpenAI' ? 'gpt-5' : 'claude-sonnet-4-5',
@@ -172,13 +199,17 @@ function state(provider: 'OpenAI' | 'Anthropic') {
         },
         maxCompletionSize: 1000,
         temperature: 0.7,
-        eventMeta: { userId: 'user-1', organizationId: 'organization-1' },
+        eventMeta: {
+            userId: 'user-1',
+            organizationId: 'organization-1',
+        },
         capabilityInvocationDepth: 0,
     }
 }
 
-function actionTimelineState(provider: 'OpenAI' | 'Anthropic') {
+const actionTimelineState = (provider: 'OpenAI' | 'Anthropic') => {
     const base = state(provider)
+
     return {
         ...base,
         provider,
@@ -225,17 +256,26 @@ describe('Capability provider adapters', () => {
                         name: 'search_capabilities',
                         arguments: '{"query":"character"}',
                     }],
-                    usage: { input_tokens: 2, output_tokens: 1 },
+                    usage: {
+                        input_tokens: 2,
+                        output_tokens: 1,
+                    },
                 },
             }]))
             .mockResolvedValueOnce(asyncStream([
-                { type: 'response.output_text.delta', delta: 'Found it.' },
+                {
+                    type: 'response.output_text.delta',
+                    delta: 'Found it.',
+                },
                 {
                     type: 'response.completed',
                     response: {
                         id: 'response-2',
                         output: [],
-                        usage: { input_tokens: 3, output_tokens: 4 },
+                        usage: {
+                            input_tokens: 3,
+                            output_tokens: 4,
+                        },
                     },
                 },
             ]))
@@ -274,19 +314,31 @@ describe('Capability provider adapters', () => {
                 name: 'search_capabilities',
                 input: { query: 'character' },
             }],
-            usage: { input_tokens: 2, output_tokens: 1 },
+            usage: {
+                input_tokens: 2,
+                output_tokens: 1,
+            },
         }
         const secondFinal = {
             id: 'message-2',
-            content: [{ type: 'text', text: 'Found it.' }],
-            usage: { input_tokens: 3, output_tokens: 4 },
+            content: [{
+                type: 'text',
+                text: 'Found it.',
+            }],
+            usage: {
+                input_tokens: 3,
+                output_tokens: 4,
+            },
         }
         anthropicMocks.messagesStream
             .mockReturnValueOnce(Object.assign(asyncStream([]), { finalMessage: vi.fn(async () => firstFinal) }))
             .mockReturnValueOnce(Object.assign(
                 asyncStream([{
                     type: 'content_block_delta',
-                    delta: { type: 'text_delta', text: 'Found it.' },
+                    delta: {
+                        type: 'text_delta',
+                        text: 'Found it.',
+                    },
                 }]),
                 { finalMessage: vi.fn(async () => secondFinal) },
             ))
@@ -308,7 +360,10 @@ describe('Capability provider adapters', () => {
             messages: expect.arrayContaining([
                 expect.objectContaining({
                     role: 'user',
-                    content: [expect.objectContaining({ type: 'tool_result', tool_use_id: 'tool-1' })],
+                    content: [expect.objectContaining({
+                        type: 'tool_result',
+                        tool_use_id: 'tool-1',
+                    })],
                 }),
             ]),
         }))
@@ -324,27 +379,45 @@ describe('Capability provider adapters', () => {
                 type: 'tool_use',
                 id: 'tool-1',
                 name: toolName,
-                input: { durationMs: 1, precisionMs: 1 },
+                input: {
+                    durationMs: 1,
+                    precisionMs: 1,
+                },
             }],
-            usage: { input_tokens: 2, output_tokens: 1 },
+            usage: {
+                input_tokens: 2,
+                output_tokens: 1,
+            },
         }
         const secondFinal = {
             id: 'message-2',
-            content: [{ type: 'text', text: 'The action timeline is ready.' }],
-            usage: { input_tokens: 3, output_tokens: 4 },
+            content: [{
+                type: 'text',
+                text: 'The action timeline is ready.',
+            }],
+            usage: {
+                input_tokens: 3,
+                output_tokens: 4,
+            },
         }
         anthropicMocks.messagesStream
             .mockReturnValueOnce(Object.assign(asyncStream([]), { finalMessage: vi.fn(async () => firstFinal) }))
             .mockReturnValueOnce(Object.assign(
                 asyncStream([{
                     type: 'content_block_delta',
-                    delta: { type: 'text_delta', text: 'The action timeline is ready.' },
+                    delta: {
+                        type: 'text_delta',
+                        text: 'The action timeline is ready.',
+                    },
                 }]),
                 { finalMessage: vi.fn(async () => secondFinal) },
             ))
         const use = vi.fn(async () => ({
             ...capabilityRunResult(),
-            output: { outputKind: 'capabilityArtifact', assetId: 'asset-1' },
+            output: {
+                outputKind: 'capabilityArtifact',
+                assetId: 'asset-1',
+            },
             events: [],
         }))
         const provider = new AnthropicProvider('instance', {
@@ -357,14 +430,20 @@ describe('Capability provider adapters', () => {
 
         expect(anthropicMocks.messagesStream).toHaveBeenCalledTimes(2)
         expect(anthropicMocks.messagesStream.mock.calls[0]?.[0]).toEqual(expect.objectContaining({
-            tool_choice: { type: 'tool', name: toolName },
+            tool_choice: {
+                type: 'tool',
+                name: toolName,
+            },
             tools: expect.arrayContaining([expect.objectContaining({ name: toolName })]),
         }))
         expect(anthropicMocks.messagesStream.mock.calls[1]?.[0]).toEqual(expect.objectContaining({
             messages: expect.arrayContaining([
                 expect.objectContaining({
                     role: 'user',
-                    content: [expect.objectContaining({ type: 'tool_result', tool_use_id: 'tool-1' })],
+                    content: [expect.objectContaining({
+                        type: 'tool_result',
+                        tool_use_id: 'tool-1',
+                    })],
                 }),
             ]),
         }))
@@ -373,7 +452,10 @@ describe('Capability provider adapters', () => {
         expect(anthropicMocks.messagesStream.mock.calls[1]?.[0]?.system).toContain('Do not include code')
         expect(anthropicMocks.messagesStream.mock.calls[0]?.[0]?.system).not.toContain('Do not include code')
         expect(use).toHaveBeenCalledWith(expect.objectContaining({
-            arguments: expect.objectContaining({ durationMs: 15000, precisionMs: 2000 }),
+            arguments: expect.objectContaining({
+                durationMs: 15000,
+                precisionMs: 2000,
+            }),
         }))
         expect(publisher.capabilityGenerationTrace).toHaveBeenCalledOnce()
         expect(publisher.chunk).toHaveBeenCalledWith('The action timeline is ready.')
@@ -395,7 +477,10 @@ describe('Capability provider adapters', () => {
                             arguments: { prompt: 'desert courier' },
                         }),
                     }],
-                    usage: { input_tokens: 1, output_tokens: 1 },
+                    usage: {
+                        input_tokens: 1,
+                        output_tokens: 1,
+                    },
                 },
             }]))
             .mockResolvedValueOnce(asyncStream([{
@@ -403,13 +488,19 @@ describe('Capability provider adapters', () => {
                 response: {
                     id: 'response-2',
                     output: [],
-                    usage: { input_tokens: 1, output_tokens: 1 },
+                    usage: {
+                        input_tokens: 1,
+                        output_tokens: 1,
+                    },
                 },
             }]))
         const use = vi.fn(async () => capabilityRunResult())
         const provider = new OpenAIProvider('instance', {
             ...deps(vi.fn(async () => ({ items: [] }))),
-            capabilityDispatcher: { search: vi.fn(), use } as any,
+            capabilityDispatcher: {
+                search: vi.fn(),
+                use,
+            } as any,
         })
         configure(provider)
 
@@ -441,25 +532,40 @@ describe('Capability provider adapters', () => {
                         type: 'function_call',
                         call_id: 'call-1',
                         name: toolName,
-                        arguments: JSON.stringify({ durationMs: 1, precisionMs: 1 }),
+                        arguments: JSON.stringify({
+                            durationMs: 1,
+                            precisionMs: 1,
+                        }),
                     }],
-                    usage: { input_tokens: 1, output_tokens: 1 },
+                    usage: {
+                        input_tokens: 1,
+                        output_tokens: 1,
+                    },
                 },
             }]))
             .mockResolvedValueOnce(asyncStream([
-                { type: 'response.output_text.delta', delta: 'The action timeline is ready.' },
+                {
+                    type: 'response.output_text.delta',
+                    delta: 'The action timeline is ready.',
+                },
                 {
                     type: 'response.completed',
                     response: {
                         id: 'response-2',
                         output: [],
-                        usage: { input_tokens: 1, output_tokens: 1 },
+                        usage: {
+                            input_tokens: 1,
+                            output_tokens: 1,
+                        },
                     },
                 },
             ]))
         const use = vi.fn(async () => ({
             ...capabilityRunResult(),
-            output: { outputKind: 'capabilityArtifact', assetId: 'asset-1' },
+            output: {
+                outputKind: 'capabilityArtifact',
+                assetId: 'asset-1',
+            },
             events: [],
         }))
         const provider = new OpenAIProvider('instance', {
@@ -472,12 +578,18 @@ describe('Capability provider adapters', () => {
 
         expect(openaiMocks.responsesCreate).toHaveBeenCalledTimes(2)
         expect(openaiMocks.responsesCreate.mock.calls[0]?.[0]).toEqual(expect.objectContaining({
-            tool_choice: { type: 'function', name: toolName },
+            tool_choice: {
+                type: 'function',
+                name: toolName,
+            },
             tools: expect.arrayContaining([expect.objectContaining({ name: toolName })]),
         }))
         expect(openaiMocks.responsesCreate.mock.calls[1]?.[0]).toEqual(expect.objectContaining({
             input: expect.arrayContaining([
-                expect.objectContaining({ type: 'function_call_output', call_id: 'call-1' }),
+                expect.objectContaining({
+                    type: 'function_call_output',
+                    call_id: 'call-1',
+                }),
             ]),
         }))
         expect(openaiMocks.responsesCreate.mock.calls[1]?.[0]?.tool_choice).toBeUndefined()
@@ -485,7 +597,10 @@ describe('Capability provider adapters', () => {
         expect(openaiMocks.responsesCreate.mock.calls[1]?.[0]?.instructions).toContain('Do not include code')
         expect(openaiMocks.responsesCreate.mock.calls[0]?.[0]?.instructions).not.toContain('Do not include code')
         expect(use).toHaveBeenCalledWith(expect.objectContaining({
-            arguments: expect.objectContaining({ durationMs: 15000, precisionMs: 2000 }),
+            arguments: expect.objectContaining({
+                durationMs: 15000,
+                precisionMs: 2000,
+            }),
         }))
         expect(publisher.capabilityGenerationTrace).toHaveBeenCalledOnce()
         expect(publisher.chunk).toHaveBeenCalledWith('The action timeline is ready.')

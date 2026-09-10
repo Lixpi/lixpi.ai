@@ -36,6 +36,7 @@ afterEach(() => {
 const createMockAnchor = (): MockAnchor => {
     const anchor = document.createElement('a') as MockAnchor
     anchor.click = vi.fn()
+
     return anchor
 }
 

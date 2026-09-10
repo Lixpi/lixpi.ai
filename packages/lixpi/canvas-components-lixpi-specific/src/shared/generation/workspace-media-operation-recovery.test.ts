@@ -4,12 +4,7 @@ import {
     it,
     vi,
 } from 'vitest'
-import {
-    type CanvasState,
-    type MediaGenerationRequest,
-    type MediaGenerationRequestEvent,
-    type OperationStatusCanvasNode,
-} from '@lixpi/constants'
+import { type CanvasState, type MediaGenerationRequest, type OperationStatusCanvasNode } from '@lixpi/constants'
 import {
     WorkspaceMediaOperationRecovery,
     type CanvasMediaRecoveryEnvelope,
@@ -25,8 +20,14 @@ const node = (requestId = 'request'): OperationStatusCanvasNode => ({
     generationRun: 0,
     title: 'Generating',
     message: 'Waiting',
-    position: { x: 0, y: 0 },
-    dimensions: { width: 300, height: 100 },
+    position: {
+        x: 0,
+        y: 0,
+    },
+    dimensions: {
+        width: 300,
+        height: 100,
+    },
     createdAt: 1,
     updatedAt: 1,
 })
@@ -51,20 +52,55 @@ const request = (revision = 1, requestId = 'request'): MediaGenerationRequest =>
 })
 const envelope = (sequence: number, revision = sequence, requestId = 'request'): Required<CanvasMediaRecoveryEnvelope> => ({
     streamSequence: sequence,
-    event: { eventId: `event-${sequence}`, generationRequestId: requestId, sequence, requestRevision: revision, status: 'MEDIA_GENERATION_PROGRESS', payload: {}, createdAt: 1 },
+    event: {
+        eventId: `event-${sequence}`,
+        generationRequestId: requestId,
+        sequence,
+        requestRevision: revision,
+        status: 'MEDIA_GENERATION_PROGRESS',
+        payload: {},
+        createdAt: 1,
+    },
 })
-function setup(overrides: Partial<WorkspaceMediaOperationRecoveryPorts> = {}) {
-    let scope = { workspaceId: 'workspace', sceneKey: 'scene' }
-    const state: CanvasState = { nodes: [node()], edges: [], viewport: { x: 0, y: 0, zoom: 1 } }
-    const listeners: Array<{ receive: (event: CanvasMediaRecoveryEnvelope) => void; unsubscribe: ReturnType<typeof vi.fn> }> = []
+const setup = (overrides: Partial<WorkspaceMediaOperationRecoveryPorts> = {}) => {
+    let scope = {
+        workspaceId: 'workspace',
+        sceneKey: 'scene',
+    }
+    const state: CanvasState = {
+        nodes: [node()],
+        edges: [],
+        viewport: {
+            x: 0,
+            y: 0,
+            zoom: 1,
+        },
+    }
+    const listeners: Array<{
+        receive: (event: CanvasMediaRecoveryEnvelope) => void
+        unsubscribe: ReturnType<typeof vi.fn>
+    }> = []
     const ports: WorkspaceMediaOperationRecoveryPorts = {
         readScope: () => scope,
         readCanvasState: () => state,
-        fetch: vi.fn(async () => ({ request: request(), liveSubject: 'subject' })),
-        replay: vi.fn(async () => ({ request: request(), replay: { events: [], hasMore: false } })),
+        fetch: vi.fn(async () => ({
+            request: request(),
+            liveSubject: 'subject',
+        })),
+        replay: vi.fn(async () => ({
+            request: request(),
+            replay: {
+                events: [],
+                hasMore: false,
+            },
+        })),
         subscribe: vi.fn((_subject, receive) => {
             const unsubscribe = vi.fn()
-            listeners.push({ receive, unsubscribe })
+            listeners.push({
+                receive,
+                unsubscribe,
+            })
+
             return unsubscribe
         }),
         apply: vi.fn(),
@@ -72,13 +108,15 @@ function setup(overrides: Partial<WorkspaceMediaOperationRecoveryPorts> = {}) {
         ...overrides,
     }
     const owner = new WorkspaceMediaOperationRecovery(ports)
+
     return {
         owner,
         ports,
         listeners,
-        setScene: (sceneKey: string) => {
-            scope = { ...scope, sceneKey }
-        },
+        setScene: (sceneKey: string) => void (scope = {
+            ...scope,
+            sceneKey,
+        }),
     }
 }
 
@@ -88,7 +126,14 @@ describe('workspace media operation recovery', () => {
         fixture.ports.replay = vi.fn(async () => {
             expect(fixture.listeners).toHaveLength(1)
             fixture.listeners[0].receive(envelope(4, 4))
-            return { request: request(2), replay: { events: [envelope(4, 4), envelope(5, 5)], hasMore: false } }
+
+            return {
+                request: request(2),
+                replay: {
+                    events: [envelope(4, 4), envelope(5, 5)],
+                    hasMore: false,
+                },
+            }
         })
         const first = fixture.owner.ensure(node())
         expect(fixture.owner.ensure(node())).toBe(first)
@@ -105,13 +150,29 @@ describe('workspace media operation recovery', () => {
         let page = 0
         fixture.ports.replay = vi.fn(async query => {
             page += 1
+
             if (page === 1) {
                 fixture.listeners[0].receive(envelope(100, 1))
                 expect(query.startStreamSequence).toBeUndefined()
-                return { request: request(), replay: { events: [envelope(3, 1)], hasMore: true } }
+
+                return {
+                    request: request(),
+                    replay: {
+                        events: [envelope(3, 1)],
+                        hasMore: true,
+                    },
+                }
             }
+
             expect(query.startStreamSequence).toBe(4)
-            return { request: request(), replay: { events: [envelope(7, 1)], hasMore: false } }
+
+            return {
+                request: request(),
+                replay: {
+                    events: [envelope(7, 1)],
+                    hasMore: false,
+                },
+            }
         })
         await fixture.owner.ensure(node())
         expect(fixture.ports.replay).toHaveBeenCalledTimes(2)
@@ -138,7 +199,10 @@ describe('workspace media operation recovery', () => {
         await Promise.resolve()
         fixture.setScene('replacement')
         fixture.owner.clear()
-        fetched.resolve({ request: request(), liveSubject: 'old' })
+        fetched.resolve({
+            request: request(),
+            liveSubject: 'old',
+        })
         await pending
         expect(fixture.ports.apply).not.toHaveBeenCalled()
         expect(fixture.ports.subscribe).not.toHaveBeenCalled()
@@ -153,7 +217,13 @@ describe('workspace media operation recovery', () => {
         await Promise.resolve()
         await Promise.resolve()
         fixture.owner.clear()
-        fixture.ports.replay = vi.fn(async () => ({ request: request(8), replay: { events: [], hasMore: false } }))
+        fixture.ports.replay = vi.fn(async () => ({
+            request: request(8),
+            replay: {
+                events: [],
+                hasMore: false,
+            },
+        }))
         await fixture.owner.ensure(node())
         replayed.reject(new Error('obsolete'))
         await first
@@ -165,7 +235,13 @@ describe('workspace media operation recovery', () => {
     })
 
     it('rejects fetched identities outside the requested workspace or request', async () => {
-        const fixture = setup({ fetch: async () => ({ request: { ...request(), workspaceId: 'other' }, liveSubject: 'other' }) })
+        const fixture = setup({ fetch: async () => ({
+            request: {
+                ...request(),
+                workspaceId: 'other',
+            },
+            liveSubject: 'other',
+        }) })
         await fixture.owner.ensure(node())
         expect(fixture.ports.apply).not.toHaveBeenCalled()
         expect(fixture.ports.subscribe).not.toHaveBeenCalled()
@@ -181,14 +257,26 @@ describe('workspace media operation recovery', () => {
         })
         await fixture.owner.ensure(node())
         expect(fixture.listeners[0].unsubscribe).toHaveBeenCalledTimes(1)
-        fixture.ports.replay = async () => ({ request: request(), replay: { events: [], hasMore: false } })
+        fixture.ports.replay = async () => ({
+            request: request(),
+            replay: {
+                events: [],
+                hasMore: false,
+            },
+        })
         await fixture.owner.ensure(node())
         expect(fixture.ports.fetch).toHaveBeenCalledTimes(2)
         fixture.owner.destroy()
     })
 
     it('stops a replay that claims another page but cannot advance', async () => {
-        const fixture = setup({ replay: vi.fn(async () => ({ request: request(), replay: { events: [], hasMore: true } })) })
+        const fixture = setup({ replay: vi.fn(async () => ({
+            request: request(),
+            replay: {
+                events: [],
+                hasMore: true,
+            },
+        })) })
         await fixture.owner.ensure(node())
         expect(fixture.ports.replay).toHaveBeenCalledTimes(1)
         expect(fixture.ports.reportError).toHaveBeenCalledWith(expect.objectContaining({ message: 'Canvas media replay made no progress' }))
@@ -209,8 +297,17 @@ describe('workspace media operation recovery', () => {
 
     it('attempts all cleanup and suppresses late live callbacks even when an unsubscribe fails', async () => {
         const fixture = setup({
-            fetch: async query => ({ request: request(1, query.generationRequestId), liveSubject: 'subject' }),
-            replay: async query => ({ request: request(1, query.generationRequestId), replay: { events: [], hasMore: false } }),
+            fetch: async query => ({
+                request: request(1, query.generationRequestId),
+                liveSubject: 'subject',
+            }),
+            replay: async query => ({
+                request: request(1, query.generationRequestId),
+                replay: {
+                    events: [],
+                    hasMore: false,
+                },
+            }),
         })
         await Promise.all([fixture.owner.ensure(node()), fixture.owner.ensure(node('request-two'))])
         fixture.listeners[0].unsubscribe.mockImplementation(() => {
@@ -230,6 +327,7 @@ describe('workspace media operation recovery', () => {
         const unsubscribe = vi.fn()
         fixture.ports.subscribe = () => {
             fixture.owner.clear()
+
             return unsubscribe
         }
         await fixture.owner.ensure(node())

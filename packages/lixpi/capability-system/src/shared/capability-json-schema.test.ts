@@ -23,14 +23,20 @@ describe('validateJsonSchemaValue', () => {
                 subject: {
                     type: 'object',
                     required: ['name'],
-                    properties: { name: { type: 'string', minLength: 1 } },
+                    properties: { name: {
+                        type: 'string',
+                        minLength: 1,
+                    } },
                     additionalProperties: false,
                 },
             },
         }
 
         expect(validateJsonSchemaValue(schema, { subjects: [{ name: 'Maya' }] })).toEqual({ valid: true })
-        expect(validateJsonSchemaValue(schema, { subjects: [{ name: '' }], extra: true })).toEqual({
+        expect(validateJsonSchemaValue(schema, {
+            subjects: [{ name: '' }],
+            extra: true,
+        })).toEqual({
             valid: false,
             errors: expect.arrayContaining([
                 '$.subjects[0].name: string is shorter than minLength',
@@ -53,8 +59,14 @@ describe('validateJsonSchemaValue', () => {
     it('implements combinators, enums, numeric bounds, and contains-safe equality', () => {
         expect(validateJsonSchemaValue({
             oneOf: [
-                { type: 'integer', minimum: 1 },
-                { type: 'string', enum: ['auto'] },
+                {
+                    type: 'integer',
+                    minimum: 1,
+                },
+                {
+                    type: 'string',
+                    enum: ['auto'],
+                },
             ],
         }, 'auto')).toEqual({ valid: true })
         expect(validateJsonSchemaValue({

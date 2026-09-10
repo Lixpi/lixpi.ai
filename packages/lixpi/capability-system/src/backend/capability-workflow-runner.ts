@@ -629,11 +629,11 @@ export class CapabilityWorkflowRunner {
     }
 }
 
-async function executeWithTimeout(
+const executeWithTimeout = async (
     action: Readonly<CapabilityActionDefinition>,
     input: Readonly<Record<string, unknown>>,
     context: Omit<Parameters<CapabilityActionDefinition['execute']>[1], 'signal'> & { signal?: AbortSignal },
-): Promise<unknown> {
+): Promise<unknown> => {
     const timeoutController = new AbortController()
     const timeout = setTimeout(
         () => timeoutController.abort(
@@ -674,10 +674,10 @@ async function executeWithTimeout(
     }
 }
 
-function resolveInputBindings(
+const resolveInputBindings = (
     bindings: Record<string, CapabilityValueBinding>,
     context: BindingContext,
-): Readonly<Record<string, unknown>> {
+): Readonly<Record<string, unknown>> => {
     const input: Record<string, unknown> = Object.create(null)
 
     for (const [key, binding] of Object.entries(bindings)) {
@@ -688,10 +688,10 @@ function resolveInputBindings(
     return Object.freeze(input)
 }
 
-function resolveOutputBindings(
+const resolveOutputBindings = (
     bindings: Record<string, CapabilityValueBinding>,
     context: BindingContext,
-): Record<string, CapabilityJsonValue> {
+): Record<string, CapabilityJsonValue> => {
     const output: Record<string, CapabilityJsonValue> = Object.create(null)
 
     for (const [key, binding] of Object.entries(bindings)) {
@@ -707,10 +707,10 @@ function resolveOutputBindings(
     return output
 }
 
-function resolveBinding(
+const resolveBinding = (
     binding: CapabilityValueBinding,
     context: BindingContext,
-): unknown {
+): unknown => {
     if (binding.source === 'literal')
         return structuredClone(binding.value)
 
@@ -732,10 +732,10 @@ function resolveBinding(
     return resource
 }
 
-function evaluateCondition(
+const evaluateCondition = (
     condition: CapabilityCondition,
     context: BindingContext,
-): boolean {
+): boolean => {
     if (condition.type === 'exists')
         return resolveBinding(condition.value, context) != null
 
@@ -797,23 +797,23 @@ function evaluateCondition(
     return isRecord(left) && typeof right === 'string' && Object.hasOwn(left, right)
 }
 
-function comparable(
+const comparable = (
     left: unknown,
     right: unknown,
     compare: (
         left: number,
         right: number,
     ) => boolean,
-): boolean {
+): boolean => {
     return typeof left === 'number' && Number.isFinite(left)
         && typeof right === 'number' && Number.isFinite(right)
         && compare(left, right)
 }
 
-function readSafePath(
+const readSafePath = (
     value: unknown,
     path: string[],
-): unknown {
+): unknown => {
     let cursor = value
 
     for (const part of path) {
@@ -836,7 +836,7 @@ function readSafePath(
     return cursor
 }
 
-function assertSafePathPart(part: string): void {
+const assertSafePathPart = (part: string): void => {
     if (
         part === '__proto__'
         || part === 'prototype'
@@ -845,11 +845,11 @@ function assertSafePathPart(part: string): void {
         throw new CapabilityError('CAPABILITY_WORKFLOW_INVALID', `Unsafe binding path segment ${part}`)
 }
 
-function readJsonResource(
+const readJsonResource = (
     plan: SealedResolvedCapabilityPlan,
     capabilityId: string,
     resourceId: string,
-): unknown {
+): unknown => {
     const resource = plan.getResource(capabilityId, resourceId)
 
     if (
@@ -872,7 +872,7 @@ function readJsonResource(
     }
 }
 
-function summarizeValue(value: unknown): string {
+const summarizeValue = (value: unknown): string => {
     if (value == null)
         return String(value)
 
@@ -891,14 +891,12 @@ function summarizeValue(value: unknown): string {
     return typeof value
 }
 
-function errorMessageOf(error: unknown): string {
-    return error instanceof Error ? error.message : String(error)
-}
+const errorMessageOf = (error: unknown): string => (error instanceof Error ? error.message : String(error))
 
-function normalizeActionError(
+const normalizeActionError = (
     error: unknown,
     actionKey: string,
-): CapabilityError {
+): CapabilityError => {
     if (isCapabilityError(error))
         return error
 
@@ -910,16 +908,16 @@ function normalizeActionError(
     )
 }
 
-function isCancellation(
+const isCancellation = (
     error: unknown,
     signal: AbortSignal | undefined,
-): boolean {
+): boolean => {
     return signal?.aborted === true
         || (error instanceof DOMException && error.name === 'AbortError')
         || (isCapabilityError(error) && error.code === 'CAPABILITY_RUN_CANCELLED')
 }
 
-function cancelledError(signal: AbortSignal | undefined): CapabilityError {
+const cancelledError = (signal: AbortSignal | undefined): CapabilityError => {
     return new CapabilityError(
         'CAPABILITY_RUN_CANCELLED',
         'Capability run was cancelled',
@@ -928,10 +926,10 @@ function cancelledError(signal: AbortSignal | undefined): CapabilityError {
     )
 }
 
-async function abortableDelay(
+const abortableDelay = async (
     milliseconds: number,
     signal: AbortSignal | undefined,
-): Promise<void> {
+): Promise<void> => {
     if (milliseconds <= 0)
         return
 
@@ -959,13 +957,13 @@ async function abortableDelay(
     })
 }
 
-function deduplicateStrings(values: string[]): string[] {
+const deduplicateStrings = (values: string[]): string[] => {
     return [...new Set(
         values.filter(value => typeof value === 'string' && value.length > 0),
     )]
 }
 
-function isCapabilityJsonValue(value: unknown): value is CapabilityJsonValue {
+const isCapabilityJsonValue = (value: unknown): value is CapabilityJsonValue => {
     if (
         value === null
         || typeof value === 'string'
@@ -993,10 +991,10 @@ function isCapabilityJsonValue(value: unknown): value is CapabilityJsonValue {
     })
 }
 
-function deepEqual(
+const deepEqual = (
     left: unknown,
     right: unknown,
-): boolean {
+): boolean => {
     if (Object.is(left, right))
         return true
 
@@ -1020,6 +1018,4 @@ function deepEqual(
     return false
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-    return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
-}
+const isRecord = (value: unknown): value is Record<string, unknown> => Boolean(value) && typeof value === 'object' && !Array.isArray(value)

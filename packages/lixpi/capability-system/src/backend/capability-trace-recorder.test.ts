@@ -14,7 +14,7 @@ import {
     hasTraceContent,
 } from './capability-trace-recorder.ts'
 
-function makeHandle(overrides: Partial<ExecutionTraceHandle> = {}): ExecutionTraceHandle {
+const makeHandle = (overrides: Partial<ExecutionTraceHandle> = {}): ExecutionTraceHandle => {
     return {
         kind: 'media',
         id: 'asset-1',
@@ -24,7 +24,7 @@ function makeHandle(overrides: Partial<ExecutionTraceHandle> = {}): ExecutionTra
     }
 }
 
-function makeModelCall(overrides: Partial<ExecutionTraceModelCall> = {}): ExecutionTraceModelCall {
+const makeModelCall = (overrides: Partial<ExecutionTraceModelCall> = {}): ExecutionTraceModelCall => {
     return {
         id: 'call-1',
         role: 'media',
@@ -39,9 +39,7 @@ function makeModelCall(overrides: Partial<ExecutionTraceModelCall> = {}): Execut
 // =============================================================================
 
 describe('createCapabilityTraceRecorder — accumulation', () => {
-    it('returns undefined until something is recorded', () => {
-        expect(createCapabilityTraceRecorder().snapshot()).toBeUndefined()
-    })
+    it('returns undefined until something is recorded', () => void expect(createCapabilityTraceRecorder().snapshot()).toBeUndefined())
 
     it('records reasoning, handles, model calls, and facts into one trace', () => {
         const recorder = createCapabilityTraceRecorder()
@@ -56,7 +54,10 @@ describe('createCapabilityTraceRecorder — accumulation', () => {
         expect(trace?.reasoning).toBe('Chose the three-shot plan')
         expect(trace?.handles).toHaveLength(1)
         expect(trace?.modelCalls?.[0]?.modelId).toBe('openai:gpt-image-1')
-        expect(trace?.facts).toEqual([{ label: 'Planned shots', value: '3' }])
+        expect(trace?.facts).toEqual([{
+            label: 'Planned shots',
+            value: '3',
+        }])
     })
 
     it('deduplicates handles by kind, id, and role but keeps the same id under a different role', () => {
@@ -87,7 +88,10 @@ describe('createCapabilityTraceRecorder — accumulation', () => {
         const recorder = createCapabilityTraceRecorder()
         recorder.addModelCall(makeModelCall({ id: 'call-1' }))
         recorder.addModelCall(makeModelCall({ id: 'call-2' }))
-        recorder.addModelCall(makeModelCall({ id: 'call-1', purpose: 'updated' }))
+        recorder.addModelCall(makeModelCall({
+            id: 'call-1',
+            purpose: 'updated',
+        }))
 
         expect(recorder.snapshot()?.modelCalls?.map(call => call.id)).toEqual(['call-1', 'call-2'])
         expect(recorder.snapshot()?.modelCalls?.[0]?.purpose).toBe('updated')
@@ -150,16 +154,32 @@ describe('createCapabilityTraceRecorder — settlement', () => {
 // =============================================================================
 
 describe('hasTraceContent', () => {
-    it('rejects a trace carrying only its version', () => {
-        expect(hasTraceContent({ traceVersion: 'execution-trace-v1' })).toBe(false)
-    })
+    it('rejects a trace carrying only its version', () => void expect(hasTraceContent({ traceVersion: 'execution-trace-v1' })).toBe(false))
 
     it('accepts a trace carrying any single field', () => {
-        expect(hasTraceContent({ traceVersion: 'execution-trace-v1', reasoning: 'why' })).toBe(true)
-        expect(hasTraceContent({ traceVersion: 'execution-trace-v1', handles: [makeHandle()] })).toBe(true)
-        expect(hasTraceContent({ traceVersion: 'execution-trace-v1', modelCalls: [makeModelCall()] })).toBe(true)
-        expect(hasTraceContent({ traceVersion: 'execution-trace-v1', facts: [{ label: 'a', value: 'b' }] })).toBe(true)
-        expect(hasTraceContent({ traceVersion: 'execution-trace-v1', errorMessage: 'boom' })).toBe(true)
+        expect(hasTraceContent({
+            traceVersion: 'execution-trace-v1',
+            reasoning: 'why',
+        })).toBe(true)
+        expect(hasTraceContent({
+            traceVersion: 'execution-trace-v1',
+            handles: [makeHandle()],
+        })).toBe(true)
+        expect(hasTraceContent({
+            traceVersion: 'execution-trace-v1',
+            modelCalls: [makeModelCall()],
+        })).toBe(true)
+        expect(hasTraceContent({
+            traceVersion: 'execution-trace-v1',
+            facts: [{
+                label: 'a',
+                value: 'b',
+            }],
+        })).toBe(true)
+        expect(hasTraceContent({
+            traceVersion: 'execution-trace-v1',
+            errorMessage: 'boom',
+        })).toBe(true)
     })
 
     it('rejects a trace whose collections are all empty', () => {

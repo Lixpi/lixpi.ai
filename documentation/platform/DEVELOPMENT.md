@@ -19,7 +19,7 @@ This guide gets Lixpi running locally. Everything runs in **Docker** via `docker
 
 See [System Architecture](./SYSTEM-ARCHITECTURE.md) for the full service responsibilities and the NATS backbone, and [Authentication](./AUTHENTICATION.md) for the auth model.
 
-The [AI Model Registry](../development-workflow/AI-MODEL-REGISTRY.md) defines the mandatory synchronization contract for provider model and parameter changes. Its registry API and maintenance tools run only inside the registry container.
+The [AI Model Registry](../../services/ai-model-registry/documentation/AI-MODEL-REGISTRY.md) defines the mandatory synchronization contract for provider model and parameter changes. Its registry API and maintenance tools run only inside the registry container.
 
 ## Quick Start
 
@@ -94,7 +94,7 @@ start.bat
 ./rebuild-containers.sh lixpi-web-ui
 
 # Then run the single service
-docker-compose up lixpi-web-ui   # requires .env set (./set-env.sh); override with --env-file otherwise
+docker compose up lixpi-web-ui   # requires .env set (./set-env.sh); override with --env-file otherwise
 ```
 
 ### API
@@ -104,7 +104,7 @@ docker-compose up lixpi-web-ui   # requires .env set (./set-env.sh); override wi
 ./rebuild-containers.sh lixpi-api
 
 # Then run the single service
-docker-compose up lixpi-api   # requires .env set (./set-env.sh); override with --env-file otherwise
+docker compose up lixpi-api   # requires .env set (./set-env.sh); override with --env-file otherwise
 ```
 
 {% callout type="note" %}
@@ -149,7 +149,7 @@ To rebuild the Pulumi container from scratch:
 To run Pulumi:
 
 ```shell
-docker-compose up lixpi-pulumi   # requires .env set (./set-env.sh); override with --env-file otherwise
+docker compose up lixpi-pulumi   # requires .env set (./set-env.sh); override with --env-file otherwise
 ```
 
 For how the Pulumi program is structured and the full set of commands (`up`, `preview`, `destroy`, …), see [Infrastructure Overview](./deployment/INFRASTRUCTURE-OVERVIEW.md).

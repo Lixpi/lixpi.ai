@@ -47,18 +47,19 @@ const mocks = vi.hoisted(() => ({
 }))
 
 vi.mock('archiver', () => ({
-    ZipArchive: vi.fn(function() {
-        return {
-            append: mocks.archiveAppend,
-            pipe: mocks.archivePipe,
-            on: mocks.archiveOn,
-            abort: mocks.archiveAbort,
-            finalize: mocks.archiveFinalize,
-        }
-    }),
+    ZipArchive: class {
+        append = mocks.archiveAppend
+        pipe = mocks.archivePipe
+        on = mocks.archiveOn
+        abort = mocks.archiveAbort
+        finalize = mocks.archiveFinalize
+    },
 }))
 
-vi.mock('@lixpi/debug-tools', () => ({ err: vi.fn(), info: vi.fn() }))
+vi.mock('@lixpi/debug-tools', () => ({
+    err: vi.fn(),
+    info: vi.fn(),
+}))
 vi.mock('@lixpi/nats-service', () => ({
     default: { getInstance: mocks.getNatsInstance },
 }))
@@ -84,7 +85,10 @@ vi.mock('../models/asset.ts', () => ({
     buildAssetScopeAndOwnerKey: (scope: string, ownerId: string) => `${scope}#${ownerId}`,
 }))
 vi.mock('../models/blob.ts', () => ({
-    default: { get: mocks.blobGet, store: mocks.blobStore },
+    default: {
+        get: mocks.blobGet,
+        store: mocks.blobStore,
+    },
 }))
 vi.mock('../models/organization.ts', () => ({
     default: { getUserOrganizations: mocks.getUserOrganizations },
@@ -125,6 +129,7 @@ const createResponse = () => ({
 const createManifestZip = (manifest: object) => {
     const zip = new AdmZip()
     zip.addFile('manifest.json', Buffer.from(JSON.stringify(manifest)))
+
     return zip.toBuffer()
 }
 
@@ -144,7 +149,15 @@ const emptyManifest = () => ({
     exportedAt: new Date().toISOString(),
     workspace: {
         name: 'Test workspace',
-        canvasState: { viewport: { x: 0, y: 0, zoom: 1 }, nodes: [], edges: [] },
+        canvasState: {
+            viewport: {
+                x: 0,
+                y: 0,
+                zoom: 1,
+            },
+            nodes: [],
+            edges: [],
+        },
         createdAt: 100,
         updatedAt: 200,
     },
@@ -173,7 +186,15 @@ describe('Workspace export route', () => {
             workspaceId: 'workspace-1',
             organizationId: 'org-1',
             name: 'Test workspace',
-            canvasState: { viewport: { x: 0, y: 0, zoom: 1 }, nodes: [], edges: [] },
+            canvasState: {
+                viewport: {
+                    x: 0,
+                    y: 0,
+                    zoom: 1,
+                },
+                nodes: [],
+                edges: [],
+            },
             createdAt: 100,
             updatedAt: 200,
         })
@@ -234,7 +255,15 @@ describe('Workspace import route', () => {
         mocks.getWorkspace.mockResolvedValue({
             workspaceId: 'workspace-1',
             organizationId: 'org-1',
-            canvasState: { viewport: { x: 0, y: 0, zoom: 1 }, nodes: [], edges: [] },
+            canvasState: {
+                viewport: {
+                    x: 0,
+                    y: 0,
+                    zoom: 1,
+                },
+                nodes: [],
+                edges: [],
+            },
             canvasStateUpdatedAt: 200,
         })
         mocks.replaceWorkspaceContent.mockResolvedValue(undefined)
@@ -284,7 +313,10 @@ describe('Workspace import route', () => {
         const handler = route.stack.at(-1).handle
         const req: any = {
             ...makeWorkspaceRouteEnv(),
-            file: { buffer: createManifestZip({ ...emptyManifest(), exportVersion: 1 }) },
+            file: { buffer: createManifestZip({
+                ...emptyManifest(),
+                exportVersion: 1,
+            }) },
         }
         const res = createResponse()
 
@@ -310,10 +342,16 @@ describe('Workspace import route', () => {
         expect(mocks.getUserOrganizations).toHaveBeenCalledWith({ userId: 'user-1' })
         expect(mocks.replaceWorkspaceContent).toHaveBeenCalledWith(expect.objectContaining({
             workspaceId: 'workspace-1',
-            canvasState: expect.objectContaining({ nodes: [], edges: [] }),
+            canvasState: expect.objectContaining({
+                nodes: [],
+                edges: [],
+            }),
             expectedCanvasStateUpdatedAt: 200,
         }))
-        expect(res.json).toHaveBeenCalledWith({ success: true, importedAssets: 0 })
+        expect(res.json).toHaveBeenCalledWith({
+            success: true,
+            importedAssets: 0,
+        })
     })
 
     it('imports an Action Timeline Artifact document with its module-owned schema', async () => {
@@ -321,8 +359,14 @@ describe('Workspace import route', () => {
         const sourceWorkspaceId = 'source-workspace-1'
         const nodeId = 'capability-artifact-node-1'
         const document = buildActionTimelineDocument(
-            { durationMs: 2000, precisionMs: 2000 },
-            [{ slotIndex: 0, runs: [{ text: 'The subject crosses the frame.' }] }],
+            {
+                durationMs: 2000,
+                precisionMs: 2000,
+            },
+            [{
+                slotIndex: 0,
+                runs: [{ text: 'The subject crosses the frame.' }],
+            }],
         )
         const documentBytes = Buffer.from(JSON.stringify(document))
         const blobHash = createHash('sha256').update(documentBytes).digest('hex')
@@ -331,14 +375,24 @@ describe('Workspace import route', () => {
             workspace: {
                 ...emptyManifest().workspace,
                 canvasState: {
-                    viewport: { x: 0, y: 0, zoom: 1 },
+                    viewport: {
+                        x: 0,
+                        y: 0,
+                        zoom: 1,
+                    },
                     nodes: [{
                         nodeId,
                         type: 'capabilityArtifact',
                         assetId: sourceAssetId,
                         artifactTypeId: ACTION_TIMELINE_ARTIFACT_TYPE_ID,
-                        position: { x: 0, y: 0 },
-                        dimensions: { width: 520, height: 360 },
+                        position: {
+                            x: 0,
+                            y: 0,
+                        },
+                        dimensions: {
+                            width: 520,
+                            height: 360,
+                        },
                     }],
                     edges: [],
                 },
@@ -421,7 +475,10 @@ describe('Workspace import route', () => {
                 }),
             },
         }))
-        expect(res.json).toHaveBeenCalledWith({ success: true, importedAssets: 1 })
+        expect(res.json).toHaveBeenCalledWith({
+            success: true,
+            importedAssets: 1,
+        })
     })
 
     it('denies import when the workspace organization is not accessible to the user', async () => {

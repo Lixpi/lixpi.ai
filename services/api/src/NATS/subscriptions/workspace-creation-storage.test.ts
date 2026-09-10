@@ -17,7 +17,11 @@ const mocks = vi.hoisted(() => ({
     },
 }))
 
-vi.mock('@lixpi/debug-tools', () => ({ info: vi.fn(), err: vi.fn(), warn: vi.fn() }))
+vi.mock('@lixpi/debug-tools', () => ({
+    info: vi.fn(),
+    err: vi.fn(),
+    warn: vi.fn(),
+}))
 vi.mock('../../models/workspace.ts', () => ({ default: mocks.workspace }))
 vi.mock('../../models/organization.ts', () => ({ default: mocks.organization }))
 vi.mock('../../models/asset.ts', () => ({ default: {} }))
@@ -50,7 +54,10 @@ describe('Workspace creation storage provisioning', () => {
         expect(mocks.workspace.createWorkspace).toHaveBeenCalledWith({
             name: 'New Workspace',
             organizationId: 'organization-1',
-            permissions: { userId: 'user-1', accessLevel: 'owner' },
+            permissions: {
+                userId: 'user-1',
+                accessLevel: 'owner',
+            },
         })
         expect(result).toEqual(expect.objectContaining({ workspaceId: 'ws-1' }))
     })

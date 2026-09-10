@@ -21,7 +21,10 @@ import { mountApp } from './app.ts'
 
 beforeEach(() => {
     vi.resetAllMocks()
-    mocks.createLayout.mockImplementation(() => ({ el: document.createElement('main'), destroy: mocks.layoutDestroy }))
+    mocks.createLayout.mockImplementation(() => ({
+        el: document.createElement('main'),
+        destroy: mocks.layoutDestroy,
+    }))
 })
 
 describe('application canvas session shutdown', () => {
@@ -29,6 +32,7 @@ describe('application canvas session shutdown', () => {
         const closed = Promise.withResolvers<void>()
         const close = vi.fn(() => {
             expect(mocks.layoutDestroy).toHaveBeenCalledTimes(1)
+
             return closed.promise
         })
         const application = mountApp(document.createElement('div'), close)
@@ -55,7 +59,10 @@ describe('application canvas session shutdown', () => {
         const [outcome] = await Promise.allSettled([application.destroy()])
         expect(close).toHaveBeenCalledTimes(1)
         expect(outcome.status).toBe('rejected')
-        if (outcome.status !== 'rejected') throw new Error('Expected cleanup failure')
+
+        if (outcome.status !== 'rejected')
+            throw new Error('Expected cleanup failure')
+
         expect(outcome.reason).toBeInstanceOf(AggregateError)
         expect(outcome.reason.errors.map((error: Error) => error.message)).toEqual(['layout failed', 'tooltip failed', 'save failed'])
     })

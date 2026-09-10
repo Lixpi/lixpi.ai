@@ -34,7 +34,10 @@ const mocks = {
         sourceCoverageNote: 'Source coverage: prompt-derived.',
     })),
     getAuthorizedAsset: vi.fn(),
-    putWithCoordinate: vi.fn(async (args: { bytes: Uint8Array; revision: number }) => ({
+    putWithCoordinate: vi.fn(async (args: {
+        bytes: Uint8Array
+        revision: number
+    }) => ({
         coordinate: {
             organizationId: 'org-1',
             bucketName: 'transient-media-org-1-files',
@@ -111,7 +114,10 @@ const context = (mediaRunId = 'media-1'): CapabilityMediaExecutionContext => ({
         capabilityReferences: [],
         capabilityOutputs: [],
     },
-    eventMeta: { organizationId: 'org-1', userId: 'user-1' },
+    eventMeta: {
+        organizationId: 'org-1',
+        userId: 'user-1',
+    },
 })
 
 const assessment = (
@@ -134,8 +140,14 @@ const assessment = (
             : []),
     ].map(dimension => ({
         dimension,
-        score: failed && dimension === failedDimension ? score : 0.95,
-        mismatchCodes: failed && dimension === failedDimension ? ['TEST_MISMATCH'] : [],
+        score: failed
+            && dimension === failedDimension
+            ? score
+            : 0.95,
+        mismatchCodes: failed
+            && dimension === failedDimension
+            ? ['TEST_MISMATCH']
+            : [],
     })),
     assessor: 'test/reasoning-v1',
 })
@@ -189,21 +201,33 @@ const createFlattenedSheet = async (executionPlan: ReturnType<typeof plan>): Pro
             },
         }).png().toBuffer()
         const sourceMetadata = await sharp(source).metadata()
+
         return {
             input: source,
             left: Math.round(cell.x * width / layout.width + (scaledWidth - sourceMetadata.width!) / 2),
             top: Math.round(cell.y * height / layout.height + (scaledHeight - sourceMetadata.height!) / 2),
         }
     }))
+
     return await sharp({
-        create: { width, height, channels: 3, background: '#ffffff' },
+        create: {
+            width,
+            height,
+            channels: 3,
+            background: '#ffffff',
+        },
     }).composite(overlays).png().toBuffer()
 }
 
 describe('CharacterSheetStrategy', () => {
     beforeAll(async () => {
         panelPng = await sharp({
-            create: { width: 256, height: 256, channels: 3, background: '#6688aa' },
+            create: {
+                width: 256,
+                height: 256,
+                channels: 3,
+                background: '#6688aa',
+            },
         }).png().toBuffer()
     })
 
@@ -214,7 +238,11 @@ describe('CharacterSheetStrategy', () => {
             organizationId: 'org-1',
             media: {
                 renditions: {
-                    canonical: { status: 'ready', blobHash: 'blob-1', mimeType: 'image/png' },
+                    canonical: {
+                        status: 'ready',
+                        blobHash: 'blob-1',
+                        mimeType: 'image/png',
+                    },
                 },
             },
         })
@@ -332,7 +360,11 @@ describe('CharacterSheetStrategy', () => {
                     organizationId: 'org-1',
                     media: {
                         renditions: {
-                            canonical: { status: 'ready', blobHash: 'source-hash', mimeType: 'image/png' },
+                            canonical: {
+                                status: 'ready',
+                                blobHash: 'source-hash',
+                                mimeType: 'image/png',
+                            },
                         },
                     },
                 }
@@ -352,15 +384,25 @@ describe('CharacterSheetStrategy', () => {
         const result = await editStrategy.execute(executionContext, executionPlan, {})
         const trace = result.capabilityMediaTrace as {
             totalProviderOperations: number
-            panels: Array<{ panelId: string; attempts: number; vlmAssessor: string }>
+            panels: Array<{
+                panelId: string
+                attempts: number
+                vlmAssessor: string
+            }>
         }
         const backRequest = mocks.render.mock.calls[0]?.[0]
 
         expect(mocks.render).toHaveBeenCalledOnce()
         expect(backRequest?.operationKey).toContain(':body-back:')
         expect(backRequest?.references).toEqual(expect.arrayContaining([
-            expect.objectContaining({ role: 'adjacent-angle', fileName: 'GENERATED_IDENTITY_ANCHOR.png' }),
-            expect.objectContaining({ role: 'canonical-anchor', fileName: 'GENERATED_OUTFIT_ANCHOR.png' }),
+            expect.objectContaining({
+                role: 'adjacent-angle',
+                fileName: 'GENERATED_IDENTITY_ANCHOR.png',
+            }),
+            expect.objectContaining({
+                role: 'canonical-anchor',
+                fileName: 'GENERATED_OUTFIT_ANCHOR.png',
+            }),
         ]))
         expect(trace.totalProviderOperations).toBe(1)
         expect(trace.panels).toEqual(expect.arrayContaining([
@@ -374,7 +416,10 @@ describe('CharacterSheetStrategy', () => {
                 attempts: 0,
                 vlmAssessor: 'durable-composition-component',
             }),
-            expect.objectContaining({ panelId: 'body-back', attempts: 1 }),
+            expect.objectContaining({
+                panelId: 'body-back',
+                attempts: 1,
+            }),
         ]))
         expect(result.mediaComposition?.sourceAssetIds).toEqual(['source-1'])
         expect(result.mediaComposition?.components.map(component => component.componentId))
@@ -395,7 +440,11 @@ describe('CharacterSheetStrategy', () => {
             organizationId: 'org-1',
             media: {
                 renditions: {
-                    canonical: { status: 'ready', blobHash: 'legacy-sheet-hash', mimeType: 'image/png' },
+                    canonical: {
+                        status: 'ready',
+                        blobHash: 'legacy-sheet-hash',
+                        mimeType: 'image/png',
+                    },
                 },
             },
         })
@@ -426,8 +475,14 @@ describe('CharacterSheetStrategy', () => {
             fileName: 'EDIT_TARGET_body-back.png',
         }))
         expect(backRequest?.references).toEqual(expect.arrayContaining([
-            expect.objectContaining({ role: 'adjacent-angle', fileName: 'GENERATED_IDENTITY_ANCHOR.png' }),
-            expect.objectContaining({ role: 'canonical-anchor', fileName: 'GENERATED_OUTFIT_ANCHOR.png' }),
+            expect.objectContaining({
+                role: 'adjacent-angle',
+                fileName: 'GENERATED_IDENTITY_ANCHOR.png',
+            }),
+            expect.objectContaining({
+                role: 'canonical-anchor',
+                fileName: 'GENERATED_OUTFIT_ANCHOR.png',
+            }),
         ]))
         expect(result.mediaComposition?.sourceAssetIds).toEqual([])
         expect(result.mediaComposition?.components.map(component => component.componentId))
@@ -449,8 +504,14 @@ describe('CharacterSheetStrategy', () => {
         executionContext.sharedState.authoritativePrompt = userPrompt
         executionContext.sharedState.editTargetAssetId = 'sheet-1'
         executionContext.sharedState.mediaReferenceAliases = [
-            { assetId: 'source-1', alias: 'REFERENCE_1' },
-            { assetId: 'sheet-1', alias: 'REFERENCE_2' },
+            {
+                assetId: 'source-1',
+                alias: 'REFERENCE_1',
+            },
+            {
+                assetId: 'sheet-1',
+                alias: 'REFERENCE_2',
+            },
         ]
         mocks.getAuthorizedAsset.mockImplementation(async ({ assetId }) =>
             assetId === 'sheet-1'
@@ -477,7 +538,11 @@ describe('CharacterSheetStrategy', () => {
                     organizationId: 'org-1',
                     media: {
                         renditions: {
-                            canonical: { status: 'ready', blobHash: 'source-hash', mimeType: 'image/png' },
+                            canonical: {
+                                status: 'ready',
+                                blobHash: 'source-hash',
+                                mimeType: 'image/png',
+                            },
                         },
                     },
                 }
@@ -505,7 +570,12 @@ describe('CharacterSheetStrategy', () => {
                             region: 'outfit' as const,
                             requestAuthority: 'assigned' as const,
                             visibility: 'observed' as const,
-                            sourceRegion: { x: 10, y: 10, width: 200, height: 230 },
+                            sourceRegion: {
+                                x: 10,
+                                y: 10,
+                                width: 200,
+                                height: 230,
+                            },
                             targetAngles: ['back' as const],
                             confidence: 1,
                         },
@@ -516,7 +586,12 @@ describe('CharacterSheetStrategy', () => {
                             requestAuthority: 'assigned' as const,
                             visibility: 'observed' as const,
                             sourceAssetId: 'source-1',
-                            sourceRegion: { x: 50, y: 60, width: 100, height: 180 },
+                            sourceRegion: {
+                                x: 50,
+                                y: 60,
+                                width: 100,
+                                height: 180,
+                            },
                             targetAngles: ['back' as const],
                             confidence: 1,
                         },
@@ -568,14 +643,32 @@ describe('CharacterSheetStrategy', () => {
             ),
         ).toBe(false)
         expect(frontRequest?.references).toEqual(expect.arrayContaining([
-            expect.objectContaining({ role: 'original-source', fileName: 'REFERENCE_1.png' }),
-            expect.objectContaining({ role: 'body-outfit-crop', fileName: 'REFERENCE_1_BODY_OUTFIT_CROP.png' }),
-            expect.objectContaining({ role: 'prop-crop', fileName: 'REFERENCE_1_PROP_CROP.png' }),
+            expect.objectContaining({
+                role: 'original-source',
+                fileName: 'REFERENCE_1.png',
+            }),
+            expect.objectContaining({
+                role: 'body-outfit-crop',
+                fileName: 'REFERENCE_1_BODY_OUTFIT_CROP.png',
+            }),
+            expect.objectContaining({
+                role: 'prop-crop',
+                fileName: 'REFERENCE_1_PROP_CROP.png',
+            }),
         ]))
         expect(backRequest?.references).toEqual(expect.arrayContaining([
-            expect.objectContaining({ role: 'original-source', fileName: 'REFERENCE_1.png' }),
-            expect.objectContaining({ role: 'body-outfit-crop', fileName: 'REFERENCE_1_BODY_OUTFIT_CROP.png' }),
-            expect.objectContaining({ role: 'prop-crop', fileName: 'REFERENCE_1_PROP_CROP.png' }),
+            expect.objectContaining({
+                role: 'original-source',
+                fileName: 'REFERENCE_1.png',
+            }),
+            expect.objectContaining({
+                role: 'body-outfit-crop',
+                fileName: 'REFERENCE_1_BODY_OUTFIT_CROP.png',
+            }),
+            expect.objectContaining({
+                role: 'prop-crop',
+                fileName: 'REFERENCE_1_PROP_CROP.png',
+            }),
         ]))
         expect(frontRequest?.references.filter(reference => reference.role === 'original-source'))
             .toHaveLength(1)
@@ -608,8 +701,16 @@ describe('CharacterSheetStrategy', () => {
                 traceUrl: '/api/capabilities/watercolor/resources/sample-1',
             }],
             capabilityOutputs: [
-                { capabilityId: 'character-creator', runId: 'character-run', output: {} },
-                { capabilityId: 'watercolor-style', runId: 'style-run', output: {} },
+                {
+                    capabilityId: 'character-creator',
+                    runId: 'character-run',
+                    output: {},
+                },
+                {
+                    capabilityId: 'watercolor-style',
+                    runId: 'style-run',
+                    output: {},
+                },
             ],
         }
         const assess = vi.fn(async () => assessment(false))
@@ -677,8 +778,14 @@ describe('CharacterSheetStrategy', () => {
         expect(backRequest?.prompt).toContain('GENERATED_OUTFIT_ANCHOR.png')
         expect(backRequest?.prompt).toContain('full-body proportions, outfit construction')
         expect(backRequest?.references).toEqual(expect.arrayContaining([
-            expect.objectContaining({ role: 'canonical-anchor', fileName: 'GENERATED_OUTFIT_ANCHOR.png' }),
-            expect.objectContaining({ role: 'adjacent-angle', fileName: 'GENERATED_IDENTITY_ANCHOR.png' }),
+            expect.objectContaining({
+                role: 'canonical-anchor',
+                fileName: 'GENERATED_OUTFIT_ANCHOR.png',
+            }),
+            expect.objectContaining({
+                role: 'adjacent-angle',
+                fileName: 'GENERATED_IDENTITY_ANCHOR.png',
+            }),
         ]))
         expect(assess).toHaveBeenCalledWith(expect.objectContaining({
             authoritativePrompt: 'Transform the referenced woman into a visibly undead zombie.',
@@ -738,12 +845,11 @@ describe('CharacterSheetStrategy', () => {
                 await request.onImagePartial?.(panelPng.toString('base64'), 1)
                 lifecycle.push(`terminal:${request.context.mediaRunId}`)
             }
+
             return providerResult(request)
         })
 
-        const publishImagePartial = vi.fn(async () => {
-            lifecycle.push('published')
-        })
+        const publishImagePartial = vi.fn(async () => void lifecycle.push('published'))
         await strategy(async () => assessment(false)).execute(
             context('media-google'),
             plan(),
@@ -770,6 +876,7 @@ describe('CharacterSheetStrategy', () => {
         const result = await strategy(async request => {
             const count = (attempts.get(request.panel.panelId) ?? 0) + 1
             attempts.set(request.panel.panelId, count)
+
             return assessment(count === 1)
         }).execute(context(), executionPlan, {})
         const trace = result.capabilityMediaTrace as Record<string, unknown>
@@ -783,7 +890,10 @@ describe('CharacterSheetStrategy', () => {
     it('retains panels with non-structural comparison warnings for explicit user review', async () => {
         const executionPlan = plan()
         const result = await strategy(async () => assessment(true, 0.6)).execute(context(), executionPlan, {})
-        const trace = result.capabilityMediaTrace as { totalProviderOperations: number; panels: unknown[] }
+        const trace = result.capabilityMediaTrace as {
+            totalProviderOperations: number
+            panels: unknown[]
+        }
 
         expect(trace.totalProviderOperations).toBe(executionPlan.panels.length)
         expect(trace.panels).toEqual(expect.arrayContaining([
@@ -799,6 +909,7 @@ describe('CharacterSheetStrategy', () => {
         const executionPlan = plan()
         const result = await strategy(async () => {
             const result = assessment(false)
+
             return {
                 ...result,
                 dimensions: result.dimensions.map(dimension => (
@@ -868,10 +979,16 @@ describe('CharacterSheetStrategy', () => {
     it('retains a structurally rejected terminal for review without releasing it as an anchor', async () => {
         const executionPlan = plan()
         const providerPartial = await sharp({
-            create: { width: 96, height: 96, channels: 3, background: '#aa4466' },
+            create: {
+                width: 96,
+                height: 96,
+                channels: 3,
+                background: '#aa4466',
+            },
         }).png().toBuffer()
         mocks.render.mockImplementation(async request => {
             await request.onImagePartial?.(providerPartial.toString('base64'), 1)
+
             return providerResult(request)
         })
         const publishImagePartial = vi.fn(async () => undefined)
@@ -924,10 +1041,16 @@ describe('CharacterSheetStrategy', () => {
 
     it('retains the last provider partial when the provider fails before terminal output', async () => {
         const providerPartial = await sharp({
-            create: { width: 96, height: 96, channels: 3, background: '#aa4466' },
+            create: {
+                width: 96,
+                height: 96,
+                channels: 3,
+                background: '#aa4466',
+            },
         }).png().toBuffer()
         mocks.render.mockImplementationOnce(async request => {
             await request.onImagePartial?.(providerPartial.toString('base64'), 1)
+
             throw new Error('provider disconnected')
         })
 
@@ -979,12 +1102,17 @@ describe('CharacterSheetStrategy', () => {
             userPrompt: 'A courier; include their belongings',
         })
         mocks.render.mockImplementation(async request => {
-            if (request.operationKey.includes(':prop-primary:')) throw new Error('prop unavailable')
+            if (request.operationKey.includes(':prop-primary:'))
+                throw new Error('prop unavailable')
+
             return providerResult(request)
         })
 
         const result = await strategy(async () => assessment(false)).execute(context(), executionPlan, {})
-        const trace = result.capabilityMediaTrace as { totalProviderOperations: number; panels: unknown[] }
+        const trace = result.capabilityMediaTrace as {
+            totalProviderOperations: number
+            panels: unknown[]
+        }
 
         expect(result.generatedImages).toEqual([Buffer.from('composed-sheet').toString('base64')])
         expect(trace.totalProviderOperations).toBe(executionPlan.panels.length)
@@ -1006,7 +1134,9 @@ describe('CharacterSheetStrategy', () => {
 
     it('keeps accepted progress and blocks every later shot when the required outfit anchor fails', async () => {
         mocks.render.mockImplementation(async request => {
-            if (request.operationKey.includes(':body-front:')) throw new Error('outfit unavailable')
+            if (request.operationKey.includes(':body-front:'))
+                throw new Error('outfit unavailable')
+
             return providerResult(request)
         })
 
@@ -1026,7 +1156,9 @@ describe('CharacterSheetStrategy', () => {
             userPrompt: 'A courier in four shots',
         })
         mocks.render.mockImplementation(async request => {
-            if (request.operationKey.includes(':body-back:')) throw new Error('back outfit unavailable')
+            if (request.operationKey.includes(':body-back:'))
+                throw new Error('back outfit unavailable')
+
             return providerResult(request)
         })
 
@@ -1106,7 +1238,10 @@ describe('CharacterSheetStrategy', () => {
         })
 
         const result = await failing.execute(context(), executionPlan, {})
-        const trace = result.capabilityMediaTrace as { steps: Array<{ stepId: string; issues: string[] }> }
+        const trace = result.capabilityMediaTrace as { steps: Array<{
+            stepId: string
+            issues: string[]
+        }> }
 
         expect(trace.steps).toContainEqual(expect.objectContaining({
             stepId: 'source-evidence',
@@ -1134,7 +1269,12 @@ describe('CharacterSheetStrategy', () => {
 describe('CharacterSheetStrategy — execution traces', () => {
     beforeAll(async () => {
         panelPng = await sharp({
-            create: { width: 256, height: 256, channels: 3, background: '#6688aa' },
+            create: {
+                width: 256,
+                height: 256,
+                channels: 3,
+                background: '#6688aa',
+            },
         }).png().toBuffer()
     })
 
@@ -1145,7 +1285,11 @@ describe('CharacterSheetStrategy — execution traces', () => {
             organizationId: 'org-1',
             media: {
                 renditions: {
-                    canonical: { status: 'ready', blobHash: 'blob-1', mimeType: 'image/png' },
+                    canonical: {
+                        status: 'ready',
+                        blobHash: 'blob-1',
+                        mimeType: 'image/png',
+                    },
                 },
             },
         })
@@ -1162,18 +1306,25 @@ describe('CharacterSheetStrategy — execution traces', () => {
         })
         await strategy(async () => assessment(false)).execute(context(), executionPlan, {
             reportProgress: async progress => {
-                if (progress.items) snapshots.push(progress.items)
+                if (progress.items)
+                    snapshots.push(progress.items)
             },
         })
+
         return snapshots.at(-1) ?? []
     }
 
     const findItem = (items: readonly OperationProgressItem[], id: string): OperationProgressItem | undefined => {
         for (const item of items) {
-            if (item.id === id) return item
+            if (item.id === id)
+                return item
+
             const nested = findItem(item.children ?? [], id)
-            if (nested) return nested
+
+            if (nested)
+                return nested
         }
+
         return undefined
     }
 
@@ -1188,7 +1339,10 @@ describe('CharacterSheetStrategy — execution traces', () => {
             mediaKind: 'image',
             role: 'source-reference',
         }])
-        expect(resolve?.trace?.facts).toContainEqual({ label: 'Authorized source images', value: '1' })
+        expect(resolve?.trace?.facts).toContainEqual({
+            label: 'Authorized source images',
+            value: '1',
+        })
     })
 
     it('traces the image model, its size param, its prompt, and its references for each rendered shot', async () => {
@@ -1201,8 +1355,14 @@ describe('CharacterSheetStrategy — execution traces', () => {
             provider: 'OpenAI',
             modelId: 'image-v1',
         })
-        expect(modelCall?.params).toContainEqual({ name: 'size', value: '1024x1536' })
-        expect(modelCall?.params).toContainEqual({ name: 'attempt', value: '1' })
+        expect(modelCall?.params).toContainEqual({
+            name: 'size',
+            value: '1024x1536',
+        })
+        expect(modelCall?.params).toContainEqual({
+            name: 'attempt',
+            value: '1',
+        })
         expect(modelCall?.prompt).toBeTruthy()
         expect(modelCall?.inputHandles?.length).toBeGreaterThan(0)
         expect(render?.trace?.facts?.some(fact => fact.label === 'References accepted by provider')).toBe(true)
@@ -1223,9 +1383,18 @@ describe('CharacterSheetStrategy — execution traces', () => {
 
         const assess = findItem(items, 'assess:head-front-neutral')
         const modelCall = assess?.trace?.modelCalls?.[0]
-        expect(modelCall).toMatchObject({ role: 'assessor', modelId: 'test/reasoning-v1' })
-        expect(modelCall?.params).toContainEqual({ name: 'target-view', value: '0.95' })
-        expect(assess?.trace?.facts).toContainEqual({ label: 'Verdict', value: 'passed' })
+        expect(modelCall).toMatchObject({
+            role: 'assessor',
+            modelId: 'test/reasoning-v1',
+        })
+        expect(modelCall?.params).toContainEqual({
+            name: 'target-view',
+            value: '0.95',
+        })
+        expect(assess?.trace?.facts).toContainEqual({
+            label: 'Verdict',
+            value: 'passed',
+        })
     })
 
     it('traces the compositor and what it placed', async () => {

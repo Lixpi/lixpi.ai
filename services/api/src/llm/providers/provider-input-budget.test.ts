@@ -24,9 +24,15 @@ const state = (contextWindow?: number) =>
 describe('provider translated-request context admission', () => {
     it('rejects complete oversized text without mutating or clipping it', () => {
         const text = 'timeline-segment\n'.repeat(100)
-        const request = { input: [{ role: 'user', content: text }] }
+        const request = { input: [{
+            role: 'user',
+            content: text,
+        }] }
 
-        expect(() => assessProviderInputBudget({ state: state(200), request })).toThrowError(
+        expect(() => assessProviderInputBudget({
+            state: state(200),
+            request,
+        })).toThrowError(
             expect.objectContaining<Partial<CapabilityError>>({
                 code: 'MODEL_INPUT_CONTEXT_EXCEEDED',
                 details: expect.objectContaining({ contextWindow: 200 }),
@@ -41,7 +47,10 @@ describe('provider translated-request context admission', () => {
             state: state(10000),
             request: {
                 contents: [{
-                    parts: [{ inlineData: { mimeType: 'audio/wav', data: bytes } }],
+                    parts: [{ inlineData: {
+                        mimeType: 'audio/wav',
+                        data: bytes,
+                    } }],
                 }],
             },
         })
@@ -54,7 +63,8 @@ describe('provider translated-request context admission', () => {
         expect(result!.inputTokens).toBeLessThan(1000)
     })
 
-    it('defers admission only for legacy fixtures without model context metadata', () => {
-        expect(assessProviderInputBudget({ state: state(), request: { input: 'complete' } })).toBeUndefined()
-    })
+    it('defers admission only for legacy fixtures without model context metadata', () => void expect(assessProviderInputBudget({
+        state: state(),
+        request: { input: 'complete' },
+    })).toBeUndefined())
 })

@@ -20,7 +20,11 @@ describe('IdleTask', () => {
         vi.stubGlobal('cancelIdleCallback', cancel)
         const controller = new AbortController()
         const callback = vi.fn()
-        const task = new IdleTask({ callback, signal: controller.signal, timeoutMs: 2000 })
+        const task = new IdleTask({
+            callback,
+            signal: controller.signal,
+            timeoutMs: 2000,
+        })
         controller.abort()
         task.destroy()
         request.mock.calls[0][0]()

@@ -60,7 +60,10 @@ const createVideoNode = (attrs: Record<string, unknown> = {}) => {
 const createNodeView = (attrs: Record<string, unknown> = {}) => {
     const node = createVideoNode(attrs)
     const doc = testSchema.nodes.doc.create(null, [node])
-    const state = EditorState.create({ doc, schema: testSchema })
+    const state = EditorState.create({
+        doc,
+        schema: testSchema,
+    })
     const view = {
         state,
         dispatch: vi.fn(),
@@ -70,9 +73,7 @@ const createNodeView = (attrs: Record<string, unknown> = {}) => {
     return aiGeneratedVideoNodeView(node, view as any, () => 0)
 }
 
-beforeEach(() => {
-    vi.mocked(AuthService.getTokenSilently).mockReset().mockResolvedValue('token-1')
-})
+beforeEach(() => void vi.mocked(AuthService.getTokenSilently).mockReset().mockResolvedValue('token-1'))
 
 describe('aiGeneratedVideoNodeSpec', () => {
     it('serializes core video attrs for ProseMirror DOM output', () => {
@@ -128,7 +129,10 @@ describe('aiGeneratedVideoNodeSpec', () => {
 })
 
 describe('aiGeneratedVideoNodeView', () => {
-    let controlInstance: { resize: any; destroy: any }
+    let controlInstance: {
+        resize: any
+        destroy: any
+    }
 
     beforeEach(() => {
         const mockedControls = createVideoControls as any

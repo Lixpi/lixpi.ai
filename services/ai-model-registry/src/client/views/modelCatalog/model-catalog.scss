@@ -1,0 +1,780 @@
+// Model catalog page. The theme owns the card, table, form, chip, status, and
+// drawer styles; these rules are what this page adds on top of them.
+
+@use "@lixpi/ui-primitives/styles/transitions" as *;
+
+// A flagged row and the lines that bound it are one colour, so the colour is mixed
+// into the surface rather than laid over it as a tint: a translucent value would
+// paint differently in a cell than in the 1px between two cells.
+$incomplete-row: color-mix(in srgb, var(--orange) 16%, var(--bg-surface));
+$incomplete-row-hover: color-mix(in srgb, var(--orange) 26%, var(--bg-surface));
+$incomplete-row-selected: color-mix(in srgb, var(--orange) 32%, var(--bg-surface));
+$error-row: color-mix(in srgb, var(--red) 18%, var(--bg-surface));
+$error-row-hover: color-mix(in srgb, var(--red) 28%, var(--bg-surface));
+$error-row-selected: color-mix(in srgb, var(--red) 34%, var(--bg-surface));
+
+.model-catalog-page {
+    padding-bottom: 64px;
+}
+
+.model-catalog-status {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 16px;
+
+    &:empty {
+        display: none;
+    }
+}
+
+.model-catalog-note {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+// The theme's banner centres its icon against a single line of text. A failure
+// carries a list under it, so the icon lines up with the first line instead.
+.model-catalog-sync-failure {
+    align-items: flex-start;
+
+    .banner-icon {
+        margin-top: 1px;
+    }
+}
+
+// One failed source per row: what failed, then what it said. No list markers, which
+// would be the only bullets on the page.
+.model-catalog-failure {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 8px;
+    margin-top: 6px;
+    color: var(--text-secondary);
+}
+
+// The counts carry themselves through size, weight, and colour. No boxes: a
+// border around each one would draw more attention than the numbers do.
+.model-catalog-stats {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 8px 36px;
+    margin-bottom: 24px;
+}
+
+.model-catalog-stat {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+}
+
+.model-catalog-stat .stat-value {
+    font-size: 20px;
+    font-weight: 600;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-secondary);
+}
+
+.model-catalog-stat .stat-label {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+// The total is the headline the rest are read against.
+.model-catalog-stat-lead .stat-value {
+    font-size: 28px;
+    color: var(--text);
+}
+
+.model-catalog-stat-lead .stat-label {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.model-catalog-stat-good .stat-value {
+    color: var(--green);
+}
+
+.model-catalog-stat-warn .stat-value {
+    color: var(--orange);
+}
+
+.model-catalog-filters {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.model-catalog-filter-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.model-catalog-search {
+    width: 240px;
+}
+
+.model-catalog-filter-controls .form-control {
+    width: auto;
+    min-width: 160px;
+}
+
+.model-catalog-row {
+    cursor: pointer;
+}
+
+.model-catalog-row-selected {
+    background: var(--primary-lt);
+}
+
+// A flagged row is meant to be found while scanning the column of names, not read
+// out of the status word at the far right. The stripe sits in the first cell's
+// padding, in the same gap the sync spinner uses, so it costs the table no width.
+.model-catalog-row-incomplete,
+.model-catalog-row-error {
+    td:first-child {
+        position: relative;
+    }
+
+    td:first-child::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        width: 3px;
+    }
+}
+
+// The theme's own row hover is an opaque grey, which under a tint turns brown, so a
+// flagged row carries its own hover and selected shades. Both step up from the base
+// tint; the base itself is the theme token, left as it is.
+.model-catalog-row-incomplete {
+    td:first-child::before {
+        background: var(--orange);
+    }
+}
+
+.model-catalog-table tbody tr.model-catalog-row-incomplete:hover td {
+    background: $incomplete-row-hover;
+    border-bottom-color: $incomplete-row-hover;
+}
+
+// The flag is one solid block: the cells and the two lines that bound them are the
+// same colour, so nothing reads as a border or as a gap where a border used to be.
+//
+// The colour is opaque rather than a translucent tint. A translucent one sits on the
+// row background in the cells and on the table background in the 1px border, which
+// is two slightly different colours and exactly the seam this is fixing. The line
+// above a flagged row belongs to the row before it, so that one is painted too.
+.model-catalog-table tbody tr.model-catalog-row-incomplete td,
+.model-catalog-table tbody tr:has(+ tr.model-catalog-row-incomplete) td {
+    border-bottom-color: $incomplete-row;
+}
+
+.model-catalog-table tbody tr.model-catalog-row-incomplete td {
+    background: $incomplete-row;
+}
+
+// Reserved for a rate that disagrees with the source it came from. That is money
+// rather than a gap in the catalog, so it outranks an incomplete row and is the only
+// thing on this table wearing red.
+.model-catalog-row-error {
+    td:first-child::before {
+        background: var(--red);
+    }
+}
+
+.model-catalog-table tbody tr.model-catalog-row-error td,
+.model-catalog-table tbody tr:has(+ tr.model-catalog-row-error) td {
+    border-bottom-color: $error-row;
+}
+
+.model-catalog-table tbody tr.model-catalog-row-error td {
+    background: $error-row;
+}
+
+.model-catalog-table tbody tr.model-catalog-row-error:hover td {
+    background: $error-row-hover;
+    border-bottom-color: $error-row-hover;
+}
+
+// A flagged row that is also the selected one keeps its flag: which model the panel
+// is showing is already obvious from the panel.
+.model-catalog-table tbody tr.model-catalog-row-incomplete.model-catalog-row-selected td {
+    background: $incomplete-row-selected;
+    border-bottom-color: $incomplete-row-selected;
+}
+
+.model-catalog-table tbody tr.model-catalog-row-error.model-catalog-row-selected td {
+    background: $error-row-selected;
+    border-bottom-color: $error-row-selected;
+}
+
+// The theme's yellow status text is a dark amber for light backgrounds. Orange, at
+// the weight the rest of the status chips use.
+.model-catalog-status-incomplete {
+    color: var(--orange);
+
+    &::before {
+        background: var(--orange);
+    }
+}
+
+// A row is a title over its id, with room to the left for the spinner a running sync
+// puts there. The spinner sits outside the stack so the two lines stay where they
+// are whether it is showing or not.
+.model-catalog-cell-name {
+    // Relative so the sync spinner can be taken out of the flow and placed in the gap
+    // the column indent leaves, level with the provider chevron above it: a row's text
+    // then sits in the same place whether a sync is running or not.
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    > div {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+}
+
+// Centred by margins between a top and bottom of 0, never by a transform: the spin
+// itself is a transform, so anything else put there is wiped every frame and the
+// spinner walks down the row instead of turning.
+.model-catalog-row-spinner {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: calc(var(--model-catalog-name-indent) * -1);
+    margin-block: auto;
+}
+
+.model-catalog-group-spinner {
+    flex-shrink: 0;
+}
+
+// The theme's spinner track is `--border-color`, which in the dark theme is white at
+// 8% and reads as nothing: what is left is a lone arc floating in the row. These are
+// small and sit on a busy surface, so the ring needs to be a ring.
+.model-catalog-row-spinner,
+.model-catalog-group-spinner {
+    border-color: var(--text-disabled);
+    border-top-color: var(--primary);
+}
+
+// The theme gives `code` a bordered, padded box. A model id under its title is a
+// label rather than a snippet, so it drops the box and keeps the monospace.
+.model-catalog-model-id {
+    display: inline;
+    padding: 0;
+    border: 0;
+    background: none;
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.model-catalog-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.model-catalog-muted {
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.model-catalog-sources {
+    font-variant-numeric: tabular-nums;
+    color: var(--text-secondary);
+}
+
+// The theme owns the panel: it slides in when it carries `open` and sits
+// off-screen otherwise. These rules only widen it, because a model's
+// provenance and its authored record need the room.
+// The panel covers the content area exactly: everything right of the sidebar,
+// which stays visible so the page it belongs to is still there behind it.
+//
+// It is also where a model is read and edited rather than a compact list, so it
+// carries a larger type scale than the table behind it. The sizes are set here rather
+// than on each rule, so the table keeps its own.
+.drawer.model-catalog-drawer {
+    top: var(--page-top, 0px);
+    left: var(--sidebar-w);
+    right: 0;
+    width: auto;
+    height: calc(100vh - var(--page-top, 0px));
+    border-left: 1px solid var(--border-color);
+
+    .drawer-title {
+        font-size: 18px;
+    }
+
+    .model-catalog-drawer-subtitle,
+    .model-catalog-muted {
+        font-size: 14px;
+    }
+
+    .model-catalog-section-title {
+        font-size: 13px;
+    }
+
+    .model-catalog-definitions {
+        font-size: 14px;
+    }
+
+    .model-catalog-field-chip {
+        font-size: 13px;
+        padding: 2px 7px;
+    }
+
+    .form-label {
+        font-size: 13px;
+    }
+
+    .form-control {
+        font-size: 14px;
+    }
+
+    p {
+        font-size: 14px;
+    }
+
+    .table {
+        font-size: 14px;
+    }
+}
+
+// Two columns wherever a section is short enough to share a row, and full width
+// for the ones that are not.
+.drawer.model-catalog-drawer .drawer-body {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-content: start;
+    gap: 0 32px;
+    padding: 0 24px 24px;
+    // The panel is the vertical scroller here, so it keeps the whole gesture: no
+    // bounce at its ends and nothing handed to the page behind it. The horizontal
+    // axis is left alone, since it never scrolls.
+    overscroll-behavior-y: none;
+}
+
+// Set on the document while the panel is open.
+.model-catalog-scroll-locked,
+.model-catalog-scroll-locked body {
+    overflow: hidden;
+}
+
+.model-catalog-section-wide {
+    grid-column: 1 / -1;
+}
+
+.model-catalog-drawer-subtitle {
+    grid-row: 2;
+    grid-column: 2;
+    max-height: 2em;
+    overflow: hidden;
+    font-size: 12px;
+    color: var(--text-muted);
+    transition:
+        hoverTransition(max-height),
+        hoverTransition(opacity);
+}
+
+// Scrolled: the subtitle's row closes up, so the header is as tall as the name and no
+// taller. It is the second row that goes, and the first row is above it, so the name
+// and the arrow do not move a pixel.
+.model-catalog-drawer-scrolled .model-catalog-drawer-subtitle {
+    max-height: 0;
+    opacity: 0;
+}
+
+// The scroller carries no padding of its own: the title bar sticks to its top edge
+// and has to span the full width, so the padding belongs to what is inside it.
+.model-catalog-drawer {
+    // Where the title starts: the bar's own padding, then the back arrow, which is
+    // pulled left a little and followed by a gap. The subtitle lines up with it.
+    --model-catalog-drawer-back-size: 28px;
+    --model-catalog-drawer-back-pull: 6px;
+    --model-catalog-drawer-back-gap: 6px;
+    --model-catalog-drawer-inset: 24px;
+}
+
+// Two rows: the arrow and the name on the first, the subtitle under the name on the
+// second. A grid rather than a flex row so the arrow is centred on the title's line
+// instead of on the block as a whole, and so the subtitle's row keeps its height
+// whatever the subtitle is doing. Nothing in here moves, ever.
+.model-catalog-drawer-header {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    column-gap: var(--model-catalog-drawer-back-gap);
+    align-items: center;
+    // The row is as tall as the back button, so this is the only vertical space in
+    // the header and it is the same above and below.
+    padding: 10px var(--model-catalog-drawer-inset);
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border-color-light);
+}
+
+.model-catalog-drawer-header .drawer-title {
+    grid-row: 1;
+    grid-column: 2;
+    // Tighter than the theme's, so the name's line box does not sit lower in the row
+    // than the arrow beside it.
+    line-height: 1.2;
+}
+
+// The panel opens on one model, so its name is the heading of the view rather than a
+// label on a dialog. The theme's drawer title is sized for the latter.
+.model-catalog-drawer .drawer-title {
+    font-size: 18px;
+    font-weight: var(--font-weight-bold);
+    line-height: 1.3;
+}
+
+// The panel is a view you came into from the table, not a dialog, so the way out is
+// an arrow back rather than a cross. It sits before the title, where a back control
+// is looked for, and is sized to be pressed without hunting for it.
+.model-catalog-drawer-back {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    // First column, first row: level with the name, never with the block. The gap to
+    // the title is the grid's, so the button carries none of its own.
+    grid-row: 1;
+    grid-column: 1;
+    width: var(--model-catalog-drawer-back-size);
+    height: var(--model-catalog-drawer-back-size);
+    margin-left: calc(var(--model-catalog-drawer-back-pull) * -1);
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition:
+        hoverTransition(background),
+        hoverTransition(color);
+
+    svg {
+        width: 20px;
+        height: 20px;
+    }
+
+    &:hover {
+        background: var(--bg-surface-secondary);
+        color: var(--text);
+    }
+}
+
+.model-catalog-section {
+    min-width: 0;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--border-color-light);
+
+    &:last-child {
+        border-bottom: none;
+    }
+}
+
+.model-catalog-section-title {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+}
+
+.model-catalog-facts {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.model-catalog-definitions {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr);
+    gap: 8px 16px;
+    align-items: baseline;
+    font-size: 12px;
+
+    dt {
+        color: var(--text-muted);
+    }
+
+    dd {
+        margin: 0;
+        color: var(--text);
+        overflow-wrap: anywhere;
+    }
+}
+
+.model-catalog-form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px 16px;
+}
+
+// A field path, shown as a value rather than as a snippet to be copied.
+.model-catalog-field-chip {
+    padding: 1px 6px;
+    border-radius: var(--radius-sm);
+    background: var(--bg-surface-secondary);
+    border: 1px solid var(--border-color-light);
+    font-size: 11px;
+    color: var(--text-secondary);
+}
+
+// The theme's underlined tabs, with one change: a model directory can hold half a
+// dozen files, so the row wraps rather than pushing the last tab off the panel.
+.model-catalog-file-tabs {
+    flex-wrap: wrap;
+}
+
+// The pane keeps the row above it clear of the document under it, whether that is
+// the viewer, a message, or the banner a failed read puts there.
+.model-catalog-file-pane {
+    padding-top: 8px;
+}
+
+// The record is shown in full down the page: no height cap, so the panel scrolls
+// once vertically instead of trapping a second scrollbar inside itself.
+//
+// Across the page it is the other way round. A line of JSON is not prose and is not
+// wrapped; a long one scrolls sideways here rather than folding into the next line,
+// and the scrollbar appears only when there is a line long enough to need it.
+.model-catalog-json {
+    overflow: hidden;
+
+    .cm-editor,
+    .cm-editor .cm-scroller,
+    .cm-editor .cm-content,
+    .cm-editor .cm-gutters {
+        background: transparent;
+    }
+
+    .cm-editor {
+        font-size: var(--model-catalog-json-font-size, 13px);
+        color: var(--text-secondary);
+    }
+
+    // Only the horizontal axis is asked for. Naming one axis makes the other compute
+    // to `auto` whatever is written here, which costs nothing: the block has no height
+    // cap, so there is never anything to scroll vertically.
+    //
+    // The bar itself is hidden. It would sit across the bottom of the block as a
+    // permanent piece of furniture between the record and the section under it, and
+    // the gesture works without it.
+    .cm-scroller {
+        overflow-x: auto;
+        scrollbar-width: none;
+        // Sideways only. The vertical axis stays at `auto` so a wheel over the code
+        // scrolls the panel, which is the only thing that can scroll vertically here.
+        overscroll-behavior-x: none;
+
+        &::-webkit-scrollbar {
+            display: none;
+        }
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        line-height: 1.55;
+    }
+
+    .cm-content {
+        padding: 12px 0;
+    }
+
+    // The fold markers are chrome, not content, so they stay quiet until the
+    // pointer is on them.
+    .cm-gutters {
+        border: 0;
+        color: var(--text-disabled);
+    }
+
+    // The cell is exactly one line tall, so centring in it puts the marker on
+    // the middle of the line it belongs to.
+    .cm-foldGutter .cm-gutterElement {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+    }
+
+    .model-catalog-fold-marker {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
+        cursor: pointer;
+    }
+
+    .model-catalog-fold-marker svg {
+        width: 11px;
+        height: 11px;
+    }
+
+    .model-catalog-fold-marker-open svg {
+        transform: rotate(90deg);
+    }
+
+    // Hover lifts an open marker out of the gutter's grey. A closed one already
+    // carries the brace colour, so hovering brightens that rather than
+    // replacing it with something duller.
+    .model-catalog-fold-marker-open:hover {
+        color: var(--text);
+    }
+
+    .model-catalog-fold-marker-closed:hover {
+        filter: brightness(1.3);
+    }
+
+    // A collapsed range carries the brace colour from the active theme, which is
+    // the same colour as the `{` and `}` it stands in for.
+
+    .cm-foldPlaceholder {
+        padding: 0 6px;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-sm);
+        background: var(--bg-surface-secondary);
+        color: var(--text-muted);
+    }
+}
+
+// The provider name sits behind the chevron in the group band, so the model column
+// has to start there too or the first column reads as two ragged edges. The offset is
+// stated the way the band builds it, the chevron's own width plus the band's gap,
+// rather than as a number that would drift the moment either changes.
+.model-catalog-table {
+    --model-catalog-chevron-size: 13px;
+    --model-catalog-group-gap: 10px;
+    --model-catalog-name-indent: calc(var(--model-catalog-chevron-size) + var(--model-catalog-group-gap));
+}
+
+.model-catalog-table th:first-child,
+.model-catalog-table tr:not(.model-catalog-group-header-row) > td:first-child {
+    padding-left: calc(16px + var(--model-catalog-name-indent));
+}
+
+// A provider's band opens its group of rows. It reads as a heading rather than
+// as a card: the name carries the weight and nothing boxes it in.
+//
+// The two class names are what beat `table.table td` in the theme. Without them
+// the cell keeps the theme's padding and the band inside it adds its own on top,
+// which is what pushed the provider name in from the column edge.
+.model-catalog-table .model-catalog-group-header-row td {
+    padding: 10px 16px;
+    background: var(--bg-surface-secondary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.model-catalog-group-body + .model-catalog-group-body .model-catalog-group-header-row td {
+    border-top: 1px solid var(--border-color);
+}
+
+// The whole band is the collapse control, so it is a button stripped back to
+// looking like the heading it is.
+.model-catalog-group-bar {
+    display: flex;
+    align-items: baseline;
+    gap: var(--model-catalog-group-gap);
+    width: 100%;
+    padding: 0;
+    border: 0;
+    background: none;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+// Sized here rather than left to the theme's `1em` fallback, because the column
+// indent is measured from it and the two must agree. The header row's font is a
+// couple of pixels smaller than the body's, so an em would put them on different
+// lines.
+.model-catalog-group-chevron {
+    align-self: center;
+    display: flex;
+    color: var(--text-muted);
+    transition: hoverTransition(transform);
+
+    svg {
+        width: var(--model-catalog-chevron-size);
+        height: var(--model-catalog-chevron-size);
+    }
+}
+
+.model-catalog-group-bar[aria-expanded="true"] .model-catalog-group-chevron {
+    transform: rotate(90deg);
+}
+
+.model-catalog-group-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.model-catalog-group-bar:hover .model-catalog-group-name {
+    color: var(--primary);
+}
+
+.model-catalog-group-count {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.model-catalog-group-settings {
+    padding-top: 8px;
+    // Lined up with the provider name above it, which the chevron indents.
+    padding-left: var(--model-catalog-name-indent);
+
+    summary {
+        display: inline-block;
+        font-size: 12px;
+        color: var(--text-muted);
+        cursor: pointer;
+        transition: hoverTransition(color);
+    }
+
+    summary:hover {
+        color: var(--primary);
+    }
+}
+
+.model-catalog-group-settings-body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 20px;
+    padding-top: 12px;
+}
+
+.model-catalog-skip-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 260px;
+    overflow-y: auto;
+}
+
+.model-catalog-skip-item {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 12px;
+}
+
+.model-catalog-skip-model {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    color: var(--text-secondary);
+    margin-right: 8px;
+}

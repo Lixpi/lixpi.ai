@@ -52,10 +52,10 @@ import { getCapabilityDispatcher } from './capability-system/capability-runtime.
 import { asCapabilityArguments } from './capability-system/capability-state-resolver.ts'
 
 import {
-    MetricsClient,
-    metricsConfigFromEnv,
-    type MetricsNats,
-} from './metrics/metrics-client.ts'
+    UsageMeteringClient,
+    usageMeteringOptionsFromEnv,
+    type UsageMeteringTransport,
+} from '@lixpi/usage-reporter'
 
 const env = process.env
 
@@ -125,6 +125,31 @@ const subscriptions = [
 //   with the service that is proving its identity.
 const serviceAuthConfigs: ServiceAuthConfig[] = []
 
+if (env.NATS_AI_MODEL_REGISTRY_NKEY_PUBLIC) {
+    // The AI Model Registry owns the model catalog and announces each sync run.
+    // Unlike NEX it is an ordinary Lixpi service, so it authenticates with a
+    // self-issued NKey-signed JWT rather than a raw NKey challenge, and it lands
+    // in the default auth account alongside the API that subscribes to it.
+    serviceAuthConfigs.push({
+        publicKey: env.NATS_AI_MODEL_REGISTRY_NKEY_PUBLIC,
+        // Must match the `sub` claim the registry puts in its self-issued JWT,
+        // which is NATS_AI_MODEL_REGISTRY_USER_ID in that service's environment.
+        userId: 'svc:ai-model-registry',
+        permissions: {
+            pub: {
+                allow: [
+                    // The only subject the registry publishes: run totals and
+                    // drift counts after each catalog sync.
+                    'aiModels.syncCompleted',
+                ],
+            },
+            sub: {
+                allow: ['_INBOX.>'],
+            },
+        },
+    })
+}
+
 if (env.NATS_NEX_NODE_NKEY_PUBLIC) {
     // NEX is a NATS-native tool, not a browser or normal API client. It connects
     // with standard NATS NKey auth (`--nats.nkey` + `--nats.seed`), which means
@@ -176,10 +201,6 @@ if (env.NATS_NEX_NODE_NKEY_PUBLIC) {
                     // by consumers/producers when JetStream is involved.
                     '$JS.FC.>',
                     '$JS.ACK.>',
-                    // Completion event published by the ai-models-sync workload
-                    // in the NEX account and exported/imported into AUTH for the
-                    // API subscriber.
-                    'aiModels.syncCompleted',
                 ],
             },
             sub: {
@@ -250,32 +271,33 @@ await startNatsAuthCalloutService({
     serviceAuthConfigs,
 })
 
-// Metrics client. The spend guard is synchronous: check before a paid provider
-// call, confirm after. Requests use the raw NATS_Service.request so they bypass the
-// global JWT middleware — an internal metrics subject carries no user token. Off
-// (METRICS_ENABLED!=true) → the open-source plug (check approves, confirm no-ops).
-const metricsNatsConn = (await NATS_Service.getInstance())!
-const metricsNats: MetricsNats = {
+// Usage metering. The spend guard is synchronous: authorize before a paid provider
+// call, record what it used after. Requests use the raw NATS_Service.request so they
+// bypass the global JWT middleware, because an internal metering subject carries no
+// user token. With METRICS_ENABLED unset this is the plug: every spend is authorized
+// and recording is a no-op.
+const usageMeteringConnection = (await NATS_Service.getInstance())!
+const usageMeteringTransport: UsageMeteringTransport = {
     request: (
         subject,
         data,
         timeoutMs,
-    ) => metricsNatsConn.request(
+    ) => usageMeteringConnection.request(
         subject,
         data,
         timeoutMs,
     ),
 }
-const metrics = new MetricsClient(
-    metricsNats,
-    metricsConfigFromEnv(),
+const usageMetering = new UsageMeteringClient(
+    usageMeteringTransport,
+    usageMeteringOptionsFromEnv(),
 )
 
 // Initialize the in-process LLM module. The LangGraph workflow that previously
 // ran in the standalone services/llm-api Python service now runs here directly.
 const llmModule = createLlmModule({
     natsService: await NATS_Service.getInstance(),
-    metrics,
+    usageMetering,
 })
 setPromptReferenceModuleCatalog(llmModule.capabilityModuleCatalog)
 await llmModule.seedCapabilities()

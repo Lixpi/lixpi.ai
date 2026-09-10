@@ -1,0 +1,23 @@
+{
+    "name": "@lixpi/usage-reporter",
+    "version": "0.0.1",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "test:run": "vitest run"
+    },
+    "main": "./src/index.ts",
+    "exports": {
+        ".": "./src/index.ts"
+    },
+    "devDependencies": {
+        "@types/node": "*",
+        "vitest": "*"
+    },
+    "dependencies": {
+        "@lixpi/constants": "workspace:*",
+        "@lixpi/debug-tools": "workspace:*",
+        "chalk": "*",
+        "decimal.js": "*"
+    }
+}

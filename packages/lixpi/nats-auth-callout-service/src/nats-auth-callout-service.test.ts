@@ -47,6 +47,7 @@ vi.mock('@nats-io/jwt', () => ({
 
 vi.mock('@lixpi/auth-service', async (importOriginal) => {
     const actual = await importOriginal<typeof import('@lixpi/auth-service')>()
+
     return {
         ...actual,
         createJwtVerifier: createJwtVerifierMock,
@@ -87,9 +88,7 @@ const buildAuthRequest = (request: Record<string, any>): MockRequestMessage => (
     },
 })
 
-const extractEncodedPermissions = (calls: any[]) => {
-    return calls[0]?.[3]
-}
+const extractEncodedPermissions = (calls: any[]) => calls[0]?.[3]
 
 describe('startNatsAuthCalloutService', () => {
     let authorizationRequestCurveKeyPair: { open: ReturnType<typeof vi.fn> }
@@ -115,9 +114,17 @@ describe('startNatsAuthCalloutService', () => {
 
         fromSeedMock.mockImplementation((seed: Buffer) => {
             const seedValue = seed.toString()
-            if (seedValue === 'nKeyIssuerSeed') return authorizationIssuerKeyPair
-            if (seedValue === 'xKeyIssuerSeed') return authorizationRequestCurveKeyPair
-            return { getPublicKey: vi.fn().mockReturnValue('NKEY-UNKNOWN'), sign: vi.fn() }
+
+            if (seedValue === 'nKeyIssuerSeed')
+                return authorizationIssuerKeyPair
+
+            if (seedValue === 'xKeyIssuerSeed')
+                return authorizationRequestCurveKeyPair
+
+            return {
+                getPublicKey: vi.fn().mockReturnValue('NKEY-UNKNOWN'),
+                sign: vi.fn(),
+            }
         })
 
         fromPublicMock.mockReturnValue(rawNKeyVerifier)
@@ -134,18 +141,16 @@ describe('startNatsAuthCalloutService', () => {
 
         authCalloutCallback = null
         natsServiceMock = {
-            reply: vi.fn((...args: any[]) => {
-                authCalloutCallback = args[1]
-            }),
+            reply: vi.fn((...args: any[]) => void (authCalloutCallback = args[1])),
         }
 
         decodeMock.mockImplementation((value: any, options: any) => {
-            if (options?.complete) {
+            if (options?.complete)
                 return { payload: { iss: '' } }
-            }
-            if (options?.json) {
+
+            if (options?.json)
                 return JSON.parse(new TextDecoder().decode(value))
-            }
+
             return null
         })
 
@@ -195,8 +200,12 @@ describe('startNatsAuthCalloutService', () => {
             },
         }
         decodeMock.mockImplementation((value: any, options: any) => {
-            if (options?.complete) return { payload: { iss: '' } }
-            if (options?.json) return request
+            if (options?.complete)
+                return { payload: { iss: '' } }
+
+            if (options?.json)
+                return request
+
             return null
         })
 
@@ -293,8 +302,12 @@ describe('startNatsAuthCalloutService', () => {
             },
         ]
         decodeMock.mockImplementation((value: any, options: any) => {
-            if (options?.complete) return { payload: { iss: rawServicePublicKey } }
-            if (options?.json) return request
+            if (options?.complete)
+                return { payload: { iss: rawServicePublicKey } }
+
+            if (options?.json)
+                return request
+
             return null
         })
 
@@ -348,8 +361,12 @@ describe('startNatsAuthCalloutService', () => {
         fromPublicMock.mockReturnValue(rawNKeyVerifier)
         rawNKeyVerifier.verify.mockReturnValue(true)
         decodeMock.mockImplementation((value: any, options: any) => {
-            if (options?.complete) return { payload: { iss: '' } }
-            if (options?.json) return request
+            if (options?.complete)
+                return { payload: { iss: '' } }
+
+            if (options?.json)
+                return request
+
             return null
         })
 
@@ -365,7 +382,10 @@ describe('startNatsAuthCalloutService', () => {
                 {
                     publicKey: rawServicePublicKey,
                     userId: rawServiceUser,
-                    permissions: { pub: { allow: ['svc.publish'] }, sub: { allow: ['svc.subscribe'] } },
+                    permissions: {
+                        pub: { allow: ['svc.publish'] },
+                        sub: { allow: ['svc.subscribe'] },
+                    },
                 },
             ],
             natsAuthAccount: 'AUTH',
@@ -382,7 +402,10 @@ describe('startNatsAuthCalloutService', () => {
             rawServiceUser,
             natsServicePublicKey,
             authorizationIssuerKeyPair,
-            expect.objectContaining({ type: 'user', version: 2 }),
+            expect.objectContaining({
+                type: 'user',
+                version: 2,
+            }),
             { aud: 'AUTH' },
         )
     })
@@ -399,8 +422,12 @@ describe('startNatsAuthCalloutService', () => {
             },
         }
         decodeMock.mockImplementation((value: any, options: any) => {
-            if (options?.complete) return { payload: { iss: '' } }
-            if (options?.json) return request
+            if (options?.complete)
+                return { payload: { iss: '' } }
+
+            if (options?.json)
+                return request
+
             return null
         })
 
@@ -429,8 +456,12 @@ describe('startNatsAuthCalloutService', () => {
             },
         }
         decodeMock.mockImplementation((value: any, options: any) => {
-            if (options?.complete) return { payload: { iss: '' } }
-            if (options?.json) return request
+            if (options?.complete)
+                return { payload: { iss: '' } }
+
+            if (options?.json)
+                return request
+
             return null
         })
 

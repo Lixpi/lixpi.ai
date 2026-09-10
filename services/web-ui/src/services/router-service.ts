@@ -22,6 +22,11 @@ const routeValuesMatch = (
     return leftEntries.every(([key, value]) => String(value) === String(right[key]))
 }
 
+export const loadWorkspaceRouteData = async (workspaceId: string): Promise<void> => {
+    await servicesStore.getData('workspaceService').getWorkspace({ workspaceId })
+    await servicesStore.getData('assetService').loadWorkspaceAssets(workspaceId)
+}
+
 export const routes: RouteDefinition[] = [
     {
         path: '/',
@@ -31,11 +36,6 @@ export const routes: RouteDefinition[] = [
         load: async (params: any) => void (await loadWorkspaceRouteData(params.workspaceId as string)),
     },
 ]
-
-export async function loadWorkspaceRouteData(workspaceId: string): Promise<void> {
-    await servicesStore.getData('workspaceService').getWorkspace({ workspaceId })
-    await servicesStore.getData('assetService').loadWorkspaceAssets(workspaceId)
-}
 
 export type Router = {
     currentRoute: {

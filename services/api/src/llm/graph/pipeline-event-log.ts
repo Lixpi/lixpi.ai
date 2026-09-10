@@ -183,10 +183,10 @@ export class PipelineEventLog {
     }
 }
 
-export function getPipelineEventSubject(
+export const getPipelineEventSubject = (
     workspaceId: string,
     pipelineId: string,
-): string {
+): string => {
     return [
         NATS_SUBJECTS.AI_INTERACTION_SUBJECTS.CHAT_PIPELINE_EVENTS,
         sanitizeSubjectToken(workspaceId),
@@ -194,15 +194,12 @@ export function getPipelineEventSubject(
     ].join('.')
 }
 
-function getPipelineEventStreamName(workspaceId: string): string {
-    return `PIPELINE_EVENTS_${sanitizeStreamToken(workspaceId)}`
-}
+const getPipelineEventStreamName = (workspaceId: string): string => `PIPELINE_EVENTS_${sanitizeStreamToken(workspaceId)}`
 
-function getPipelineEventStreamSubject(workspaceId: string): string {
-    return `${NATS_SUBJECTS.AI_INTERACTION_SUBJECTS.CHAT_PIPELINE_EVENTS}.${sanitizeSubjectToken(workspaceId)}.>`
-}
+const getPipelineEventStreamSubject = (workspaceId: string): string =>
+    `${NATS_SUBJECTS.AI_INTERACTION_SUBJECTS.CHAT_PIPELINE_EVENTS}.${sanitizeSubjectToken(workspaceId)}.>`
 
-function getPublishAckSequence(ack: any): number {
+const getPublishAckSequence = (ack: any): number => {
     if (typeof ack?.seq === 'number')
         return ack.seq
 
@@ -212,7 +209,7 @@ function getPublishAckSequence(ack: any): number {
     throw new Error('JetStream publish ack did not include a stream sequence')
 }
 
-function sanitizeForJetStream(value: unknown): unknown {
+const sanitizeForJetStream = (value: unknown): unknown => {
     if (value === undefined)
         return null
 
@@ -237,10 +234,6 @@ function sanitizeForJetStream(value: unknown): unknown {
     return result
 }
 
-function sanitizeStreamToken(value: string): string {
-    return value.replace(/[^A-Za-z0-9_-]/g, '_')
-}
+const sanitizeStreamToken = (value: string): string => value.replace(/[^A-Za-z0-9_-]/g, '_')
 
-function sanitizeSubjectToken(value: string): string {
-    return value.replace(/[^A-Za-z0-9_-]/g, '_')
-}
+const sanitizeSubjectToken = (value: string): string => value.replace(/[^A-Za-z0-9_-]/g, '_')

@@ -22,10 +22,31 @@ import {
 } from '../../shared/generation/workspace-media-trackers.ts'
 
 const owners: WorkspaceGenerationVisuals[] = []
-const image = (nodeId: string, overrides: Partial<ImageCanvasNode> = {}): ImageCanvasNode => ({ nodeId, assetId: `asset-${nodeId}`, type: 'image', position: { x: 0, y: 0 }, dimensions: { width: 300, height: 200 }, ...overrides })
-const tracker = (nodeId: string, hasReceivedFrame = false): PendingGeneratedMediaTracker => ({ nodeId, assetId: `asset-${nodeId}`, placementKey: 'placement', hasReceivedFrame })
-function fixture(nodes: CanvasNode[] = []) {
-    let state = { nodes, edges: [] } as unknown as CanvasState
+const image = (nodeId: string, overrides: Partial<ImageCanvasNode> = {}): ImageCanvasNode => ({
+    nodeId,
+    assetId: `asset-${nodeId}`,
+    type: 'image',
+    position: {
+        x: 0,
+        y: 0,
+    },
+    dimensions: {
+        width: 300,
+        height: 200,
+    },
+    ...overrides,
+})
+const tracker = (nodeId: string, hasReceivedFrame = false): PendingGeneratedMediaTracker => ({
+    nodeId,
+    assetId: `asset-${nodeId}`,
+    placementKey: 'placement',
+    hasReceivedFrame,
+})
+const fixture = (nodes: CanvasNode[] = []) => {
+    let state = {
+        nodes,
+        edges: [],
+    } as unknown as CanvasState
     let alwaysOn = false
     const assets = new Map<string, Asset>()
     const timers = new Map<number, () => void>()
@@ -38,35 +59,39 @@ function fixture(nodes: CanvasNode[] = []) {
         alwaysOn: () => alwaysOn,
         setTargets: vi.fn(),
         onFinalized: vi.fn(),
-        getPendingInset: () => ({ x: 110, y: 60, size: 80 }),
+        getPendingInset: () => ({
+            x: 110,
+            y: 60,
+            size: 80,
+        }),
         completionTimeoutMs: 30000,
         setTimer: vi.fn(callback => {
             const id = timers.size + 1
             timers.set(id, callback)
+
             return id
         }),
-        clearTimer: vi.fn(id => {
-            cancelled.add(id)
-        }),
+        clearTimer: vi.fn(id => void cancelled.add(id)),
     }
     const view = new WorkspaceGenerationVisuals(ports)
     owners.push(view)
+
     return {
         view,
         ports,
         timers,
         cancelled,
         assets,
-        setAlwaysOn: () => {
-            alwaysOn = true
-        },
-        setState: (nodes: CanvasNode[]) => {
-            state = { ...state, nodes }
-        },
+        setAlwaysOn: () => void (alwaysOn = true),
+        setState: (nodes: CanvasNode[]) => void (state = {
+            ...state,
+            nodes,
+        }),
     }
 }
 afterEach(() => {
     for (const owner of owners.splice(0)) owner.destroy()
+
     vi.restoreAllMocks()
 })
 
@@ -79,8 +104,14 @@ describe('WorkspaceGenerationVisuals', () => {
         f.view.sync()
         expect(f.ports.setTargets).toHaveBeenCalledWith(
             new Map([
-                ['image', { direction: 'clockwise', shape: 'node' }],
-                ['video', { direction: 'clockwise', shape: 'preFrameCircle' }],
+                ['image', {
+                    direction: 'clockwise',
+                    shape: 'node',
+                }],
+                ['video', {
+                    direction: 'clockwise',
+                    shape: 'preFrameCircle',
+                }],
                 ['reference', { direction: 'counterclockwise' }],
             ]),
         )
@@ -109,14 +140,28 @@ describe('WorkspaceGenerationVisuals', () => {
         expect(f.view.isPending(node.nodeId)).toBe(true)
         f.assets.set(node.assetId, { media: { renditions: { original: { status: 'ready' } } } } as Asset)
         expect(f.view.isPending(node.nodeId)).toBe(false)
-        expect(f.view.isWaitingForFrame({ ...node, mediaGenerationPhase: 'pending-before-first-frame' })).toBe(true)
+        expect(f.view.isWaitingForFrame({
+            ...node,
+            mediaGenerationPhase: 'pending-before-first-frame',
+        })).toBe(true)
     })
 
     it('keeps a completion circle on the original rendition until finalization', () => {
         const f = fixture([image('one')])
-        f.view.keepCompletion('run', tracker('temporary', true), { nodeId: 'one', assetId: 'final' })
-        expect(f.ports.images.get('run')).toMatchObject({ nodeId: 'one', assetId: 'final', hasReceivedFrame: false })
-        expect(f.ports.setTargets).toHaveBeenLastCalledWith(new Map([['one', { direction: 'clockwise', shape: 'preFrameCircle', sourceRendition: 'original' }]]))
+        f.view.keepCompletion('run', tracker('temporary', true), {
+            nodeId: 'one',
+            assetId: 'final',
+        })
+        expect(f.ports.images.get('run')).toMatchObject({
+            nodeId: 'one',
+            assetId: 'final',
+            hasReceivedFrame: false,
+        })
+        expect(f.ports.setTargets).toHaveBeenLastCalledWith(new Map([['one', {
+            direction: 'clockwise',
+            shape: 'preFrameCircle',
+            sourceRendition: 'original',
+        }]]))
         expect(f.ports.setTimer).toHaveBeenCalledWith(expect.any(Function), 30000)
         f.view.clearCompletion('one')
         f.view.clearCompletion('one')
@@ -159,7 +204,10 @@ describe('WorkspaceGenerationVisuals', () => {
     })
 
     it('removes aliases for one node while retaining unrelated runs', () => {
-        const values = new Map([['alias', tracker('one')], ['other', tracker('two')]])
+        const values = new Map([
+            ['alias', tracker('one')],
+            ['other', tracker('two')],
+        ])
         setGeneratedMediaTracker(values, 'canonical', tracker('one', true))
         expect([...values.keys()]).toEqual(['other', 'canonical'])
         expect(values.get('canonical')?.hasReceivedFrame).toBe(true)
@@ -190,7 +238,9 @@ describe('WorkspaceGenerationVisuals', () => {
         })
         expect(() => f.view.destroy()).toThrow()
         expect(f.ports.clearTimer).toHaveBeenCalledTimes(2)
+
         for (const callback of f.timers.values()) callback()
+
         expect(f.ports.onFinalized).not.toHaveBeenCalled()
         f.view.keepCompletion('late', tracker('late'), image('late'))
         f.view.markFrameDecoded('late')
@@ -228,8 +278,14 @@ describe('WorkspaceGenerationVisuals', () => {
         f.view.sync()
         expect(f.ports.setTargets).toHaveBeenLastCalledWith(
             new Map([
-                ['pending', { direction: 'clockwise', shape: 'preFrameCircle' }],
-                ['ready', { direction: 'counterclockwise', shape: 'node' }],
+                ['pending', {
+                    direction: 'clockwise',
+                    shape: 'preFrameCircle',
+                }],
+                ['ready', {
+                    direction: 'counterclockwise',
+                    shape: 'node',
+                }],
             ]),
         )
         const element = document.createElement('div')

@@ -197,19 +197,19 @@ Anthropic and Stability inference can run through AWS Bedrock instead of each ve
 
 `STABLE_DIFFUSION_USE_AWS_BEDROCK_INFERENCE` is accepted as an alias of the Stability flag, so you can keep the flag next to the api-key name your `.env` already uses.
 
-Bedrock requests go to `AWS_REGION` and are signed with AWS credentials instead of an api key. Locally that is the SSO profile named by `AWS_PROFILE`, resolved against the developer's `~/.aws` SSO cache that docker-compose mounts into the container. On AWS it is the ECS task role, which carries Bedrock invoke and catalog-read permissions.
+Bedrock requests go to `AWS_REGION` and are signed with AWS credentials instead of an api key. Locally that is the SSO profile named by `AWS_PROFILE`, resolved against the developer's `~/.aws` SSO cache that docker compose mounts into the container. On AWS it is the ECS task role, which carries Bedrock invoke and catalog-read permissions.
 
 `providers/bedrock-inference.ts` owns the flags, the region, credential resolution, and the translation from a catalog model id to a Bedrock model id. It discovers that translation from the Bedrock control plane and caches it per process: it normalizes the catalog id to a Bedrock model-name stem, matches both current pinned dateless IDs and legacy version-suffixed IDs from `ListFoundationModels`, and for models that Bedrock does not serve on demand it picks the cross-region inference profile covering the model. New model releases need no code change because of that, and only a renamed id needs an alias entry.
 
 Bedrock serves Stability as text-to-image and image-to-image only, so it has no equivalent of the `control/*` endpoints the direct API path uses. Reference-driven requests fall back to image-to-image with a strength chosen per routing mode, the secondary style reference is dropped, and the provider logs a warning naming the fallback. Anthropic behaves the same on both paths.
 
-The `ai-models-synchronization` NEX workload reads `ANTHROPIC_USE_AWS_BEDROCK_INFERENCE` too. With the flag on it lists Anthropic models from the Bedrock foundation-model catalog and projects both dated version-suffixed IDs and current pinned dateless IDs onto exact vendor model IDs, so persisted selections remain exact catalog keys when there is no Anthropic api key.
+The AI Model Registry reads `ANTHROPIC_USE_AWS_BEDROCK_INFERENCE` too. With the flag on it lists Anthropic models from the Bedrock foundation-model catalog and projects both dated version-suffixed IDs and current pinned dateless IDs onto exact vendor model IDs, so persisted selections remain exact catalog keys when there is no Anthropic api key.
 
 ## Synchronized inference capabilities
 
 The selected `AiModel` record supplies `inferenceCapabilities` to ordinary provider streams, structured VLM calls, Capability model variants, and Character Creator assessment calls. The profile controls temperature omission, provider-native thinking configuration, system-prompt support, closed-schema adaptation, and accepted input kinds. The API fails when a selected record lacks this profile. It does not infer these behaviors from provider or model names.
 
-`services/nex/workloads/ai-models-synchronization` defines and validates the profiles before writing `AI_MODELS_LIST`. Adding or changing a model-specific inference rule belongs there. The API only translates the synchronized profile into provider request fields.
+[`services/ai-model-registry`](../../../ai-model-registry) holds and validates the profiles before writing `AI_MODELS_LIST`. A model-specific inference rule is a field in that model's `-lixpi.json`. The API only translates the profile into provider request fields.
 
 ## Provider invariants
 

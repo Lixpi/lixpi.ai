@@ -7,14 +7,20 @@ import {
 } from 'vitest'
 import { withoutLayout } from '@lixpi/test-utils'
 
-function extractFlatRule(source: string, selector: string): string {
+const extractFlatRule = (source: string, selector: string): string => {
     const start = source.indexOf(`${selector} {`)
     const end = source.indexOf('\n}', start)
-    if (start === -1 || end === -1) throw new Error(`Missing flat SCSS rule: ${selector}`)
+
+    if (
+        start === -1
+        || end === -1
+    )
+        throw new Error(`Missing flat SCSS rule: ${selector}`)
+
     return source.slice(start, end)
 }
 
-function expectRuleToContain(rule: string, snippet: string, selector: string): void {
+const expectRuleToContain = (rule: string, snippet: string, selector: string): void => {
     expect(
         withoutLayout(rule).includes(withoutLayout(snippet)),
         `${selector} should contain:\n${snippet}`,

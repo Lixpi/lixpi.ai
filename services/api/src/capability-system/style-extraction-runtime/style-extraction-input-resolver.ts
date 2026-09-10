@@ -101,10 +101,10 @@ export const resolveStyleExtractionInput = async (
     }
 }
 
-async function resolveModel(modelId: string): Promise<{
+const resolveModel = async (modelId: string): Promise<{
     provider: ProviderName
     model: NonNullable<StyleExtractionInput['analysisModel']>
-}> {
+}> => {
     const [provider, ...modelParts] = modelId.split(':')
     const modelName = modelParts.join(':')
 
@@ -129,10 +129,10 @@ async function resolveModel(modelId: string): Promise<{
     }
 }
 
-function readString(
+const readString = (
     value: unknown,
     name: string,
-): string {
+): string => {
     if (
         typeof value !== 'string'
         || !value.trim()
@@ -142,10 +142,10 @@ function readString(
     return value.trim()
 }
 
-function readStringArray(
+const readStringArray = (
     value: unknown,
     name: string,
-): string[] {
+): string[] => {
     if (
         !Array.isArray(value)
         || value.length === 0

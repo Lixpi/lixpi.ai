@@ -15,7 +15,7 @@ import {
     setAiChatPanelState,
 } from './workspace-panel-state.ts'
 
-function makeCanvasState(overrides: Partial<CanvasState> = {}): CanvasState {
+const makeCanvasState = (overrides: Partial<CanvasState> = {}): CanvasState => {
     return {
         sourceContext: {} as CanvasState['sourceContext'],
         nodes: [],
@@ -24,13 +24,19 @@ function makeCanvasState(overrides: Partial<CanvasState> = {}): CanvasState {
     }
 }
 
-function makeNode(nodeId: string, type: CanvasNode['type']): CanvasNode {
+const makeNode = (nodeId: string, type: CanvasNode['type']): CanvasNode => {
     return {
         nodeId,
         type,
         referenceId: nodeId,
-        position: { x: 0, y: 0 },
-        dimensions: { width: 1, height: 1 },
+        position: {
+            x: 0,
+            y: 0,
+        },
+        dimensions: {
+            width: 1,
+            height: 1,
+        },
     } as CanvasNode
 }
 
@@ -46,11 +52,21 @@ describe('AI chat panel persisted state', () => {
     it('does not migrate legacy tab and session-history fields into the panel state', () => {
         const state = getAiChatPanelState(makeCanvasState({
             lastActiveAiChatThreadId: 'thread-1',
-            aiChatSidebarTabs: [{ tabId: 'thread:thread-1', type: 'thread', refId: 'thread-1', title: 'AI Chat' }],
+            aiChatSidebarTabs: [{
+                tabId: 'thread:thread-1',
+                type: 'thread',
+                refId: 'thread-1',
+                title: 'AI Chat',
+            }],
             activeAiChatSidebarTabId: 'thread:thread-1',
             aiChatPanel: {
                 ...createDefaultAiChatPanelState(),
-                tabs: [{ tabId: 'thread:thread-1', type: 'thread', refId: 'thread-1', title: 'AI Chat' }],
+                tabs: [{
+                    tabId: 'thread:thread-1',
+                    type: 'thread',
+                    refId: 'thread-1',
+                    title: 'AI Chat',
+                }],
                 activeTabId: 'thread:thread-1',
                 isSessionHistoryOpen: true,
             } as CanvasAiChatPanelState,
@@ -88,20 +104,32 @@ describe('AI chat panel persisted state', () => {
         const state = getAiChatPanelState(setAiChatPanelState(makeCanvasState({ nodes }), {
             ...createDefaultAiChatPanelState(),
             isOpen: true,
-            generatedOutputDetailsTarget: { kind: 'output', nodeId: 'image-a' },
+            generatedOutputDetailsTarget: {
+                kind: 'output',
+                nodeId: 'image-a',
+            },
         }))
 
-        expect(state.generatedOutputDetailsTarget).toEqual({ kind: 'output', nodeId: 'image-a' })
+        expect(state.generatedOutputDetailsTarget).toEqual({
+            kind: 'output',
+            nodeId: 'image-a',
+        })
     })
 
     it('persists a valid branch-marker target', () => {
         const nodes = [makeNode('branch-a', 'branchLine')]
         const state = getAiChatPanelState(setAiChatPanelState(makeCanvasState({ nodes }), {
             ...createDefaultAiChatPanelState(),
-            generatedOutputDetailsTarget: { kind: 'branch-marker', nodeId: 'branch-a' },
+            generatedOutputDetailsTarget: {
+                kind: 'branch-marker',
+                nodeId: 'branch-a',
+            },
         }))
 
-        expect(state.generatedOutputDetailsTarget).toEqual({ kind: 'branch-marker', nodeId: 'branch-a' })
+        expect(state.generatedOutputDetailsTarget).toEqual({
+            kind: 'branch-marker',
+            nodeId: 'branch-a',
+        })
     })
 
     it('drops generated-output targets whose node is missing or has the wrong kind', () => {
@@ -112,7 +140,10 @@ describe('AI chat panel persisted state', () => {
                 nodes,
                 aiChatPanel: {
                     ...createDefaultAiChatPanelState(),
-                    generatedOutputDetailsTarget: { kind: 'output', nodeId: 'document-a' },
+                    generatedOutputDetailsTarget: {
+                        kind: 'output',
+                        nodeId: 'document-a',
+                    },
                 },
             })).generatedOutputDetailsTarget,
         ).toBeUndefined()
@@ -122,7 +153,10 @@ describe('AI chat panel persisted state', () => {
                 nodes,
                 aiChatPanel: {
                     ...createDefaultAiChatPanelState(),
-                    generatedOutputDetailsTarget: { kind: 'branch-marker', nodeId: 'image-a' },
+                    generatedOutputDetailsTarget: {
+                        kind: 'branch-marker',
+                        nodeId: 'image-a',
+                    },
                 },
             })).generatedOutputDetailsTarget,
         ).toBeUndefined()
@@ -160,13 +194,23 @@ describe('AI chat panel persisted state', () => {
     it('setAiChatPanelState removes legacy top-level and nested tab state', () => {
         const legacyCanvasState = makeCanvasState({
             activeAiChatSidebarTabId: 'thread:thread-1',
-            aiChatSidebarTabs: [{ tabId: 'thread:thread-1', type: 'thread', refId: 'thread-1', title: 'Thread 1' }],
+            aiChatSidebarTabs: [{
+                tabId: 'thread:thread-1',
+                type: 'thread',
+                refId: 'thread-1',
+                title: 'Thread 1',
+            }],
         })
 
         const normalized = setAiChatPanelState(legacyCanvasState, {
             ...createDefaultAiChatPanelState(),
             isOpen: true,
-            tabs: [{ tabId: 'thread:stale', type: 'thread', refId: 'stale', title: 'Stale' }],
+            tabs: [{
+                tabId: 'thread:stale',
+                type: 'thread',
+                refId: 'stale',
+                title: 'Stale',
+            }],
             activeTabId: 'thread:stale',
             isSessionHistoryOpen: true,
         } as CanvasAiChatPanelState)

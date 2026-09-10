@@ -2,8 +2,8 @@
 # Universal entrypoint for lixpi-typescript-test-runner.
 #
 # api / web-ui / nex are bind-mounted from their own service directories
-# (docker-compose.typescript-test-runner.yml, included from the root
-# docker-compose.yml) — each is fully self-contained, with its own
+# (docker compose.typescript-test-runner.yml, included from the root
+# docker compose.yml) — each is fully self-contained, with its own
 # package.json, pnpm-workspace.yaml, and vitest.config.ts, identical to what
 # ships in its app container. No config is duplicated here.
 #
@@ -17,7 +17,7 @@
 #
 # This script is the image's ENTRYPOINT (Dockerfile), so it's invoked as a
 # one-shot `docker compose run --rm` per call — each call gets its own fresh
-# container (always reflects the current docker-compose.yml) with a Compose
+# container (always reflects the current docker compose.yml) with a Compose
 # auto-generated unique name, so concurrent invocations never collide.
 #
 # --profile is a top-level `docker compose` flag, not a `run` flag, so it
@@ -56,6 +56,10 @@ run_domain() {
 }
 
 run_shared() {
+    # pnpm may update the workspace manifest with dependency build decisions.
+    # Keep those install-only writes in the disposable container filesystem.
+    cp /usr/src/service/shared-workspace/pnpm-workspace.yaml /usr/src/service/shared/pnpm-workspace.yaml
+
     pkg_filter=""
     case "$1" in
         ""|-*) ;;

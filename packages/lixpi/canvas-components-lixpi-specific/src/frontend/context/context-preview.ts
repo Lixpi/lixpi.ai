@@ -500,9 +500,8 @@ class ContextPreviewVisual {
     }
 }
 
-function getContextPreviewPopoverOrientation(node: ImageCanvasNode | VideoCanvasNode): ContextPreviewPopoverOrientation {
-    return node.dimensions.height > node.dimensions.width ? 'portrait' : 'landscape'
-}
+const getContextPreviewPopoverOrientation = (node: ImageCanvasNode | VideoCanvasNode): ContextPreviewPopoverOrientation =>
+    (node.dimensions.height > node.dimensions.width ? 'portrait' : 'landscape')
 
 const getContextPreviewPopoverClassName = (
     node: CanvasNode,

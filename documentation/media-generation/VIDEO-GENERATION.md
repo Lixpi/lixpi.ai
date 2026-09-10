@@ -19,7 +19,7 @@ The shared workflow, dual-model routing, the `generate_video` tool schema, the 3
 
 The composer stores `mediaGenerationMode: image | video` in its ProseMirror node and preserves separate image/video model selections and configuration groups. Only the active mode's model ids and options enter `mediaGenerationRequest`; prompt wording and source-video context cannot switch modes. The bottom summary row is the settings trigger. Its menu shows the reasoning section plus only the active image or video section.
 
-The API model catalog publishes a per-model `mediaGenerationConfigMatrix`. Video controls are copied from `AiModel.videoGenerationControls`, whose authoring source is `services/nex/workloads/ai-models-synchronization`. Each selected model has its own configuration row. Aspect ratio, resolution, duration, and Seedance 2.5 output format use the shared ui-kit sliding dropdown. Seedance `Smart length` is an ordered duration option whose question-mark trigger opens its option description through the shared help tooltip. All Seedance models expose generated audio. Negative prompting, moderation policy, and provider output count remain pipeline-owned. The API validates every submitted value against the same synchronized profile before provider execution.
+The API model catalog publishes a per-model `mediaGenerationConfigMatrix`. Video controls are copied from `AiModel.videoGenerationControls`, whose authoring source is `services/ai-model-registry/data/model-catalog/`. Each selected model has its own configuration row. Aspect ratio, resolution, duration, and Seedance 2.5 output format use the shared ui-kit sliding dropdown. Seedance `Smart length` is an ordered duration option whose question-mark trigger opens its option description through the shared help tooltip. All Seedance models expose generated audio. Negative prompting, moderation policy, and provider output count remain pipeline-owned. The API validates every submitted value against the same synchronized profile before provider execution.
 
 ## Where Video Generation Sits
 
@@ -264,7 +264,7 @@ Matrix child video lifecycle events are mirrored onto the live canonical respons
 
 ## Model Sync & Pricing
 
-`ai-models-synchronization.ts` makes VEO models discoverable:
+The registry catalog makes VEO models discoverable:
 
 - A new `video_generation` modality (`{ title: 'Video Generation', shortTitle: 'VID GEN' }`); VEO models carry modalities `['video', 'video_generation']`.
 - `fetchGoogleModels` admits active Veo ids, drops dated snapshots, and explicitly filters every shut-down Veo id even if the upstream list endpoint returns one.
@@ -278,7 +278,7 @@ The API catalog copies those controls into one configuration-matrix group per mo
 
 ## Usage Metering
 
-`reportVideoUsage` ([`usage-reporter.ts`](../../services/api/src/llm/usage/usage-reporter.ts)) branches on `pricing.video.measuringUnit`: `'seconds'` computes per-second cost (VEO, byte-identical to before), `'tokens'` computes `total_tokens × price / pricePer` (Seedance — `total_tokens` threaded from the ModelArk task response through `videoUsage`). It returns a `VideoUsageReport`.
+`reportVideoUsage` ([`usage-reporter.ts`](../../packages/lixpi/usage-reporter/src/usage-reporter.ts)) branches on `pricing.video.measuringUnit`: `'seconds'` computes per-second cost (VEO, byte-identical to before), `'tokens'` computes `total_tokens × price / pricePer` (Seedance — `total_tokens` threaded from the ModelArk task response through `videoUsage`). It returns a `VideoUsageReport`.
 
 {% callout type="warning" %}
 Usage reports are computed and logged today; they are not published to NATS yet. Per-second VEO prices are still placeholders to reconcile; Seedance token pricing follows the Dreamina resource packs.
@@ -339,7 +339,7 @@ services/api/src/
 │   │   ├── video-publisher.ts        # VIDEO_PENDING/GENERATING/COMPLETE/ERROR, MP4/MOV validation
 │   │   ├── media-branch-resolver.ts  # VLM gate generalized to video; VEO ref mapping
 │   │   └── stream-publisher.ts       # videoGenerationTrace()
-│   ├── usage/usage-reporter.ts       # reportVideoUsage (per-second VEO / per-token Seedance)
+│   ├── usage/check-metering.ts       # graph run → @lixpi/usage-reporter's admission estimate
 │   ├── config.ts                     # VEO_POLL_INTERVAL_MS, BYTEPLUS_ARK_BASE_URL, BYTEPLUS_VIDEO_POLL_INTERVAL_MS
 │   └── prompts/
 │       ├── load-prompts.ts           # getSystemPrompt(includeVideoGeneration)

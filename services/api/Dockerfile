@@ -8,7 +8,7 @@ FROM node:${NODE_VERSION}-alpine AS builder
 # RUN apk add --update --no-cache python3 make g++ cmake
 
 # Install pnpm globally
-RUN npm install -g pnpm
+RUN npm install -g pnpm@12.3.4
 
 # Set the working directory
 WORKDIR /usr/src/service
@@ -36,7 +36,7 @@ FROM node:${NODE_VERSION}-alpine
 RUN apk add --update --no-cache curl rsync
 
 # Install pnpm globally (in the runtime stage)
-RUN npm install -g pnpm
+RUN npm install -g pnpm@12.3.4
 
 # Set the working directory
 WORKDIR /usr/src/service

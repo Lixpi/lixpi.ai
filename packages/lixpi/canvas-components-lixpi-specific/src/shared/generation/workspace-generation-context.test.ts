@@ -29,8 +29,14 @@ const rootNode = {
     nodeId: 'thread-node-1',
     type: 'document',
     assetId: 'thread-1',
-    position: { x: 0, y: 0 },
-    dimensions: { width: 100, height: 100 },
+    position: {
+        x: 0,
+        y: 0,
+    },
+    dimensions: {
+        width: 100,
+        height: 100,
+    },
 } satisfies CanvasNode
 
 const portraitSourceNode = {
@@ -41,8 +47,14 @@ const portraitSourceNode = {
     src: '/api/images/workspace-1/portrait-file',
     aspectRatio: 1,
     parentId: 'thread-node-1',
-    position: { x: 0, y: 0 },
-    dimensions: { width: 100, height: 100 },
+    position: {
+        x: 0,
+        y: 0,
+    },
+    dimensions: {
+        width: 100,
+        height: 100,
+    },
 } satisfies CanvasNode
 
 const landscapeSourceNode = {
@@ -53,8 +65,14 @@ const landscapeSourceNode = {
     src: '/api/images/workspace-1/landscape-file',
     aspectRatio: 1,
     parentId: 'thread-node-1',
-    position: { x: 120, y: 0 },
-    dimensions: { width: 100, height: 100 },
+    position: {
+        x: 120,
+        y: 0,
+    },
+    dimensions: {
+        width: 100,
+        height: 100,
+    },
 } satisfies CanvasNode
 
 const personGeneratedNode = {
@@ -64,8 +82,14 @@ const personGeneratedNode = {
     workspaceId: 'workspace-1',
     src: '/api/images/workspace-1/person-generated-file',
     aspectRatio: 1,
-    position: { x: 240, y: 0 },
-    dimensions: { width: 100, height: 100 },
+    position: {
+        x: 240,
+        y: 0,
+    },
+    dimensions: {
+        width: 100,
+        height: 100,
+    },
     generatedBy: {
         conversationAssetId: 'thread-1',
         responseId: 'response-person',
@@ -87,8 +111,14 @@ const goatGeneratedNode = {
     workspaceId: 'workspace-1',
     src: '/api/images/workspace-1/goat-generated-file',
     aspectRatio: 1,
-    position: { x: 360, y: 0 },
-    dimensions: { width: 100, height: 100 },
+    position: {
+        x: 360,
+        y: 0,
+    },
+    dimensions: {
+        width: 100,
+        height: 100,
+    },
     generatedBy: {
         conversationAssetId: 'thread-1',
         responseId: 'response-goat',
@@ -110,8 +140,14 @@ const refinedPersonGeneratedNode = {
     workspaceId: 'workspace-1',
     src: '/api/images/workspace-1/person-refined-file',
     aspectRatio: 1,
-    position: { x: 480, y: 0 },
-    dimensions: { width: 100, height: 100 },
+    position: {
+        x: 480,
+        y: 0,
+    },
+    dimensions: {
+        width: 100,
+        height: 100,
+    },
     generatedBy: {
         conversationAssetId: 'thread-1',
         responseId: 'response-refined',
@@ -142,8 +178,14 @@ const videoGeneratedNode = {
     aspectRatio: 1.7777,
     durationSeconds: 6,
     hasAudio: true,
-    position: { x: 600, y: 0 },
-    dimensions: { width: 160, height: 90 },
+    position: {
+        x: 600,
+        y: 0,
+    },
+    dimensions: {
+        width: 160,
+        height: 90,
+    },
     generatedBy: {
         conversationAssetId: 'thread-1',
         responseId: 'response-video',
@@ -172,8 +214,14 @@ const uploadedVideoNode = {
     durationSeconds: 8,
     hasAudio: false,
     parentId: 'thread-node-1',
-    position: { x: 760, y: 0 },
-    dimensions: { width: 120, height: 120 },
+    position: {
+        x: 760,
+        y: 0,
+    },
+    dimensions: {
+        width: 120,
+        height: 120,
+    },
     descriptor: {
         status: 'ready',
         summary: 'a red sports car drifting on a wet city street at night',
@@ -185,12 +233,18 @@ const uploadedVideoNode = {
     },
 } satisfies CanvasNode
 
-function createActiveLineageTopology(
+const createActiveLineageTopology = (
     node: Extract<CanvasNode, { type: 'image' | 'video' }>,
     markerNodeId = `line-${node.nodeId}`,
-): { nodes: CanvasNode[]; edges: WorkspaceEdge[] } {
+): {
+    nodes: CanvasNode[]
+    edges: WorkspaceEdge[]
+} => {
     const branchId = node.generatedBy?.branchId
-    if (!branchId) throw new Error(`Missing branchId for ${node.nodeId}`)
+
+    if (!branchId)
+        throw new Error(`Missing branchId for ${node.nodeId}`)
+
     const activeNode = {
         ...node,
         generatedBy: {
@@ -208,9 +262,16 @@ function createActiveLineageTopology(
         reasoningRunId: `reasoning-${node.nodeId}`,
         reasoningModelId: 'OpenAI:gpt-5-mini' as any,
         reasoningIndex: 0,
-        position: { x: 0, y: 0 },
-        dimensions: { width: 100, height: 40 },
+        position: {
+            x: 0,
+            y: 0,
+        },
+        dimensions: {
+            width: 100,
+            height: 40,
+        },
     } satisfies CanvasNode
+
     return {
         nodes: [activeNode, markerNode],
         edges: [{
@@ -225,8 +286,14 @@ const cubistDocNode = {
     nodeId: 'cubist-doc',
     type: 'document',
     assetId: 'doc-cubist',
-    position: { x: 0, y: 0 },
-    dimensions: { width: 100, height: 100 },
+    position: {
+        x: 0,
+        y: 0,
+    },
+    dimensions: {
+        width: 100,
+        height: 100,
+    },
     descriptor: {
         status: 'ready',
         summary: 'a cubist study of a dog',
@@ -242,8 +309,14 @@ const threadContextNode = {
     nodeId: 'thread-context',
     type: 'document',
     assetId: 'thread-context-ref',
-    position: { x: 0, y: 0 },
-    dimensions: { width: 100, height: 100 },
+    position: {
+        x: 0,
+        y: 0,
+    },
+    dimensions: {
+        width: 100,
+        height: 100,
+    },
     descriptor: {
         status: 'ready',
         summary: 'chat about seaside villages',
@@ -258,6 +331,7 @@ const threadContextNode = {
 // Descriptors are supplied by the host, independently of canvas placements.
 beforeEach(() => {
     assets.clear()
+
     for (const node of [uploadedVideoNode, cubistDocNode, threadContextNode]) {
         assets.set(node.assetId, {
             assetId: node.assetId,
@@ -274,8 +348,16 @@ describe('buildMediaBranchCandidateSnapshot', () => {
             conversationAssetId: 'thread-1',
             nodes: [rootNode, portraitSourceNode, landscapeSourceNode, personGeneratedNode, goatGeneratedNode],
             edges: [
-                { edgeId: 'edge-root-person', sourceNodeId: 'thread-node-1', targetNodeId: 'person-generated' },
-                { edgeId: 'edge-root-goat', sourceNodeId: 'thread-node-1', targetNodeId: 'goat-generated' },
+                {
+                    edgeId: 'edge-root-person',
+                    sourceNodeId: 'thread-node-1',
+                    targetNodeId: 'person-generated',
+                },
+                {
+                    edgeId: 'edge-root-goat',
+                    sourceNodeId: 'thread-node-1',
+                    targetNodeId: 'goat-generated',
+                },
             ],
             contextMediaNodeIds: ['landscape-source', 'goat-generated'],
             prompt: 'make the goat wear sunglasses',
@@ -421,9 +503,18 @@ describe('getPromptTextFromMessages', () => {
     it('returns latest plain-string user content', () => {
         expect(
             getPromptTextFromMessages([
-                { role: 'assistant', content: 'ignore this' },
-                { role: 'user', content: 'first message' },
-                { role: 'user', content: 'latest plain prompt' },
+                {
+                    role: 'assistant',
+                    content: 'ignore this',
+                },
+                {
+                    role: 'user',
+                    content: 'first message',
+                },
+                {
+                    role: 'user',
+                    content: 'latest plain prompt',
+                },
             ]),
         ).toBe('latest plain prompt')
     })
@@ -431,8 +522,23 @@ describe('getPromptTextFromMessages', () => {
     it('ignores malformed content blocks and still collects latest user prompt', () => {
         expect(
             getPromptTextFromMessages([
-                { role: 'user', content: [{ type: 'image', text: 'ignore' }, null, { type: 'input_text', text: 'valid prompt' }] },
-                { role: 'user', content: [{ type: 'text', text: 'later prompt' }, 'literal'] },
+                {
+                    role: 'user',
+                    content: [{
+                        type: 'image',
+                        text: 'ignore',
+                    }, null, {
+                        type: 'input_text',
+                        text: 'valid prompt',
+                    }],
+                },
+                {
+                    role: 'user',
+                    content: [{
+                        type: 'text',
+                        text: 'later prompt',
+                    }, 'literal'],
+                },
             ]),
         ).toBe('later prompt\nliteral')
     })
@@ -440,16 +546,38 @@ describe('getPromptTextFromMessages', () => {
     it('returns the latest user prompt from mixed message content formats', () => {
         expect(
             getPromptTextFromMessages([
-                { role: 'assistant', content: [{ type: 'text', text: 'ignore this' }] },
-                { role: 'user', content: [{ type: 'text', text: 'older prompt' }] },
-                { role: 'user', content: [{ type: 'input_text', text: 'newest prompt' }, { type: 'text', text: 'with details' }] },
+                {
+                    role: 'assistant',
+                    content: [{
+                        type: 'text',
+                        text: 'ignore this',
+                    }],
+                },
+                {
+                    role: 'user',
+                    content: [{
+                        type: 'text',
+                        text: 'older prompt',
+                    }],
+                },
+                {
+                    role: 'user',
+                    content: [{
+                        type: 'input_text',
+                        text: 'newest prompt',
+                    }, {
+                        type: 'text',
+                        text: 'with details',
+                    }],
+                },
             ]),
         ).toBe('newest prompt\nwith details')
     })
 
-    it('returns an empty string when no user message content is available', () => {
-        expect(getPromptTextFromMessages([{ role: 'assistant', content: 'hello' }])).toBe('')
-    })
+    it('returns an empty string when no user message content is available', () => void expect(getPromptTextFromMessages([{
+        role: 'assistant',
+        content: 'hello',
+    }])).toBe(''))
 })
 
 describe('getGeneratedImageTextByNodeIdFromThreadContent', () => {
@@ -485,21 +613,45 @@ describe('getGeneratedImageTextByNodeIdFromThreadContent', () => {
             content: [
                 {
                     type: 'aiUserMessage',
-                    content: [{ type: 'paragraph', content: [{ type: 'text', text: 'a painterly village' }] }],
+                    content: [{
+                        type: 'paragraph',
+                        content: [{
+                            type: 'text',
+                            text: 'a painterly village',
+                        }],
+                    }],
                 },
                 {
                     type: 'aiResponseMessage',
                     attrs: { id: 'response-person' },
-                    content: [{ type: 'paragraph', content: [{ type: 'text', text: 'person response text' }] }],
+                    content: [{
+                        type: 'paragraph',
+                        content: [{
+                            type: 'text',
+                            text: 'person response text',
+                        }],
+                    }],
                 },
                 {
                     type: 'aiUserMessage',
-                    content: [{ type: 'paragraph', content: [{ type: 'text', text: 'goat setup prompt' }] }],
+                    content: [{
+                        type: 'paragraph',
+                        content: [{
+                            type: 'text',
+                            text: 'goat setup prompt',
+                        }],
+                    }],
                 },
                 {
                     type: 'aiResponseMessage',
                     attrs: { id: 'response-goat' },
-                    content: [{ type: 'paragraph', content: [{ type: 'text', text: 'goat response text' }] }],
+                    content: [{
+                        type: 'paragraph',
+                        content: [{
+                            type: 'text',
+                            text: 'goat response text',
+                        }],
+                    }],
                 },
             ],
         }
@@ -694,8 +846,14 @@ describe('buildWorkspaceContextSnapshot', () => {
         type: 'capabilityArtifact',
         artifactTypeId: 'action-timeline',
         assetId: 'timeline-asset',
-        position: { x: 0, y: 0 },
-        dimensions: { width: 520, height: 360 },
+        position: {
+            x: 0,
+            y: 0,
+        },
+        dimensions: {
+            width: 520,
+            height: 360,
+        },
     } satisfies CanvasNode
     const workspaceNodes = [
         rootNode,
@@ -800,7 +958,11 @@ describe('buildWorkspaceContextSnapshot', () => {
             prompt: 'put the portrait behind the dog doc',
             nodes: workspaceNodes,
             edges: [
-                { edgeId: 'edge-person-root', sourceNodeId: 'person-generated', targetNodeId: 'thread-node-1' },
+                {
+                    edgeId: 'edge-person-root',
+                    sourceNodeId: 'person-generated',
+                    targetNodeId: 'thread-node-1',
+                },
             ] as WorkspaceEdge[],
             rootNodeId: 'thread-node-1',
             contextChipNodeIds: ['cubist-doc'],
@@ -841,7 +1003,11 @@ describe('buildWorkspaceContextSnapshot', () => {
             prompt: 'x',
             nodes: workspaceNodes,
             edges: [
-                { edgeId: 'edge-person-root', sourceNodeId: 'person-generated', targetNodeId: 'thread-node-1' },
+                {
+                    edgeId: 'edge-person-root',
+                    sourceNodeId: 'person-generated',
+                    targetNodeId: 'thread-node-1',
+                },
             ] as WorkspaceEdge[],
             contextChipNodeIds: ['person-generated'],
         })
@@ -858,7 +1024,10 @@ describe('buildWorkspaceContextSnapshot', () => {
             nodes: workspaceNodes,
             edges: [],
             contextChipNodeIds: ['cubist-doc', 'thread-context', 'person-generated'],
-            titlesByNodeId: { 'cubist-doc': 'Cubist Dog', 'thread-context': 'Seaside chat' },
+            titlesByNodeId: {
+                'cubist-doc': 'Cubist Dog',
+                'thread-context': 'Seaside chat',
+            },
         })
         const byId = new Map(snapshot.nodes.map((node) => [node.nodeId, node]))
 

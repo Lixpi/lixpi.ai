@@ -1,0 +1,30 @@
+{
+    "_meta": {
+        "sourceName": "OpenAI Models API",
+        "sourceId": "provider-api",
+        "queriedEndpoints": [
+            {
+                "endpoint": "GET https://api.openai.com/v1/models",
+                "note": "Takes no parameters. Authorized with a bearer token."
+            }
+        ],
+        "hasDataForThisModel": true,
+        "inferenceProvidersWithData": [
+            "openai"
+        ],
+        "fetchedAt": "2026-09-08T00:55:53.254Z",
+        "publishedVersions": {
+            "currentVersion": "gpt-5.6-luna",
+            "allPublishedVersions": [
+                "gpt-5.6-luna"
+            ]
+        }
+    },
+    "byInferenceProvider": {
+        "openai": {
+            "model": "gpt-5.6-luna",
+            "modelVersion": "gpt-5.6-luna",
+            "modelKeyAtSource": "gpt-5.6-luna"
+        }
+    }
+}

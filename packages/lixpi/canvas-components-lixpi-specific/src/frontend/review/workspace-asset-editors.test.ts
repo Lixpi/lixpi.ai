@@ -19,10 +19,19 @@ import {
 } from './workspace-asset-editors.ts'
 
 const owners: Array<{ destroy: () => void }> = []
-function fixture() {
+const fixture = () => {
     const host = document.createElement('div')
     document.body.appendChild(host)
-    let current = { assetId: 'asset', title: 'Original', revision: 1, descriptor: { summary: 'Description', version: 3, status: 'ready' } } as Asset
+    let current = {
+        assetId: 'asset',
+        title: 'Original',
+        revision: 1,
+        descriptor: {
+            summary: 'Description',
+            version: 3,
+            status: 'ready',
+        },
+    } as Asset
     const requests: WorkspaceAssetEditorRequest[] = []
     const disposers: ReturnType<typeof vi.fn>[] = []
     const ports: WorkspaceAssetEditorPorts = {
@@ -31,10 +40,16 @@ function fixture() {
             requests.push(request)
             const destroy = vi.fn()
             disposers.push(destroy)
+
             return { destroy }
         },
         updateMetadata: vi.fn(async (_id, _revision, patch) => {
-            current = { ...current, ...patch, revision: current.revision + 1 }
+            current = {
+                ...current,
+                ...patch,
+                revision: current.revision + 1,
+            }
+
             return current
         }),
         onChanged: vi.fn(),
@@ -42,8 +57,19 @@ function fixture() {
     }
     const editor = new WorkspaceAssetMetadataEditor('asset', host, 'details', ports)
     owners.push(editor)
-    const change = (title: string, description = 'Description') => requests[0]!.onChange(buildAssetMetadataEditorDocument({ ...current, title, descriptor: { ...current.descriptor!, summary: description } }, 'details'))
-    const blur = (relatedTarget: EventTarget | null = null) => host.dispatchEvent(new FocusEvent('focusout', { bubbles: true, relatedTarget }))
+    const change = (title: string, description = 'Description') => requests[0]!.onChange(buildAssetMetadataEditorDocument({
+        ...current,
+        title,
+        descriptor: {
+            ...current.descriptor!,
+            summary: description,
+        },
+    }, 'details'))
+    const blur = (relatedTarget: EventTarget | null = null) => host.dispatchEvent(new FocusEvent('focusout', {
+        bubbles: true,
+        relatedTarget,
+    }))
+
     return {
         host,
         ports,
@@ -53,22 +79,36 @@ function fixture() {
         change,
         blur,
         getAsset: () => current,
-        setAsset: (asset: Asset) => {
-            current = asset
-        },
+        setAsset: (asset: Asset) => void (current = asset),
     }
 }
 afterEach(() => {
     for (const owner of owners.splice(0)) owner.destroy()
+
     document.body.replaceChildren()
 })
 
 describe('Workspace Asset editors', () => {
     it('keeps descriptions out of title-only drafts and preserves empty paragraph edits', () => {
-        const asset = { title: ' Title ', descriptor: { summary: ' Description ' } } as Asset
+        const asset = {
+            title: ' Title ',
+            descriptor: { summary: ' Description ' },
+        } as Asset
         expect(readAssetMetadataEditorDocument(buildAssetMetadataEditorDocument(asset, 'node'))).toEqual({ title: 'Title' })
-        expect(readAssetMetadataEditorDocument(buildAssetMetadataEditorDocument(asset, 'details'))).toEqual({ title: 'Title', description: 'Description' })
-        expect(readAssetMetadataEditorDocument(buildAssetMetadataEditorDocument({ ...asset, descriptor: { ...asset.descriptor!, summary: '' } }, 'details'))).toEqual({ title: 'Title', description: '' })
+        expect(readAssetMetadataEditorDocument(buildAssetMetadataEditorDocument(asset, 'details'))).toEqual({
+            title: 'Title',
+            description: 'Description',
+        })
+        expect(readAssetMetadataEditorDocument(buildAssetMetadataEditorDocument({
+            ...asset,
+            descriptor: {
+                ...asset.descriptor!,
+                summary: '',
+            },
+        }, 'details'))).toEqual({
+            title: 'Title',
+            description: '',
+        })
     })
 
     it('commits on focus leaving the editor, preserving descriptor fields and the current revision', async () => {
@@ -80,7 +120,15 @@ describe('Workspace Asset editors', () => {
         expect(f.ports.updateMetadata).not.toHaveBeenCalled()
         f.blur()
         await vi.waitFor(() => expect(f.ports.onChanged).toHaveBeenCalledOnce())
-        expect(f.ports.updateMetadata).toHaveBeenCalledWith('asset', 1, { title: 'Changed', descriptor: expect.objectContaining({ summary: '', version: 3, status: 'ready', updatedAt: expect.any(Number) }) })
+        expect(f.ports.updateMetadata).toHaveBeenCalledWith('asset', 1, {
+            title: 'Changed',
+            descriptor: expect.objectContaining({
+                summary: '',
+                version: 3,
+                status: 'ready',
+                updatedAt: expect.any(Number),
+            }),
+        })
         f.blur()
         expect(f.ports.updateMetadata).toHaveBeenCalledOnce()
         f.change(' ')
@@ -93,8 +141,13 @@ describe('Workspace Asset editors', () => {
         const first = Promise.withResolvers<Asset>()
         let calls = 0
         const update = vi.fn(async (_id: string, _revision: number, patch: { title: string }) => {
-            const asset = ++calls === 1 ? await first.promise : { ...f.getAsset(), ...patch, revision: 3 }
+            const asset = ++calls === 1 ? await first.promise : {
+                ...f.getAsset(),
+                ...patch,
+                revision: 3,
+            }
             f.setAsset(asset)
+
             return asset
         })
         f.ports.updateMetadata = update
@@ -103,7 +156,11 @@ describe('Workspace Asset editors', () => {
         f.change('Second')
         f.blur()
         expect(update).toHaveBeenCalledOnce()
-        first.resolve({ ...f.getAsset(), title: 'First', revision: 2 })
+        first.resolve({
+            ...f.getAsset(),
+            title: 'First',
+            revision: 2,
+        })
         await vi.waitFor(() => expect(update).toHaveBeenCalledTimes(2))
         expect(update.mock.calls[1]).toEqual(['asset', 2, expect.objectContaining({ title: 'Second' })])
         expect(f.getAsset().title).toBe('Second')
@@ -120,8 +177,16 @@ describe('Workspace Asset editors', () => {
         expect(f.disposers[0]).toHaveBeenCalledOnce()
         f.change('Late')
         f.blur()
-        if (outcome === 'resolve') pending.resolve({ ...f.getAsset(), title: 'Changed', revision: 2 })
-        else pending.reject(new Error('Disconnected'))
+
+        if (outcome === 'resolve')
+            pending.resolve({
+                ...f.getAsset(),
+                title: 'Changed',
+                revision: 2,
+            })
+        else
+            pending.reject(new Error('Disconnected'))
+
         await Promise.allSettled([pending.promise])
         expect(f.ports.updateMetadata).toHaveBeenCalledOnce()
         expect(f.ports.onChanged).not.toHaveBeenCalled()
@@ -142,13 +207,23 @@ describe('Workspace Asset editors', () => {
         const host = document.createElement('div')
         let request: WorkspaceAssetEditorRequest | undefined
         const destroy = vi.fn()
-        const editor = new WorkspaceAssetContentEditor(host, { type: 'doc' }, { organizationId: 'org', workspaceId: 'workspace', assetId: 'asset', role: 'content', baseVersion: 7 }, value => {
+        const editor = new WorkspaceAssetContentEditor(host, { type: 'doc' }, {
+            organizationId: 'org',
+            workspaceId: 'workspace',
+            assetId: 'asset',
+            role: 'content',
+            baseVersion: 7,
+        }, value => {
             request = value
+
             return { destroy }
         })
         owners.push(editor)
         expect(request?.authority?.baseVersion).toBe(7)
-        request?.authority?.onLeaseStateChange({ readOnly: true, holderWorkspaceId: 'another' })
+        request?.authority?.onLeaseStateChange({
+            readOnly: true,
+            holderWorkspaceId: 'another',
+        })
         expect(host.getAttribute('aria-description')).toBe('Read-only; lease held by another')
         expect(host.classList.contains('is-read-only')).toBe(true)
         editor.destroy()

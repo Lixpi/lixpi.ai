@@ -20,6 +20,7 @@ describe('current media provider policy definitions', () => {
         const providers: ProviderName[] = ['OpenAI', 'Anthropic', 'Google', 'Stability', 'BytePlus']
 
         expect(Object.keys(CURRENT_MEDIA_PROVIDER_DEFINITIONS).sort()).toEqual([...providers].sort())
+
         for (const provider of providers) {
             expect(() => assertValidMediaProviderDefinition(CURRENT_MEDIA_PROVIDER_DEFINITIONS[provider])).not.toThrow()
             expect(CURRENT_MEDIA_PROVIDER_DEFINITIONS[provider].moderation.automaticRetry).toBe('never')
@@ -192,7 +193,10 @@ describe('current media provider policy definitions', () => {
         const problem = normalizeProviderProblem({
             provider: 'Stability',
             error: new Error('request failed {"token":"secret-value","cookie":"session-value"}'),
-            context: { generationRequestId: 'request-1', stage: 'submit' },
+            context: {
+                generationRequestId: 'request-1',
+                stage: 'submit',
+            },
         })
 
         expect(problem.providerReason).not.toContain('secret-value')
@@ -204,7 +208,10 @@ describe('current media provider policy definitions', () => {
             normalizeProviderProblem({
                 provider: 'Google',
                 error: new Error(message),
-                context: { generationRequestId: 'request-1', stage: 'submit' },
+                context: {
+                    generationRequestId: 'request-1',
+                    stage: 'submit',
+                },
             }).stage
 
         expect(normalize('VEO operation completed with raiMediaFilteredCount=1')).toBe('poll')

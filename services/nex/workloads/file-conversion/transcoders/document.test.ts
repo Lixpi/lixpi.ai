@@ -25,6 +25,7 @@ vi.mock('@lixpi/debug-tools', () => ({
 
 vi.mock('./run-process.ts', async () => {
     const actual = await vi.importActual<typeof import('./run-process.ts')>('./run-process.ts')
+
     return {
         ...actual,
         runProcess: (...args: Parameters<typeof runProcessMock>) => runProcessMock(...args),
@@ -33,15 +34,14 @@ vi.mock('./run-process.ts', async () => {
 
 const extractShOutputPath = (command: string): string => {
     const match = />\s+"([^"]+)"$/.exec(command)
-    if (!match) {
+
+    if (!match)
         throw new Error(`cannot parse sh output path: ${command}`)
-    }
+
     return match[1]
 }
 
-beforeEach(() => {
-    runProcessMock.mockReset()
-})
+beforeEach(() => void runProcessMock.mockReset())
 
 describe('convertDocumentToPdf', () => {
     it('stores the generated PDF that soffice writes into the output directory', async () => {

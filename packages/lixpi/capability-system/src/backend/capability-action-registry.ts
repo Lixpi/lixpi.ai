@@ -133,7 +133,7 @@ export const acceptCapabilityJsonValue = (value: unknown): CapabilityActionValid
         }
 }
 
-function isCapabilityJsonValue(value: unknown): value is CapabilityJsonValue {
+const isCapabilityJsonValue = (value: unknown): value is CapabilityJsonValue => {
     if (
         value === null
         || typeof value === 'string'
@@ -156,6 +156,4 @@ function isCapabilityJsonValue(value: unknown): value is CapabilityJsonValue {
     return Object.entries(value).every(([key, child]) => isSafeProperty(key) && isCapabilityJsonValue(child))
 }
 
-function isSafeProperty(key: string): boolean {
-    return key !== '__proto__' && key !== 'prototype' && key !== 'constructor'
-}
+const isSafeProperty = (key: string): boolean => key !== '__proto__' && key !== 'prototype' && key !== 'constructor'

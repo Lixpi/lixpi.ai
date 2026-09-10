@@ -16,20 +16,37 @@ import {
     type ProseMirrorJsonNode,
 } from './thread-doc.ts'
 
-function text(value: string): ProseMirrorJsonNode {
-    return { type: 'paragraph', content: [{ type: 'text', text: value }] }
+const text = (value: string): ProseMirrorJsonNode => {
+    return {
+        type: 'paragraph',
+        content: [{
+            type: 'text',
+            text: value,
+        }],
+    }
 }
 
-function userMessage(value: string): ProseMirrorJsonNode {
-    return { type: 'aiUserMessage', content: [text(value)] }
+const userMessage = (value: string): ProseMirrorJsonNode => {
+    return {
+        type: 'aiUserMessage',
+        content: [text(value)],
+    }
 }
 
-function responseMessage(attrs: Record<string, any>, sections: ProseMirrorJsonNode[] = [], body: ProseMirrorJsonNode[] = []): ProseMirrorJsonNode {
-    return { type: 'aiResponseMessage', attrs, content: [...sections, ...body] }
+const responseMessage = (attrs: Record<string, any>, sections: ProseMirrorJsonNode[] = [], body: ProseMirrorJsonNode[] = []): ProseMirrorJsonNode => {
+    return {
+        type: 'aiResponseMessage',
+        attrs,
+        content: [...sections, ...body],
+    }
 }
 
-function reasoningSection(attrs: Record<string, any>, value: string): ProseMirrorJsonNode {
-    return { type: 'aiReasoningSection', attrs, content: [text(value)] }
+const reasoningSection = (attrs: Record<string, any>, value: string): ProseMirrorJsonNode => {
+    return {
+        type: 'aiReasoningSection',
+        attrs,
+        content: [text(value)],
+    }
 }
 
 const threadDoc: ProseMirrorJsonNode = {
@@ -40,13 +57,25 @@ const threadDoc: ProseMirrorJsonNode = {
         content: [
             userMessage('draw a watercolor'),
             responseMessage(
-                { id: 'resp-1', generationRequestId: 'req-1' },
-                [reasoningSection({ reasoningRunId: 'run-1', generationRequestId: 'req-1' }, 'watercolor response')],
+                {
+                    id: 'resp-1',
+                    generationRequestId: 'req-1',
+                },
+                [reasoningSection({
+                    reasoningRunId: 'run-1',
+                    generationRequestId: 'req-1',
+                }, 'watercolor response')],
             ),
             userMessage('create an oil painting'),
             responseMessage(
-                { id: 'resp-2', generationRequestId: 'req-2' },
-                [reasoningSection({ reasoningRunId: 'run-2', generationRequestId: 'req-2' }, 'oil painting response')],
+                {
+                    id: 'resp-2',
+                    generationRequestId: 'req-2',
+                },
+                [reasoningSection({
+                    reasoningRunId: 'run-2',
+                    generationRequestId: 'req-2',
+                }, 'oil painting response')],
             ),
         ],
     }],
@@ -74,9 +103,7 @@ describe('getBranchMarkerTurnMessages', () => {
         expect(turn?.responseMessage.attrs?.id).toBe('resp-1')
     })
 
-    it('returns null for a turn that is not in the document yet (preflight)', () => {
-        expect(getBranchMarkerTurnMessages(threadNode, { generationRequestId: 'req-preflight' })).toBeNull()
-    })
+    it('returns null for a turn that is not in the document yet (preflight)', () => void expect(getBranchMarkerTurnMessages(threadNode, { generationRequestId: 'req-preflight' })).toBeNull())
 
     it('never matches a sectionless response as a fallback container', () => {
         const sectionlessThread: ProseMirrorJsonNode = {
@@ -110,22 +137,35 @@ describe('findBranchMarkerResponseSection', () => {
     const response = responseMessage(
         { id: 'resp-1' },
         [
-            reasoningSection({ reasoningRunId: 'run-1', reasoningModelId: 'ModelA', reasoningIndex: 0, branchForkNodeId: 'fork-1' }, 'a'),
-            reasoningSection({ reasoningRunId: 'run-2', reasoningModelId: 'ModelA', reasoningIndex: 1 }, 'b'),
+            reasoningSection({
+                reasoningRunId: 'run-1',
+                reasoningModelId: 'ModelA',
+                reasoningIndex: 0,
+                branchForkNodeId: 'fork-1',
+            }, 'a'),
+            reasoningSection({
+                reasoningRunId: 'run-2',
+                reasoningModelId: 'ModelA',
+                reasoningIndex: 1,
+            }, 'b'),
         ],
     )
 
-    it('matches by reasoningRunId first', () => {
-        expect(findBranchMarkerResponseSection(response, { reasoningRunId: 'run-2' })?.attrs?.reasoningRunId).toBe('run-2')
-    })
+    it('matches by reasoningRunId first', () => void expect(findBranchMarkerResponseSection(response, { reasoningRunId: 'run-2' })?.attrs?.reasoningRunId).toBe('run-2'))
 
     it('matches by marker node attr', () => {
-        const section = findBranchMarkerResponseSection(response, { markerNodeId: 'fork-1', markerNodeAttr: 'branchForkNodeId' })
+        const section = findBranchMarkerResponseSection(response, {
+            markerNodeId: 'fork-1',
+            markerNodeAttr: 'branchForkNodeId',
+        })
         expect(section?.attrs?.reasoningRunId).toBe('run-1')
     })
 
     it('disambiguates same model by reasoningIndex', () => {
-        const section = findBranchMarkerResponseSection(response, { reasoningModelId: 'modela', reasoningIndex: 1 })
+        const section = findBranchMarkerResponseSection(response, {
+            reasoningModelId: 'modela',
+            reasoningIndex: 1,
+        })
         expect(section?.attrs?.reasoningRunId).toBe('run-2')
     })
 
@@ -136,7 +176,7 @@ describe('findBranchMarkerResponseSection', () => {
 })
 
 describe('getBranchMarkerConversationPreviewFromThreadContent', () => {
-    function previewFor(sectionContent: ProseMirrorJsonNode[]): ReturnType<typeof getBranchMarkerConversationPreviewFromThreadContent> {
+    const previewFor = (sectionContent: ProseMirrorJsonNode[]): ReturnType<typeof getBranchMarkerConversationPreviewFromThreadContent> => {
         return getBranchMarkerConversationPreviewFromThreadContent(
             {
                 type: 'doc',
@@ -232,7 +272,10 @@ describe('getBranchMarkerConversationPreviewFromThreadContent', () => {
                                     displayName: 'Action Timeline',
                                 },
                             },
-                            { type: 'text', text: ' Create 15 seconds with 2-second segments.' },
+                            {
+                                type: 'text',
+                                text: ' Create 15 seconds with 2-second segments.',
+                            },
                         ],
                     }],
                 }],
@@ -264,7 +307,10 @@ describe('getBranchMarkerConversationPreviewFromThreadContent', () => {
 describe('getLatestThreadTurnMessages', () => {
     it('returns the last user and response messages', () => {
         const threadNode = findAiChatThreadContentNode(threadDoc, 'thread-1')!
-        const { userMessage: latestUser, responseMessage: latestResponse } = getLatestThreadTurnMessages(threadNode)
+        const {
+            userMessage: latestUser,
+            responseMessage: latestResponse,
+        } = getLatestThreadTurnMessages(threadNode)
         expect(collectProseMirrorText(latestUser ?? undefined).trim()).toBe('create an oil painting')
         expect(latestResponse?.attrs?.id).toBe('resp-2')
     })

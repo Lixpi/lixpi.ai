@@ -21,9 +21,10 @@ vi.mock('$src/stores/servicesStore.ts', () => ({
     servicesStore: { getData: vi.fn() },
 }))
 
-function mockNatsRequest(response: unknown) {
+const mockNatsRequest = (response: unknown) => {
     const request = vi.fn().mockResolvedValue(response)
     servicesStore.getData.mockReturnValue({ request } as never)
+
     return request
 }
 
@@ -49,13 +50,19 @@ describe('media-descriptor-service', () => {
         })
 
         it('requests MEDIA_DESCRIBE with the asset id and token for image descriptors', async () => {
-            const request = mockNatsRequest({ summary: 'an image of a robot', entityTags: ['robot'] })
+            const request = mockNatsRequest({
+                summary: 'an image of a robot',
+                entityTags: ['robot'],
+            })
             const result = await describeMedia({
                 assetId: 'asset-image-1',
                 aiModel: 'vision-v2',
             })
 
-            expect(result).toEqual({ summary: 'an image of a robot', entityTags: ['robot'] })
+            expect(result).toEqual({
+                summary: 'an image of a robot',
+                entityTags: ['robot'],
+            })
             expect(request).toHaveBeenCalledTimes(1)
             expect(request).toHaveBeenCalledWith(MEDIA_DESCRIBE, {
                 token: 'token-1',

@@ -26,23 +26,50 @@ import {
     type WorkspaceNodeGesturesPorts,
 } from './workspace-node-gestures.ts'
 
-function image(nodeId = 'image', overrides: Partial<ImageCanvasNode> = {}): ImageCanvasNode {
-    return { nodeId, type: 'image', assetId: nodeId, position: { x: 20, y: 30 }, dimensions: { width: 200, height: 100 }, ...overrides }
+const image = (nodeId = 'image', overrides: Partial<ImageCanvasNode> = {}): ImageCanvasNode => {
+    return {
+        nodeId,
+        type: 'image',
+        assetId: nodeId,
+        position: {
+            x: 20,
+            y: 30,
+        },
+        dimensions: {
+            width: 200,
+            height: 100,
+        },
+        ...overrides,
+    }
 }
 const owners: WorkspaceNodeGestures[] = []
 afterEach(() => {
     for (const owner of owners.splice(0)) owner.destroy()
 })
 
-function setup(nodes: CanvasNode[] = [image()]) {
+const setup = (nodes: CanvasNode[] = [image()]) => {
     const pane = document.createElement('div')
     const elements = new Map(nodes.map(node => [node.nodeId, document.createElement('div')]))
-    const bounds = new Map<string, Rect>(nodes.map(node => [node.nodeId, { ...computeWorldPosition(node, new Map(nodes.map(item => [item.nodeId, item]))), ...node.dimensions }]))
-    let state: CanvasState | null = { nodes, edges: [], viewport: { x: 0, y: 0, zoom: 1 } }
+    const bounds = new Map<string, Rect>(nodes.map(node => [node.nodeId, {
+        ...computeWorldPosition(node, new Map(nodes.map(item => [item.nodeId, item]))),
+        ...node.dimensions,
+    }]))
+    let state: CanvasState | null = {
+        nodes,
+        edges: [],
+        viewport: {
+            x: 0,
+            y: 0,
+            zoom: 1,
+        },
+    }
     let sceneKey = 'scene'
     let workspaceId = 'workspace'
     const selected = new Set<string>()
-    const timers: Array<{ callback: () => void; cancel: ReturnType<typeof vi.fn> }> = []
+    const timers: Array<{
+        callback: () => void
+        cancel: ReturnType<typeof vi.fn>
+    }> = []
     const drags: NodeTransformOptions[] = []
     const resizes: NodeResizeOptions[] = []
     const unlock = vi.fn()
@@ -50,34 +77,48 @@ function setup(nodes: CanvasNode[] = [image()]) {
     const geometry = new WorkspaceGeometry({
         workspaceId,
         settings,
-        getViewport: () => ({ x: 0, y: 0, zoom: 1 }),
-        getPaneSize: () => ({ width: 1000, height: 800 }),
+        getViewport: () => ({
+            x: 0,
+            y: 0,
+            zoom: 1,
+        }),
+        getPaneSize: () => ({
+            width: 1000,
+            height: 800,
+        }),
         getWorldPosition: computeWorldPosition,
-        getWorldRect: (node, byId) => ({ ...computeWorldPosition(node, byId), ...node.dimensions }),
+        getWorldRect: (node, byId) => ({
+            ...computeWorldPosition(node, byId),
+            ...node.dimensions,
+        }),
         getLiveDimensions: nodeId => bounds.get(nodeId),
         isPending: () => false,
     })
-    const connections = { checkProximity: vi.fn(), commitProximityConnection: vi.fn(), cancelTransientConnection: vi.fn() }
+    const connections = {
+        checkProximity: vi.fn(),
+        commitProximityConnection: vi.fn(),
+        cancelTransientConnection: vi.fn(),
+    }
     const media: NonNullable<ReturnType<WorkspaceNodeGesturesPorts['media']>> = {
         getNodeBounds: nodeId => bounds.get(nodeId),
-        setNodeLiveTransform: vi.fn((nodeId, position, dimensions) => {
-            bounds.set(nodeId, { ...position, ...dimensions })
-        }),
+        setNodeLiveTransform: vi.fn((nodeId, position, dimensions) => void bounds.set(nodeId, {
+            ...position,
+            ...dimensions,
+        })),
         setSelectedImageNodes: vi.fn(),
         setSelectionOverlayBounds: vi.fn(),
     }
     const ports: WorkspaceNodeGesturesPorts = {
         pane,
-        readScope: () => ({ workspaceId, sceneKey }),
+        readScope: () => ({
+            workspaceId,
+            sceneKey,
+        }),
         readState: () => state,
         runtime: {
             cancelInteraction: vi.fn(),
-            startNodeDrag: vi.fn(options => {
-                drags.push(options)
-            }),
-            startNodeResize: vi.fn(options => {
-                resizes.push(options)
-            }),
+            startNodeDrag: vi.fn(options => void drags.push(options)),
+            startNodeResize: vi.fn(options => void resizes.push(options)),
         },
         findElement: nodeId => elements.get(nodeId) ?? null,
         media: () => media,
@@ -91,12 +132,18 @@ function setup(nodes: CanvasNode[] = [image()]) {
             selected.add(nodeId)
         }),
         toggleSelection: vi.fn(nodeId => {
-            if (selected.has(nodeId)) selected.delete(nodeId)
-            else selected.add(nodeId)
+            if (selected.has(nodeId))
+                selected.delete(nodeId)
+            else
+                selected.add(nodeId)
         }),
         bringToFront: vi.fn(),
         lockPan: vi.fn(() => unlock),
-        getViewport: () => ({ x: 0, y: 0, zoom: 1 }),
+        getViewport: () => ({
+            x: 0,
+            y: 0,
+            zoom: 1,
+        }),
         updateChromeTransform: vi.fn(),
         updateChromeLayout: vi.fn(),
         scheduleEdges: vi.fn(),
@@ -108,18 +155,21 @@ function setup(nodes: CanvasNode[] = [image()]) {
         syncNodeGeometry: vi.fn(),
         syncMedia: vi.fn(),
         rememberManualMarker: vi.fn(),
-        commit: vi.fn(next => {
-            state = next
-        }),
+        commit: vi.fn(next => void (state = next)),
         setTimer: callback => {
             const cancel = vi.fn()
-            timers.push({ callback, cancel })
+            timers.push({
+                callback,
+                cancel,
+            })
+
             return cancel
         },
     }
     const owner = new WorkspaceNodeGestures(ports)
     owners.push(owner)
     const event = () => new MouseEvent('mousedown', { bubbles: true })
+
     return {
         owner,
         ports,
@@ -135,15 +185,9 @@ function setup(nodes: CanvasNode[] = [image()]) {
         geometry,
         unlock,
         event,
-        setScene: (value: string) => {
-            sceneKey = value
-        },
-        setWorkspace: (value: string) => {
-            workspaceId = value
-        },
-        setState: (value: CanvasState | null) => {
-            state = value
-        },
+        setScene: (value: string) => void (sceneKey = value),
+        setWorkspace: (value: string) => void (workspaceId = value),
+        setState: (value: CanvasState | null) => void (state = value),
         get state() {
             return state
         },
@@ -155,7 +199,10 @@ describe('WorkspaceNodeGestures', () => {
         const fixture = setup()
         const clicked = vi.fn()
         const collision = vi.spyOn(fixture.geometry, 'createCollisionPlan')
-        fixture.owner.startDrag(fixture.event(), 'image', { onClick: clicked, suppressPaneClick: true })
+        fixture.owner.startDrag(fixture.event(), 'image', {
+            onClick: clicked,
+            suppressPaneClick: true,
+        })
         expect(fixture.ports.select).not.toHaveBeenCalled()
         expect(fixture.drags[0].threshold).toBe(6)
         fixture.drags[0].onEnd(fixture.event(), fixture.bounds, false)
@@ -178,35 +225,82 @@ describe('WorkspaceNodeGestures', () => {
     })
 
     it('keeps a selected media group rigid and suppresses the following click', () => {
-        const fixture = setup([image('first'), image('second', { position: { x: 420, y: 30 } })])
+        const fixture = setup([image('first'), image('second', { position: {
+            x: 420,
+            y: 30,
+        } })])
         fixture.selected.add('first')
         fixture.selected.add('second')
         const collision = vi.spyOn(fixture.geometry, 'createCollisionPlan')
         fixture.owner.startDrag(fixture.event(), 'first')
         expect(fixture.drags[0].targets.map(target => target.nodeId)).toEqual(['first', 'second'])
         fixture.drags[0].onStart?.()
-        const moved = new Map([['first', { x: 70, y: 50, width: 200, height: 100 }], ['second', { x: 470, y: 50, width: 200, height: 100 }]])
+        const moved = new Map([
+            ['first', {
+                x: 70,
+                y: 50,
+                width: 200,
+                height: 100,
+            }],
+            ['second', {
+                x: 470,
+                y: 50,
+                width: 200,
+                height: 100,
+            }],
+        ])
         fixture.drags[0].onChange(moved)
         fixture.drags[0].onEnd(fixture.event(), moved, true)
         expect(collision).not.toHaveBeenCalled()
-        expect(fixture.state!.nodes.map(node => node.position)).toEqual([{ x: 70, y: 50 }, { x: 470, y: 50 }])
+        expect(fixture.state!.nodes.map(node => node.position)).toEqual([{
+            x: 70,
+            y: 50,
+        }, {
+            x: 470,
+            y: 50,
+        }])
         expect(fixture.ports.select).not.toHaveBeenCalled()
         expect(fixture.owner.consumeNodeClick()).toBe(true)
     })
 
     it('moves a selected parent and child together while retaining child-local coordinates', () => {
-        const parent = image('parent', { dimensions: { width: 400, height: 300 } })
-        const child = image('child', { parentId: 'parent', position: { x: 30, y: 40 } })
+        const parent = image('parent', { dimensions: {
+            width: 400,
+            height: 300,
+        } })
+        const child = image('child', {
+            parentId: 'parent',
+            position: {
+                x: 30,
+                y: 40,
+            },
+        })
         const fixture = setup([parent, child])
         fixture.selected.add('parent')
         fixture.selected.add('child')
         fixture.owner.startDrag(fixture.event(), 'parent')
         expect(fixture.drags[0].targets.map(target => target.nodeId)).toEqual(['parent', 'child'])
         fixture.drags[0].onStart?.()
-        const moved = new Map([['parent', { x: 120, y: 130, width: 400, height: 300 }], ['child', { x: 150, y: 170, width: 200, height: 100 }]])
+        const moved = new Map([
+            ['parent', {
+                x: 120,
+                y: 130,
+                width: 400,
+                height: 300,
+            }],
+            ['child', {
+                x: 150,
+                y: 170,
+                width: 200,
+                height: 100,
+            }],
+        ])
         fixture.drags[0].onChange(moved)
         fixture.drags[0].onEnd(fixture.event(), moved, true)
-        expect(fixture.state!.nodes[0].position).toEqual({ x: 120, y: 130 })
+        expect(fixture.state!.nodes[0].position).toEqual({
+            x: 120,
+            y: 130,
+        })
         expect(fixture.state!.nodes[1].position).toEqual(child.position)
         expect(fixture.state!.nodes[1].parentId).toBe('parent')
         expect(fixture.connections.checkProximity).toHaveBeenCalledOnce()
@@ -214,24 +308,80 @@ describe('WorkspaceNodeGestures', () => {
     })
 
     it('remembers manually moved branch-marker geometry', () => {
-        const marker: CanvasNode = { nodeId: 'marker', type: 'branchOrigin', branchId: 'branch', generationRequestId: 'request', temporary: true, position: { x: 0, y: 0 }, dimensions: { width: 150, height: 90 } }
+        const marker: CanvasNode = {
+            nodeId: 'marker',
+            type: 'branchOrigin',
+            branchId: 'branch',
+            generationRequestId: 'request',
+            temporary: true,
+            position: {
+                x: 0,
+                y: 0,
+            },
+            dimensions: {
+                width: 150,
+                height: 90,
+            },
+        }
         const fixture = setup([marker])
         fixture.owner.startDrag(fixture.event(), marker.nodeId)
         fixture.drags[0].onStart?.()
-        const moved = new Map([['marker', { x: 40, y: 60, width: 150, height: 90 }]])
+        const moved = new Map([['marker', {
+            x: 40,
+            y: 60,
+            width: 150,
+            height: 90,
+        }]])
         fixture.drags[0].onChange(moved)
         fixture.drags[0].onEnd(fixture.event(), moved, true)
-        expect(fixture.ports.rememberManualMarker).toHaveBeenCalledWith(expect.objectContaining({ nodeId: 'marker', position: { x: 40, y: 60 } }), expect.any(Object))
+        expect(fixture.ports.rememberManualMarker).toHaveBeenCalledWith(expect.objectContaining({
+            nodeId: 'marker',
+            position: {
+                x: 40,
+                y: 60,
+            },
+        }), expect.any(Object))
     })
 
     it('locks image aspect ratio and persists resized child coordinates relative to its parent', () => {
-        const fixture = setup([image('parent', { dimensions: { width: 500, height: 400 } }), image('child', { parentId: 'parent', position: { x: 30, y: 40 } })])
+        const fixture = setup([image('parent', { dimensions: {
+            width: 500,
+            height: 400,
+        } }), image('child', {
+            parentId: 'parent',
+            position: {
+                x: 30,
+                y: 40,
+            },
+        })])
         fixture.owner.startResize(fixture.event(), 'child', 'bottom-right')
-        expect(fixture.resizes[0].constraints).toEqual({ min: { width: 50, height: 25 }, preserveAspectRatio: true, aspectRatio: 2 })
-        const moved = new Map([['child', { x: 50, y: 70, width: 300, height: 150 }]])
+        expect(fixture.resizes[0].constraints).toEqual({
+            min: {
+                width: 50,
+                height: 25,
+            },
+            preserveAspectRatio: true,
+            aspectRatio: 2,
+        })
+        const moved = new Map([['child', {
+            x: 50,
+            y: 70,
+            width: 300,
+            height: 150,
+        }]])
         fixture.resizes[0].onChange(moved)
         fixture.resizes[0].onEnd(fixture.event(), moved, true)
-        expect(fixture.state!.nodes[1]).toMatchObject({ parentId: 'parent', position: { x: 30, y: 40 }, dimensions: { width: 300, height: 150 } })
+        expect(fixture.state!.nodes[1]).toMatchObject({
+            parentId: 'parent',
+            position: {
+                x: 30,
+                y: 40,
+            },
+            dimensions: {
+                width: 300,
+                height: 150,
+            },
+        })
         expect(fixture.owner.resizingNodeId).toBeNull()
     })
 
@@ -239,9 +389,16 @@ describe('WorkspaceNodeGestures', () => {
         const fixture = setup()
         fixture.owner.startDrag(fixture.event(), 'image')
         fixture.drags[0].onStart?.()
-        if (kind === 'workspace') fixture.setWorkspace('other')
-        if (kind === 'scene') fixture.setScene('other')
-        if (kind === 'state') fixture.setState(null)
+
+        if (kind === 'workspace')
+            fixture.setWorkspace('other')
+
+        if (kind === 'scene')
+            fixture.setScene('other')
+
+        if (kind === 'state')
+            fixture.setState(null)
+
         fixture.drags[0].onEnd(fixture.event(), fixture.bounds, true)
         expect(fixture.ports.commit).not.toHaveBeenCalled()
         fixture.owner.clear()
@@ -262,7 +419,12 @@ describe('WorkspaceNodeGestures', () => {
         const fixture = setup()
         fixture.ports.updateChromeTransform = () => fixture.setScene('replacement')
         fixture.owner.startResize(fixture.event(), 'image', 'bottom-right')
-        fixture.resizes[0].onChange(new Map([['image', { x: 10, y: 20, width: 400, height: 200 }]]))
+        fixture.resizes[0].onChange(new Map([['image', {
+            x: 10,
+            y: 20,
+            width: 400,
+            height: 200,
+        }]]))
         expect(fixture.media.setSelectedImageNodes).not.toHaveBeenCalled()
         expect(fixture.media.setSelectionOverlayBounds).not.toHaveBeenCalled()
         expect(fixture.ports.scheduleEdges).not.toHaveBeenCalled()
@@ -276,7 +438,12 @@ describe('WorkspaceNodeGestures', () => {
         const obsolete = fixture.drags[0]
         obsolete.onStart?.()
         fixture.owner.startResize(fixture.event(), 'image', 'bottom-right')
-        obsolete.onChange(new Map([['image', { x: 900, y: 900, width: 1, height: 1 }]]))
+        obsolete.onChange(new Map([['image', {
+            x: 900,
+            y: 900,
+            width: 1,
+            height: 1,
+        }]]))
         obsolete.onCancel('escape')
         expect(fixture.owner.resizingNodeId).toBe('image')
         expect(fixture.elements.get('image')!.classList.contains('is-resizing')).toBe(true)
@@ -287,6 +454,7 @@ describe('WorkspaceNodeGestures', () => {
         const fixture = setup()
         fixture.ports.runtime.startNodeDrag = options => {
             options.onStart?.()
+
             throw new Error('allocation')
         }
         expect(() => fixture.owner.startDrag(fixture.event(), 'image')).toThrow('allocation')

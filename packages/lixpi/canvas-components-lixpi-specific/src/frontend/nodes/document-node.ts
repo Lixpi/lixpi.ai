@@ -117,10 +117,12 @@ class WorkspaceDocumentNode {
     ) {
         this.assetId = node.assetId
         const html = createDocumentHtml(element.ownerDocument)
-        this.container = html`<div
+        this.container = html`
+            <div
                 className="document-node-editor nopan"
                 data-help-tooltip="aria-description"
-            ></div>` as HTMLDivElement
+            ></div>
+        ` as HTMLDivElement
         element.append(this.container)
         this.lifetime.own(() => this.container.remove())
         this.contentLifetime = this.lifetime.child()

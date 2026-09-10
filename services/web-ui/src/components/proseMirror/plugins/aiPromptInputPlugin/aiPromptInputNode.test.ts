@@ -13,13 +13,9 @@ import {
 } from '$src/components/proseMirror/plugins/aiPromptInputPlugin/aiPromptInputNode.ts'
 import { withoutLayout } from '@lixpi/test-utils'
 
-function expectSourceToContain(source: string, snippet: string): void {
-    expect(withoutLayout(source).includes(withoutLayout(snippet)), `source should contain: ${snippet}`).toBe(true)
-}
+const expectSourceToContain = (source: string, snippet: string): void => void expect(withoutLayout(source).includes(withoutLayout(snippet)), `source should contain: ${snippet}`).toBe(true)
 
-function expectSourceNotToContain(source: string, snippet: string): void {
-    expect(withoutLayout(source).includes(withoutLayout(snippet)), `source should not contain: ${snippet}`).toBe(false)
-}
+const expectSourceNotToContain = (source: string, snippet: string): void => void expect(withoutLayout(source).includes(withoutLayout(snippet)), `source should not contain: ${snippet}`).toBe(false)
 
 const aiPromptInputNodeSource = readFileSync(resolve(import.meta.dirname, 'aiPromptInputNode.ts'), 'utf-8')
 

@@ -122,10 +122,12 @@ class CapabilityRunForm implements CapabilityRunFormInstance {
     private readonly errorElement: HTMLDivElement
 
     constructor(private readonly config: CapabilityRunFormConfig) {
-        this.errorElement = html`<div
+        this.errorElement = html`
+            <div
                 className="capability-run-form-errors"
                 role="alert"
-            ></div>` as HTMLDivElement
+            ></div>
+        ` as HTMLDivElement
         this.element = html`
             <form className="capability-run-form">
                 <div className="capability-run-form-fields"></div>
@@ -176,10 +178,12 @@ class CapabilityRunForm implements CapabilityRunFormInstance {
         required: boolean,
     ): HTMLElement {
         const id = `capability-run-field-${name}`
-        const label = html`<label
+        const label = html`
+            <label
                 className="capability-run-form-field"
                 for=${id}
-            ></label>` as HTMLLabelElement
+            ></label>
+        ` as HTMLLabelElement
         label.appendChild(html`<span>${property.title ?? name}${required ? ' *' : ''}</span>`)
 
         let input: HTMLElement
@@ -194,11 +198,13 @@ class CapabilityRunForm implements CapabilityRunFormInstance {
                 />
             `
         else if (property.enum) {
-            const select = html`<select
+            const select = html`
+                <select
                     id=${id}
                     name=${name}
                     required=${required}
-                ></select>` as HTMLSelectElement
+                ></select>
+            ` as HTMLSelectElement
 
             if (!required)
                 select.appendChild(html`<option value="">Select…</option>`)

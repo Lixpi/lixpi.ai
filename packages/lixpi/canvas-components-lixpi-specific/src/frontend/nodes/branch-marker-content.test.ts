@@ -14,21 +14,45 @@ import {
 const views: BranchMarkerContent[] = []
 afterEach(() => {
     for (const view of views.splice(0)) view.destroy()
+
     document.body.replaceChildren()
     vi.restoreAllMocks()
 })
 
-function mount(overrides: Partial<BranchMarkerContentOptions> = {}) {
-    const preview = { dom: document.createElement('span'), destroy: vi.fn() }
+const mount = (overrides: Partial<BranchMarkerContentOptions> = {}) => {
+    const preview = {
+        dom: document.createElement('span'),
+        destroy: vi.fn(),
+    }
     preview.dom.textContent = '@Frame'
     const options: BranchMarkerContentOptions = {
         document,
         label: 'Start branch',
         headerHeight: 42,
-        promptParts: [{ type: 'text', text: 'Use ' }, { type: 'media', reference: { referenceType: 'media', assetId: 'frame', mediaKind: 'image', displayName: 'Frame' } }],
+        promptParts: [{
+            type: 'text',
+            text: 'Use ',
+        }, {
+            type: 'media',
+            reference: {
+                referenceType: 'media',
+                assetId: 'frame',
+                mediaKind: 'image',
+                displayName: 'Frame',
+            },
+        }],
         renderReference: () => preview,
-        reasoningModel: { title: 'Reasoning <model>', icon: null },
-        mediaModels: [{ title: 'Image model', icon: null, label: 'Image', glassImage: '', textureImage: '' }],
+        reasoningModel: {
+            title: 'Reasoning <model>',
+            icon: null,
+        },
+        mediaModels: [{
+            title: 'Image model',
+            icon: null,
+            label: 'Image',
+            glassImage: '',
+            textureImage: '',
+        }],
         modelSummary: 'Image: Image model',
         responseText: 'A response',
         responsePhase: 'preamble',
@@ -42,12 +66,19 @@ function mount(overrides: Partial<BranchMarkerContentOptions> = {}) {
     const view = new BranchMarkerContent(options)
     views.push(view)
     document.body.appendChild(view.element)
-    return { view, preview }
+
+    return {
+        view,
+        preview,
+    }
 }
 
 describe('BranchMarkerContent', () => {
     it('keeps the prompt separate from streaming reasoning and owns its preview and tooltips', () => {
-        const { view, preview } = mount()
+        const {
+            view,
+            preview,
+        } = mount()
         expect(view.element.querySelector('.workspace-branch-marker-message-text')?.textContent).toBe('Use @Frame')
         expect(view.element.querySelector('.workspace-branch-marker-response-text')?.textContent).toBe('A response')
         expect(view.element.querySelector('.workspace-branch-marker-response-spinner')).not.toBeNull()
@@ -64,9 +95,18 @@ describe('BranchMarkerContent', () => {
     })
 
     it('lets the progress timeline replace the standalone response and releases nested views', () => {
-        const progress = { element: document.createElement('section'), destroy: vi.fn() }
-        const referenceResolution = { element: document.createElement('section'), destroy: vi.fn() }
-        const { view } = mount({ progress, referenceResolution })
+        const progress = {
+            element: document.createElement('section'),
+            destroy: vi.fn(),
+        }
+        const referenceResolution = {
+            element: document.createElement('section'),
+            destroy: vi.fn(),
+        }
+        const { view } = mount({
+            progress,
+            referenceResolution,
+        })
         expect(view.element.classList.contains('has-progress')).toBe(true)
         expect(view.element.querySelector('.workspace-branch-marker-response')).toBeNull()
         expect(view.element.querySelector('.workspace-branch-marker-message-progress')).not.toBeNull()
@@ -93,8 +133,14 @@ describe('BranchMarkerContent', () => {
     })
 
     it('releases supplied child views when rendering a reference fails', () => {
-        const progress = { element: document.createElement('section'), destroy: vi.fn() }
-        const referenceResolution = { element: document.createElement('section'), destroy: vi.fn() }
+        const progress = {
+            element: document.createElement('section'),
+            destroy: vi.fn(),
+        }
+        const referenceResolution = {
+            element: document.createElement('section'),
+            destroy: vi.fn(),
+        }
         expect(() =>
             mount({
                 progress,

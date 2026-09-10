@@ -15,7 +15,7 @@ import {
     CapabilityChatRunProgressController,
 } from '$src/components/proseMirror/plugins/aiChatThreadPlugin/capabilityChatRunProgress.ts'
 
-function event(sequence: number): CapabilityRunEvent {
+const event = (sequence: number): CapabilityRunEvent => {
     return {
         runId: 'run-1',
         sequence,

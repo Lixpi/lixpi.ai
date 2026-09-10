@@ -272,7 +272,7 @@ export const aiUserMessageNodeSpec = {
     },
 } as NodeSpec
 
-export function normalizeReferenceNodeIds(value: unknown): string[] {
+export const normalizeReferenceNodeIds = (value: unknown): string[] => {
     const rawIds = Array.isArray(value)
         ? value
         : typeof value === 'string'
@@ -298,7 +298,7 @@ export function normalizeReferenceNodeIds(value: unknown): string[] {
     return ids
 }
 
-function parseReferenceNodeIds(value: string): unknown[] {
+const parseReferenceNodeIds = (value: string): unknown[] => {
     try {
         const parsed = JSON.parse(value)
 
@@ -801,7 +801,7 @@ export const aiChatNodeSpecs = {
     [aiMediaGenerationProgressNodeType]: aiMediaGenerationProgressNodeSpec,
 }
 
-function parseVariantIndex(value: string | null): number | null {
+const parseVariantIndex = (value: string | null): number | null => {
     if (!value)
         return null
 
@@ -810,10 +810,10 @@ function parseVariantIndex(value: string | null): number | null {
     return Number.isFinite(parsed) ? parsed : null
 }
 
-function parseTraceBlockAttrs(
+const parseTraceBlockAttrs = (
     dom: HTMLElement,
     title: string,
-) {
+) => {
     return {
         title,
         isOpen: false,
@@ -834,7 +834,7 @@ function parseTraceBlockAttrs(
     }
 }
 
-function parseReasoningIndex(value: string | null): number | null {
+const parseReasoningIndex = (value: string | null): number | null => {
     if (
         value === null
         || value === undefined

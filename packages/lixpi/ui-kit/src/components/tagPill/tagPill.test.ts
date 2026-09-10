@@ -16,7 +16,7 @@ const SVG_NS = 'http://www.w3.org/2000/svg'
 
 type TagPillConfig = Parameters<typeof createTagPill>[1]
 
-function mountWithConfig(config: Partial<TagPillConfig> = {}, includeDefaultWidth = true) {
+const mountWithConfig = (config: Partial<TagPillConfig> = {}, includeDefaultWidth = true) => {
     const svg = document.createElementNS(SVG_NS, 'svg') as unknown as SVGSVGElement
     document.body.appendChild(svg)
     const onClick = vi.fn()
@@ -34,11 +34,21 @@ function mountWithConfig(config: Partial<TagPillConfig> = {}, includeDefaultWidt
         ...config,
     })
 
-    return { svg, tagPill, onClick, onClose }
+    return {
+        svg,
+        tagPill,
+        onClick,
+        onClose,
+    }
 }
 
-function mount(selected = false, hovered = false, disabled = false, closable = false) {
-    return mountWithConfig({ selected, hovered, disabled, closable })
+const mount = (selected = false, hovered = false, disabled = false, closable = false) => {
+    return mountWithConfig({
+        selected,
+        hovered,
+        disabled,
+        closable,
+    })
 }
 
 const labels = (svg: SVGSVGElement) => Array.from(svg.querySelectorAll('.tag-pill-label'))
@@ -47,9 +57,7 @@ const closes = (svg: SVGSVGElement) => Array.from(svg.querySelectorAll('.tag-pil
 const backgrounds = (svg: SVGSVGElement) => Array.from(svg.querySelectorAll('.tag-pill-background'))
 
 describe('createTagPill', () => {
-    beforeEach(() => {
-        document.body.innerHTML = ''
-    })
+    beforeEach(() => void (document.body.innerHTML = ''))
 
     it('renders the pill surface and text', () => {
         const { svg } = mount()
@@ -61,7 +69,10 @@ describe('createTagPill', () => {
     })
 
     it('updates fill state from setSelected and render state', () => {
-        const { svg, tagPill } = mount(false)
+        const {
+            svg,
+            tagPill,
+        } = mount(false)
         const background = svg.querySelector('.tag-pill-background')!
 
         expect(background.getAttribute('fill')).toBe('rgba(108, 117, 135, 0.08)')
@@ -70,7 +81,13 @@ describe('createTagPill', () => {
         expect(background.getAttribute('fill')).toBe('rgba(255, 255, 255, 0.72)')
         expect(background.getAttribute('stroke')).toBe('rgba(105, 115, 133, 0.12)')
 
-        tagPill.render({ selected: false, hovered: true, label: 'Beta', closable: true, closeVisibility: 'always' })
+        tagPill.render({
+            selected: false,
+            hovered: true,
+            label: 'Beta',
+            closable: true,
+            closeVisibility: 'always',
+        })
         expect(labels(svg)[0]!.textContent).toBe('Beta')
         expect(background.getAttribute('fill')).toBe('rgba(255, 255, 255, 0.72)')
 
@@ -79,7 +96,10 @@ describe('createTagPill', () => {
     })
 
     it('accepts a complete caller-owned color palette and updates it through render state', () => {
-        const { svg, tagPill } = mountWithConfig({
+        const {
+            svg,
+            tagPill,
+        } = mountWithConfig({
             selected: true,
             closable: true,
             colors: {
@@ -115,7 +135,10 @@ describe('createTagPill', () => {
         tagPill.render({
             selected: false,
             hovered: true,
-            colors: { fillHover: '#bfd4ff', text: '#174a8a' },
+            colors: {
+                fillHover: '#bfd4ff',
+                text: '#174a8a',
+            },
         })
         expect(background.getAttribute('fill')).toBe('#bfd4ff')
         expect(background.getAttribute('stroke')).toBe('#aac4ef')
@@ -126,7 +149,11 @@ describe('createTagPill', () => {
     })
 
     it('fires click and close callbacks', () => {
-        const { svg, onClick, onClose } = mount(false, false, false, true)
+        const {
+            svg,
+            onClick,
+            onClose,
+        } = mount(false, false, false, true)
         const pill = groups(svg)[0]!
         const close = closes(svg)[0]!
 
@@ -139,7 +166,10 @@ describe('createTagPill', () => {
     })
 
     it('keeps close control hidden until hover when configured with hover visibility', () => {
-        const { svg, tagPill } = mount(false, false, false, true)
+        const {
+            svg,
+            tagPill,
+        } = mount(false, false, false, true)
         const close = closes(svg)[0]!
 
         close.setAttribute('data-close-visibility', 'hover')
@@ -151,7 +181,11 @@ describe('createTagPill', () => {
     })
 
     it('does not fire callbacks when disabled', () => {
-        const { svg, onClick, onClose } = mount(false, false, true, true)
+        const {
+            svg,
+            onClick,
+            onClose,
+        } = mount(false, false, true, true)
 
         groups(svg)[0]!.dispatchEvent(new MouseEvent('click', { bubbles: true }))
         svg.querySelector('.tag-pill-close')!.dispatchEvent(new MouseEvent('click', { bubbles: true }))
@@ -161,19 +195,35 @@ describe('createTagPill', () => {
     })
 
     it('invokes onClick from keyboard Enter and Space', () => {
-        const { svg, onClick } = mount()
+        const {
+            svg,
+            onClick,
+        } = mount()
         const pill = groups(svg)[0]!
 
-        pill.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
-        pill.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true }))
-        pill.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }))
+        pill.dispatchEvent(new KeyboardEvent('keydown', {
+            key: 'Enter',
+            bubbles: true,
+        }))
+        pill.dispatchEvent(new KeyboardEvent('keydown', {
+            key: ' ',
+            bubbles: true,
+        }))
+        pill.dispatchEvent(new KeyboardEvent('keydown', {
+            key: 'Tab',
+            bubbles: true,
+        }))
 
         expect(onClick).toHaveBeenCalledTimes(2)
         expect(onClick).toHaveBeenCalledWith('tag-pill', expect.any(Event))
     })
 
     it('stops event propagation from close interactions', () => {
-        const { svg, onClick, onClose } = mount(false, false, false, true)
+        const {
+            svg,
+            onClick,
+            onClose,
+        } = mount(false, false, false, true)
         const close = closes(svg)[0]!
         const svgSpy = vi.fn()
 
@@ -187,19 +237,34 @@ describe('createTagPill', () => {
     })
 
     it('invokes onClose from keyboard Enter and Space', () => {
-        const { svg, onClose } = mount(false, false, false, true)
+        const {
+            svg,
+            onClose,
+        } = mount(false, false, false, true)
         const close = closes(svg)[0]!
 
-        close.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
-        close.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true }))
-        close.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }))
+        close.dispatchEvent(new KeyboardEvent('keydown', {
+            key: 'Enter',
+            bubbles: true,
+        }))
+        close.dispatchEvent(new KeyboardEvent('keydown', {
+            key: ' ',
+            bubbles: true,
+        }))
+        close.dispatchEvent(new KeyboardEvent('keydown', {
+            key: 'Tab',
+            bubbles: true,
+        }))
 
         expect(onClose).toHaveBeenCalledTimes(2)
         expect(onClose).toHaveBeenCalledWith('tag-pill', expect.any(Event))
     })
 
     it('applies content-surface fill/hover behavior', () => {
-        const { svg, tagPill } = mountWithConfig({
+        const {
+            svg,
+            tagPill,
+        } = mountWithConfig({
             label: 'Surface',
             surface: 'content',
         })
@@ -211,7 +276,10 @@ describe('createTagPill', () => {
         tagPill.render({ hovered: true })
         expect(background.getAttribute('fill')).toBe('rgba(105, 115, 133, 0.055)')
 
-        tagPill.render({ hovered: false, selected: true })
+        tagPill.render({
+            hovered: false,
+            selected: true,
+        })
         expect(background.getAttribute('fill')).toBe('transparent')
     })
 
@@ -300,7 +368,10 @@ describe('createTagPill', () => {
     })
 
     it('renders an icon and hides the icon group when icon is removed', () => {
-        const { svg, tagPill } = mountWithConfig({
+        const {
+            svg,
+            tagPill,
+        } = mountWithConfig({
             label: 'Iconic',
             icon: xIcon,
         })
@@ -325,7 +396,10 @@ describe('createTagPill', () => {
     })
 
     it('recomputes auto width when label changes without explicit width', () => {
-        const { svg, tagPill } = mountWithConfig({
+        const {
+            svg,
+            tagPill,
+        } = mountWithConfig({
             label: 'Tiny',
         }, false)
 
@@ -337,7 +411,10 @@ describe('createTagPill', () => {
     })
 
     it('destroys group without touching caller-owned svg root', () => {
-        const { svg, tagPill } = mount()
+        const {
+            svg,
+            tagPill,
+        } = mount()
 
         expect(groups(svg).length).toBe(1)
 

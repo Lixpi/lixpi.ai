@@ -70,7 +70,10 @@ const moduleCatalog = {
     getModuleMeta: vi.fn((moduleId: string) => moduleItems.find(item => item.moduleId === moduleId)),
     resolveEntry: vi.fn((moduleId: string) =>
         moduleItems.some(item => item.moduleId === moduleId)
-            ? { capabilityId: `global.${moduleId}`, kind: 'tool' as const }
+            ? {
+                capabilityId: `global.${moduleId}`,
+                kind: 'tool' as const,
+            }
             : undefined
     ),
 }
@@ -78,9 +81,17 @@ const workspace = {
     workspaceId: 'workspace-1',
     organizationId: 'organization-1',
     canvasState: {
-        nodes: [{ nodeId: 'node-portrait', type: 'image', assetId: 'asset-portrait' }],
+        nodes: [{
+            nodeId: 'node-portrait',
+            type: 'image',
+            assetId: 'asset-portrait',
+        }],
         edges: [],
-        viewport: { x: 0, y: 0, zoom: 1 },
+        viewport: {
+            x: 0,
+            y: 0,
+            zoom: 1,
+        },
     },
 }
 const requester = {
@@ -115,8 +126,16 @@ const portraitAsset = {
     originWorkspaceId: 'workspace-1',
     ownerUserId: 'user-1',
     documents: {},
-    media: { kind: 'image', renditions: {} },
-    states: { lifecycle: 'active', media: 'ready', conversation: 'none', provenance: 'none' },
+    media: {
+        kind: 'image',
+        renditions: {},
+    },
+    states: {
+        lifecycle: 'active',
+        media: 'ready',
+        conversation: 'none',
+        provenance: 'none',
+    },
     referenceCount: 1,
     revision: 1,
     createdAt: 1,
@@ -189,7 +208,13 @@ describe('PromptReferenceCatalogService', () => {
         mocks.getAsset.mockResolvedValue(portraitAsset)
         mocks.searchAvailable.mockResolvedValue({
             items: [
-                { ...portrait, assetId: 'asset-library', searchKey: 'image#library#asset-library', normalizedTitle: 'library', title: 'Library' },
+                {
+                    ...portrait,
+                    assetId: 'asset-library',
+                    searchKey: 'image#library#asset-library',
+                    normalizedTitle: 'library',
+                    title: 'Library',
+                },
                 portrait,
             ],
         })
@@ -201,8 +226,15 @@ describe('PromptReferenceCatalogService', () => {
         })
 
         expect(page.items).toEqual([
-            expect.objectContaining({ assetId: 'asset-portrait', nodeId: 'node-portrait', source: 'canvas' }),
-            expect.objectContaining({ assetId: 'asset-library', source: 'library' }),
+            expect.objectContaining({
+                assetId: 'asset-portrait',
+                nodeId: 'node-portrait',
+                source: 'canvas',
+            }),
+            expect.objectContaining({
+                assetId: 'asset-library',
+                source: 'library',
+            }),
         ])
         expect(mocks.searchAvailable).toHaveBeenCalledWith(expect.objectContaining({
             organizationIds: ['organization-1'],
@@ -271,10 +303,22 @@ describe('PromptReferenceCatalogService', () => {
     })
 
     it('lists registered Artifacts canvas-first with module-owned metadata', async () => {
-        const document = buildActionTimelineDocument({ durationMs: 2500, precisionMs: 1000 }, [
-            { slotIndex: 0, runs: [{ text: 'Establish ' }, { assetId: 'asset-portrait' }] },
-            { slotIndex: 1, runs: [{ text: 'Continue' }] },
-            { slotIndex: 2, runs: [{ text: 'Finish' }] },
+        const document = buildActionTimelineDocument({
+            durationMs: 2500,
+            precisionMs: 1000,
+        }, [
+            {
+                slotIndex: 0,
+                runs: [{ text: 'Establish ' }, { assetId: 'asset-portrait' }],
+            },
+            {
+                slotIndex: 1,
+                runs: [{ text: 'Continue' }],
+            },
+            {
+                slotIndex: 2,
+                runs: [{ text: 'Finish' }],
+            },
         ])
         const artifactAsset = (assetId: string, updatedAt: number) => ({
             assetId,
@@ -376,8 +420,16 @@ describe('PromptReferenceCatalogService', () => {
             originWorkspaceId: 'workspace-2',
             ownerUserId: 'user-1',
             documents: {},
-            media: { kind: 'image', renditions: {} },
-            states: { lifecycle: 'active', media: 'ready', conversation: 'none', provenance: 'none' },
+            media: {
+                kind: 'image',
+                renditions: {},
+            },
+            states: {
+                lifecycle: 'active',
+                media: 'ready',
+                conversation: 'none',
+                provenance: 'none',
+            },
             referenceCount: 1,
             revision: 1,
             createdAt: 1,

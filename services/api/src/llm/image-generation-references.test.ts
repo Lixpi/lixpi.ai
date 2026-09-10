@@ -24,8 +24,16 @@ describe('buildImageGenerationReferences', () => {
             capabilityReferenceImages: ['layout-image'],
             capabilityUsageMode: 'character-creator',
         })).toEqual([
-            { url: 'layout-image', role: 'capability-reference', fileName: 'capability-reference-1' },
-            { url: 'source-image', role: 'source-reference', fileName: 'source-reference-1' },
+            {
+                url: 'layout-image',
+                role: 'capability-reference',
+                fileName: 'capability-reference-1',
+            },
+            {
+                url: 'source-image',
+                role: 'source-reference',
+                fileName: 'source-reference-1',
+            },
         ])
     })
 
@@ -35,8 +43,16 @@ describe('buildImageGenerationReferences', () => {
             capabilityReferenceImages: ['capability-image'],
             capabilityUsageMode: 'visual-style',
         })).toEqual([
-            { url: 'capability-image', role: 'capability-reference', fileName: 'capability-reference-1' },
-            { url: 'source-image', role: 'source-reference', fileName: 'source-reference-1' },
+            {
+                url: 'capability-image',
+                role: 'capability-reference',
+                fileName: 'capability-reference-1',
+            },
+            {
+                url: 'source-image',
+                role: 'source-reference',
+                fileName: 'source-reference-1',
+            },
         ])
     })
 })
@@ -142,6 +158,7 @@ describe('provider-neutral image reference contract', () => {
         ]
 
         expect(baseProviderSource).toContain('await resolveImageGenerationReferences(imageGenerationReferences, this.nats)')
+
         for (const providerSource of providerSources) {
             expect(providerSource).toContain('resolvedImageGenerationReferences')
             expect(providerSource).not.toContain('reference_role')

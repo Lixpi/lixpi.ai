@@ -28,13 +28,9 @@ RUN eval "$(fnm env)" && \
     fnm default $NODE_VERSION && \
     fnm use $NODE_VERSION
 
-# Install pnpm globally (in the runtime stage)
+# Activate the repository's pnpm version in the Node installation managed by fnm.
 RUN eval "$(fnm env)" && \
-    if ! command -v pnpm &> /dev/null; then \
-        npm install -g pnpm; \
-    else \
-        echo "pnpm is already installed"; \
-    fi
+    corepack prepare pnpm@12.3.4 --activate
 
 # Add fnm initialization to .bashrc to ensure it's available in all bash sessions
 RUN echo 'eval "$(fnm env)"' >> ~/.bashrc

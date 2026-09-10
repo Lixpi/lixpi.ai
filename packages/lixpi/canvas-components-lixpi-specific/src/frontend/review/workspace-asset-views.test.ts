@@ -18,9 +18,21 @@ import {
     type WorkspaceAssetEditorRequest,
 } from './workspace-asset-editors.ts'
 
-const node: ImageCanvasNode = { nodeId: 'node', type: 'image', assetId: 'asset', position: { x: 0, y: 0 }, dimensions: { width: 100, height: 100 } }
+const node: ImageCanvasNode = {
+    nodeId: 'node',
+    type: 'image',
+    assetId: 'asset',
+    position: {
+        x: 0,
+        y: 0,
+    },
+    dimensions: {
+        width: 100,
+        height: 100,
+    },
+}
 const owners: WorkspaceAssetViews[] = []
-function fixture() {
+const fixture = () => {
     let asset = {
         assetId: 'asset',
         organizationId: 'org',
@@ -28,10 +40,19 @@ function fixture() {
         revision: 1,
         scope: 'workspace',
         subjectIdentity: { classification: 'unknown' },
-        states: { lifecycle: 'active', media: 'ready', provenance: 'generated' },
+        states: {
+            lifecycle: 'active',
+            media: 'ready',
+            provenance: 'generated',
+        },
         documents: { content: {} },
         media: { renditions: { original: { status: 'ready' } } },
-        lineage: { sourceConversationAssetId: 'conversation', parentAssetId: 'parent', sourceAssetIds: ['reference'], generationSeed: 0 },
+        lineage: {
+            sourceConversationAssetId: 'conversation',
+            parentAssetId: 'parent',
+            sourceAssetIds: ['reference'],
+            generationSeed: 0,
+        },
     } as Asset
     const requests: WorkspaceAssetEditorRequest[] = []
     const disposers: ReturnType<typeof vi.fn>[] = []
@@ -41,20 +62,39 @@ function fixture() {
         userId: 'user',
         tooltipHideDelayMs: 100,
         getAsset: () => asset,
-        getContentDocument: () => ({ doc: { type: 'doc', content: [] }, version: 7 }),
+        getContentDocument: () => ({
+            doc: {
+                type: 'doc',
+                content: [],
+            },
+            version: 7,
+        }),
         mountEditor: request => {
             requests.push(request)
             const destroy = vi.fn()
             disposers.push(destroy)
+
             return { destroy }
         },
         updateMetadata: vi.fn(async () => asset),
         changeScope: vi.fn(async (_id, _revision, scope) => {
-            asset = { ...asset, scope, revision: asset.revision + 1 }
+            asset = {
+                ...asset,
+                scope,
+                revision: asset.revision + 1,
+            }
+
             return asset
         }),
         attestSubjectIdentity: vi.fn(async (_id, _revision, classification) => {
-            asset = { ...asset, subjectIdentity: { ...asset.subjectIdentity, classification } }
+            asset = {
+                ...asset,
+                subjectIdentity: {
+                    ...asset.subjectIdentity,
+                    classification,
+                },
+            }
+
             return asset
         }),
         onChanged: vi.fn(),
@@ -65,8 +105,10 @@ function fixture() {
     const mount = () => {
         const element = views.createDetails(node)!
         document.body.appendChild(element)
+
         return element
     }
+
     return {
         views,
         ports,
@@ -74,18 +116,17 @@ function fixture() {
         requests,
         disposers,
         getAsset: () => asset,
-        setAsset: (next: Asset) => {
-            asset = next
-        },
+        setAsset: (next: Asset) => void (asset = next),
     }
 }
-function choose(element: HTMLElement, title: string) {
+const choose = (element: HTMLElement, title: string) => {
     const option = [...element.querySelectorAll<HTMLElement>('.canvas-asset-scope-dropdown .dropdown-option-item')].find(option => option.textContent?.trim() === title)
     expect(option).toBeDefined()
     option!.click()
 }
 afterEach(() => {
     for (const owner of owners.splice(0)) owner.destroy()
+
     document.body.replaceChildren()
 })
 
@@ -96,7 +137,12 @@ describe('WorkspaceAssetViews', () => {
         expect(element.querySelector('.canvas-asset-renditions')?.textContent).toBe('original: ready')
         expect(element.querySelector('.canvas-asset-seed')?.textContent).toBe('0')
         expect(element.querySelector('.canvas-asset-lineage')?.textContent).toBe('conversation conversation\nparent parent\nsource reference')
-        expect(f.requests[0]?.authority).toMatchObject({ workspaceId: 'workspace', assetId: 'asset', role: 'content', baseVersion: 7 })
+        expect(f.requests[0]?.authority).toMatchObject({
+            workspaceId: 'workspace',
+            assetId: 'asset',
+            role: 'content',
+            baseVersion: 7,
+        })
         f.views.clear()
         expect(f.requests[0]?.signal.aborted).toBe(true)
         expect(f.disposers[0]).toHaveBeenCalledOnce()
@@ -105,8 +151,15 @@ describe('WorkspaceAssetViews', () => {
 
     it('shows document roles for artifacts and omits an absent seed', () => {
         const f = fixture()
-        f.setAsset({ ...f.getAsset(), lineage: undefined })
-        const element = f.views.createDetails({ ...node, type: 'capabilityArtifact', artifactTypeId: 'artifact' })!
+        f.setAsset({
+            ...f.getAsset(),
+            lineage: undefined,
+        })
+        const element = f.views.createDetails({
+            ...node,
+            type: 'capabilityArtifact',
+            artifactTypeId: 'artifact',
+        })!
         expect(element.querySelector('.canvas-asset-storage-label')?.textContent).toBe('Documents')
         expect(element.querySelector('.canvas-asset-renditions')?.textContent).toBe('content')
         expect(element.querySelector('.canvas-asset-seed-row')).toBeNull()
@@ -146,12 +199,17 @@ describe('WorkspaceAssetViews', () => {
         f.ports.changeScope = vi.fn(async () => {
             const updated = await pending.promise
             f.setAsset(updated)
+
             return updated
         })
         const element = f.mount()
         choose(element, 'Mine')
         f.views.destroy()
-        pending.resolve({ ...f.getAsset(), scope: 'user', revision: 2 })
+        pending.resolve({
+            ...f.getAsset(),
+            scope: 'user',
+            revision: 2,
+        })
         await pending.promise
         expect(f.getAsset().scope).toBe('user')
         expect(f.ports.onChanged).not.toHaveBeenCalled()
@@ -181,6 +239,7 @@ describe('WorkspaceAssetViews', () => {
         let signal: AbortSignal | undefined
         f.ports.mountEditor = request => {
             signal = request.signal
+
             throw new Error('editor unavailable')
         }
         expect(() => f.views.createDetails(node)).toThrow('editor unavailable')

@@ -58,7 +58,11 @@ const capabilityMeta = {
         }],
         bestResults: ['Supply 3 to 5 high-resolution views, including face and full-body views.'],
         limitations: ['Missing angles and regions are inferred. Identity preservation is best effort.'],
-        executionCharacteristics: { cost: 'high' as const, latency: 'high' as const, summary: 'Generates and validates panels before assembly.' },
+        executionCharacteristics: {
+            cost: 'high' as const,
+            latency: 'high' as const,
+            summary: 'Generates and validates panels before assembly.',
+        },
     },
 }
 
@@ -73,9 +77,7 @@ describe('PromptReferenceNodeView', () => {
             ['tool', '', promptIcon],
             ['skill', '', fileIcon],
         ] as const,
-    )('uses an existing SVG for %s %s references', (referenceType, mediaKind, icon) => {
-        expect(getPromptReferenceIcon(referenceType, mediaKind)).toBe(icon)
-    })
+    )('uses an existing SVG for %s %s references', (referenceType, mediaKind, icon) => void expect(getPromptReferenceIcon(referenceType, mediaKind)).toBe(icon))
 
     it('renders only the existing icon and cosmetic name without trigger characters', () => {
         const node = promptReference({
@@ -256,8 +258,14 @@ describe('PromptReferenceNodeView', () => {
                 type: 'image',
                 nodeId: 'image-node-1',
                 assetId: 'asset-1',
-                position: { x: 0, y: 0 },
-                dimensions: { width: 640, height: 480 },
+                position: {
+                    x: 0,
+                    y: 0,
+                },
+                dimensions: {
+                    width: 640,
+                    height: 480,
+                },
             }),
             environment: {
                 getDocuments: () => [],
@@ -304,8 +312,14 @@ describe('PromptReferenceNodeView', () => {
                 type: 'image',
                 nodeId: 'image-node-1',
                 assetId: 'asset-1',
-                position: { x: 0, y: 0 },
-                dimensions: { width: 640, height: 480 },
+                position: {
+                    x: 0,
+                    y: 0,
+                },
+                dimensions: {
+                    width: 640,
+                    height: 480,
+                },
             }),
             environment: {
                 getDocuments: () => [],
@@ -339,8 +353,14 @@ describe('PromptReferenceNodeView', () => {
                 type: 'image',
                 nodeId: 'image-node-1',
                 assetId: 'asset-1',
-                position: { x: 0, y: 0 },
-                dimensions: { width: 640, height: 480 },
+                position: {
+                    x: 0,
+                    y: 0,
+                },
+                dimensions: {
+                    width: 640,
+                    height: 480,
+                },
             }),
             environment: {
                 getDocuments: () => [],
@@ -377,8 +397,14 @@ describe('PromptReferenceNodeView', () => {
                         type: 'video',
                         nodeId: 'video-node-1',
                         assetId: 'asset-video',
-                        position: { x: 0, y: 0 },
-                        dimensions: { width: 640, height: 360 },
+                        position: {
+                            x: 0,
+                            y: 0,
+                        },
+                        dimensions: {
+                            width: 640,
+                            height: 360,
+                        },
                     }
                     : undefined,
             environment: {
@@ -421,7 +447,10 @@ describe('PromptReferenceNodeView', () => {
         const documentNode = doc(p(promptReference({ displayName: 'Character Sheet' })))
         const state = createStateWithTextSelection(documentNode, start, start)
         const view = createMockEditorView({ state })
-        const event = new KeyboardEvent('keydown', { key, cancelable: true })
+        const event = new KeyboardEvent('keydown', {
+            key,
+            cancelable: true,
+        })
         const plugin = createPromptReferenceNodeViewPlugin()
 
         expect(plugin.props.handleKeyDown?.(view, event)).toBe(true)
@@ -439,11 +468,17 @@ describe('PromptReferenceNodeView', () => {
     )('converts a prompt-reference NodeSelection into a visible text caret for %s', (key, expected) => {
         const documentNode = doc(p(promptReference({ displayName: 'Character Sheet' })))
         const nodePosition = findNodePosition(documentNode, PROMPT_REFERENCE_NODE_TYPE)
-        if (nodePosition === null) throw new Error('Missing prompt reference in test document')
+
+        if (nodePosition === null)
+            throw new Error('Missing prompt reference in test document')
+
         const state = createStateWithNodeSelection(documentNode, nodePosition)
         expect(state.selection).toBeInstanceOf(NodeSelection)
         const view = createMockEditorView({ state })
-        const event = new KeyboardEvent('keydown', { key, cancelable: true })
+        const event = new KeyboardEvent('keydown', {
+            key,
+            cancelable: true,
+        })
 
         expect(createPromptReferenceNodeViewPlugin().props.handleKeyDown?.(view, event)).toBe(true)
         expect(view.state.selection).toBeInstanceOf(TextSelection)

@@ -185,10 +185,12 @@ export class NativePlayback {
         options.signal.throwIfAborted()
         const html = createDocumentHtml(options.root.ownerDocument)
         this.element = options.kind === 'video'
-            ? html`<video
+            ? html`
+                <video
                     className="canvas-native-video"
                     playsinline
-                ></video>` as HTMLVideoElement
+                ></video>
+            ` as HTMLVideoElement
             : html`<audio className="canvas-native-audio"></audio>` as HTMLAudioElement
         this.element.muted = options.muted ?? false
         this.element.loop = options.loop ?? false

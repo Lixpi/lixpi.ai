@@ -16,15 +16,17 @@ type Deferred = {
     resolve: () => void
 }
 
-function createDeferred(): Deferred {
+const createDeferred = (): Deferred => {
     let resolve!: () => void
-    const promise = new Promise<void>((done) => {
-        resolve = done
-    })
-    return { promise, resolve }
+    const promise = new Promise<void>((done) => void (resolve = done))
+
+    return {
+        promise,
+        resolve,
+    }
 }
 
-async function flushMicrotasks(): Promise<void> {
+const flushMicrotasks = async (): Promise<void> => {
     for (let i = 0; i < 8; i++) {
         await Promise.resolve()
     }
@@ -39,6 +41,7 @@ describe('RouterService — route data loader races', () => {
     const getWorkspace = vi.fn(({ workspaceId }: { workspaceId: string }) => {
         const deferred = createDeferred()
         workspaceLoads.set(workspaceId, deferred)
+
         return deferred.promise
     })
     const loadWorkspaceAssets = vi.fn(async () => undefined)
@@ -55,9 +58,7 @@ describe('RouterService — route data loader races', () => {
         })
     })
 
-    afterEach(() => {
-        routerService.destroy()
-    })
+    afterEach(() => void routerService.destroy())
 
     it('does not let a stale workspace load mark the active newer route as fetched', async () => {
         routerService.navigateTo('/workspace/:workspaceId', {

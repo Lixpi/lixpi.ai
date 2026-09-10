@@ -78,7 +78,10 @@ const record: CapabilityCatalogRecord = {
 describe('Capability catalog management transport', () => {
     beforeEach(() => {
         vi.clearAllMocks()
-        mocks.model.readManifest.mockResolvedValue({ record, manifest })
+        mocks.model.readManifest.mockResolvedValue({
+            record,
+            manifest,
+        })
         mocks.model.authorize.mockResolvedValue(record)
         mocks.model.listAccessGrants.mockResolvedValue([{
             capabilityId: record.capabilityId,
@@ -90,19 +93,33 @@ describe('Capability catalog management transport', () => {
         mocks.model.save.mockResolvedValue(record)
         mocks.model.getAudienceUserIds.mockResolvedValue(['editor-1'])
         mocks.model.setStatus.mockResolvedValue({
-            record: { ...record, status: 'disabled', updatedAt: 3 },
+            record: {
+                ...record,
+                status: 'disabled',
+                updatedAt: 3,
+            },
             audienceUserIds: ['editor-1'],
         })
     })
 
     it('returns management permissions and grants to an authorized editor', async () => {
-        const result = await handler(CATALOG.GET)({ user: { userId: 'owner-1' }, capabilityId: record.capabilityId })
+        const result = await handler(CATALOG.GET)({
+            user: { userId: 'owner-1' },
+            capabilityId: record.capabilityId,
+        })
 
         expect(result).toMatchObject({
             record,
             manifest,
-            permissions: { canEdit: true, canDelete: true, canShare: true },
-            grants: [expect.objectContaining({ principalId: 'editor-1', accessLevel: 'editor' })],
+            permissions: {
+                canEdit: true,
+                canDelete: true,
+                canShare: true,
+            },
+            grants: [expect.objectContaining({
+                principalId: 'editor-1',
+                accessLevel: 'editor',
+            })],
         })
     })
 
@@ -117,7 +134,10 @@ describe('Capability catalog management transport', () => {
             tags: ['test'],
         }
         await handler(CATALOG.CREATE)(common)
-        await handler(CATALOG.UPDATE)({ ...common, expectedManifestBlobHash: record.manifestBlobHash })
+        await handler(CATALOG.UPDATE)({
+            ...common,
+            expectedManifestBlobHash: record.manifestBlobHash,
+        })
 
         expect(mocks.model.save).toHaveBeenNthCalledWith(
             1,

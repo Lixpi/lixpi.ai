@@ -49,9 +49,11 @@ afterEach(() => {
     debugErrSpy = null
 })
 
-function getImageUrls(messages: ChatMessage[]): string[] {
+const getImageUrls = (messages: ChatMessage[]): string[] => {
     return messages.flatMap((message) => {
-        if (!Array.isArray(message.content)) return []
+        if (!Array.isArray(message.content))
+            return []
+
         return message.content
             .filter((block) => block?.type === 'input_image')
             .map((block) => block.image_url)
@@ -112,7 +114,7 @@ const goatCandidate: NonNullable<ProviderState['mediaBranchCandidateSnapshot']>[
 
 // Five plain base-context references for exercising the provider-aware video
 // reference cap (which replaced the old hardcoded .slice(0, 3)).
-function buildCapReferenceCandidates(): NonNullable<ProviderState['mediaBranchCandidateSnapshot']>['candidates'] {
+const buildCapReferenceCandidates = (): NonNullable<ProviderState['mediaBranchCandidateSnapshot']>['candidates'] => {
     return Array.from({ length: 5 }, (_, i) => ({
         candidateId: `cap-src-${i}`,
         nodeId: `cap-src-${i}`,
@@ -126,44 +128,100 @@ function buildCapReferenceCandidates(): NonNullable<ProviderState['mediaBranchCa
     }))
 }
 
-function createState(overrides: {
+const createState = (overrides: {
     promptText?: string
     activeTargetCandidateId?: string
     candidates?: NonNullable<ProviderState['mediaBranchCandidateSnapshot']>['candidates']
-} = {}): ProviderState {
+} = {}): ProviderState => {
     const promptText = overrides.promptText ?? 'draw a goat in the style of that landscape painting'
     const candidates = overrides.candidates ?? baseCandidates
     const hasGoatCandidate = candidates.some((candidate: { nodeId?: string }) => candidate.nodeId === 'goat-generated')
     const candidateMessageContent = [
-        { type: 'input_text', text: JSON.stringify({ type: 'standalone_image', nodeId: 'portrait-source' }) },
-        { type: 'input_image', image_url: portraitUrl, detail: 'auto' },
-        { type: 'input_text', text: JSON.stringify({ type: 'standalone_image', nodeId: 'landscape-source' }) },
-        { type: 'input_image', image_url: landscapeUrl, detail: 'auto' },
-        { type: 'input_text', text: JSON.stringify({ type: 'generated_image_variant', nodeId: 'person-generated' }) },
-        { type: 'input_image', image_url: personUrl, detail: 'auto' },
+        {
+            type: 'input_text',
+            text: JSON.stringify({
+                type: 'standalone_image',
+                nodeId: 'portrait-source',
+            }),
+        },
+        {
+            type: 'input_image',
+            image_url: portraitUrl,
+            detail: 'auto',
+        },
+        {
+            type: 'input_text',
+            text: JSON.stringify({
+                type: 'standalone_image',
+                nodeId: 'landscape-source',
+            }),
+        },
+        {
+            type: 'input_image',
+            image_url: landscapeUrl,
+            detail: 'auto',
+        },
+        {
+            type: 'input_text',
+            text: JSON.stringify({
+                type: 'generated_image_variant',
+                nodeId: 'person-generated',
+            }),
+        },
+        {
+            type: 'input_image',
+            image_url: personUrl,
+            detail: 'auto',
+        },
         ...(hasGoatCandidate
             ? [
-                { type: 'input_text', text: JSON.stringify({ type: 'generated_image_variant', nodeId: 'goat-generated' }) },
-                { type: 'input_image', image_url: goatUrl, detail: 'auto' },
+                {
+                    type: 'input_text',
+                    text: JSON.stringify({
+                        type: 'generated_image_variant',
+                        nodeId: 'goat-generated',
+                    }),
+                },
+                {
+                    type: 'input_image',
+                    image_url: goatUrl,
+                    detail: 'auto',
+                },
             ]
             : []),
     ]
+
     return {
         messages: [
             {
                 role: 'user',
                 content: [
-                    { type: 'input_text', text: 'Feature visual references for @paint' },
-                    { type: 'input_image', image_url: featureUrl, detail: 'high' },
+                    {
+                        type: 'input_text',
+                        text: 'Feature visual references for @paint',
+                    },
+                    {
+                        type: 'input_image',
+                        image_url: featureUrl,
+                        detail: 'high',
+                    },
                 ],
             },
             {
                 role: 'user',
                 content: candidateMessageContent,
             },
-            { role: 'user', content: promptText },
+            {
+                role: 'user',
+                content: promptText,
+            },
         ],
-        aiModelMetaInfo: { provider: 'OpenAI', model: 'gpt-4.1', modelVersion: 'gpt-4.1', maxCompletionSize: 4096 },
+        aiModelMetaInfo: {
+            provider: 'OpenAI',
+            model: 'gpt-4.1',
+            modelVersion: 'gpt-4.1',
+            maxCompletionSize: 4096,
+        },
         eventMeta: {},
         workspaceId: 'workspace-1',
         aiChatThreadId: 'thread-1',
@@ -175,7 +233,11 @@ function createState(overrides: {
         aiRequestReceivedAt: 1,
         enableImageGeneration: false,
         imageSize: 'auto',
-        imageModelMetaInfo: { provider: 'OpenAI', model: 'gpt-image-1', modelVersion: 'gpt-image-1' },
+        imageModelMetaInfo: {
+            provider: 'OpenAI',
+            model: 'gpt-image-1',
+            modelVersion: 'gpt-image-1',
+        },
         imageModelVersion: 'gpt-image-1',
         imageProviderName: 'OpenAI',
         imagePromptRetryCount: 0,
@@ -193,7 +255,7 @@ function createState(overrides: {
     }
 }
 
-function createVideoState(overrides: Parameters<typeof createState>[0] = {}): ProviderState {
+const createVideoState = (overrides: Parameters<typeof createState>[0] = {}): ProviderState => {
     // A video-only request: no image model selected, only a VEO video model.
     // The resolver must still run and ground references for VEO.
     return {
@@ -205,7 +267,7 @@ function createVideoState(overrides: Parameters<typeof createState>[0] = {}): Pr
     }
 }
 
-function createParsedResolution(overrides: Partial<Record<string, unknown>> = {}): Record<string, unknown> {
+const createParsedResolution = (overrides: Partial<Record<string, unknown>> = {}): Record<string, unknown> => {
     return {
         mode: 'context-only',
         operationKind: 'new_image',
@@ -228,7 +290,7 @@ function createParsedResolution(overrides: Partial<Record<string, unknown>> = {}
     }
 }
 
-function createDeps(parsed: Record<string, unknown>) {
+const createDeps = (parsed: Record<string, unknown>) => {
     const natsService = {
         getObject: vi.fn(async () => tinyPngBytes),
     }
@@ -258,7 +320,10 @@ function createDeps(parsed: Record<string, unknown>) {
 
 describe('resolveMediaBranch', () => {
     it('resolves lineage for Capability media output even when ordinary media providers are disabled', async () => {
-        const { deps, publisher } = createDeps(createParsedResolution())
+        const {
+            deps,
+            publisher,
+        } = createDeps(createParsedResolution())
         const state = createState({ candidates: [] })
         state.imageModelVersion = undefined
         state.imageProviderName = undefined
@@ -274,7 +339,11 @@ describe('resolveMediaBranch', () => {
     })
 
     it('does not resolve a media branch for a terminal Capability Artifact', async () => {
-        const { deps, publisher, callVlm } = createDeps(createParsedResolution())
+        const {
+            deps,
+            publisher,
+            callVlm,
+        } = createDeps(createParsedResolution())
         const state = createState({ candidates: [] })
         state.capabilityOutputAssetIds = ['asset-action-timeline']
         state.capabilityOutputMediaAssetIds = []
@@ -290,7 +359,11 @@ describe('resolveMediaBranch', () => {
     })
 
     it('preserves feature images and every explicitly attached candidate in provider messages', async () => {
-        const { deps, publisher, callVlm } = createDeps({
+        const {
+            deps,
+            publisher,
+            callVlm,
+        } = createDeps({
             mode: 'context-only',
             operationKind: 'new_image',
             targetCandidateId: '',
@@ -308,8 +381,16 @@ describe('resolveMediaBranch', () => {
             confidence: 0.92,
             rationale: 'The prompt asks for a new goat and uses the landscape as style evidence.',
             decisions: [
-                { nodeId: 'landscape-source', role: 'style-reference', reason: 'style source' },
-                { nodeId: 'person-generated', role: 'excluded', reason: 'unrelated portrait branch' },
+                {
+                    nodeId: 'landscape-source',
+                    role: 'style-reference',
+                    reason: 'style source',
+                },
+                {
+                    nodeId: 'person-generated',
+                    role: 'excluded',
+                    reason: 'unrelated portrait branch',
+                },
             ],
         })
 
@@ -338,7 +419,10 @@ describe('resolveMediaBranch', () => {
     })
 
     it('does not invent a generated identity target when the VLM returns a fresh branch', async () => {
-        const { deps, publisher } = createDeps(createParsedResolution({
+        const {
+            deps,
+            publisher,
+        } = createDeps(createParsedResolution({
             mode: 'fresh-branch',
             operationKind: 'new_image',
             targetCandidateId: '',
@@ -354,10 +438,26 @@ describe('resolveMediaBranch', () => {
             styleTags: ['orange-palette'],
             rationale: 'The prompt names the guy from the landscape-source branch; person-generated is the branch leaf identity reference.',
             decisions: [
-                { nodeId: 'portrait-source', role: 'base-context', reason: 'original identity photo' },
-                { nodeId: 'landscape-source', role: 'style-reference', reason: 'landscape source style' },
-                { nodeId: 'person-generated', role: 'base-context', reason: 'existing branch leaf for the named guy' },
-                { nodeId: 'goat-generated', role: 'excluded', reason: 'active target is a goat, not the named guy' },
+                {
+                    nodeId: 'portrait-source',
+                    role: 'base-context',
+                    reason: 'original identity photo',
+                },
+                {
+                    nodeId: 'landscape-source',
+                    role: 'style-reference',
+                    reason: 'landscape source style',
+                },
+                {
+                    nodeId: 'person-generated',
+                    role: 'base-context',
+                    reason: 'existing branch leaf for the named guy',
+                },
+                {
+                    nodeId: 'goat-generated',
+                    role: 'excluded',
+                    reason: 'active target is a goat, not the named guy',
+                },
             ],
         }))
 
@@ -398,7 +498,11 @@ describe('resolveMediaBranch', () => {
             entityTags: ['horse'],
             styleTags: ['portrait-style'],
             decisions: [
-                { nodeId: 'person-generated', role: 'style-reference', reason: 'only a style reference for a new subject' },
+                {
+                    nodeId: 'person-generated',
+                    role: 'style-reference',
+                    reason: 'only a style reference for a new subject',
+                },
             ],
         }))
 
@@ -430,7 +534,11 @@ describe('resolveMediaBranch', () => {
             visualEntitySummary: 'more artistic portrait of the man',
             entityTags: ['person'],
             decisions: [
-                { nodeId: 'person-generated', role: 'target', reason: 'active portrait branch target' },
+                {
+                    nodeId: 'person-generated',
+                    role: 'target',
+                    reason: 'active portrait branch target',
+                },
             ],
         }))
 
@@ -617,8 +725,16 @@ describe('resolveMediaBranch', () => {
             entityTags: ['goat'],
             styleTags: ['painting'],
             decisions: [
-                { nodeId: 'landscape-source', role: 'style-reference', reason: 'style source' },
-                { nodeId: 'person-generated', role: 'excluded', reason: 'portrait branch conflicts with goat subject' },
+                {
+                    nodeId: 'landscape-source',
+                    role: 'style-reference',
+                    reason: 'style source',
+                },
+                {
+                    nodeId: 'person-generated',
+                    role: 'excluded',
+                    reason: 'portrait branch conflicts with goat subject',
+                },
             ],
         }))
 
@@ -641,7 +757,10 @@ describe('resolveMediaBranch', () => {
     })
 
     it('ignores a VLM exclusion of an explicitly attached target', async () => {
-        const { deps, publisher } = createDeps(createParsedResolution({
+        const {
+            deps,
+            publisher,
+        } = createDeps(createParsedResolution({
             mode: 'edit-active-branch',
             operationKind: 'edit_existing',
             targetCandidateId: 'person-generated',
@@ -649,7 +768,11 @@ describe('resolveMediaBranch', () => {
             referenceCandidateIds: ['person-generated'],
             excludedCandidateIds: ['person-generated'],
             decisions: [
-                { nodeId: 'person-generated', role: 'target', reason: 'target' },
+                {
+                    nodeId: 'person-generated',
+                    role: 'target',
+                    reason: 'target',
+                },
             ],
         }))
 
@@ -665,14 +788,21 @@ describe('resolveMediaBranch', () => {
     })
 
     it('restores an explicitly attached target omitted by the VLM reference list', async () => {
-        const { deps, publisher } = createDeps(createParsedResolution({
+        const {
+            deps,
+            publisher,
+        } = createDeps(createParsedResolution({
             mode: 'edit-active-branch',
             operationKind: 'edit_existing',
             targetCandidateId: 'person-generated',
             parentCandidateId: 'person-generated',
             referenceCandidateIds: ['portrait-source'],
             decisions: [
-                { nodeId: 'person-generated', role: 'target', reason: 'target' },
+                {
+                    nodeId: 'person-generated',
+                    role: 'target',
+                    reason: 'target',
+                },
             ],
         }))
 
@@ -687,7 +817,10 @@ describe('resolveMediaBranch', () => {
     })
 
     it('fails visibly when the VLM returns an ambiguous resolution', async () => {
-        const { deps, publisher } = createDeps({
+        const {
+            deps,
+            publisher,
+        } = createDeps({
             mode: 'ambiguous',
             operationKind: 'new_image',
             targetCandidateId: '',
@@ -720,7 +853,10 @@ describe('resolveMediaBranch', () => {
             ancestorNodeIds: ['portrait-source-copy'],
             sourceContextNodeIds: ['portrait-source-copy'],
         }
-        const { deps, publisher } = createDeps(createParsedResolution({
+        const {
+            deps,
+            publisher,
+        } = createDeps(createParsedResolution({
             mode: 'ambiguous',
             confidence: 0.1,
             rationale: 'The referent is unclear.',
@@ -745,7 +881,10 @@ describe('resolveMediaBranch', () => {
 
     // Temporary skip: API integration behavior changed; re-enable after stabilization.
     it.skip('runs for a video-only request and maps the resolved target onto videoFirstFrameImage', async () => {
-        const { deps, publisher } = createDeps(createParsedResolution({
+        const {
+            deps,
+            publisher,
+        } = createDeps(createParsedResolution({
             mode: 'edit-active-branch',
             operationKind: 'edit_existing',
             targetCandidateId: 'person-generated',
@@ -753,7 +892,11 @@ describe('resolveMediaBranch', () => {
             referenceCandidateIds: ['person-generated'],
             sourceContextNodeIds: ['portrait-source'],
             decisions: [
-                { nodeId: 'person-generated', role: 'target', reason: 'animate this generated portrait' },
+                {
+                    nodeId: 'person-generated',
+                    role: 'target',
+                    reason: 'animate this generated portrait',
+                },
             ],
         }))
 
@@ -775,14 +918,21 @@ describe('resolveMediaBranch', () => {
 
     // Temporary skip: API integration behavior changed; re-enable after stabilization.
     it.skip('maps references onto videoReferenceImages when a video request identifies no target', async () => {
-        const { deps, publisher } = createDeps(createParsedResolution({
+        const {
+            deps,
+            publisher,
+        } = createDeps(createParsedResolution({
             mode: 'context-only',
             operationKind: 'new_image',
             referenceCandidateIds: ['landscape-source'],
             sourceContextNodeIds: ['landscape-source'],
             styleReferenceCandidateIds: ['landscape-source'],
             decisions: [
-                { nodeId: 'landscape-source', role: 'style-reference', reason: 'style and mood reference' },
+                {
+                    nodeId: 'landscape-source',
+                    role: 'style-reference',
+                    reason: 'style and mood reference',
+                },
             ],
         }))
 
@@ -809,7 +959,11 @@ describe('resolveMediaBranch', () => {
             referenceCandidateIds: refNodeIds,
             sourceContextNodeIds: refNodeIds,
             styleReferenceCandidateIds: refNodeIds,
-            decisions: refNodeIds.map((nodeId) => ({ nodeId, role: 'style-reference', reason: 'cap test reference' })),
+            decisions: refNodeIds.map((nodeId) => ({
+                nodeId,
+                role: 'style-reference',
+                reason: 'cap test reference',
+            })),
         }))
 
         const update = await resolveMediaBranch(createVideoState({ candidates: capCandidates }), deps)
@@ -829,12 +983,21 @@ describe('resolveMediaBranch', () => {
             referenceCandidateIds: refNodeIds,
             sourceContextNodeIds: refNodeIds,
             styleReferenceCandidateIds: refNodeIds,
-            decisions: refNodeIds.map((nodeId) => ({ nodeId, role: 'style-reference', reason: 'cap test reference' })),
+            decisions: refNodeIds.map((nodeId) => ({
+                nodeId,
+                role: 'style-reference',
+                reason: 'cap test reference',
+            })),
         }))
 
         const state: ProviderState = {
             ...createVideoState({ candidates: capCandidates }),
-            videoModelMetaInfo: { provider: 'Google', model: 'Seedance', modelVersion: 'dreamina-seedance-2-0-260128', videoMaxReferenceImages: 9 },
+            videoModelMetaInfo: {
+                provider: 'Google',
+                model: 'Seedance',
+                modelVersion: 'dreamina-seedance-2-0-260128',
+                videoMaxReferenceImages: 9,
+            },
         }
         const update = await resolveMediaBranch(state, deps)
 
@@ -844,7 +1007,11 @@ describe('resolveMediaBranch', () => {
     })
 
     it('returns an empty patch when neither image nor video generation is configured', async () => {
-        const { deps, publisher, callVlm } = createDeps(createParsedResolution({}))
+        const {
+            deps,
+            publisher,
+            callVlm,
+        } = createDeps(createParsedResolution({}))
 
         const update = await resolveMediaBranch({
             ...createState(),
@@ -861,7 +1028,10 @@ describe('resolveMediaBranch', () => {
     })
 
     it('errors for missing snapshot on a video-only request', async () => {
-        const { deps, publisher } = createDeps(createParsedResolution({}))
+        const {
+            deps,
+            publisher,
+        } = createDeps(createParsedResolution({}))
 
         await expect(resolveMediaBranch({
             ...createVideoState(),
@@ -884,24 +1054,30 @@ describe('resolveMediaBranch', () => {
                 'Image branch resolver model is not configured for provider Google',
             )
         } finally {
-            if (previousProvider === undefined) {
+            if (previousProvider === undefined)
                 delete process.env.MEDIA_BRANCH_RESOLVER_PROVIDER
-            } else {
+             else
                 process.env.MEDIA_BRANCH_RESOLVER_PROVIDER = previousProvider
-            }
-            if (previousModel === undefined) {
+
+            if (previousModel === undefined)
                 delete process.env.MEDIA_BRANCH_RESOLVER_MODEL_VERSION
-            } else {
+             else
                 process.env.MEDIA_BRANCH_RESOLVER_MODEL_VERSION = previousModel
-            }
         }
     })
 
     it('rejects invalid decision roles from the VLM while retaining strict node-id validation', async () => {
-        const { deps, publisher } = createDeps({
+        const {
+            deps,
+            publisher,
+        } = createDeps({
             ...createParsedResolution({}),
             decisions: [
-                { nodeId: 'person-generated', role: 'invalid-role', reason: 'bad enum member' },
+                {
+                    nodeId: 'person-generated',
+                    role: 'invalid-role',
+                    reason: 'bad enum member',
+                },
             ],
         })
 
@@ -913,7 +1089,10 @@ describe('resolveMediaBranch', () => {
     })
 
     it('rejects low-confidence resolutions even when references are present', async () => {
-        const { deps, publisher } = createDeps(createParsedResolution({ confidence: 0.1 }))
+        const {
+            deps,
+            publisher,
+        } = createDeps(createParsedResolution({ confidence: 0.1 }))
 
         await expect(resolveMediaBranch(createState(), deps)).rejects.toThrow('MEDIA_BRANCH_REFERENCE_AMBIGUITY:Resolved from visible candidates.')
         expect(publisher.mediaBranchResolutionError).toHaveBeenCalledOnce()
@@ -921,7 +1100,10 @@ describe('resolveMediaBranch', () => {
     })
 
     it('keeps a targetless mode targetless without explicit resolver target evidence', async () => {
-        const { deps, publisher } = createDeps(createParsedResolution({
+        const {
+            deps,
+            publisher,
+        } = createDeps(createParsedResolution({
             mode: 'fresh-branch',
             operationKind: 'new_image',
             referenceCandidateIds: ['person-generated'],
@@ -969,7 +1151,11 @@ describe('resolveMediaBranch', () => {
             referenceCandidateIds: ['landscape-source', 'person-generated'],
             sourceContextNodeIds: ['landscape-source'],
             decisions: [
-                { nodeId: 'person-generated', role: 'target', reason: 'target image should win first-frame order' },
+                {
+                    nodeId: 'person-generated',
+                    role: 'target',
+                    reason: 'target image should win first-frame order',
+                },
             ],
         }))
 
@@ -980,7 +1166,10 @@ describe('resolveMediaBranch', () => {
     })
 
     it('normalizes candidate node-id arrays by trimming whitespace and deduplicating', async () => {
-        const { deps, publisher } = createDeps({
+        const {
+            deps,
+            publisher,
+        } = createDeps({
             ...createParsedResolution({
                 referenceCandidateIds: ['  portrait-source', 'landscape-source ', 'portrait-source', '', 'landscape-source'],
                 sourceContextNodeIds: [' landscape-source', 'landscape-source  ', ''],
@@ -1011,8 +1200,16 @@ describe('resolveMediaBranch', () => {
             styleReferenceCandidateIds: [],
             excludedCandidateIds: [],
             decisions: [
-                { nodeId: 'missing-node', role: 'style-reference', reason: 'should be ignored' },
-                { nodeId: 'portrait-source', role: 'base-context', reason: 'portrait is the intended source' },
+                {
+                    nodeId: 'missing-node',
+                    role: 'style-reference',
+                    reason: 'should be ignored',
+                },
+                {
+                    nodeId: 'portrait-source',
+                    role: 'base-context',
+                    reason: 'portrait is the intended source',
+                },
             ],
         }))
 
@@ -1028,7 +1225,10 @@ describe('resolveMediaBranch', () => {
     })
 
     it('restricts candidates to explicitReferenceCandidateIds so the VLM never sees non-explicit media', async () => {
-        const { deps, callVlm } = createDeps(createParsedResolution({
+        const {
+            deps,
+            callVlm,
+        } = createDeps(createParsedResolution({
             referenceCandidateIds: ['landscape-source'],
             sourceContextNodeIds: ['landscape-source'],
         }))
@@ -1052,7 +1252,11 @@ describe('resolveMediaBranch', () => {
     })
 
     it('resolves a fresh branch when explicitReferenceCandidateIds exclude every candidate', async () => {
-        const { deps, callVlm, publisher } = createDeps(createParsedResolution())
+        const {
+            deps,
+            callVlm,
+            publisher,
+        } = createDeps(createParsedResolution())
 
         const state = createState()
         state.mediaBranchCandidateSnapshot = {

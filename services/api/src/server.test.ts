@@ -9,24 +9,32 @@ import {
 
 const mocks = vi.hoisted(() => {
     const appUseCalls: Array<{ args: unknown[] }> = []
-    const appGetCalls: Array<{ path: string; handler: (...args: unknown[]) => unknown }> = []
-    const appSetCalls: Array<{ key: string; value: unknown }> = []
+    const appGetCalls: Array<{
+        path: string
+        handler: (...args: unknown[]) => unknown
+    }> = []
+    const appSetCalls: Array<{
+        key: string
+        value: unknown
+    }> = []
 
     const expressJson = vi.fn(() => 'json-middleware')
     const expressUrlencoded = vi.fn(() => 'urlencoded-middleware')
 
     const expressUse = vi.fn()
     const app = {
-        set: vi.fn((key: string, value: unknown) => {
-            appSetCalls.push({ key, value })
-        }),
+        set: vi.fn((key: string, value: unknown) => void appSetCalls.push({
+            key,
+            value,
+        })),
         use: vi.fn((...args: unknown[]) => {
             appUseCalls.push({ args })
             expressUse(...args)
         }),
-        get: vi.fn((path: string, handler: (...args: unknown[]) => unknown) => {
-            appGetCalls.push({ path, handler })
-        }),
+        get: vi.fn((path: string, handler: (...args: unknown[]) => unknown) => void appGetCalls.push({
+            path,
+            handler,
+        })),
     }
 
     const express = vi.fn(() => app)
@@ -38,6 +46,7 @@ const mocks = vi.hoisted(() => {
         listening: true,
         listen: vi.fn((port: number, host: string, callback?: () => void) => {
             callback?.()
+
             return undefined
         }),
     }
@@ -95,8 +104,8 @@ const mocks = vi.hoisted(() => {
         }
     }
 
-    const metricsConfigFromEnv = vi.fn(() => ({}))
-    const MetricsClient = vi.fn()
+    const usageMeteringOptionsFromEnv = vi.fn(() => ({}))
+    const UsageMeteringClient = vi.fn()
 
     const log = vi.fn()
     const info = vi.fn()
@@ -153,6 +162,7 @@ const mocks = vi.hoisted(() => {
                 shutdown: vi.fn(),
             }
             llmModule = module
+
             return module
         }),
         getLlmModule: () => llmModule,
@@ -160,8 +170,8 @@ const mocks = vi.hoisted(() => {
         startAssetMaintenanceWorker,
         CapabilityRunEventRelay,
         capabilityRunEventRelayStart,
-        metricsConfigFromEnv,
-        MetricsClient,
+        usageMeteringOptionsFromEnv,
+        UsageMeteringClient,
         log,
         info,
         infoStr,
@@ -276,21 +286,19 @@ vi.mock('./services/capability-run-event-log.ts', () => ({
     CapabilityRunEventRelay: mocks.CapabilityRunEventRelay,
 }))
 
-vi.mock('./metrics/metrics-client.ts', () => ({
-    MetricsClient: mocks.MetricsClient,
-    metricsConfigFromEnv: mocks.metricsConfigFromEnv,
+vi.mock('@lixpi/usage-reporter', () => ({
+    UsageMeteringClient: mocks.UsageMeteringClient,
+    usageMeteringOptionsFromEnv: mocks.usageMeteringOptionsFromEnv,
 }))
 
-async function loadServer(): Promise<void> {
+const loadServer = async (): Promise<void> => {
     vi.resetModules()
     await import('./server.ts')
 }
 
-function routeForPath(path: string) {
-    return mocks.appUseCalls.find((call) => call.args.at(0) === path)?.args.at(1)
-}
+const routeForPath = (path: string) => mocks.appUseCalls.find((call) => call.args.at(0) === path)?.args.at(1)
 
-function resetServerEnv(overrides: Record<string, string | undefined>): void {
+const resetServerEnv = (overrides: Record<string, string | undefined>): void => {
     process.env.ENVIRONMENT = 'local'
     process.env.NATS_SERVERS = 'nats://localhost:4222'
     process.env.NATS_REGULAR_USER_PASSWORD = 'regular-password'
@@ -304,15 +312,18 @@ function resetServerEnv(overrides: Record<string, string | undefined>): void {
 
     Object.keys(overrides).forEach((key) => {
         const value = overrides[key]
+
         if (value === undefined) {
             delete process.env[key]
+
             return
         }
+
         process.env[key] = value
     })
 }
 
-function resetMockState(): void {
+const resetMockState = (): void => {
     mocks.appUseCalls.length = 0
     mocks.appGetCalls.length = 0
     mocks.appSetCalls.length = 0
@@ -333,8 +344,8 @@ function resetMockState(): void {
     mocks.setLlmModule.mockClear()
     mocks.setPromptReferenceModuleCatalog.mockClear()
     mocks.startAssetMaintenanceWorker.mockClear()
-    mocks.metricsConfigFromEnv.mockClear()
-    mocks.MetricsClient.mockClear()
+    mocks.usageMeteringOptionsFromEnv.mockClear()
+    mocks.UsageMeteringClient.mockClear()
     mocks.log.mockClear()
     mocks.info.mockClear()
     mocks.infoStr.mockClear()
@@ -368,14 +379,19 @@ describe('services/api server startup', () => {
         resetMockState()
     })
 
-    afterEach(() => {
-        vi.restoreAllMocks()
-    })
+    afterEach(() => void vi.restoreAllMocks())
 
     it('initializes core services, middleware, routes, and shutdown handlers', async () => {
-        const processOnCalls: Array<{ event: string; handler: (...args: unknown[]) => unknown }> = []
+        const processOnCalls: Array<{
+            event: string
+            handler: (...args: unknown[]) => unknown
+        }> = []
         const processOnSpy = vi.spyOn(process, 'on').mockImplementation((event: string, handler: (...args: unknown[]) => unknown) => {
-            processOnCalls.push({ event, handler })
+            processOnCalls.push({
+                event,
+                handler,
+            })
+
             return process as NodeJS.Process
         })
         const processExitSpy = vi.spyOn(process, 'exit').mockImplementation(() => undefined as never)
@@ -413,7 +429,7 @@ describe('services/api server startup', () => {
         })
         expect(mocks.createLlmModule).toHaveBeenCalledWith({
             natsService: mocks.natsInstance,
-            metrics: expect.anything(),
+            usageMetering: expect.anything(),
         })
         expect(mocks.getLlmModule()?.seedCapabilities).toHaveBeenCalledTimes(1)
         expect(mocks.setPromptReferenceModuleCatalog).toHaveBeenCalledWith(mocks.capabilityModuleCatalog)
@@ -424,8 +440,14 @@ describe('services/api server startup', () => {
 
         expect(mocks.app.use).toHaveBeenCalledTimes(9)
         expect(mocks.expressJson).toHaveBeenCalledWith({ limit: '100mb' })
-        expect(mocks.expressUrlencoded).toHaveBeenCalledWith({ limit: '100mb', extended: true })
-        expect(mocks.cors).toHaveBeenCalledWith({ origin: 'https://api.example.test', credentials: true })
+        expect(mocks.expressUrlencoded).toHaveBeenCalledWith({
+            limit: '100mb',
+            extended: true,
+        })
+        expect(mocks.cors).toHaveBeenCalledWith({
+            origin: 'https://api.example.test',
+            credentials: true,
+        })
         expect(mocks.cookieParser).toHaveBeenCalledWith()
 
         expect(routeForPath('/api/assets')).toBe(mocks.assetRoutes)
@@ -474,9 +496,16 @@ describe('services/api server startup', () => {
     })
 
     it('uses immediate exit on SIGTERM without initiating graceful shutdown paths', async () => {
-        const processOnCalls: Array<{ event: string; handler: (...args: unknown[]) => unknown }> = []
+        const processOnCalls: Array<{
+            event: string
+            handler: (...args: unknown[]) => unknown
+        }> = []
         const processOnSpy = vi.spyOn(process, 'on').mockImplementation((event: string, handler: (...args: unknown[]) => unknown) => {
-            processOnCalls.push({ event, handler })
+            processOnCalls.push({
+                event,
+                handler,
+            })
+
             return process as NodeJS.Process
         })
         const processExitSpy = vi.spyOn(process, 'exit').mockImplementation(() => undefined as never)

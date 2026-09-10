@@ -31,11 +31,14 @@ import {
 } from './executionTraceDetails.ts'
 import { createExecutionTraceTimelineDetailAdapter } from './executionTraceTimelineDetail.ts'
 
-function makeTrace(overrides: Partial<ExecutionTrace> = {}): ExecutionTrace {
-    return { traceVersion: 'execution-trace-v1', ...overrides }
+const makeTrace = (overrides: Partial<ExecutionTrace> = {}): ExecutionTrace => {
+    return {
+        traceVersion: 'execution-trace-v1',
+        ...overrides,
+    }
 }
 
-function chipNames(element: HTMLElement): string[] {
+const chipNames = (element: HTMLElement): string[] => {
     return [...element.querySelectorAll<HTMLElement>('.prompt-reference-chip-name')]
         .map(node => node.textContent ?? '')
 }
@@ -45,17 +48,11 @@ function chipNames(element: HTMLElement): string[] {
 // =============================================================================
 
 describe('executionTraceDetails — formatters', () => {
-    it('strips the provider prefix from a namespaced model id', () => {
-        expect(formatExecutionTraceModelId('openai:gpt-image-1')).toBe('gpt-image-1')
-    })
+    it('strips the provider prefix from a namespaced model id', () => void expect(formatExecutionTraceModelId('openai:gpt-image-1')).toBe('gpt-image-1'))
 
-    it('keeps a model id that carries no provider prefix', () => {
-        expect(formatExecutionTraceModelId('gpt-image-1')).toBe('gpt-image-1')
-    })
+    it('keeps a model id that carries no provider prefix', () => void expect(formatExecutionTraceModelId('gpt-image-1')).toBe('gpt-image-1'))
 
-    it('keeps every segment after the first colon', () => {
-        expect(formatExecutionTraceModelId('bedrock:us.anthropic:claude')).toBe('us.anthropic:claude')
-    })
+    it('keeps every segment after the first colon', () => void expect(formatExecutionTraceModelId('bedrock:us.anthropic:claude')).toBe('us.anthropic:claude'))
 
     it('humanizes a handle role without shouting the remaining words', () => {
         expect(formatExecutionTraceHandleRole('character-reference')).toBe('Character reference')
@@ -80,12 +77,27 @@ describe('executionTraceDetails — formatters', () => {
 
     it('groups duplicate result facts without losing their count', () => {
         expect(getExecutionTraceDisplayFacts([
-            { label: 'edit-target', value: '1242×2496' },
-            { label: 'edit-target', value: '1242×2496' },
-            { label: 'overall-score', value: '0.87' },
+            {
+                label: 'edit-target',
+                value: '1242×2496',
+            },
+            {
+                label: 'edit-target',
+                value: '1242×2496',
+            },
+            {
+                label: 'overall-score',
+                value: '0.87',
+            },
         ])).toEqual([
-            { label: 'Edit targets (2)', value: '1242×2496' },
-            { label: 'Overall score', value: '87%' },
+            {
+                label: 'Edit targets (2)',
+                value: '1242×2496',
+            },
+            {
+                label: 'Overall score',
+                value: '87%',
+            },
         ])
     })
 
@@ -134,7 +146,10 @@ describe('executionTraceDetails — formatters', () => {
     })
 
     it('joins only the token counts that are present', () => {
-        expect(formatExecutionTraceTokenUsage({ input: 10, output: 5 })).toBe('10 in · 5 out')
+        expect(formatExecutionTraceTokenUsage({
+            input: 10,
+            output: 5,
+        })).toBe('10 in · 5 out')
         expect(formatExecutionTraceTokenUsage({ reasoning: 7 })).toBe('7 reasoning')
         expect(formatExecutionTraceTokenUsage(undefined)).toBe('')
     })
@@ -145,9 +160,7 @@ describe('executionTraceDetails — formatters', () => {
 // =============================================================================
 
 describe('executionTraceDetails — renderability', () => {
-    it('rejects a trace carrying nothing but its version', () => {
-        expect(isRenderableExecutionTrace(makeTrace())).toBe(false)
-    })
+    it('rejects a trace carrying nothing but its version', () => void expect(isRenderableExecutionTrace(makeTrace())).toBe(false))
 
     it('rejects payloads that are not traces at all', () => {
         expect(isRenderableExecutionTrace(null)).toBe(false)
@@ -157,7 +170,10 @@ describe('executionTraceDetails — renderability', () => {
 
     it('accepts a trace once it carries any content', () => {
         expect(isRenderableExecutionTrace(makeTrace({ reasoning: 'why' }))).toBe(true)
-        expect(isRenderableExecutionTrace(makeTrace({ facts: [{ label: 'a', value: 'b' }] }))).toBe(true)
+        expect(isRenderableExecutionTrace(makeTrace({ facts: [{
+            label: 'a',
+            value: 'b',
+        }] }))).toBe(true)
     })
 
     it('gives equal traces the same key and different traces different keys', () => {
@@ -182,7 +198,10 @@ describe('createExecutionTraceDetail — rendered content', () => {
         const detail = createExecutionTraceDetail({
             trace: makeTrace({
                 reasoning: 'Chose a three-panel turnaround',
-                facts: [{ label: 'Planned shots', value: '3' }],
+                facts: [{
+                    label: 'Planned shots',
+                    value: '3',
+                }],
                 outputSummary: 'Sheet composed',
             }),
         })
@@ -202,7 +221,10 @@ describe('createExecutionTraceDetail — rendered content', () => {
                     role: 'media',
                     provider: 'openai',
                     modelId: 'openai:gpt-image-1',
-                    params: [{ name: 'size', value: '1024x1536' }],
+                    params: [{
+                        name: 'size',
+                        value: '1024x1536',
+                    }],
                 }],
             }),
         })
@@ -223,15 +245,24 @@ describe('createExecutionTraceDetail — rendered content', () => {
     it('renders parameters, results, and metadata as list items without table structures', () => {
         const detail = createExecutionTraceDetail({
             trace: makeTrace({
-                facts: [{ label: 'References accepted', value: 'canonical-anchor, edit-target' }],
+                facts: [{
+                    label: 'References accepted',
+                    value: 'canonical-anchor, edit-target',
+                }],
                 modelCalls: [{
                     id: 'render',
                     role: 'media',
                     provider: 'openai',
                     modelId: 'openai:gpt-image-1',
                     params: [
-                        { name: 'size', value: '1024x1536' },
-                        { name: 'conditioning', value: 'edit, identity, pose' },
+                        {
+                            name: 'size',
+                            value: '1024x1536',
+                        },
+                        {
+                            name: 'conditioning',
+                            value: 'edit, identity, pose',
+                        },
                     ],
                     providerOperationId: 'op-1',
                     startedAt: 0,
@@ -291,8 +322,14 @@ describe('createExecutionTraceDetail — rendered content', () => {
         const detail = createExecutionTraceDetail({
             trace: makeTrace({
                 facts: [
-                    { label: 'Generation request', value: 'media-b614f5f4-5d58-4291-9399-daaeba5d6d54' },
-                    { label: 'Media runs', value: '3' },
+                    {
+                        label: 'Generation request',
+                        value: 'media-b614f5f4-5d58-4291-9399-daaeba5d6d54',
+                    },
+                    {
+                        label: 'Media runs',
+                        value: '3',
+                    },
                 ],
                 modelCalls: [{
                     id: 'render',
@@ -300,8 +337,14 @@ describe('createExecutionTraceDetail — rendered content', () => {
                     provider: 'google',
                     modelId: 'google:gemini-3-pro-image',
                     params: [
-                        { name: 'operation', value: 'google-143583f1-7c3b-48ca-9f4a-13baeeebb6e8' },
-                        { name: 'size', value: '1:1' },
+                        {
+                            name: 'operation',
+                            value: 'google-143583f1-7c3b-48ca-9f4a-13baeeebb6e8',
+                        },
+                        {
+                            name: 'size',
+                            value: '1:1',
+                        },
                     ],
                 }],
             }),
@@ -358,7 +401,12 @@ describe('createExecutionTraceDetail — rendered content', () => {
     it('renders a model call footer only when it has timing or usage', () => {
         const bare = createExecutionTraceDetail({
             trace: makeTrace({
-                modelCalls: [{ id: 'a', role: 'media', provider: 'openai', modelId: 'm' }],
+                modelCalls: [{
+                    id: 'a',
+                    role: 'media',
+                    provider: 'openai',
+                    modelId: 'm',
+                }],
             }),
         })
         expect(bare.element.querySelector('.execution-trace-model-call-footer')).toBeNull()
@@ -374,7 +422,10 @@ describe('createExecutionTraceDetail — rendered content', () => {
                     providerOperationId: 'op-1',
                     startedAt: 0,
                     completedAt: 2000,
-                    tokenUsage: { input: 10, output: 5 },
+                    tokenUsage: {
+                        input: 10,
+                        output: 5,
+                    },
                 }],
             }),
         })
@@ -395,10 +446,27 @@ describe('createExecutionTraceDetail — handles', () => {
         const detail = createExecutionTraceDetail({
             trace: makeTrace({
                 handles: [
-                    { kind: 'media', id: 'asset-1', displayName: 'Urban Street Art', mediaKind: 'image' },
-                    { kind: 'capability-module', id: 'global.character-creator', displayName: 'Character Creator' },
-                    { kind: 'tool', id: 'tool-1', displayName: 'Some Tool' },
-                    { kind: 'skill', id: 'skill-1', displayName: 'Some Skill' },
+                    {
+                        kind: 'media',
+                        id: 'asset-1',
+                        displayName: 'Urban Street Art',
+                        mediaKind: 'image',
+                    },
+                    {
+                        kind: 'capability-module',
+                        id: 'global.character-creator',
+                        displayName: 'Character Creator',
+                    },
+                    {
+                        kind: 'tool',
+                        id: 'tool-1',
+                        displayName: 'Some Tool',
+                    },
+                    {
+                        kind: 'skill',
+                        id: 'skill-1',
+                        displayName: 'Some Skill',
+                    },
                 ],
             }),
         })
@@ -431,8 +499,16 @@ describe('createExecutionTraceDetail — handles', () => {
             },
             trace: makeTrace({
                 handles: [
-                    { kind: 'tool', id: 'module.tool', displayName: 'Some Tool' },
-                    { kind: 'skill', id: 'module.skill', displayName: 'Some Skill' },
+                    {
+                        kind: 'tool',
+                        id: 'module.tool',
+                        displayName: 'Some Tool',
+                    },
+                    {
+                        kind: 'skill',
+                        id: 'module.skill',
+                        displayName: 'Some Skill',
+                    },
                 ],
             }),
         })
@@ -488,8 +564,18 @@ describe('createExecutionTraceDetail — handles', () => {
                     role: 'media',
                     provider: 'openai',
                     modelId: 'openai:gpt-image-1',
-                    inputHandles: [{ kind: 'media', id: 'in', displayName: 'Given asset', mediaKind: 'image' }],
-                    outputHandles: [{ kind: 'media', id: 'out', displayName: 'Produced asset', mediaKind: 'image' }],
+                    inputHandles: [{
+                        kind: 'media',
+                        id: 'in',
+                        displayName: 'Given asset',
+                        mediaKind: 'image',
+                    }],
+                    outputHandles: [{
+                        kind: 'media',
+                        id: 'out',
+                        displayName: 'Produced asset',
+                        mediaKind: 'image',
+                    }],
                 }],
             }),
         })

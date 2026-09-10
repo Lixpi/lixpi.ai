@@ -12,9 +12,12 @@ import {
     type CanvasConversationEditorsPorts,
 } from './canvas-conversation-editors.ts'
 
-type Entry = { id: string; destroy: ReturnType<typeof vi.fn> }
+type Entry = {
+    id: string
+    destroy: ReturnType<typeof vi.fn>
+}
 const owners: CanvasConversationEditors<Entry>[] = []
-function fixture() {
+const fixture = () => {
     const pane = document.createElement('div')
     document.body.appendChild(pane)
     const timers = new Map<number, () => void>()
@@ -23,6 +26,7 @@ function fixture() {
         setTimer: vi.fn(callback => {
             const id = timers.size + 1
             timers.set(id, callback)
+
             return id
         }),
         clearTimer: vi.fn(),
@@ -35,14 +39,30 @@ function fixture() {
             scope = current
             const destroy = vi.fn()
             current.own(destroy)
-            return { id, destroy }
+
+            return {
+                id,
+                destroy,
+            }
         })
-        return { entry, scope }
+
+        return {
+            entry,
+            scope,
+        }
     }
-    return { owner, ports, timers, pane, mount }
+
+    return {
+        owner,
+        ports,
+        timers,
+        pane,
+        mount,
+    }
 }
 afterEach(() => {
     for (const owner of owners.splice(0)) owner.destroy()
+
     document.body.replaceChildren()
     vi.restoreAllMocks()
 })
@@ -71,7 +91,11 @@ describe('CanvasConversationEditors', () => {
             expect(first.entry.destroy).toHaveBeenCalledOnce()
             expect(first.scope.container.isConnected).toBe(false)
             expect(scope.isCurrent()).toBe(true)
-            return { id: 'new', destroy: vi.fn() }
+
+            return {
+                id: 'new',
+                destroy: vi.fn(),
+            }
         })
         expect(f.owner.get('thread')).toBe(second)
         expect(first.scope.isCurrent()).toBe(false)
@@ -87,6 +111,7 @@ describe('CanvasConversationEditors', () => {
             f.owner.mount('thread', scope => {
                 scope.own(editor)
                 scope.own(service)
+
                 throw new Error('register failed')
             })
         ).toThrow(AggregateError)
@@ -104,7 +129,11 @@ describe('CanvasConversationEditors', () => {
             f.owner.mount('thread', scope => {
                 replacement = f.mount().entry
                 scope.own(releaseLateResource)
-                return { id: 'old', destroy: vi.fn() }
+
+                return {
+                    id: 'old',
+                    destroy: vi.fn(),
+                }
             })
         ).toThrow('replaced during mounting')
         expect(f.owner.get('thread')).toBe(replacement)

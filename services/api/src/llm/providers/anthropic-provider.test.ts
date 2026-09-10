@@ -23,19 +23,19 @@ const anthropicMocks = vi.hoisted(() => ({
 }))
 
 vi.mock('@anthropic-ai/sdk', () => ({
-    default: vi.fn(function() {
-        return {
-            messages: {
-                stream: anthropicMocks.stream,
-            },
+    default: class {
+        messages = {
+            stream: anthropicMocks.stream,
         }
-    }),
+    },
 }))
 
 vi.mock('@anthropic-ai/bedrock-sdk', () => ({
-    AnthropicBedrock: vi.fn(function() {
-        return { messages: { stream: anthropicMocks.stream } }
-    }),
+    AnthropicBedrock: class {
+        messages = {
+            stream: anthropicMocks.stream,
+        }
+    },
 }))
 
 import { AnthropicProvider } from './anthropic-provider.ts'
@@ -70,7 +70,13 @@ const makeAnthropicStream = (
 ) => ({
     [Symbol.asyncIterator]: async function*() {
         for (const text of textChunks) {
-            yield { type: 'content_block_delta', delta: { type: 'text_delta', text } }
+            yield {
+                type: 'content_block_delta',
+                delta: {
+                    type: 'text_delta',
+                    text,
+                },
+            }
         }
     },
     finalMessage: vi.fn(async () => finalMessage),
@@ -81,9 +87,20 @@ const setProviderPublishers = (provider: AnthropicProvider) => {
     const end = vi.fn()
     const chunk = vi.fn()
     const error = vi.fn()
-    ;(provider as any).streamPublisher = { start, end, chunk, error }
+    ;(provider as any).streamPublisher = {
+        start,
+        end,
+        chunk,
+        error,
+    }
     ;(provider as any).abortController = new AbortController()
-    return { start, end, chunk, error }
+
+    return {
+        start,
+        end,
+        chunk,
+        error,
+    }
 }
 
 const makeState = (overrides: Record<string, any> = {}) => ({
@@ -97,7 +114,10 @@ const makeState = (overrides: Record<string, any> = {}) => ({
         modelVersion: 'claude-sonnet-4-6',
         inferenceCapabilities: ANTHROPIC_INFERENCE_CAPABILITIES,
     },
-    messages: [{ role: 'user', content: 'Describe a sunset over the ocean.' }],
+    messages: [{
+        role: 'user',
+        content: 'Describe a sunset over the ocean.',
+    }],
     // Bypass capability-model-tool exposure so plain streaming tests don't
     // need to also mock the capability dispatcher.
     capabilityInvocationDepth: 1,
@@ -118,12 +138,18 @@ describe('AnthropicProvider', () => {
     })
 
     afterEach(() => {
-        if (previousApiKey === undefined) delete process.env.ANTHROPIC_API_KEY
-        else process.env.ANTHROPIC_API_KEY = previousApiKey
+        if (previousApiKey === undefined)
+            delete process.env.ANTHROPIC_API_KEY
+        else
+            process.env.ANTHROPIC_API_KEY = previousApiKey
+
         for (const [key, value] of Object.entries(previousBedrockFlags)) {
-            if (value === undefined) delete process.env[key]
-            else process.env[key] = value
+            if (value === undefined)
+                delete process.env[key]
+            else
+                process.env[key] = value
         }
+
         vi.restoreAllMocks()
     })
 
@@ -158,8 +184,14 @@ describe('AnthropicProvider', () => {
                 ['The sun ', 'dips below the waves.'],
                 {
                     id: 'msg_1',
-                    content: [{ type: 'text', text: 'The sun dips below the waves.' }],
-                    usage: { input_tokens: 12, output_tokens: 8 },
+                    content: [{
+                        type: 'text',
+                        text: 'The sun dips below the waves.',
+                    }],
+                    usage: {
+                        input_tokens: 12,
+                        output_tokens: 8,
+                    },
                 },
             ))
 
@@ -191,7 +223,17 @@ describe('AnthropicProvider', () => {
 
             anthropicMocks.stream.mockReturnValueOnce(makeAnthropicStream(
                 ['hello'],
-                { id: 'msg_2', content: [{ type: 'text', text: 'hello' }], usage: { input_tokens: 1, output_tokens: 1 } },
+                {
+                    id: 'msg_2',
+                    content: [{
+                        type: 'text',
+                        text: 'hello',
+                    }],
+                    usage: {
+                        input_tokens: 1,
+                        output_tokens: 1,
+                    },
+                },
             ))
 
             await (provider as any).streamImpl(makeState())
@@ -206,7 +248,17 @@ describe('AnthropicProvider', () => {
 
             anthropicMocks.stream.mockReturnValueOnce(makeAnthropicStream(
                 ['hello'],
-                { id: 'msg-adaptive', content: [{ type: 'text', text: 'hello' }], usage: { input_tokens: 1, output_tokens: 1 } },
+                {
+                    id: 'msg-adaptive',
+                    content: [{
+                        type: 'text',
+                        text: 'hello',
+                    }],
+                    usage: {
+                        input_tokens: 1,
+                        output_tokens: 1,
+                    },
+                },
             ))
 
             await (provider as any).streamImpl(makeState({
@@ -223,7 +275,11 @@ describe('AnthropicProvider', () => {
                     },
                 },
                 imageModelVersion: 'gpt-image-2',
-                imageModelMetaInfo: { provider: 'OpenAI', model: 'gpt-image-2', modelVersion: 'gpt-image-2' },
+                imageModelMetaInfo: {
+                    provider: 'OpenAI',
+                    model: 'gpt-image-2',
+                    modelVersion: 'gpt-image-2',
+                },
                 imageProviderName: 'OpenAI',
             }))
 
@@ -252,18 +308,28 @@ describe('AnthropicProvider', () => {
                         name: 'generate_image',
                         input: { prompt: 'A red bicycle leaning on a brick wall.' },
                     }],
-                    usage: { input_tokens: 5, output_tokens: 5 },
+                    usage: {
+                        input_tokens: 5,
+                        output_tokens: 5,
+                    },
                 },
             ))
 
             const result = await (provider as any).streamImpl(makeState({
                 imageModelVersion: 'gpt-image-2',
-                imageModelMetaInfo: { provider: 'OpenAI', model: 'gpt-image-2', modelVersion: 'gpt-image-2' },
+                imageModelMetaInfo: {
+                    provider: 'OpenAI',
+                    model: 'gpt-image-2',
+                    modelVersion: 'gpt-image-2',
+                },
                 imageProviderName: 'OpenAI',
             }))
 
             const streamArgs = anthropicMocks.stream.mock.calls[0]?.[0]
-            expect(streamArgs.tool_choice).toEqual({ type: 'tool', name: 'generate_image' })
+            expect(streamArgs.tool_choice).toEqual({
+                type: 'tool',
+                name: 'generate_image',
+            })
             expect(result.generatedImagePrompt).toBe('A red bicycle leaning on a brick wall.')
             expect(result.generatedVideoPrompt).toBeUndefined()
             expect(publisherState.error).not.toHaveBeenCalled()
@@ -289,18 +355,28 @@ describe('AnthropicProvider', () => {
                             negativePrompt: 'no subtitles',
                         },
                     }],
-                    usage: { input_tokens: 5, output_tokens: 5 },
+                    usage: {
+                        input_tokens: 5,
+                        output_tokens: 5,
+                    },
                 },
             ))
 
             const result = await (provider as any).streamImpl(makeState({
                 videoModelVersion: 'veo-3.1',
-                videoModelMetaInfo: { provider: 'Google', model: 'veo-3.1-generate-preview', modelVersion: 'veo-3.1' },
+                videoModelMetaInfo: {
+                    provider: 'Google',
+                    model: 'veo-3.1-generate-preview',
+                    modelVersion: 'veo-3.1',
+                },
                 videoProviderName: 'Google',
             }))
 
             const streamArgs = anthropicMocks.stream.mock.calls[0]?.[0]
-            expect(streamArgs.tool_choice).toEqual({ type: 'tool', name: 'generate_video' })
+            expect(streamArgs.tool_choice).toEqual({
+                type: 'tool',
+                name: 'generate_video',
+            })
             expect(result.generatedVideoPrompt).toBe('A drone shot rising over a foggy forest.')
             expect(result.generatedVideoNegativePrompt).toBe('no subtitles')
             expect(result.generatedImagePrompt).toBeUndefined()
@@ -316,19 +392,40 @@ describe('AnthropicProvider', () => {
                 {
                     id: 'msg_5',
                     content: [
-                        { type: 'tool_use', id: 'tool_3', name: 'generate_image', input: { prompt: 'image prompt' } },
-                        { type: 'tool_use', id: 'tool_4', name: 'generate_video', input: { prompt: 'video prompt' } },
+                        {
+                            type: 'tool_use',
+                            id: 'tool_3',
+                            name: 'generate_image',
+                            input: { prompt: 'image prompt' },
+                        },
+                        {
+                            type: 'tool_use',
+                            id: 'tool_4',
+                            name: 'generate_video',
+                            input: { prompt: 'video prompt' },
+                        },
                     ],
-                    usage: { input_tokens: 5, output_tokens: 5 },
+                    usage: {
+                        input_tokens: 5,
+                        output_tokens: 5,
+                    },
                 },
             ))
 
             const result = await (provider as any).streamImpl(makeState({
                 imageModelVersion: 'gpt-image-2',
-                imageModelMetaInfo: { provider: 'OpenAI', model: 'gpt-image-2', modelVersion: 'gpt-image-2' },
+                imageModelMetaInfo: {
+                    provider: 'OpenAI',
+                    model: 'gpt-image-2',
+                    modelVersion: 'gpt-image-2',
+                },
                 imageProviderName: 'OpenAI',
                 videoModelVersion: 'veo-3.1',
-                videoModelMetaInfo: { provider: 'Google', model: 'veo-3.1-generate-preview', modelVersion: 'veo-3.1' },
+                videoModelMetaInfo: {
+                    provider: 'Google',
+                    model: 'veo-3.1-generate-preview',
+                    modelVersion: 'veo-3.1',
+                },
                 videoProviderName: 'Google',
             }))
 
@@ -342,15 +439,33 @@ describe('AnthropicProvider', () => {
 
             anthropicMocks.stream.mockReturnValueOnce(makeAnthropicStream(
                 ['no tool call here'],
-                { id: 'msg_6', content: [{ type: 'text', text: 'no tool call here' }], usage: { input_tokens: 1, output_tokens: 1 } },
+                {
+                    id: 'msg_6',
+                    content: [{
+                        type: 'text',
+                        text: 'no tool call here',
+                    }],
+                    usage: {
+                        input_tokens: 1,
+                        output_tokens: 1,
+                    },
+                },
             ))
 
             await (provider as any).streamImpl(makeState({
                 imageModelVersion: 'gpt-image-2',
-                imageModelMetaInfo: { provider: 'OpenAI', model: 'gpt-image-2', modelVersion: 'gpt-image-2' },
+                imageModelMetaInfo: {
+                    provider: 'OpenAI',
+                    model: 'gpt-image-2',
+                    modelVersion: 'gpt-image-2',
+                },
                 imageProviderName: 'OpenAI',
                 videoModelVersion: 'veo-3.1',
-                videoModelMetaInfo: { provider: 'Google', model: 'veo-3.1-generate-preview', modelVersion: 'veo-3.1' },
+                videoModelMetaInfo: {
+                    provider: 'Google',
+                    model: 'veo-3.1-generate-preview',
+                    modelVersion: 'veo-3.1',
+                },
                 videoProviderName: 'Google',
             }))
 

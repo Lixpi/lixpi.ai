@@ -30,7 +30,7 @@ const outputSchema: CapabilityResourceRef = {
     role: 'schema',
 }
 
-function makeToolManifest(capabilityId = 'character-creator'): CapabilityManifest {
+const makeToolManifest = (capabilityId = 'character-creator'): CapabilityManifest => {
     return {
         schemaVersion: 1,
         capabilityId,
@@ -59,7 +59,10 @@ function makeToolManifest(capabilityId = 'character-creator'): CapabilityManifes
                         action: 'character.validate',
                         dependsOn: [],
                         input: {
-                            request: { source: 'input', path: ['prompt'] },
+                            request: {
+                                source: 'input',
+                                path: ['prompt'],
+                            },
                         },
                         progress: {},
                     },
@@ -69,21 +72,32 @@ function makeToolManifest(capabilityId = 'character-creator'): CapabilityManifes
                         action: 'image.generate',
                         dependsOn: ['validate'],
                         input: {
-                            prompt: { source: 'step', stepId: 'validate', path: ['prompt'] },
+                            prompt: {
+                                source: 'step',
+                                stepId: 'validate',
+                                path: ['prompt'],
+                            },
                         },
-                        retry: { maxAttempts: 2, backoffMs: 100 },
+                        retry: {
+                            maxAttempts: 2,
+                            backoffMs: 100,
+                        },
                         progress: { group: 'generation' },
                     },
                 ],
                 outputs: {
-                    assetId: { source: 'step', stepId: 'generate', path: ['assetId'] },
+                    assetId: {
+                        source: 'step',
+                        stepId: 'generate',
+                        path: ['assetId'],
+                    },
                 },
             },
         },
     }
 }
 
-function makeSkillManifest(capabilityId: string, references: CapabilityManifest['references'] = []): CapabilityManifest {
+const makeSkillManifest = (capabilityId: string, references: CapabilityManifest['references'] = []): CapabilityManifest => {
     return {
         schemaVersion: 1,
         capabilityId,
@@ -95,8 +109,9 @@ function makeSkillManifest(capabilityId: string, references: CapabilityManifest[
     }
 }
 
-function issueCodes(manifest: unknown): string[] {
+const issueCodes = (manifest: unknown): string[] => {
     const result = validateCapabilityManifest(manifest)
+
     return result.issues.map((issue) => issue.code)
 }
 
@@ -107,11 +122,16 @@ function issueCodes(manifest: unknown): string[] {
 describe('validateCapabilityManifest', () => {
     it('accepts a valid bounded Tool manifest and registered actions', () => {
         const result = validateCapabilityManifest(makeToolManifest(), {
-            allowedActions: new Set(['character.validate', 'image.generate']),
+            allowedActions: new Set([
+                'character.validate',
+                'image.generate',
+            ]),
         })
 
         expect(result.valid).toBe(true)
-        if (result.valid) expect(result.manifest.capabilityId).toBe('character-creator')
+
+        if (result.valid)
+            expect(result.manifest.capabilityId).toBe('character-creator')
     })
 
     it('rejects unnamespaced and non-allowlisted actions', () => {
@@ -140,7 +160,11 @@ describe('validateCapabilityManifest', () => {
     it('rejects step bindings that read from unavailable steps', () => {
         const manifest = makeToolManifest()
         manifest.tool!.workflow.steps[0]!.input = {
-            future: { source: 'step', stepId: 'generate', path: ['assetId'] },
+            future: {
+                source: 'step',
+                stepId: 'generate',
+                path: ['assetId'],
+            },
         }
 
         expect(issueCodes(manifest)).toContain('INVALID_BINDING')
@@ -176,7 +200,10 @@ describe('validateCapabilityManifest', () => {
     it('rejects non-finite literal values and excessive retries', () => {
         const manifest = makeToolManifest()
         manifest.tool!.workflow.steps[0]!.input = {
-            value: { source: 'literal', value: Number.POSITIVE_INFINITY },
+            value: {
+                source: 'literal',
+                value: Number.POSITIVE_INFINITY,
+            },
         }
         manifest.tool!.workflow.steps[0]!.retry = {
             maxAttempts: CAPABILITY_LIMITS.maxRetryAttempts + 1,
@@ -196,8 +223,14 @@ describe('validateCapabilityManifest', () => {
 describe('validateCapabilityDependencyGraph', () => {
     it('accepts Tools and Skills referencing either kind', () => {
         const tool = makeToolManifest()
-        tool.references = [{ capabilityId: 'layout', kind: 'skill' }]
-        const skill = makeSkillManifest('layout', [{ capabilityId: tool.capabilityId, kind: 'tool' }])
+        tool.references = [{
+            capabilityId: 'layout',
+            kind: 'skill',
+        }]
+        const skill = makeSkillManifest('layout', [{
+            capabilityId: tool.capabilityId,
+            kind: 'tool',
+        }])
         skill.references = []
 
         expect(validateCapabilityDependencyGraph([tool, skill], {
@@ -206,10 +239,20 @@ describe('validateCapabilityDependencyGraph', () => {
     })
 
     it('detects reference cycles, missing targets, and declared-kind mismatches', () => {
-        const first = makeSkillManifest('first', [{ capabilityId: 'second', kind: 'tool', import: ['missing-export'] }])
+        const first = makeSkillManifest('first', [{
+            capabilityId: 'second',
+            kind: 'tool',
+            import: ['missing-export'],
+        }])
         const second = makeSkillManifest('second', [
-            { capabilityId: 'first', kind: 'skill' },
-            { capabilityId: 'missing', kind: 'skill' },
+            {
+                capabilityId: 'first',
+                kind: 'skill',
+            },
+            {
+                capabilityId: 'missing',
+                kind: 'skill',
+            },
         ])
 
         const issues = validateCapabilityDependencyGraph([first, second], {
@@ -227,7 +270,10 @@ describe('validateCapabilityDependencyGraph', () => {
         const manifests = Array.from({ length: 4 }, (_, index) =>
             makeSkillManifest(
                 `skill-${index}`,
-                index < 3 ? [{ capabilityId: `skill-${index + 1}`, kind: 'skill' as CapabilityKind }] : [],
+                index < 3 ? [{
+                    capabilityId: `skill-${index + 1}`,
+                    kind: 'skill' as CapabilityKind,
+                }] : [],
             ))
 
         const codes = validateCapabilityDependencyGraph(manifests, {

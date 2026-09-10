@@ -11,7 +11,10 @@ import {
     type MediaSourceResolver,
 } from './types.ts'
 
-const decoder = vi.hoisted(() => ({ decode: vi.fn(), destroy: vi.fn() }))
+const decoder = vi.hoisted(() => ({
+    decode: vi.fn(),
+    destroy: vi.fn(),
+}))
 vi.mock('./image-decoder.ts', () => ({
     ImageDecoder: class {
         decode = decoder.decode
@@ -23,35 +26,85 @@ const descriptor: MediaDescriptor = {
     key: 'photo',
     kind: 'image',
     version: '1',
-    renditions: [{ id: 'small', width: 256, height: 256, mimeType: 'image/png' }, { id: 'full', width: 1024, height: 1024, mimeType: 'image/png' }],
+    renditions: [{
+        id: 'small',
+        width: 256,
+        height: 256,
+        mimeType: 'image/png',
+    }, {
+        id: 'full',
+        width: 1024,
+        height: 1024,
+        mimeType: 'image/png',
+    }],
 }
 
-function deferred<Value>() {
+const deferred = <Value>() => {
     let resolve!: (value: Value) => void
     let reject!: (reason: unknown) => void
     const promise = new Promise<Value>((yes, no) => {
         resolve = yes
         reject = no
     })
-    return { promise, resolve, reject }
+
+    return {
+        promise,
+        resolve,
+        reject,
+    }
 }
 
-function bitmap(width = 256) {
-    return { width, height: width, close: vi.fn() } as unknown as ImageBitmap
+const bitmap = (width = 256) => {
+    return {
+        width,
+        height: width,
+        close: vi.fn(),
+    } as unknown as ImageBitmap
 }
 
-function fixture(maxTextures = 2) {
+const fixture = (maxTextures = 2) => {
     const releaseSource = vi.fn()
-    const resolve = vi.fn(async () => ({ url: 'https://media.example.test/photo', request: { headers: { Authorization: 'test' } }, release: releaseSource }))
+    const resolve = vi.fn(async () => ({
+        url: 'https://media.example.test/photo',
+        request: { headers: { Authorization: 'test' } },
+        release: releaseSource,
+    }))
     const releases: Array<ReturnType<typeof vi.fn>> = []
     const createTexture = vi.fn((image: ImageBitmap) => {
         const release = vi.fn(() => image.close())
         releases.push(release)
-        return { texture: { kind: 'texture' as const, id: `image-${releases.length}`, owner: Symbol() }, release }
+
+        return {
+            texture: {
+                kind: 'texture' as const,
+                id: `image-${releases.length}`,
+                owner: Symbol(),
+            },
+            release,
+        }
     })
-    const media = new CanvasMedia({ resolver: { resolve }, createTexture, cache: { maxTextures } })
-    const acquire = (signal = new AbortController().signal, source = descriptor, pixels = 100) => media.acquireImage({ media: source, visiblePixels: { width: pixels, height: pixels }, signal })
-    return { media, acquire, resolve, releaseSource, createTexture, releases }
+    const media = new CanvasMedia({
+        resolver: { resolve },
+        createTexture,
+        cache: { maxTextures },
+    })
+    const acquire = (signal = new AbortController().signal, source = descriptor, pixels = 100) => media.acquireImage({
+        media: source,
+        visiblePixels: {
+            width: pixels,
+            height: pixels,
+        },
+        signal,
+    })
+
+    return {
+        media,
+        acquire,
+        resolve,
+        releaseSource,
+        createTexture,
+        releases,
+    }
 }
 
 beforeEach(() => {
@@ -63,7 +116,13 @@ describe('canvas media ownership', () => {
     it('shares a decode while allowing one waiting consumer to cancel independently', async () => {
         const pending = deferred<ImageBitmap>()
         decoder.decode.mockReturnValue(pending.promise)
-        const { media, acquire, resolve, releaseSource, createTexture } = fixture()
+        const {
+            media,
+            acquire,
+            resolve,
+            releaseSource,
+            createTexture,
+        } = fixture()
         const first = new AbortController()
         const firstResult = acquire(first.signal)
         const secondResult = acquire()
@@ -84,7 +143,12 @@ describe('canvas media ownership', () => {
     it('closes a late bitmap when the last pending interest is cancelled', async () => {
         const pending = deferred<ImageBitmap>()
         decoder.decode.mockReturnValue(pending.promise)
-        const { media, acquire, createTexture, releaseSource } = fixture()
+        const {
+            media,
+            acquire,
+            createTexture,
+            releaseSource,
+        } = fixture()
         const controller = new AbortController()
         const result = acquire(controller.signal)
         await vi.waitFor(() => expect(decoder.decode).toHaveBeenCalledOnce())
@@ -101,14 +165,21 @@ describe('canvas media ownership', () => {
 
     it('reuses a decoded larger rendition when zooming out and separates content versions', async () => {
         decoder.decode.mockImplementation(async () => bitmap(1024))
-        const { media, acquire, resolve } = fixture()
+        const {
+            media,
+            acquire,
+            resolve,
+        } = fixture()
         const full = await acquire(undefined, descriptor, 900)
         full.release()
         const zoomedOut = await acquire()
         expect(zoomedOut.texture).toBe(full.texture)
         expect(zoomedOut.renditionId).toBe('full')
         expect(resolve).toHaveBeenCalledOnce()
-        const replacement = await acquire(undefined, { ...descriptor, version: '2' })
+        const replacement = await acquire(undefined, {
+            ...descriptor,
+            version: '2',
+        })
         expect(replacement.texture).not.toBe(full.texture)
         expect(resolve).toHaveBeenCalledTimes(2)
         zoomedOut.release()
@@ -117,9 +188,16 @@ describe('canvas media ownership', () => {
     })
 
     it('evicts idle textures under budget pressure without releasing a live lease', async () => {
-        const { media, acquire, releases } = fixture(1)
+        const {
+            media,
+            acquire,
+            releases,
+        } = fixture(1)
         const first = await acquire()
-        const second = await acquire(undefined, { ...descriptor, key: 'second' })
+        const second = await acquire(undefined, {
+            ...descriptor,
+            key: 'second',
+        })
         expect(releases[0]).not.toHaveBeenCalled()
         expect(releases[1]).not.toHaveBeenCalled()
         first.release()
@@ -133,7 +211,11 @@ describe('canvas media ownership', () => {
 
     it('releases a failed source and allows an explicit retry', async () => {
         decoder.decode.mockRejectedValueOnce(new Error('decode failed'))
-        const { media, acquire, releaseSource } = fixture()
+        const {
+            media,
+            acquire,
+            releaseSource,
+        } = fixture()
         await expect(acquire()).rejects.toThrow('decode failed')
         const lease = await acquire()
         expect(releaseSource).toHaveBeenCalledTimes(2)
@@ -142,10 +224,20 @@ describe('canvas media ownership', () => {
     })
 
     it('aborts only the disposed scope and releases remaining leases on canvas disposal', async () => {
-        const { media, releases } = fixture(0)
+        const {
+            media,
+            releases,
+        } = fixture(0)
         const firstScope = new AbortController()
         const secondScope = new AbortController()
-        const request = { media: descriptor, visiblePixels: { width: 100, height: 100 }, signal: new AbortController().signal }
+        const request = {
+            media: descriptor,
+            visiblePixels: {
+                width: 100,
+                height: 100,
+            },
+            signal: new AbortController().signal,
+        }
         const first = await media.scoped(firstScope.signal).acquireImage(request)
         const second = await media.scoped(secondScope.signal).acquireImage(request)
         expect(first.texture).toBe(second.texture)
@@ -166,9 +258,19 @@ describe('canvas media ownership', () => {
                 throw new Error('No texture expected')
             },
         })
-        const playback = media.acquirePlayback({ media: { ...descriptor, kind: 'video' }, renditionId: 'full', signal: new AbortController().signal })
+        const playback = media.acquirePlayback({
+            media: {
+                ...descriptor,
+                kind: 'video',
+            },
+            renditionId: 'full',
+            signal: new AbortController().signal,
+        })
         media.destroy()
-        pending.resolve({ url: 'blob:movie', release })
+        pending.resolve({
+            url: 'blob:movie',
+            release,
+        })
         await expect(playback).rejects.toMatchObject({ name: 'AbortError' })
         expect(release).toHaveBeenCalledOnce()
     })

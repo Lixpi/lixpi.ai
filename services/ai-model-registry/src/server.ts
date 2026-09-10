@@ -27,6 +27,14 @@ import {
     type ParamRecord,
     type Status,
 } from './store.ts'
+import { CatalogConfigApi } from './catalog/catalog-config-api.ts'
+import {
+    PROVIDER_DIRECTORIES,
+    type SyncProgressEvent,
+} from './catalog/types.ts'
+import { CatalogSync } from './catalog/catalog-sync.ts'
+import { CatalogSyncService } from './catalog/catalog-sync-service.ts'
+import { SyncRunner } from './catalog/sync-runner.ts'
 
 const HERE = dirname(
     fileURLToPath(import.meta.url),
@@ -39,6 +47,11 @@ const PUBLIC_DIR = join(
 
 const PORT = Number(process.env.PORT ?? 3010)
 const PARAMS_DIR = process.env.PARAMS_DIR ?? '/usr/src/service/data/params'
+const MODEL_CATALOG_DIR = process.env.MODEL_CATALOG_DIR ?? '/usr/src/service/data/model-catalog'
+
+// The scheduled sync stays off unless a deployment asks for it, so a developer
+// running the registry never writes to DynamoDB by starting a container.
+const CATALOG_SYNC_ENABLED = process.env.MODEL_CATALOG_SYNC_ENABLED?.trim().toLowerCase() === 'true'
 
 const CONTENT_TYPES: Record<string, string> = {
     '.html': 'text/html; charset=utf-8',
@@ -121,12 +134,24 @@ const paramKey = (
 class AiModelRegistryServer {
     private readonly tree: ParamTree
     private readonly port: number
+    private readonly catalogSync: CatalogSync
+    private readonly catalogConfig: CatalogConfigApi
+    private readonly syncService: CatalogSyncService | null
+    private readonly syncRunner: SyncRunner
     constructor(
         tree: ParamTree,
         port: number,
+        catalogSync: CatalogSync,
+        catalogConfig: CatalogConfigApi,
+        syncService: CatalogSyncService | null,
+        syncRunner: SyncRunner,
     ) {
         this.tree = tree
         this.port = port
+        this.catalogSync = catalogSync
+        this.catalogConfig = catalogConfig
+        this.syncService = syncService
+        this.syncRunner = syncRunner
     }
 
     // Assembles the catalog the page renders. Every parameter carries the models
@@ -214,7 +239,11 @@ class AiModelRegistryServer {
         res: ServerResponse,
         pathname: string,
     ): Promise<void> {
+        // Client routes such as /model-parameters and /model-catalog are not files.
+        // Anything without a file extension is the single-page app, so a reload or a
+        // pasted link lands on the page rather than a 404.
         const relative = pathname === '/'
+            || extname(pathname) === ''
             ? 'index.html'
             : normalize(pathname).replace(/^(\.\.[/\\])+/u, '').replace(/^[/\\]+/u, '')
         const filePath = join(PUBLIC_DIR, relative)
@@ -300,6 +329,325 @@ class AiModelRegistryServer {
         res: ServerResponse,
     ): Promise<void> {
         const { pathname } = new URL(req.url ?? '/', `http://${req.headers.host ?? 'localhost'}`)
+
+        // The model catalog sits under /api/models. /api/catalog is the parameter
+        // registry and predates it.
+        if (
+            req.method === 'GET'
+            && pathname === '/api/models'
+        ) {
+            const merged = await this.catalogSync.loadMerged()
+            AiModelRegistryServer.sendJson(
+                res,
+                200,
+                {
+                    models: merged.filter(entry => entry.model).map(entry => entry.model),
+                    incomplete: merged.filter(entry => entry.meta.syncStatus === 'missing-required-fields').map(
+                        entry => ({
+                            model: entry.modelId,
+                            missing: entry.meta.requiredFieldsStillMissing,
+                        }),
+                    ),
+                    excluded: merged.filter(entry => entry.meta.syncStatus === 'skipped-by-catalog-index').map(entry => entry.modelId),
+                },
+            )
+
+            return
+        }
+
+        if (
+            req.method === 'GET'
+            && pathname === '/api/models/drift'
+        ) {
+            const merged = await this.catalogSync.loadMerged()
+            const findings = merged.flatMap(entry => entry.drift)
+            AiModelRegistryServer.sendJson(
+                res,
+                200,
+                {
+                    pricing: findings.filter(finding => finding.isPricing),
+                    other: findings.filter(finding => !finding.isPricing),
+                    total: findings.length,
+                    lastSync: this.syncService?.getLastResult()?.ranAt ?? null,
+                },
+            )
+
+            return
+        }
+
+        // Everything the model-catalog page renders in one request: each provider's
+        // index and inherited fields, and each model's resolved record, provenance,
+        // authored half, and drift. The page is a management view, so it needs the
+        // account of how a model resolved, not only the resolved model.
+        if (
+            req.method === 'GET'
+            && pathname === '/api/model-catalog/overview'
+        ) {
+            const merged = await this.catalogSync.loadMerged()
+            const models = []
+
+            for (const entry of merged) {
+                const lixpi = await this.catalogConfig.readModel(entry.provider, entry.modelId)
+                models.push({
+                    provider: entry.provider,
+                    providerTitle: PROVIDER_DIRECTORIES[entry.provider],
+                    modelId: entry.modelId,
+                    status: entry.meta.syncStatus,
+                    mergedAt: entry.meta.mergedAt,
+                    model: entry.model,
+                    file: entry.file,
+                    lixpi,
+                    missingRequiredFields: entry.meta.requiredFieldsStillMissing,
+                    fieldsFilledFromSchemaDefault: entry.meta.fieldsFilledFromSchemaDefault,
+                    ratesRefusedBecauseUnitsDiffer: entry.meta.ratesRefusedBecauseUnitsDiffer,
+                    sources: entry.meta.sources,
+                    authored: entry.meta.lixpi,
+                    drift: entry.drift,
+                })
+            }
+
+            const providers = []
+
+            for (const provider of this.catalogConfig.providers()) {
+                const index = await this.catalogConfig.readIndex(provider)
+                const base = await this.catalogConfig.readBase(provider)
+                providers.push({
+                    directory: provider,
+                    title: PROVIDER_DIRECTORIES[provider],
+                    index,
+                    base,
+                })
+            }
+
+            AiModelRegistryServer.sendJson(
+                res,
+                200,
+                {
+                    baseIndex: await this.catalogConfig.readBaseIndex(),
+                    providers,
+                    models,
+                    lastSync: this.syncService?.getLastResult()?.ranAt ?? null,
+                    // Whoever ran the last sync, the page needs to know whether the
+                    // catalog it is showing came from a run that finished.
+                    lastSyncOutcome: await this.catalogSync.readLastOutcome(),
+                },
+            )
+
+            return
+        }
+
+        // Every JSON file in one model's directory: the merged record, the authored
+        // half, each source's answer, and the account of the merge. The panel shows
+        // them side by side, so a reader can see what a source actually said rather
+        // than only what the merge made of it.
+        const filesMatch = /^\/api\/model-catalog\/([a-z0-9-]+)\/models\/([^/]+)\/files$/u.exec(pathname)
+
+        if (
+            filesMatch
+            && req.method === 'GET'
+        ) {
+            const provider = this.catalogConfig.resolveProvider(filesMatch[1]!)
+
+            if (!provider) {
+                AiModelRegistryServer.sendJson(
+                    res,
+                    404,
+                    {
+                        error: 'UNKNOWN_PROVIDER',
+                        detail: `No such provider directory: ${filesMatch[1]}`,
+                        knownProviders: this.catalogConfig.providers(),
+                    },
+                )
+
+                return
+            }
+
+            const files = await this.catalogSync.readModelFiles(
+                provider,
+                decodeURIComponent(filesMatch[2]!),
+            )
+            AiModelRegistryServer.sendJson(
+                res,
+                files.length === 0 ? 404 : 200,
+                files.length === 0 ? { error: 'NOT_FOUND' } : { files },
+            )
+
+            return
+        }
+
+        // A model's authored file, maintained through the API for the same reasons as
+        // the provider config: validated against the catalog, and the previous
+        // version kept.
+        const modelMatch = /^\/api\/model-catalog\/([a-z0-9-]+)\/models\/([^/]+)\/lixpi$/u.exec(pathname)
+
+        if (modelMatch) {
+            const provider = this.catalogConfig.resolveProvider(modelMatch[1]!)
+
+            if (!provider) {
+                AiModelRegistryServer.sendJson(
+                    res,
+                    404,
+                    {
+                        error: 'UNKNOWN_PROVIDER',
+                        detail: `No such provider directory: ${modelMatch[1]}`,
+                        knownProviders: this.catalogConfig.providers(),
+                    },
+                )
+
+                return
+            }
+
+            const modelId = decodeURIComponent(modelMatch[2]!)
+
+            if (req.method === 'GET') {
+                const record = await this.catalogConfig.readModel(provider, modelId)
+                AiModelRegistryServer.sendJson(
+                    res,
+                    record ? 200 : 404,
+                    record ?? { error: 'NOT_FOUND' },
+                )
+
+                return
+            }
+
+            if (req.method === 'PATCH') {
+                const patch = await readJsonBody(req)
+                const merged = await this.catalogSync.loadMerged()
+                const knownModels = new Set(
+                    merged.filter(entry => entry.provider === provider).map(entry => entry.modelId),
+                )
+                const result = await this.catalogConfig.patchModel(
+                    provider,
+                    modelId,
+                    patch as never,
+                    knownModels,
+                )
+                AiModelRegistryServer.sendJson(
+                    res,
+                    'error' in result ? 400 : 200,
+                    result,
+                )
+
+                return
+            }
+        }
+
+        // Model-catalog config. `catalog-settings.json` and `base.json` are maintained
+        // through here rather than edited by hand, so a change is validated against
+        // what the catalog holds and the previous version is kept in history/.
+        const configMatch = /^\/api\/model-catalog\/([a-z0-9-]+)\/(catalog-index|base)$/u.exec(pathname)
+
+        if (configMatch) {
+            const provider = this.catalogConfig.resolveProvider(configMatch[1]!)
+
+            if (!provider) {
+                AiModelRegistryServer.sendJson(
+                    res,
+                    404,
+                    {
+                        error: 'UNKNOWN_PROVIDER',
+                        detail: `No such provider directory: ${configMatch[1]}`,
+                        knownProviders: this.catalogConfig.providers(),
+                    },
+                )
+
+                return
+            }
+
+            const isIndex = configMatch[2] === 'catalog-index'
+
+            if (req.method === 'GET') {
+                const document = isIndex
+                    ? await this.catalogConfig.readIndex(provider)
+                    : await this.catalogConfig.readBase(provider)
+                AiModelRegistryServer.sendJson(
+                    res,
+                    document ? 200 : 404,
+                    document ?? { error: 'NOT_FOUND' },
+                )
+
+                return
+            }
+
+            if (req.method === 'PATCH') {
+                const patch = await readJsonBody(req)
+                const merged = await this.catalogSync.loadMerged()
+                const knownModels = new Set(
+                    merged.filter(entry => entry.provider === provider).map(entry => entry.modelId),
+                )
+                const result = isIndex
+                    ? await this.catalogConfig.patchIndex(
+                        provider,
+                        patch as never,
+                        knownModels,
+                    )
+                    : await this.catalogConfig.patchBase(provider, patch as never)
+                AiModelRegistryServer.sendJson(
+                    res,
+                    'error' in result ? 400 : 200,
+                    result,
+                )
+
+                return
+            }
+        }
+
+        // Starts a run and answers at once. What the run is doing goes back over the
+        // event stream below, so the page shows a sync happening instead of a button
+        // that goes quiet for a minute.
+        if (
+            req.method === 'POST'
+            && pathname === '/api/models/sync'
+        ) {
+            const {
+                started,
+            } = this.syncRunner.start()
+            AiModelRegistryServer.sendJson(
+                res,
+                200,
+                {
+                    started,
+                    // Not an error: pressing the button during a run joins that run.
+                    alreadyRunning: !started,
+                },
+            )
+
+            return
+        }
+
+        // Server-sent events. Every subscriber gets what has already happened in the
+        // current run before it sees anything live, so a page opened or reloaded
+        // mid-run catches up rather than showing an idle button.
+        if (
+            req.method === 'GET'
+            && pathname === '/api/models/sync/events'
+        ) {
+            res.writeHead(
+                200,
+                {
+                    'content-type': 'text/event-stream',
+                    'cache-control': 'no-cache',
+                    connection: 'keep-alive',
+                },
+            )
+
+            const send = (event: SyncProgressEvent): void => void res.write(`data: ${JSON.stringify(event)}\n\n`)
+
+            for (const event of this.syncRunner.history())
+                send(event)
+
+            if (!this.syncRunner.isRunning()) {
+                send({
+                    type: 'run-finished',
+                    status: 'completed',
+                })
+            }
+
+            const unsubscribe = this.syncRunner.subscribe(send)
+            req.on('close', unsubscribe)
+
+            return
+        }
 
         if (
             req.method === 'GET'
@@ -667,7 +1015,13 @@ class AiModelRegistryServer {
             },
         )
 
-        const shutdown = () => server.close(() => process.exit(0))
+        if (this.syncService)
+            this.syncService.start()
+
+        const shutdown = () => {
+            void this.syncService?.stop()
+            server.close(() => process.exit(0))
+        }
         process.on('SIGTERM', shutdown)
         process.on('SIGINT', shutdown)
     }
@@ -676,4 +1030,20 @@ class AiModelRegistryServer {
 new AiModelRegistryServer(
     new ParamTree(PARAMS_DIR),
     PORT,
+    new CatalogSync({
+        catalogDir: MODEL_CATALOG_DIR,
+        fetchFromSources: false,
+        writeCatalogFiles: false,
+        writeDynamoDb: false,
+    }),
+    new CatalogConfigApi(
+        MODEL_CATALOG_DIR,
+        join(
+            MODEL_CATALOG_DIR,
+            '..',
+            'history',
+        ),
+    ),
+    CATALOG_SYNC_ENABLED ? new CatalogSyncService() : null,
+    new SyncRunner(MODEL_CATALOG_DIR),
 ).start()

@@ -19,8 +19,14 @@ const node: ImageCanvasNode = {
     nodeId: 'image-1',
     type: 'image',
     assetId: 'asset-old',
-    position: { x: 0, y: 0 },
-    dimensions: { width: 100, height: 100 },
+    position: {
+        x: 0,
+        y: 0,
+    },
+    dimensions: {
+        width: 100,
+        height: 100,
+    },
 }
 
 describe('WorkspaceMediaReplacement', () => {
@@ -48,12 +54,21 @@ describe('WorkspaceMediaReplacement', () => {
 
     it('uploads, detaches and reattaches a replacement in the captured scene', async () => {
         const lifetime = new Lifetime()
-        let state = { nodes: [node], edges: [], viewport: { x: 0, y: 0, zoom: 1 } } satisfies CanvasState
-        const commitTransient = vi.fn((next: CanvasState) => {
-            state = next
-        })
+        let state = {
+            nodes: [node],
+            edges: [],
+            viewport: {
+                x: 0,
+                y: 0,
+                zoom: 1,
+            },
+        } satisfies CanvasState
+        const commitTransient = vi.fn((next: CanvasState) => void (state = next))
         const owner = new WorkspaceMediaReplacement({
-            host: { media: { uploadReplacement: vi.fn(async () => ({ assetId: 'asset-new', kind: 'image' })) } },
+            host: { media: { uploadReplacement: vi.fn(async () => ({
+                assetId: 'asset-new',
+                kind: 'image',
+            })) } },
             document,
             lifetime,
             canAct: () => true,
@@ -74,7 +89,10 @@ describe('WorkspaceMediaReplacement', () => {
         input.dispatchEvent(new Event('change'))
         await vi.waitFor(() => expect(commitTransient).toHaveBeenCalledTimes(2))
 
-        expect(state.nodes).toEqual([expect.objectContaining({ nodeId: node.nodeId, assetId: 'asset-new' })])
+        expect(state.nodes).toEqual([expect.objectContaining({
+            nodeId: node.nodeId,
+            assetId: 'asset-new',
+        })])
         lifetime.destroy()
     })
 })

@@ -36,7 +36,7 @@ vi.mock('$src/settings.ts', () => ({
     },
 }))
 
-function createPromptSchema() {
+const createPromptSchema = () => {
     return new Schema({
         nodes: {
             doc: { content: 'block+' },
@@ -76,14 +76,21 @@ function createPromptSchema() {
                     videoGenerationConfigGroups: { default: '' },
                 },
             },
-            image: { inline: true, group: 'inline', attrs: { src: { default: '' } } },
+            image: {
+                inline: true,
+                group: 'inline',
+                attrs: { src: { default: '' } },
+            },
         },
         marks: {},
     })
 }
 
-function createTransactionTracker() {
-    const inserts: Array<{ pos: number; node: ProseMirrorNode }> = []
+const createTransactionTracker = () => {
+    const inserts: Array<{
+        pos: number
+        node: ProseMirrorNode
+    }> = []
     const nodeMarkupCalls: Array<Record<string, unknown>> = []
     const metaCalls: Array<Record<string, unknown>> = []
 
@@ -97,7 +104,11 @@ function createTransactionTracker() {
     }
 
     transaction.insert = vi.fn((pos: number, node: ProseMirrorNode) => {
-        inserts.push({ pos, node })
+        inserts.push({
+            pos,
+            node,
+        })
+
         return transaction
     })
 
@@ -106,6 +117,7 @@ function createTransactionTracker() {
             nodePos: _nodePos,
             attrs,
         })
+
         return transaction
     })
 
@@ -114,17 +126,23 @@ function createTransactionTracker() {
             meta,
             value,
         })
+
         return transaction
     })
 
-    return { transaction, inserts, nodeMarkupCalls, metaCalls }
+    return {
+        transaction,
+        inserts,
+        nodeMarkupCalls,
+        metaCalls,
+    }
 }
 
-function createThreadEditorEntry(params: {
+const createThreadEditorEntry = (params: {
     threadId: string
     threadAttrs?: Partial<Record<string, unknown>>
     threadMessageAttrs?: Partial<Record<string, unknown>>
-}) {
+}) => {
     const schema = createPromptSchema()
 
     const userMessage = schema.nodes.aiUserMessage.create(
@@ -157,7 +175,12 @@ function createThreadEditorEntry(params: {
     ) as ProseMirrorNode
 
     const doc = schema.nodes.doc.create(null, [threadNode])
-    const { transaction, inserts, nodeMarkupCalls, metaCalls } = createTransactionTracker()
+    const {
+        transaction,
+        inserts,
+        nodeMarkupCalls,
+        metaCalls,
+    } = createTransactionTracker()
 
     const editorView = {
         state: {
@@ -181,10 +204,15 @@ function createThreadEditorEntry(params: {
     }
 }
 
-function createThreadlessEditorEntry() {
+const createThreadlessEditorEntry = () => {
     const schema = createPromptSchema()
     const doc = schema.nodes.doc.create(null, [schema.nodes.paragraph.create(null, schema.text('outside thread content'))])
-    const { transaction, inserts, nodeMarkupCalls, metaCalls } = createTransactionTracker()
+    const {
+        transaction,
+        inserts,
+        nodeMarkupCalls,
+        metaCalls,
+    } = createTransactionTracker()
 
     const editorView = {
         state: {
@@ -205,13 +233,13 @@ function createThreadlessEditorEntry() {
     }
 }
 
-function createController(options?: {
+const createController = (options?: {
     getCanvasState?: () => CanvasState | null
     persistCanvasState?: (state: CanvasState) => void
     createAiChatThread?: ReturnType<typeof vi.fn>
     onAiChatThreadCreated?: ReturnType<typeof vi.fn>
     onAiSubmit?: ReturnType<typeof vi.fn>
-}) {
+}) => {
     const persistCanvasState = options?.persistCanvasState ?? vi.fn()
     const createAiChatThread = options?.createAiChatThread ?? vi.fn()
     const onAiChatThreadCreated = options?.onAiChatThreadCreated ?? vi.fn()
@@ -238,8 +266,14 @@ function createController(options?: {
 const baseNode: CanvasNode = {
     nodeId: 'target-doc',
     type: 'document',
-    position: { x: 10, y: 20 },
-    dimensions: { width: 120, height: 200 },
+    position: {
+        x: 10,
+        y: 20,
+    },
+    dimensions: {
+        width: 120,
+        height: 200,
+    },
 }
 
 describe('AiPromptInputController', () => {
@@ -250,18 +284,26 @@ describe('AiPromptInputController', () => {
         controller.registerThreadEditor('shared', { editorView: previous.editorView })
         controller.registerThreadEditor('shared', { editorView: replacement.editorView })
         controller.unregisterThreadEditor('shared', previous.editorView)
-        controller.setTarget({ nodeId: 'target', type: 'aiChatThread', referenceId: 'shared' })
+        controller.setTarget({
+            nodeId: 'target',
+            type: 'aiChatThread',
+            referenceId: 'shared',
+        })
         await controller.submitMessage({
-            contentJSON: [{ type: 'paragraph', content: [{ type: 'text', text: 'next prompt' }] }],
+            contentJSON: [{
+                type: 'paragraph',
+                content: [{
+                    type: 'text',
+                    text: 'next prompt',
+                }],
+            }],
             aiReasoningModels: ['reasoning-model'],
         })
         expect(previous.dispatch).not.toHaveBeenCalled()
         expect(replacement.dispatch).toHaveBeenCalledTimes(1)
         controller.destroy()
     })
-    beforeEach(() => {
-        vi.clearAllMocks()
-    })
+    beforeEach(() => void vi.clearAllMocks())
 
     it('warns when no target is set', async () => {
         const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
@@ -281,7 +323,11 @@ describe('AiPromptInputController', () => {
 
         const { controller } = createController()
 
-        controller.setTarget({ nodeId: 'thread-1', type: 'aiChatThread', referenceId: 'thread-1' })
+        controller.setTarget({
+            nodeId: 'thread-1',
+            type: 'aiChatThread',
+            referenceId: 'thread-1',
+        })
         await controller.submitMessage({
             contentJSON: [{ type: 'paragraph' }],
             aiReasoningModels: [],
@@ -298,11 +344,18 @@ describe('AiPromptInputController', () => {
             threadAttrs: { aiReasoningModels: serializeAiModelSelectionAttr(['existing-model']) },
         })
 
-        controller.setTarget({ nodeId: 'thread-node', type: 'aiChatThread', referenceId: 'thread-pending' })
+        controller.setTarget({
+            nodeId: 'thread-node',
+            type: 'aiChatThread',
+            referenceId: 'thread-pending',
+        })
         await controller.submitMessage({
             contentJSON: [{
                 type: 'paragraph',
-                content: [{ type: 'text', text: 'Draft prompt' }],
+                content: [{
+                    type: 'text',
+                    text: 'Draft prompt',
+                }],
             }],
             aiReasoningModels: ['text-model'],
             referenceNodeIds: ['image-1', 'image-2'],
@@ -330,14 +383,24 @@ describe('AiPromptInputController', () => {
         const { controller } = createController()
         const editorEntry = createThreadlessEditorEntry()
 
-        controller.setTarget({ nodeId: 'thread-missing', type: 'aiChatThread', referenceId: 'thread-missing' })
+        controller.setTarget({
+            nodeId: 'thread-missing',
+            type: 'aiChatThread',
+            referenceId: 'thread-missing',
+        })
         controller.registerThreadEditor('thread-missing', {
             editorView: editorEntry.editorView,
             triggerGradientAnimation: vi.fn(),
         })
 
         await controller.submitMessage({
-            contentJSON: [{ type: 'paragraph', content: [{ type: 'text', text: 'Draft prompt' }] }],
+            contentJSON: [{
+                type: 'paragraph',
+                content: [{
+                    type: 'text',
+                    text: 'Draft prompt',
+                }],
+            }],
             aiReasoningModels: ['text-model'],
         })
 
@@ -367,7 +430,11 @@ describe('AiPromptInputController', () => {
             },
         })
 
-        controller.setTarget({ nodeId: 'thread-update-node', type: 'aiChatThread', referenceId: 'thread-update' })
+        controller.setTarget({
+            nodeId: 'thread-update-node',
+            type: 'aiChatThread',
+            referenceId: 'thread-update',
+        })
         controller.registerThreadEditor('thread-update', {
             editorView: editorEntry.editorView,
             triggerGradientAnimation: vi.fn(),
@@ -389,14 +456,22 @@ describe('AiPromptInputController', () => {
             imageOptions: {
                 aiImageModels: ['img-a', 'img-b'],
                 imageGenerationSize: '1024x1024',
-                configGroups: [{ groupId: 'size', modelIds: ['img-a'], values: { style: 'vivid' } }],
+                configGroups: [{
+                    groupId: 'size',
+                    modelIds: ['img-a'],
+                    values: { style: 'vivid' },
+                }],
             },
             videoOptions: {
                 aiVideoModels: ['video-a'],
                 videoAspectRatio: '16:9',
                 videoResolution: '1080p',
                 videoDuration: '10',
-                configGroups: [{ groupId: 'quality', modelIds: ['video-a'], values: { motion: 'stable' } }],
+                configGroups: [{
+                    groupId: 'quality',
+                    modelIds: ['video-a'],
+                    values: { motion: 'stable' },
+                }],
             },
         })
 
@@ -416,14 +491,22 @@ describe('AiPromptInputController', () => {
             aiImageModels: serializeAiModelSelectionAttr(['img-a', 'img-b']),
             imageGenerationSize: '1024x1024',
             imageGenerationConfigGroups: serializeMediaGenerationConfigSelectionAttr([
-                { groupId: 'size', modelIds: ['img-a'], values: { style: 'vivid' } },
+                {
+                    groupId: 'size',
+                    modelIds: ['img-a'],
+                    values: { style: 'vivid' },
+                },
             ]),
             aiVideoModels: serializeAiModelSelectionAttr(['video-a']),
             videoAspectRatio: '16:9',
             videoResolution: '1080p',
             videoDuration: '10',
             videoGenerationConfigGroups: serializeMediaGenerationConfigSelectionAttr([
-                { groupId: 'quality', modelIds: ['video-a'], values: { motion: 'stable' } },
+                {
+                    groupId: 'quality',
+                    modelIds: ['video-a'],
+                    values: { motion: 'stable' },
+                },
             ]),
         })
     })
@@ -437,7 +520,10 @@ describe('AiPromptInputController', () => {
                 },
             ],
             edges: [],
-            nodeIdsByType: { document: ['target-doc'], all: ['target-doc'] },
+            nodeIdsByType: {
+                document: ['target-doc'],
+                all: ['target-doc'],
+            },
             workspaceId: 'workspace-1',
         } as CanvasState
         const persistCanvasState = vi.fn()
@@ -454,11 +540,18 @@ describe('AiPromptInputController', () => {
             onAiChatThreadCreated,
         })
 
-        controller.setTarget({ nodeId: 'target-doc', type: 'document', referenceId: 'doc-1' })
+        controller.setTarget({
+            nodeId: 'target-doc',
+            type: 'document',
+            referenceId: 'doc-1',
+        })
         await controller.submitMessage({
             contentJSON: [{
                 type: 'paragraph',
-                content: [{ type: 'text', text: 'Start a new thread' }],
+                content: [{
+                    type: 'text',
+                    text: 'Start a new thread',
+                }],
             }],
             aiReasoningModels: ['text-model'],
             useMultipleReasoningModels: false,
@@ -518,7 +611,11 @@ describe('AiPromptInputController', () => {
             createAiChatThread,
         })
 
-        controller.setTarget({ nodeId: 'target-doc', type: 'document', referenceId: 'doc-1' })
+        controller.setTarget({
+            nodeId: 'target-doc',
+            type: 'document',
+            referenceId: 'doc-1',
+        })
         await controller.submitMessage({
             contentJSON: [{ type: 'paragraph' }],
             aiReasoningModels: ['text-model'],
@@ -538,7 +635,11 @@ describe('AiPromptInputController', () => {
             onAiChatThreadCreated,
         })
 
-        controller.setTarget({ nodeId: 'target-doc', type: 'document', referenceId: 'doc-1' })
+        controller.setTarget({
+            nodeId: 'target-doc',
+            type: 'document',
+            referenceId: 'doc-1',
+        })
         await controller.submitMessage({
             contentJSON: [{ type: 'paragraph' }],
             aiReasoningModels: ['text-model'],
@@ -558,7 +659,11 @@ describe('AiPromptInputController', () => {
         controller.setReceiving('thread-1', true)
         expect(controller.isReceiving()).toBe(false)
 
-        controller.setTarget({ nodeId: 'thread-1', type: 'aiChatThread', referenceId: 'thread-1' })
+        controller.setTarget({
+            nodeId: 'thread-1',
+            type: 'aiChatThread',
+            referenceId: 'thread-1',
+        })
         expect(controller.isReceiving()).toBe(true)
 
         controller.setReceiving('thread-1', false)
@@ -573,9 +678,19 @@ describe('AiPromptInputController', () => {
         const { controller } = createController()
         const editorEntry = createThreadEditorEntry({ threadId: 'thread-destroy' })
 
-        controller.setTarget({ nodeId: 'thread-node-destroy', type: 'aiChatThread', referenceId: 'thread-destroy' })
+        controller.setTarget({
+            nodeId: 'thread-node-destroy',
+            type: 'aiChatThread',
+            referenceId: 'thread-destroy',
+        })
         await controller.submitMessage({
-            contentJSON: [{ type: 'paragraph', content: [{ type: 'text', text: 'Draft prompt' }] }],
+            contentJSON: [{
+                type: 'paragraph',
+                content: [{
+                    type: 'text',
+                    text: 'Draft prompt',
+                }],
+            }],
             aiReasoningModels: ['text-model'],
         })
         controller.destroy()

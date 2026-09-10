@@ -905,12 +905,12 @@ export const applyBranchTreeLayout = (
 // connector between the parent's right edge and the child's left edge. This
 // keeps splits as compact as continuations instead of adding a wide second depth
 // column.
-function positionLineageMarkers(
+const positionLineageMarkers = (
     nodes: CanvasNode[],
     nodesById: Map<string, CanvasNode>,
     nextPositionById: Map<string, Point>,
     options: BranchTreeLayoutOptions,
-): void {
+): void => {
     const childrenByMarkerId = new Map<string, BranchLineageOutputNode[]>()
 
     for (const node of nodes) {

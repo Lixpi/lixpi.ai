@@ -14,7 +14,7 @@ import {
     type GlassPixels,
 } from './glass-material.ts'
 
-function makeBaseGlassMaterialStyle(overrides: Partial<GlassMaterialStyle> = {}): GlassMaterialStyle {
+const makeBaseGlassMaterialStyle = (overrides: Partial<GlassMaterialStyle> = {}): GlassMaterialStyle => {
     return {
         shadowColor: '#112233',
         tailOpacityPower: 1,
@@ -54,9 +54,7 @@ function makeBaseGlassMaterialStyle(overrides: Partial<GlassMaterialStyle> = {})
     }
 }
 
-function alpha(pixels: GlassPixels, x: number, y: number): number {
-    return pixels.rgba[(y * pixels.size.width + x) * 4 + 3]
-}
+const alpha = (pixels: GlassPixels, x: number, y: number): number => pixels.rgba[(y * pixels.size.width + x) * 4 + 3]
 
 afterEach(() => vi.unstubAllGlobals())
 
@@ -74,7 +72,10 @@ describe('glass material pixels', () => {
         vi.stubGlobal('OffscreenCanvas', undefined)
         const pixels = new TravelingSnakeGlassMaterial(['#000000', '#ffffff'], 0.35, makeBaseGlassMaterialStyle()).bake()
         expect(pixels.kind).toBe('pixels')
-        expect(pixels.size).toEqual({ width: 256, height: 64 })
+        expect(pixels.size).toEqual({
+            width: 256,
+            height: 64,
+        })
         expect(pixels.rgba).toHaveLength(256 * 64 * 4)
         expect(alpha(pixels, 128, 32)).toBeGreaterThan(0)
         expect(alpha(pixels, 128, 0)).toBe(0)
@@ -90,9 +91,15 @@ describe('glass material pixels', () => {
                 tailFadeFraction: 0.4,
                 minTailOpacity: 0.02,
             }),
-            { width: 32, height: 16 },
+            {
+                width: 32,
+                height: 16,
+            },
         ).bake()
-        expect(pixels.size).toEqual({ width: 32, height: 16 })
+        expect(pixels.size).toEqual({
+            width: 32,
+            height: 16,
+        })
         const first = alpha(pixels, 0, 8)
         const middle = alpha(pixels, 16, 8)
         const last = alpha(pixels, 31, 8)
@@ -102,13 +109,23 @@ describe('glass material pixels', () => {
     })
 
     it('clamps circle size and translucency', () => {
-        const pixels = new CircularGlassMaterial(['#112233'], 0.35, makeBaseGlassMaterialStyle(), { size: 1, translucency: 0, rimFeatherFraction: 0.8 }).bake()
-        expect(pixels.size).toEqual({ width: 2, height: 2 })
+        const pixels = new CircularGlassMaterial(['#112233'], 0.35, makeBaseGlassMaterialStyle(), {
+            size: 1,
+            translucency: 0,
+            rimFeatherFraction: 0.8,
+        }).bake()
+        expect(pixels.size).toEqual({
+            width: 2,
+            height: 2,
+        })
         expect(alpha(pixels, 1, 1)).toBe(0)
     })
 
     it('keeps a translucent center and transparent corners on the disc', () => {
-        const pixels = new CircularGlassMaterial(['#112233'], 0.35, makeBaseGlassMaterialStyle(), { size: 32, translucency: 1 }).bake()
+        const pixels = new CircularGlassMaterial(['#112233'], 0.35, makeBaseGlassMaterialStyle(), {
+            size: 32,
+            translucency: 1,
+        }).bake()
         expect(alpha(pixels, 16, 16)).toBeGreaterThan(0)
         expect(alpha(pixels, 0, 0)).toBe(0)
     })

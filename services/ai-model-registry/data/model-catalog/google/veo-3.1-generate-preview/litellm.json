@@ -1,0 +1,31 @@
+{
+    "_meta": {
+        "sourceName": "LiteLLM model_prices_and_context_window.json",
+        "sourceId": "litellm",
+        "queriedEndpoints": [
+            {
+                "endpoint": "https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json",
+                "note": "Whole catalog fetched once per run and matched by model key."
+            }
+        ],
+        "hasDataForThisModel": true,
+        "inferenceProvidersWithData": [
+            "google"
+        ],
+        "fetchedAt": "2026-09-08T00:55:53.536Z"
+    },
+    "byInferenceProvider": {
+        "google": {
+            "contextWindow": 1024,
+            "pricing": {
+                "currency": "USD",
+                "video": {
+                    "measuringUnit": "seconds",
+                    "pricePer": "1",
+                    "price": "0.40"
+                }
+            },
+            "modelKeyAtSource": "gemini/veo-3.1-generate-preview"
+        }
+    }
+}

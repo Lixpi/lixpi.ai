@@ -15,10 +15,21 @@ const candidate = (attempt: number, score: number, failedDimensions: string[] = 
         valid: true,
         score,
         dimensions: [
-            { dimension: 'facial-identity', score: failedDimensions.includes('facial-identity') ? 0.4 : 0.9, mismatchCodes: ['FACE_SHAPE'] },
-            { dimension: 'framing', score: 0.9, mismatchCodes: [] },
+            {
+                dimension: 'facial-identity',
+                score: failedDimensions.includes('facial-identity') ? 0.4 : 0.9,
+                mismatchCodes: ['FACE_SHAPE'],
+            },
+            {
+                dimension: 'framing',
+                score: 0.9,
+                mismatchCodes: [],
+            },
         ],
-        fidelityMetric: { available: false, unavailableReason: 'non-photographic' as const },
+        fidelityMetric: {
+            available: false,
+            unavailableReason: 'non-photographic' as const,
+        },
         vlmAssessor: 'test/model',
         failedDimensions,
     },

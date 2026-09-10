@@ -55,14 +55,26 @@ describe('resizeBranchMarkerToDimensions', () => {
             type: 'branchLine',
             branchId: 'branch-1',
             generationRequestId: 'request-1',
-            position: { x: 100, y: 200 },
-            dimensions: { width: 280, height: 64 },
+            position: {
+                x: 100,
+                y: 200,
+            },
+            dimensions: {
+                width: 280,
+                height: 64,
+            },
             provenance: {},
         } as BranchLineCanvasNode
 
-        const resized = resizeBranchMarkerToDimensions(node, { width: 340, height: 94 })
+        const resized = resizeBranchMarkerToDimensions(node, {
+            width: 340,
+            height: 94,
+        })
 
-        expect(resized.position).toEqual({ x: 70, y: 185 })
+        expect(resized.position).toEqual({
+            x: 70,
+            y: 185,
+        })
         expect(resized.position.x + resized.dimensions.width / 2).toBe(240)
         expect(resized.position.y + resized.dimensions.height / 2).toBe(232)
     })

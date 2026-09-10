@@ -13,23 +13,45 @@ import {
     type BranchMarkerPromptPart,
 } from '../../shared/branch-tree-layout/marker-prompt-parts.ts'
 
-const reference: BranchMarkerPromptPart = { type: 'media', reference: { referenceType: 'media', assetId: 'asset', mediaKind: 'image', displayName: 'Image' } }
+const reference: BranchMarkerPromptPart = {
+    type: 'media',
+    reference: {
+        referenceType: 'media',
+        assetId: 'asset',
+        mediaKind: 'image',
+        displayName: 'Image',
+    },
+}
 
 describe('BranchMarkerPromptParts', () => {
     it('preserves inline order and releases every mounted preview once', () => {
-        const views: Array<{ dom: HTMLElement; destroy: ReturnType<typeof vi.fn> }> = []
+        const views: Array<{
+            dom: HTMLElement
+            destroy: ReturnType<typeof vi.fn>
+        }> = []
         const render: BranchPromptReferenceRenderer = reference => {
             const dom = document.createElement('span')
             dom.textContent = reference.displayName
-            const view = { dom, destroy: vi.fn() }
+            const view = {
+                dom,
+                destroy: vi.fn(),
+            }
             views.push(view)
+
             return view
         }
-        const prompt = new BranchMarkerPromptParts([{ type: 'text', text: 'Use ' }, reference, { type: 'text', text: ' again ' }, reference], render)
+        const prompt = new BranchMarkerPromptParts([{
+            type: 'text',
+            text: 'Use ',
+        }, reference, {
+            type: 'text',
+            text: ' again ',
+        }, reference], render)
         expect(prompt.items).toEqual(['Use ', views[0]!.dom, ' again ', views[1]!.dom])
         document.body.append(views[0]!.dom, views[1]!.dom)
         prompt.destroy()
         prompt.destroy()
+
         for (const view of views) {
             expect(view.destroy).toHaveBeenCalledOnce()
             expect(view.dom.isConnected).toBe(false)
@@ -37,7 +59,10 @@ describe('BranchMarkerPromptParts', () => {
     })
 
     it('cleans earlier previews when a later preview fails to mount', () => {
-        const first = { dom: document.createElement('span'), destroy: vi.fn() }
+        const first = {
+            dom: document.createElement('span'),
+            destroy: vi.fn(),
+        }
         const render = vi.fn<BranchPromptReferenceRenderer>()
             .mockReturnValueOnce(first)
             .mockImplementationOnce(() => {
@@ -48,8 +73,14 @@ describe('BranchMarkerPromptParts', () => {
     })
 
     it('keeps previews separate across instances displaying the same reference', () => {
-        const first = { dom: document.createElement('span'), destroy: vi.fn() }
-        const second = { dom: document.createElement('span'), destroy: vi.fn() }
+        const first = {
+            dom: document.createElement('span'),
+            destroy: vi.fn(),
+        }
+        const second = {
+            dom: document.createElement('span'),
+            destroy: vi.fn(),
+        }
         const a = new BranchMarkerPromptParts([reference], () => first)
         const b = new BranchMarkerPromptParts([reference], () => second)
         a.destroy()

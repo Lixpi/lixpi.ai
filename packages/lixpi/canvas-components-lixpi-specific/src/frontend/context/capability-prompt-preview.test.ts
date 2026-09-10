@@ -18,24 +18,45 @@ import {
 const metadata = {
     moduleId: 'test-module',
     name: 'Test module',
-    descriptionSheet: { purpose: 'Test purpose', expectedInputs: [], bestResults: ['Use context'], limitations: ['Needs input'], executionCharacteristics: { summary: 'Creates output', cost: 'low', latency: 'low' } },
+    descriptionSheet: {
+        purpose: 'Test purpose',
+        expectedInputs: [],
+        bestResults: ['Use context'],
+        limitations: ['Needs input'],
+        executionCharacteristics: {
+            summary: 'Creates output',
+            cost: 'low',
+            latency: 'low',
+        },
+    },
 } as CapabilityModuleMeta
 const owners: ReturnType<typeof createCapabilityPromptReferencePreview>[] = []
 afterEach(() => {
     for (const owner of owners.splice(0)) owner.destroy()
+
     document.body.replaceChildren()
 })
 
-function mount(load: () => Promise<CapabilityModuleMeta>, cache?: CapabilityModulePromiseCache) {
-    const preview = createCapabilityPromptReferencePreview({ moduleId: 'test-module', displayName: 'Test module' }, {
-        environment: { document, tooltipHideDelayMs: 0 },
+const mount = (load: () => Promise<CapabilityModuleMeta>, cache?: CapabilityModulePromiseCache) => {
+    const preview = createCapabilityPromptReferencePreview({
+        moduleId: 'test-module',
+        displayName: 'Test module',
+    }, {
+        environment: {
+            document,
+            tooltipHideDelayMs: 0,
+        },
         getCapabilityModule: load,
         capabilityModuleCache: cache,
     }, { inlinePopover: true })
     owners.push(preview)
     document.body.appendChild(preview.dom)
     const open = () => preview.dom.querySelector<HTMLElement>('.context-preview-inline-trigger')!.dispatchEvent(new PointerEvent('pointerenter', { bubbles: true }))
-    return { preview, open }
+
+    return {
+        preview,
+        open,
+    }
 }
 
 describe('Capability prompt preview', () => {

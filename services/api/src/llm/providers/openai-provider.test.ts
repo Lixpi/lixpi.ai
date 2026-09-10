@@ -85,9 +85,9 @@ const makeDeps = (): BaseProviderDeps => ({
         publish: vi.fn(),
     } as any,
     usageReporter: {
-        reportTokensUsage: vi.fn(),
-        reportImageUsage: vi.fn(),
-        reportVideoUsage: vi.fn(),
+        priceTextCall: vi.fn(),
+        priceImageCall: vi.fn(),
+        priceVideoCall: vi.fn(),
     } as any,
     runImageRouter: vi.fn(),
     runVideoRouter: vi.fn(),
@@ -99,6 +99,7 @@ const getUploadedFiles = (formData: FormData): File[] => {
         ...formData.getAll('image[]'),
         ...formData.getAll('image'),
     ]
+
     return values.filter((value): value is File => value instanceof File)
 }
 
@@ -115,6 +116,7 @@ const processWithCharacterReferences = async (
             request,
             formData: await request.clone().formData(),
         })
+
         return new Response(
             [
                 'event: image_edit.completed',
@@ -140,7 +142,10 @@ const processWithCharacterReferences = async (
         workspaceId: 'workspace-1',
         aiChatThreadId: 'thread-1',
         organizationId: 'organization-1',
-        eventMeta: { userId: 'user-1', organizationId: 'organization-1' },
+        eventMeta: {
+            userId: 'user-1',
+            organizationId: 'organization-1',
+        },
         enableImageGeneration: true,
         preflightResolved: true,
         imageSize: '1536x1024',
@@ -192,6 +197,7 @@ const processWithCharacterReferences = async (
     expect(fetchMock).toHaveBeenCalled()
     const editRequests = capturedRequests.filter(captured => captured.request.url.endsWith('/v1/images/edits'))
     expect(editRequests).toHaveLength(1)
+
     return editRequests[0]!
 }
 
@@ -209,8 +215,11 @@ describe('OpenAIProvider panel-reference ingestion', () => {
         consoleLogSpy = null
         vi.unstubAllGlobals()
         vi.restoreAllMocks()
-        if (previousApiKey === undefined) delete process.env.OPENAI_API_KEY
-        else process.env.OPENAI_API_KEY = previousApiKey
+
+        if (previousApiKey === undefined)
+            delete process.env.OPENAI_API_KEY
+        else
+            process.env.OPENAI_API_KEY = previousApiKey
     })
 
     it('uploads prioritized panel references to the image-edit endpoint', async () => {
@@ -231,8 +240,14 @@ describe('OpenAIProvider panel-reference ingestion', () => {
             name: file.name,
             type: file.type,
         }))).toEqual([
-            { name: 'original-source-1.png', type: 'image/png' },
-            { name: 'face-crop-1.png', type: 'image/png' },
+            {
+                name: 'original-source-1.png',
+                type: 'image/png',
+            },
+            {
+                name: 'face-crop-1.png',
+                type: 'image/png',
+            },
         ])
         await expect(files[0]?.arrayBuffer()).resolves.toEqual(
             ORIGINAL_SOURCE_BYTES.buffer.slice(
@@ -251,7 +266,10 @@ describe('OpenAIProvider panel-reference ingestion', () => {
 
     it('serializes the same scoped role state for the Responses image path', () => {
         const referenceBytes = Buffer.from('approved-face-construction')
-        const messages: Array<{ role: string; content: any }> = [{
+        const messages: Array<{
+            role: string
+            content: any
+        }> = [{
             role: 'user',
             content: 'Rebuild the clothing from the original drawing.',
         }]
@@ -300,7 +318,10 @@ describe('OpenAIProvider panel-reference ingestion', () => {
             [Symbol.asyncIterator]: async function*() {
                 yield {
                     type: 'response.completed',
-                    response: { id: 'response-1', output: [] },
+                    response: {
+                        id: 'response-1',
+                        output: [],
+                    },
                 }
             },
         }))
@@ -324,7 +345,10 @@ describe('OpenAIProvider panel-reference ingestion', () => {
                     reasoningVerbosity: 'high',
                 },
             },
-            inputMessages: [{ role: 'user', content: 'Solve this.' }],
+            inputMessages: [{
+                role: 'user',
+                content: 'Solve this.',
+            }],
             modelVersion: 'gpt-5.6-sol',
             instructions: undefined,
             temperature: 0.7,
@@ -341,7 +365,10 @@ describe('OpenAIProvider panel-reference ingestion', () => {
         expect(create).toHaveBeenCalledWith(
             expect.objectContaining({
                 model: 'gpt-5.6-sol',
-                reasoning: { effort: 'max', mode: 'pro' },
+                reasoning: {
+                    effort: 'max',
+                    mode: 'pro',
+                },
                 text: { verbosity: 'high' },
                 max_output_tokens: 4096,
             }),

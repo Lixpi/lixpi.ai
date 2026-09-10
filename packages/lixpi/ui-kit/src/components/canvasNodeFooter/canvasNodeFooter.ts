@@ -126,10 +126,12 @@ class CanvasNodeFooter implements CanvasNodeFooterInstance {
                 continue
 
             if (section.separated) {
-                this.element.appendChild(html`<div
+                this.element.appendChild(html`
+                    <div
                         className="canvas-node-footer-separator"
                         aria-hidden="true"
-                    ></div>` as HTMLDivElement)
+                    ></div>
+                ` as HTMLDivElement)
             }
 
             this.element.append(...elements)

@@ -7,29 +7,38 @@ import { readFileSync } from 'fs'
 import { resolve } from 'path'
 import { withoutLayout } from '@lixpi/test-utils'
 
-function readSourceFile(relativePath: string): string {
-    return readFileSync(resolve(import.meta.dirname, relativePath), 'utf-8')
-}
+const readSourceFile = (relativePath: string): string => readFileSync(resolve(import.meta.dirname, relativePath), 'utf-8')
 
-function expectSourceToContain(source: string, snippet: string, label: string): void {
+const expectSourceToContain = (source: string, snippet: string, label: string): void => {
     expect(
         withoutLayout(source).includes(withoutLayout(snippet)),
         `${label} should contain:\n${snippet}`,
     ).toBe(true)
 }
 
-function extractBlock(source: string, selector: string): string {
+const extractBlock = (source: string, selector: string): string => {
     const selectorIndex = source.indexOf(selector)
-    if (selectorIndex === -1) return ''
+
+    if (selectorIndex === -1)
+        return ''
 
     const openIndex = source.indexOf('{', selectorIndex)
-    if (openIndex === -1) return ''
+
+    if (openIndex === -1)
+        return ''
 
     let depth = 0
+
     for (let index = openIndex + 1; index < source.length; index++) {
-        if (source[index] === '{') depth++
-        if (source[index] !== '}') continue
-        if (depth === 0) return source.slice(selectorIndex, index + 1)
+        if (source[index] === '{')
+            depth++
+
+        if (source[index] !== '}')
+            continue
+
+        if (depth === 0)
+            return source.slice(selectorIndex, index + 1)
+
         depth--
     }
 

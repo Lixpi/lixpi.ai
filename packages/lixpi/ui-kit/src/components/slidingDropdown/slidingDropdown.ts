@@ -728,10 +728,12 @@ class SlidingDropdown<Value extends string = string> implements SlidingDropdownI
             width: '1px',
             pointerEvents: 'none',
         }
-        this.scrollPortalSpacerNode = html`<div
+        this.scrollPortalSpacerNode = html`
+            <div
                 className="sliding-dropdown-scroll-spacer"
                 style=${spacerStyle}
-            ></div>` as HTMLDivElement
+            ></div>
+        ` as HTMLDivElement
         this.scrollPortalNode = html`
             <div
                 className="sliding-dropdown-scroll-portal"

@@ -1,0 +1,56 @@
+{
+    "_meta": {
+        "sourceName": "models.dev",
+        "sourceId": "models.dev",
+        "queriedEndpoints": [
+            {
+                "endpoint": "https://models.dev/api.json",
+                "note": "Whole catalog fetched once per run; read under providers \"anthropic\" and \"amazon-bedrock\"."
+            }
+        ],
+        "hasDataForThisModel": true,
+        "inferenceProvidersWithData": [
+            "anthropic",
+            "aws-bedrock"
+        ],
+        "fetchedAt": "2026-09-08T00:55:53.285Z"
+    },
+    "byInferenceProvider": {
+        "anthropic": {
+            "contextWindow": 1000000,
+            "maxCompletionSize": 128000,
+            "pricing": {
+                "currency": "USD",
+                "text": {
+                    "measuringUnit": "tokens",
+                    "pricePer": "1000000",
+                    "tiers": {
+                        "default": {
+                            "prompt": "10.00",
+                            "completion": "50.00"
+                        }
+                    }
+                }
+            },
+            "modelKeyAtSource": "claude-fable-5-1"
+        },
+        "aws-bedrock": {
+            "contextWindow": 1000000,
+            "maxCompletionSize": 128000,
+            "pricing": {
+                "currency": "USD",
+                "text": {
+                    "measuringUnit": "tokens",
+                    "pricePer": "1000000",
+                    "tiers": {
+                        "default": {
+                            "prompt": "10.00",
+                            "completion": "50.00"
+                        }
+                    }
+                }
+            },
+            "modelKeyAtSource": "anthropic.claude-fable-5-1"
+        }
+    }
+}

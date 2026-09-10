@@ -103,7 +103,7 @@ export const createActionTimelineModule = (dependencies: ActionTimelineModuleDep
     }
 }
 
-function createActionTimelineToolPackage(dependencies: ActionTimelineModuleDependencies): CapabilityToolPackageInstaller {
+const createActionTimelineToolPackage = (dependencies: ActionTimelineModuleDependencies): CapabilityToolPackageInstaller => {
     return {
         kind: 'tool',
         capabilityId: ACTION_TIMELINE_TOOL_ID,
@@ -112,7 +112,7 @@ function createActionTimelineToolPackage(dependencies: ActionTimelineModuleDepen
     }
 }
 
-function createActionTimelineSkillPackages(storage: InstructionSkillStorage) {
+const createActionTimelineSkillPackages = (storage: InstructionSkillStorage) => {
     return [
         createActionTimelineTimingGridSkillPackage(storage),
         createActionTimelineSegmentWritingSkillPackage(storage),

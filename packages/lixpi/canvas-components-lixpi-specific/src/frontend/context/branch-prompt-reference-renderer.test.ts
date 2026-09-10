@@ -19,12 +19,17 @@ import { createCanvasPromptReferenceRenderer } from './branch-prompt-reference-r
 const owners: BranchMarkerPromptParts[] = []
 afterEach(() => {
     for (const owner of owners.splice(0)) owner.destroy()
+
     document.body.replaceChildren()
 })
 
-function renderBranchMarkerPromptParts(parts: readonly BranchMarkerPromptPart[], options?: Omit<Parameters<typeof createCanvasPromptReferenceRenderer>[0], 'document'>) {
-    const prompt = new BranchMarkerPromptParts(parts, createCanvasPromptReferenceRenderer({ document, ...options }))
+const renderBranchMarkerPromptParts = (parts: readonly BranchMarkerPromptPart[], options?: Omit<Parameters<typeof createCanvasPromptReferenceRenderer>[0], 'document'>) => {
+    const prompt = new BranchMarkerPromptParts(parts, createCanvasPromptReferenceRenderer({
+        document,
+        ...options,
+    }))
     owners.push(prompt)
+
     return prompt.items
 }
 
@@ -33,7 +38,10 @@ const submittedMessage = {
     content: [{
         type: 'paragraph',
         content: [
-            { type: 'text', text: 'Create ' },
+            {
+                type: 'text',
+                text: 'Create ',
+            },
             {
                 type: 'prompt_reference',
                 attrs: {
@@ -42,7 +50,10 @@ const submittedMessage = {
                     displayName: 'Action Timeline',
                 },
             },
-            { type: 'text', text: ' 15s duration 2s gaps with imaginary plot' },
+            {
+                type: 'text',
+                text: ' 15s duration 2s gaps with imaginary plot',
+            },
         ],
     }],
 }
@@ -52,7 +63,10 @@ describe('branch marker prompt content', () => {
         const parts = getBranchMarkerPromptParts(submittedMessage, '')
 
         expect(parts).toEqual([
-            { type: 'text', text: 'Create ' },
+            {
+                type: 'text',
+                text: 'Create ',
+            },
             {
                 type: 'capability-module',
                 reference: {
@@ -61,7 +75,10 @@ describe('branch marker prompt content', () => {
                     displayName: 'Action Timeline',
                 },
             },
-            { type: 'text', text: ' 15s duration 2s gaps with imaginary plot' },
+            {
+                type: 'text',
+                text: ' 15s duration 2s gaps with imaginary plot',
+            },
         ])
         expect(getBranchMarkerPromptDisplayText(parts)).toBe(
             'Create Action Timeline 15s duration 2s gaps with imaginary plot',
@@ -98,7 +115,11 @@ describe('branch marker prompt content', () => {
                         }],
                         bestResults: ['Specify timing.'],
                         limitations: ['Timing is inferred when omitted.'],
-                        executionCharacteristics: { cost: 'medium', latency: 'medium', summary: 'Builds a structured timeline.' },
+                        executionCharacteristics: {
+                            cost: 'medium',
+                            latency: 'medium',
+                            summary: 'Builds a structured timeline.',
+                        },
                     },
                 }),
                 environment: {
@@ -125,10 +146,19 @@ describe('branch marker prompt content', () => {
     it('preserves normal marker text behavior when no Capability badge exists', () => {
         const parts = getBranchMarkerPromptParts({
             type: 'aiUserMessage',
-            content: [{ type: 'paragraph', content: [{ type: 'text', text: '  Create   an image  ' }] }],
+            content: [{
+                type: 'paragraph',
+                content: [{
+                    type: 'text',
+                    text: '  Create   an image  ',
+                }],
+            }],
         }, '')
 
-        expect(parts).toEqual([{ type: 'text', text: 'Create an image' }])
+        expect(parts).toEqual([{
+            type: 'text',
+            text: 'Create an image',
+        }])
         expect(renderBranchMarkerPromptParts(parts)).toEqual(['Create an image'])
     })
 
@@ -149,7 +179,10 @@ describe('branch marker prompt content', () => {
             content: [{
                 type: 'paragraph',
                 content: [
-                    { type: 'text', text: 'Use ' },
+                    {
+                        type: 'text',
+                        text: 'Use ',
+                    },
                     {
                         type: 'prompt_reference',
                         attrs: {
@@ -159,7 +192,10 @@ describe('branch marker prompt content', () => {
                             displayName: 'asset-1',
                         },
                     },
-                    { type: 'text', text: ' on the train' },
+                    {
+                        type: 'text',
+                        text: ' on the train',
+                    },
                 ],
             }],
         }, '')
@@ -170,8 +206,14 @@ describe('branch marker prompt content', () => {
                     type: 'image',
                     nodeId: 'image-node-1',
                     assetId: 'asset-1',
-                    position: { x: 0, y: 0 },
-                    dimensions: { width: 640, height: 480 },
+                    position: {
+                        x: 0,
+                        y: 0,
+                    },
+                    dimensions: {
+                        width: 640,
+                        height: 480,
+                    },
                 }),
                 environment: {
                     getDocuments: () => [],

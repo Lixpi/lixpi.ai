@@ -8,9 +8,7 @@ import {
     buildAiPromptDraftFromText,
 } from './prompt-draft.ts'
 
-function getPromptInputAttrs(draft: any): Record<string, any> {
-    return draft.content[0].attrs
-}
+const getPromptInputAttrs = (draft: any): Record<string, any> => draft.content[0].attrs
 
 describe('AI prompt draft model settings', () => {
     it('copies submitted reasoning multi-model settings into an empty thread composer draft', () => {
