@@ -143,6 +143,7 @@ run_shared() {
         prosemirror \
         test-utils \
         ui-kit \
+        ui-kit-gentelella \
         ui-primitives \
         usage-reporter
     do
@@ -245,6 +246,7 @@ run_all() {
         packages/lixpi/prosemirror \
         packages/lixpi/test-utils \
         packages/lixpi/ui-kit \
+        packages/lixpi/ui-kit-gentelella \
         packages/lixpi/ui-primitives \
         packages/lixpi/usage-reporter
 }

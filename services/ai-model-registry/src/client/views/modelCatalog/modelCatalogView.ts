@@ -4,6 +4,32 @@
 // re-renders from it and writes back through the catalog service.
 
 import { LoadingStatus } from '@lixpi/constants'
+import {
+    createGentelellaBanner,
+    type GentelellaBannerInstance,
+} from '@lixpi/ui-kit-gentelella/components/banner'
+import {
+    createGentelellaButton,
+    type GentelellaButtonInstance,
+} from '@lixpi/ui-kit-gentelella/components/button'
+import {
+    createGentelellaCard,
+    type GentelellaCardInstance,
+} from '@lixpi/ui-kit-gentelella/components/card'
+import { applyGentelellaFormControl } from '@lixpi/ui-kit-gentelella/components/form'
+import {
+    createGentelellaInputGroup,
+    type GentelellaInputGroupInstance,
+} from '@lixpi/ui-kit-gentelella/components/input-group'
+import {
+    createGentelellaPage,
+    type GentelellaPageInstance,
+} from '@lixpi/ui-kit-gentelella/components/page'
+import {
+    createGentelellaPageHeader,
+    type GentelellaPageHeaderInstance,
+} from '@lixpi/ui-kit-gentelella/components/page-header'
+import { createGentelellaStat } from '@lixpi/ui-kit-gentelella/components/widgets'
 import { html } from '@lixpi/ui-primitives/dom'
 
 import { modelCatalogService } from '$src/services/model-catalog-service.ts'
@@ -95,9 +121,12 @@ class ModelCatalogView implements ModelCatalogViewInstance {
     private readonly searchEl: HTMLInputElement
     private readonly providerFilterEl: HTMLSelectElement
     private readonly statusFilterEl: HTMLSelectElement
-    private readonly syncButtonEl: HTMLButtonElement
-    private readonly syncButtonIconEl: HTMLSpanElement
-    private readonly syncButtonLabelEl: HTMLSpanElement
+    private readonly syncButton: GentelellaButtonInstance
+    private readonly searchInputGroup: GentelellaInputGroupInstance
+    private readonly filtersCard: GentelellaCardInstance
+    private readonly pageHeader: GentelellaPageHeaderInstance
+    private readonly page: GentelellaPageInstance
+    private statusBanners: GentelellaBannerInstance[] = []
     // Providers a running sync is working through, read by the group headers.
     private syncingProviders: string[] = []
     private readonly table: ModelTableInstance
@@ -113,52 +142,54 @@ class ModelCatalogView implements ModelCatalogViewInstance {
         this.statsEl = html`<div className="model-catalog-stats"></div>` as HTMLDivElement
         this.statusEl = html`<div className="model-catalog-status"></div>` as HTMLDivElement
 
-        this.searchEl = html`
-            <input
-                className="form-control"
-                type="search"
-                placeholder="Search models"
-                autocomplete="off"
-                aria-label="Search models"
-                oninput=${() => modelCatalogStore.setFilters({ query: this.searchEl.value.trim().toLowerCase() })}
-            />
-        ` as HTMLInputElement
+        this.searchEl = applyGentelellaFormControl(
+            html`
+                <input
+                    type="search"
+                    placeholder="Search models"
+                    autocomplete="off"
+                    aria-label="Search models"
+                    oninput=${() => modelCatalogStore.setFilters({ query: this.searchEl.value.trim().toLowerCase() })}
+                />
+            ` as HTMLInputElement,
+        )
 
-        this.providerFilterEl = html`
-            <select
-                className="form-control"
-                aria-label="Filter by provider"
-                onchange=${() =>
-                    modelCatalogStore.setFilters({
-                        provider: this.providerFilterEl.value as ModelCatalogFilters['provider'],
-                    })}
-            >
-                <option value="all">Every provider</option>
-            </select>
-        ` as HTMLSelectElement
+        this.providerFilterEl = applyGentelellaFormControl(
+            html`
+                <select
+                    aria-label="Filter by provider"
+                    onchange=${() =>
+                        modelCatalogStore.setFilters({
+                            provider: this.providerFilterEl.value as ModelCatalogFilters['provider'],
+                        })}
+                >
+                    <option value="all">Every provider</option>
+                </select>
+            ` as HTMLSelectElement,
+        )
 
-        this.statusFilterEl = html`
-            <select
-                className="form-control"
-                aria-label="Filter by status"
-                onchange=${() => modelCatalogStore.setFilters({ status: this.statusFilterEl.value as StatusFilter })}
-            >
-                ${STATUS_FILTER_OPTIONS.map(option => html`<option value=${option.value}>${option.label}</option>`)}
-            </select>
-        ` as HTMLSelectElement
+        this.statusFilterEl = applyGentelellaFormControl(
+            html`
+                <select
+                    aria-label="Filter by status"
+                    onchange=${() => modelCatalogStore.setFilters({ status: this.statusFilterEl.value as StatusFilter })}
+                >
+                    ${STATUS_FILTER_OPTIONS.map(option => html`<option value=${option.value}>${option.label}</option>`)}
+                </select>
+            ` as HTMLSelectElement,
+        )
 
-        this.syncButtonIconEl = html`<span innerHTML=${syncIcon}></span>` as HTMLSpanElement
-        this.syncButtonLabelEl = html`<span>Run sync</span>` as HTMLSpanElement
-        this.syncButtonEl = html`
-            <button
-                className="btn btn-primary"
-                type="button"
-                onclick=${() => void modelCatalogService.runSync()}
-            >
-                ${this.syncButtonIconEl}
-                ${this.syncButtonLabelEl}
-            </button>
-        ` as HTMLButtonElement
+        this.syncButton = createGentelellaButton({
+            label: 'Run sync',
+            iconHtml: syncIcon,
+            variant: 'primary',
+            onClick: () => void modelCatalogService.runSync(),
+        })
+        this.searchInputGroup = createGentelellaInputGroup({
+            className: 'model-catalog-search',
+            control: this.searchEl,
+            iconHtml: searchIcon,
+        })
 
         this.table = createModelTable({
             onSelect: model => this.selectModel(model),
@@ -196,48 +227,37 @@ class ModelCatalogView implements ModelCatalogViewInstance {
             },
         })
 
-        this.el = html`
-            <div className="page-wrapper model-catalog-page">
-                <div className="page-header">
-                    <div className="page-header-row">
-                        <div>
-                            <div className="page-pretitle">Catalog</div>
-                            <h1 className="page-title">AI models</h1>
-                        </div>
-                        <div className="page-actions">
-                            ${this.syncButtonEl}
-                        </div>
-                    </div>
-                </div>
-
-                ${this.statusEl}
-                ${this.statsEl}
-
-                <div className="card">
-                    <div className="card-header model-catalog-filters">
-                        <div>
-                            <div className="card-title">Models by provider</div>
-                            <div className="card-subtitle">Click a model to see how it resolved and to edit its authored file.</div>
-                        </div>
-                        <div className="model-catalog-filter-controls">
-                            <div className="input-group model-catalog-search">
-                                <span
-                                    className="input-icon"
-                                    innerHTML=${searchIcon}
-                                ></span>
-                                ${this.searchEl}
-                            </div>
-                            ${this.providerFilterEl}
-                            ${this.statusFilterEl}
-                        </div>
-                    </div>
-                    ${this.table.el}
-                </div>
-
-                ${this.detailPanel.backdropEl}
-                ${this.detailPanel.el}
+        const filterControls = html`
+            <div className="model-catalog-filter-controls">
+                ${this.searchInputGroup.el}
+                ${this.providerFilterEl}
+                ${this.statusFilterEl}
             </div>
-        ` as HTMLElement
+        ` as HTMLDivElement
+        this.pageHeader = createGentelellaPageHeader({
+            actions: this.syncButton.el,
+            pretitle: 'Catalog',
+            title: 'AI models',
+        })
+        this.filtersCard = createGentelellaCard({
+            content: this.table.el,
+            headerClassName: 'model-catalog-filters',
+            headerTrailing: filterControls,
+            subtitle: 'Click a model to see how it resolved and to edit its authored file.',
+            title: 'Models by provider',
+        })
+        this.page = createGentelellaPage({
+            className: 'model-catalog-page',
+            content: [
+                this.pageHeader.el,
+                this.statusEl,
+                this.statsEl,
+                this.filtersCard.el,
+                this.detailPanel.backdropEl,
+                this.detailPanel.el,
+            ],
+        })
+        this.el = this.page.el
 
         // A running sync reports every provider and every model twice, which is a few
         // hundred store writes in a handful of seconds. Rendering on each one would
@@ -451,12 +471,11 @@ class ModelCatalogView implements ModelCatalogViewInstance {
 
         // Pressing it again during a run would only join the run it is already
         // showing, so it holds still until the run ends.
-        this.syncButtonEl.disabled = saving || progress.running
-        this.syncButtonIconEl.className = progress.running ? 'btn-spinner' : ''
-        this.syncButtonIconEl.innerHTML = progress.running ? '' : syncIcon
-        this.syncButtonLabelEl.textContent = progress.running
+        this.syncButton.setDisabled(saving || progress.running)
+        this.syncButton.setBusy(progress.running)
+        this.syncButton.setLabel(progress.running
             ? SYNC_PHASE_LABELS[progress.phase ?? 'fetching']
-            : 'Run sync'
+            : 'Run sync')
         this.renderStatus(
             meta,
             overview,
@@ -498,21 +517,23 @@ class ModelCatalogView implements ModelCatalogViewInstance {
     ): void {
         const notes: HTMLElement[] = []
 
+        for (const banner of this.statusBanners)
+            banner.destroy()
+
+        this.statusBanners = []
+
         if (meta.loadingStatus === LoadingStatus.loading)
             notes.push(html`<div className="model-catalog-note">Loading the catalog…</div>` as HTMLElement)
 
-        if (meta.error)
-            notes.push(
-                html`
-                    <div className="banner banner-danger">
-                        <span
-                            className="banner-icon"
-                            innerHTML=${alertIcon}
-                        ></span>
-                        <div className="banner-body">${meta.error}</div>
-                    </div>
-                ` as HTMLElement,
-            )
+        if (meta.error) {
+            const banner = createGentelellaBanner({
+                body: String(meta.error),
+                iconHtml: alertIcon,
+                variant: 'danger',
+            })
+            this.statusBanners.push(banner)
+            notes.push(banner.el)
+        }
 
         const outcome = overview?.lastSyncOutcome ?? null
 
@@ -521,30 +542,32 @@ class ModelCatalogView implements ModelCatalogViewInstance {
         // from a stale timestamp.
         if (outcome?.status === 'failed') {
             const failures = outcome.error?.sourceFailures ?? []
-            notes.push(
-                html`
-                    <div className="banner banner-danger model-catalog-sync-failure">
-                        <span
-                            className="banner-icon"
-                            innerHTML=${alertIcon}
-                        ></span>
-                        <div className="banner-body">
-                            <strong>The last sync did not complete.</strong>
-                            It started ${new Date(outcome.ranAt).toLocaleString()} and stopped without writing, so everything below is from the last run that finished.
-                            ${failures.length === 0
-                                ? html`<div className="model-catalog-failure">${outcome.error?.message ?? 'No detail was recorded.'}</div>`
-                                : failures.map(
-                                    failure => html`
-                                        <div className="model-catalog-failure">
-                                            <strong>${failure.sourceName}${failure.provider ? ` · ${failure.provider}` : ''}</strong>
-                                            <span>${failure.message}</span>
-                                        </div>
-                                    `,
-                                )}
-                        </div>
-                    </div>
-                ` as HTMLElement,
-            )
+            const body = html`
+                <div>
+                    It started ${new Date(outcome.ranAt).toLocaleString()} and stopped without writing, so everything below is from the last run that finished.
+                    ${
+                        failures.length === 0
+                            ? html`<div className="model-catalog-failure">${outcome.error?.message ?? 'No detail was recorded.'}</div>`
+                            : failures.map(
+                                failure => html`
+                                    <div className="model-catalog-failure">
+                                        <strong>${failure.sourceName}${failure.provider ? ` · ${failure.provider}` : ''}</strong>
+                                        <span>${failure.message}</span>
+                                    </div>
+                                `,
+                            )
+                    }
+                </div>
+            ` as HTMLDivElement
+            const banner = createGentelellaBanner({
+                body,
+                className: 'model-catalog-sync-failure',
+                iconHtml: alertIcon,
+                title: 'The last sync did not complete.',
+                variant: 'danger',
+            })
+            this.statusBanners.push(banner)
+            notes.push(banner.el)
         }
 
         if (meta.lastSaveMessage)
@@ -606,12 +629,11 @@ class ModelCatalogView implements ModelCatalogViewInstance {
 
         this.statsEl.replaceChildren(
             ...tiles.map(
-                tile => html`
-                    <div className=${`model-catalog-stat ${tile.tone}`}>
-                        <span className="model-catalog-stat-value">${tile.value}</span>
-                        <span className="model-catalog-stat-label">${tile.label}</span>
-                    </div>
-                ` as HTMLElement,
+                tile => createGentelellaStat({
+                    className: `model-catalog-stat ${tile.tone}`,
+                    label: tile.label,
+                    value: tile.value,
+                }).el,
             ),
         )
     }
@@ -624,7 +646,16 @@ class ModelCatalogView implements ModelCatalogViewInstance {
 
         this.table.destroy()
         this.detailPanel.destroy()
-        this.el.remove()
+
+        for (const banner of this.statusBanners)
+            banner.destroy()
+
+        this.statusBanners = []
+        this.searchInputGroup.destroy()
+        this.syncButton.destroy()
+        this.pageHeader.destroy()
+        this.filtersCard.destroy()
+        this.page.destroy()
     }
 }
 

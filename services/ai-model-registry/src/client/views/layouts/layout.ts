@@ -2,6 +2,11 @@
 // the parameter registry and the model catalog on the active route.
 // Renderer: TypeScript `html` DOM, no framework runtime.
 
+import {
+    createGentelellaApplicationShell,
+    type GentelellaApplicationShellInstance,
+    type GentelellaApplicationShellNavigationItem,
+} from '@lixpi/ui-kit-gentelella/components/application-shell'
 import { html } from '@lixpi/ui-primitives/dom'
 
 import RouterService, {
@@ -23,22 +28,16 @@ import {
 } from '$src/views/modelParameters/modelParametersView.ts'
 import '$src/views/layouts/layout.scss'
 
-type NavigationItem = {
-    path: string
-    label: string
-    icon: string
-}
-
-const NAVIGATION_ITEMS: NavigationItem[] = [
+const NAVIGATION_ITEMS: GentelellaApplicationShellNavigationItem[] = [
     {
         path: MODEL_PARAMETERS_ROUTE_PATH,
         label: 'Model parameters',
-        icon: slidersIcon,
+        iconHtml: slidersIcon,
     },
     {
         path: MODEL_CATALOG_ROUTE_PATH,
         label: 'Model catalog',
-        icon: catalogIcon,
+        iconHtml: catalogIcon,
     },
 ]
 
@@ -53,77 +52,33 @@ class Layout implements LayoutInstance {
     readonly el: HTMLElement
 
     private readonly contentEl: HTMLDivElement
-    private readonly navigationLinks = new Map<string, HTMLAnchorElement>()
+    private readonly shell: GentelellaApplicationShellInstance
     private readonly unsubscribeRouter: () => void
 
     private mountedPath: string | null = null
     private view: MountedView | null = null
 
     constructor() {
-        this.contentEl = html`<div className="registry-content"></div>` as HTMLDivElement
-
-        this.el = html`
-            <div className="registry-shell">
-                ${this.renderSidebar()}
-                <main className="main">
-                    ${this.contentEl}
-                </main>
-            </div>
-        ` as HTMLElement
+        this.shell = createGentelellaApplicationShell({
+            brand: {
+                mark: 'AI',
+                name: 'Model Registry',
+            },
+            navigationGroups: [{
+                label: 'Registry',
+                items: NAVIGATION_ITEMS,
+            }],
+            footerContent: html`<span className="registry-sidebar-note">Lixpi</span>`,
+            onNavigate: path => RouterService.navigateTo(path),
+        })
+        this.contentEl = this.shell.contentEl
+        this.el = this.shell.el
 
         this.unsubscribeRouter = routerStore.subscribe(({ data }) => void this.renderRoute(data.currentRoute.path))
     }
 
-    private renderSidebar(): HTMLElement {
-        const navigationEl = html`<nav className="sidebar-nav"></nav>` as HTMLElement
-        const groupEl = html`
-            <div className="nav-group">
-                <div className="nav-label">Registry</div>
-            </div>
-        ` as HTMLDivElement
-
-        for (const item of NAVIGATION_ITEMS) {
-            const link = html`
-                <a
-                    className="nav-link"
-                    href=${item.path}
-                    onclick=${(event: Event) => this.handleNavigationClick(event, item.path)}
-                >
-                    <span innerHTML=${item.icon}></span>
-                    <span className="nav-text">${item.label}</span>
-                </a>
-            ` as HTMLAnchorElement
-            this.navigationLinks.set(item.path, link)
-            groupEl.append(link)
-        }
-
-        navigationEl.append(groupEl)
-
-        return html`
-            <aside className="sidebar">
-                <div className="sidebar-brand">
-                    <span className="brand-icon">AI</span>
-                    <span className="brand-name">Model Registry</span>
-                </div>
-                ${navigationEl}
-                <div className="sidebar-footer">
-                    <span className="registry-sidebar-note">Lixpi</span>
-                </div>
-            </aside>
-        ` as HTMLElement
-    }
-
-    private handleNavigationClick(
-        event: Event,
-        path: string,
-    ): void {
-        event.preventDefault()
-        RouterService.navigateTo(path)
-    }
-
     private renderRoute(path: string): void {
-        for (const [itemPath, link] of this.navigationLinks)
-            link.classList.toggle('active', itemPath === path)
+        this.shell.setActivePath(path)
 
         if (path === this.mountedPath)
             return
@@ -148,8 +103,7 @@ class Layout implements LayoutInstance {
         this.unsubscribeRouter()
         this.view?.destroy()
         this.view = null
-        this.navigationLinks.clear()
-        this.el.remove()
+        this.shell.destroy()
     }
 }
 

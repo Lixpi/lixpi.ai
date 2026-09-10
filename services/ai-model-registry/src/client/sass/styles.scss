@@ -2,7 +2,8 @@
 // the tokens, the layout, and the components the pages build from. Everything
 // Lixpi owns lives beside the component that uses it.
 
-@use "gentelella/scss/v4/main.scss";
+@use "@lixpi/ui-kit-gentelella/styles/theme";
+@use "@lixpi/ui-kit-gentelella/styles/application-shell";
 
 // No rubber banding on the page: reaching the top or the bottom stops there.
 //

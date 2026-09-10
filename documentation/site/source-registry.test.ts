@@ -98,10 +98,13 @@ describe('documentation source registry', () => {
             write(`packages/lixpi/${name}/src/ignored.md`)
             write(`packages/lixpi/${name}/examples/ignored.md`)
         }
+        write('packages/lixpi/ui-kit-gentelella/README.md')
+        write('packages/lixpi/ui-kit-gentelella/documentation/GUIDE.md')
+        write('packages/lixpi/ui-kit-gentelella/src/ignored.md')
         write('services/ai-model-registry/README.md')
         const registry = new DocumentationSources(root).discover()
         expect([...registry.pages.keys()].some(file => file.endsWith('ignored.md'))).toBe(false)
-        expect([...registry.pages.values()].filter(page => page.route.startsWith('packages/'))).toHaveLength(10)
+        expect([...registry.pages.values()].filter(page => page.route.startsWith('packages/'))).toHaveLength(12)
     })
     it('ignores apparent headings inside fenced code and matches rendered inline heading text', () => {
         const ast = Markdoc.parse('# Public **Node**\n\n~~~ts\n# Not a heading\n~~~\n\n## Links & **nodes**')

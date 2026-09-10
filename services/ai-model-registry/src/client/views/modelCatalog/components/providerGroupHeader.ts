@@ -3,6 +3,20 @@
 // models inherit. It sits at the head of the provider's rows because that is
 // what it configures.
 
+import {
+    createGentelellaButton,
+    type GentelellaButtonInstance,
+} from '@lixpi/ui-kit-gentelella/components/button'
+import {
+    applyGentelellaFormControl,
+    createGentelellaFormActions,
+    type GentelellaFormActionsInstance,
+} from '@lixpi/ui-kit-gentelella/components/form'
+import {
+    createGentelellaSpinner,
+    type GentelellaSpinnerInstance,
+} from '@lixpi/ui-kit-gentelella/components/spinner'
+import { gentelellaClasses } from '@lixpi/ui-kit-gentelella/class-names'
 import { html } from '@lixpi/ui-primitives/dom'
 
 import {
@@ -41,6 +55,12 @@ export type ProviderGroupHeaderInstance = {
 class ProviderGroupHeader implements ProviderGroupHeaderInstance {
     readonly el: HTMLElement
 
+    private readonly components: Array<
+        | GentelellaButtonInstance
+        | GentelellaFormActionsInstance
+        | GentelellaSpinnerInstance
+    > = []
+
     constructor(private readonly config: ProviderGroupHeaderConfig) {
         const {
             provider,
@@ -48,6 +68,16 @@ class ProviderGroupHeader implements ProviderGroupHeaderInstance {
             totalModels,
         } = this.config
         const skipped = provider.index?.modelsToSkip ?? []
+        const spinner = this.config.syncing
+            ? createGentelellaSpinner({
+                className: 'model-catalog-group-spinner',
+                label: `Syncing ${provider.title}`,
+                size: 'small',
+            })
+            : null
+
+        if (spinner)
+            this.components.push(spinner)
 
         const toggleEl = html`
             <button
@@ -60,9 +90,7 @@ class ProviderGroupHeader implements ProviderGroupHeaderInstance {
                     className="model-catalog-group-chevron"
                     innerHTML=${chevronIcon}
                 ></span>
-                ${this.config.syncing
-                    ? html`<span className="spinner spinner-sm model-catalog-group-spinner"></span>`
-                    : null}
+                ${spinner?.el}
                 <span className="model-catalog-group-name">${provider.title}</span>
                 <span className="model-catalog-group-count">
                     ${shownModels === totalModels
@@ -116,14 +144,14 @@ class ProviderGroupHeader implements ProviderGroupHeaderInstance {
             reason: string
         },
     ): HTMLElement {
-        const button = html`
-            <button
-                className="btn btn-sm btn-ghost"
-                type="button"
-                onclick=${() => void this.config.onPatchIndex(provider, { unskipModels: [entry.model] })}
-            >Unskip</button>
-        ` as HTMLButtonElement
-        button.disabled = this.config.saving
+        const button = createGentelellaButton({
+            disabled: this.config.saving,
+            label: 'Unskip',
+            onClick: () => void this.config.onPatchIndex(provider, { unskipModels: [entry.model] }),
+            size: 'small',
+            variant: 'ghost',
+        })
+        this.components.push(button)
 
         return html`
             <div className="model-catalog-skip-item">
@@ -131,7 +159,7 @@ class ProviderGroupHeader implements ProviderGroupHeaderInstance {
                     <span className="model-catalog-skip-model">${entry.model}</span>
                     <span className="model-catalog-muted">${entry.reason}</span>
                 </div>
-                ${button}
+                ${button.el}
             </div>
         ` as HTMLElement
     }
@@ -143,22 +171,24 @@ class ProviderGroupHeader implements ProviderGroupHeaderInstance {
         const current = provider.base?.fieldsInheritedByEveryModel ?? {}
         const errorEl = html`
             <p
-                className="form-error"
+                className=${gentelellaClasses.form.error}
                 hidden
             ></p>
         ` as HTMLParagraphElement
-        const textarea = html`
-            <textarea
-                className="form-control model-catalog-json"
-                spellcheck="false"
-                rows="8"
-                aria-label=${`Fields inherited by every ${provider.title} model`}
-            >${JSON.stringify(
-                current,
-                null,
-                4,
-            )}</textarea>
-        ` as HTMLTextAreaElement
+        const textarea = applyGentelellaFormControl(
+            html`
+                <textarea
+                    className="model-catalog-json"
+                    spellcheck="false"
+                    rows="8"
+                    aria-label=${`Fields inherited by every ${provider.title} model`}
+                >${JSON.stringify(
+                    current,
+                    null,
+                    4,
+                )}</textarea>
+            ` as HTMLTextAreaElement,
+        )
 
         const save = async (): Promise<void> => {
             let edited: Record<string, unknown>
@@ -189,26 +219,30 @@ class ProviderGroupHeader implements ProviderGroupHeaderInstance {
                 await this.config.onPatchBase(provider.directory, patch)
         }
 
-        const button = html`
-            <button
-                className="btn btn-outline btn-sm"
-                type="button"
-                onclick=${() => void save()}
-            >Save inherited fields</button>
-        ` as HTMLButtonElement
-        button.disabled = this.config.saving
+        const button = createGentelellaButton({
+            disabled: this.config.saving,
+            label: 'Save inherited fields',
+            onClick: () => void save(),
+            size: 'small',
+            variant: 'outline',
+        })
+        const actions = createGentelellaFormActions({ content: button.el })
+        this.components.push(button, actions)
 
         return html`
             <div className="model-catalog-base">
                 <div className="model-catalog-section-title">Fields inherited by every model</div>
                 ${textarea}
                 ${errorEl}
-                <div className="form-actions">${button}</div>
+                ${actions.el}
             </div>
         ` as HTMLElement
     }
 
     destroy(): void {
+        for (const component of this.components)
+            component.destroy()
+
         this.el.remove()
     }
 }

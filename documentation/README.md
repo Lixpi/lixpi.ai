@@ -69,6 +69,7 @@ Product behavior and persistence stay in the central workspace guides. Rendering
 | [Lixpi Canvas Components](../packages/lixpi/canvas-components-lixpi-specific/README.md) | Workspace composition, product nodes, media events, host ports and persistence |
 | [UI Primitives](../packages/lixpi/ui-primitives/README.md) | Shared DOM templates, SVG utilities, colors, gradients and easing |
 | [UI Kit](../packages/lixpi/ui-kit/README.md) | Panels, menus, tooltips, controls, previews and icon artwork |
+| [Gentelella UI Kit](../packages/lixpi/ui-kit-gentelella/README.md) | Gentelella theme styles, typed runtime facades, class contracts and composable DOM components |
 
 ## AI Chat & Context
 

@@ -12,5 +12,16 @@ packages:
   - "prosemirror"
   - "test-utils"
   - "ui-kit"
+  - "ui-kit-gentelella"
   - "ui-primitives"
   - "usage-reporter"
+
+# Shared tests install the complete package workspace. These are the build
+# dependencies explicitly allowed by the service workspaces that consume it.
+allowBuilds:
+  "@google/genai": true
+  "@parcel/watcher": true
+  browser-tabs-lock: true
+  esbuild: true
+  protobufjs: true
+  sharp: true

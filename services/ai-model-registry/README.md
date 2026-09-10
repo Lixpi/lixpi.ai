@@ -142,7 +142,7 @@ The service hot reloads. Vite serves the page on 3010 and proxies `/api` to the 
 
 Any other path opens the parameter registry, which is where the service started. Both the Node server and Vite serve `index.html` for a path that is not a file, so a reload or a pasted link lands on the page it names.
 
-The client is built the same way `services/web-ui` is: TypeScript DOM components through the `html` tagged template from `@lixpi/ui-primitives/dom`, Nano Stores for state, a path router that writes the address bar from the route store, and Sass beside each component. The visual system is the [Gentelella](https://github.com/ColorlibHQ/gentelella) admin theme, imported as Sass from the `gentelella` package, so the sidebar, cards, tables, forms, and status colours come from the theme rather than from hand-written CSS.
+The client is built the same way `services/web-ui` is: TypeScript DOM components through the `html` tagged template from `@lixpi/ui-primitives/dom`, Nano Stores for state, a path router that writes the address bar from the route store, and Sass beside each component. The visual system comes from [`@lixpi/ui-kit-gentelella`](../../packages/lixpi/ui-kit-gentelella/README.md), which owns the [Gentelella](https://github.com/ColorlibHQ/gentelella) dependency, complete theme Sass, runtime facades, class contracts, and reusable DOM components. The service composes those modules with registry-specific data, routes, and styles instead of importing Gentelella directly.
 
 ```text
 src/client/

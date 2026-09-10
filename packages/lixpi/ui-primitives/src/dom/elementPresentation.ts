@@ -48,6 +48,21 @@ export const getElementScale = (element: HTMLElement | SVGElement): number => {
     return parseTransformScale(transform)
 }
 
+export const applyCssCustomProperties = (
+    element: HTMLElement | SVGElement,
+    values: Readonly<Record<string, string | null | undefined>>,
+): void => {
+    for (const [name, value] of Object.entries(values)) {
+        if (
+            value === null
+            || value === undefined
+        )
+            element.style.removeProperty(name)
+        else
+            element.style.setProperty(name, value)
+    }
+}
+
 export const copyCssCustomProperties = (
     source: HTMLElement | SVGElement,
     target: HTMLElement | SVGElement,

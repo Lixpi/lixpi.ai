@@ -5,11 +5,35 @@ import {
     it,
 } from 'vitest'
 import {
+    applyCssCustomProperties,
     copyCssCustomProperties,
     getElementScale,
 } from './elementPresentation.ts'
 
 describe('Element presentation utilities', () => {
+    it('applies and removes explicit custom properties', () => {
+        const element = document.createElement('div')
+        applyCssCustomProperties(
+            element,
+            {
+                '--color': 'red',
+                '--space': '8px',
+            },
+        )
+        expect(element.style.getPropertyValue('--color')).toBe('red')
+        expect(element.style.getPropertyValue('--space')).toBe('8px')
+
+        applyCssCustomProperties(
+            element,
+            {
+                '--color': null,
+                '--space': undefined,
+            },
+        )
+        expect(element.style.getPropertyValue('--color')).toBe('')
+        expect(element.style.getPropertyValue('--space')).toBe('')
+    })
+
     it('reads rotated matrix and explicit scale transforms with a safe unscaled fallback', () => {
         const element = document.createElement('div')
         element.style.transform = 'matrix(0, 2, -2, 0, 10, 20)'

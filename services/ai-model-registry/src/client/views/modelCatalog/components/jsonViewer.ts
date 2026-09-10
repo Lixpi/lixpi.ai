@@ -17,7 +17,10 @@ import {
 import { EditorState as CodeMirrorEditorState } from '@codemirror/state'
 import { EditorView as CodeMirrorEditorView } from '@codemirror/view'
 import { tags } from '@lezer/highlight'
-import { html } from '@lixpi/ui-primitives/dom'
+import {
+    applyCssCustomProperties,
+    html,
+} from '@lixpi/ui-primitives/dom'
 
 import { chevronIcon } from '$src/views/layouts/icons.ts'
 
@@ -60,7 +63,7 @@ class JsonViewer implements JsonViewerInstance {
                 aria-label=${config.ariaLabel}
             ></div>
         ` as HTMLElement
-        this.el.style.setProperty('--model-catalog-json-font-size', `${settings.jsonViewer.fontSize}px`)
+        applyCssCustomProperties(this.el, { '--model-catalog-json-font-size': `${settings.jsonViewer.fontSize}px` })
 
         this.view = new CodeMirrorEditorView({
             state: CodeMirrorEditorState.create({
